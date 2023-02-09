@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.7.6;
 
 /// @title Base64
 /// @author Brecht Devos - <brecht@loopring.org>

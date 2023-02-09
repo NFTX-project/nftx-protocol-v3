@@ -3,7 +3,7 @@ pragma solidity =0.7.6;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {LowGasSafeMath} from "../uniswap/v3-core/libraries/LowGasSafeMath.sol";
+import {LowGasSafeMath} from "@uni-core/libraries/LowGasSafeMath.sol";
 
 /**
  * @notice wrap ERC721 into fungible ERC20

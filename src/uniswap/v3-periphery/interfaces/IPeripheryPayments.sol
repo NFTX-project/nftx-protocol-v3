@@ -15,6 +15,11 @@ interface IPeripheryPayments {
     /// that use ether for the input amount
     function refundETH() external payable;
 
+    /// @notice Refunds any ETH balance held by this contract to the `receiver`
+    /// @dev Useful for bundling with mint or increase liquidity that uses ether, or exact output swaps
+    /// that use ether for the input amount
+    function refundETH(address receiver) external payable;
+
     /// @notice Transfers the full amount of a token held by this contract to recipient
     /// @dev The amountMinimum parameter prevents malicious contracts from stealing the token from users
     /// @param token The contract address of the token which will be transferred to `recipient`
