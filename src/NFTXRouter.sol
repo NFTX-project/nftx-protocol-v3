@@ -32,7 +32,7 @@ contract NFTXRouter is IERC721Receiver {
     address token1;
 
     // TODO: dynamic fees
-    uint24 public constant FEE = 300;
+    uint24 public constant FEE = 3000;
 
     constructor(
         INonfungiblePositionManager positionManager_,

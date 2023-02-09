@@ -6,3 +6,4 @@ base64-sol/=src/uniswap/v3-periphery/libraries/
 @mocks/=src/mocks/
 @uni-core/=src/uniswap/v3-core/
 @uni-periphery/=src/uniswap/v3-periphery/
+forge-std/=lib/forge-std/src/
