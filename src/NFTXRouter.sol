@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity =0.7.6;
+pragma solidity =0.8.15;
 pragma abicoder v2;
 
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
-import {LowGasSafeMath} from "@uni-core/libraries/LowGasSafeMath.sol";
 
 import {vToken} from "@mocks/vToken.sol";
 // TODO: replace with IWETH
@@ -17,9 +16,7 @@ import {MockWETH} from "@mocks/MockWETH.sol";
 /**
  * @notice Intermediate Router to facilitate minting + concentrated liquidity addition (and reverse)
  */
-contract NFTXRouter is IERC721Receiver {
-    using LowGasSafeMath for uint256;
-
+contract NFTXRouter is ERC721Holder {
     INonfungiblePositionManager public positionManager;
     SwapRouter public router;
     IQuoterV2 public quoter;
@@ -184,7 +181,7 @@ contract NFTXRouter is IERC721Receiver {
                     sqrtPriceLimitX96: 0
                 })
             );
-            wethAmt = wethAmt.add(fractionalWethAmt);
+            wethAmt += fractionalWethAmt;
         }
         // send all ETH to sender
         MockWETH(WETH).withdraw(wethAmt);
@@ -247,7 +244,7 @@ contract NFTXRouter is IERC721Receiver {
     }
 
     function buyNFTs(BuyNFTsParams calldata params) external payable {
-        uint256 vTokenAmt = params.nftIds.length.mul(1 ether);
+        uint256 vTokenAmt = params.nftIds.length * 1 ether;
 
         // swap ETH to required vTokens amount
         router.exactOutputSingle{value: msg.value}(
@@ -278,7 +275,7 @@ contract NFTXRouter is IERC721Receiver {
         external
         returns (uint256 ethRequired)
     {
-        uint256 vTokenAmt = nftIds.length.mul(1 ether);
+        uint256 vTokenAmt = nftIds.length * 1 ether;
 
         (ethRequired, , , ) = quoter.quoteExactOutputSingle(
             IQuoterV2.QuoteExactOutputSingleParams({
@@ -289,15 +286,6 @@ contract NFTXRouter is IERC721Receiver {
                 sqrtPriceLimitX96: sqrtPriceLimitX96
             })
         );
-    }
-
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes memory
-    ) public virtual override returns (bytes4) {
-        return this.onERC721Received.selector;
     }
 
     receive() external payable {}

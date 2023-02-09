@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.9;
+pragma solidity =0.8.15;
 
 import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 import {TestExtend} from "./lib/TestExtend.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 import {UniswapV3Factory} from "@uni-core/UniswapV3Factory.sol";
 import {NonfungibleTokenPositionDescriptor} from "@uni-periphery/NonfungibleTokenPositionDescriptor.sol";
@@ -15,12 +15,12 @@ import {TickMath} from "@uni-core/libraries/TickMath.sol";
 
 import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
+import {vToken} from "@mocks/vToken.sol";
 
 import {NFTXRouter} from "@src/NFTXRouter.sol";
-import {vToken} from "@src/vToken.sol";
 
-contract NFTXRouterTests is TestExtend, IERC721Receiver {
-    Factory factory;
+contract NFTXRouterTests is TestExtend, ERC721Holder {
+    UniswapV3Factory factory;
     NonfungibleTokenPositionDescriptor descriptor;
     MockWETH weth;
     NonfungiblePositionManager positionManager;
@@ -36,7 +36,7 @@ contract NFTXRouterTests is TestExtend, IERC721Receiver {
     function setUp() external {
         weth = new MockWETH();
 
-        factory = new Factory();
+        factory = new UniswapV3Factory();
         descriptor = new NonfungibleTokenPositionDescriptor(
             address(weth),
             bytes32(0)
@@ -334,15 +334,6 @@ contract NFTXRouterTests is TestExtend, IERC721Receiver {
             qty,
             "NFT balance didn't decrease"
         );
-    }
-
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes memory
-    ) public virtual override returns (bytes4) {
-        return this.onERC721Received.selector;
     }
 
     // to receive the refunded ETH

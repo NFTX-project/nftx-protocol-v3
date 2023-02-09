@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.9;
+pragma solidity =0.8.15;
 
 import {Babylonian} from "@uniswap/lib/contracts/libraries/Babylonian.sol";
 import {SafeCast} from "@uni-core/libraries/SafeCast.sol";

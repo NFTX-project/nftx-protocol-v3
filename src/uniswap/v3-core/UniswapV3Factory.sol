@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity =0.8.12;
+pragma solidity =0.8.15;
 
 import {IUniswapV3Factory} from './interfaces/IUniswapV3Factory.sol';
 
