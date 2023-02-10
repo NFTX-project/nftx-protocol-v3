@@ -82,18 +82,18 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
             address(this)
         );
         (
-            uint96 nonce,
-            address operator,
+            ,
+            ,
             address token0,
             address token1,
             uint24 fee,
             int24 tickLower,
             int24 tickUpper,
             uint128 liquidity,
-            uint256 feeGrowthInside0LastX128,
-            uint256 feeGrowthInside1LastX128,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
+            ,
+            ,
+            ,
+
         ) = positionManager.positions(positionId);
 
         assertEq(
@@ -101,6 +101,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
             1,
             "Position Balance didn't change"
         );
+        assertGt(liquidity, 0, "Liquidity didn't increase");
         assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
         assertEqInt24(tickUpper, _tickUpper, "Incorrect tickUpper");
         assertEqUint24(fee, nftxRouter.FEE(), "Incorrect fee");
@@ -203,20 +204,9 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nftIds[8] = allTokenIds[8];
         nftIds[9] = allTokenIds[9];
 
-        (
-            uint96 nonce,
-            address operator,
-            address token0,
-            address token1,
-            uint24 fee,
-            int24 tickLower,
-            int24 tickUpper,
-            uint128 liquidity,
-            uint256 feeGrowthInside0LastX128,
-            uint256 feeGrowthInside1LastX128,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
-        ) = positionManager.positions(positionId);
+        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
+            positionId
+        );
 
         positionManager.setApprovalForAll(address(nftxRouter), true);
         NFTXRouter.RemoveLiquidityParams memory params = NFTXRouter
