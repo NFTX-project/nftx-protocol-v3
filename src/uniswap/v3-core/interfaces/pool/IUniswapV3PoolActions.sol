@@ -80,6 +80,15 @@ interface IUniswapV3PoolActions {
         bytes calldata data
     ) external returns (int256 amount0, int256 amount1);
 
+    /// @notice Distributes the received vault fees among the current LPs, proportional to their liquidity contribution
+    /// @dev Can only be called by feeDistributor, after it sends the reward tokens to this pool
+    /// @param rewardsAmount The amount of reward tokens to distribute
+    /// @param isToken0 If reward token is token0 then true, else false
+    function distributeRewards(
+        uint256 rewardsAmount,
+        bool isToken0
+    ) external;
+
     /// @notice Receive token0 and/or token1 and pay it back, plus a fee, in the callback
     /// @dev The caller of this method receives a callback in the form of IUniswapV3FlashCallback#uniswapV3FlashCallback
     /// @dev Can be used to donate underlying tokens pro-rata to currently in-range liquidity providers by calling

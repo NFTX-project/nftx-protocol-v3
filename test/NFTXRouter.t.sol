@@ -17,6 +17,7 @@ import {TickMath} from "@uni-core/libraries/TickMath.sol";
 import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
 import {vToken} from "@mocks/vToken.sol";
+import {MockFeeDistributor} from "@mocks/MockFeeDistributor.sol";
 
 import {NFTXRouter} from "@src/NFTXRouter.sol";
 
@@ -30,6 +31,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
     MockNFT nft;
     vToken vtoken;
+    MockFeeDistributor feeDistributor;
     NFTXRouter nftxRouter;
 
     uint256 tickDistance;
@@ -63,6 +65,9 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         tickDistance = uint256(
             uint24(factory.feeAmountTickSpacing(nftxRouter.FEE()))
         );
+
+        feeDistributor = new MockFeeDistributor(factory, address(weth), vtoken);
+        factory.setFeeDistributor(address(feeDistributor));
     }
 
     function testAddLiquidity() external {
@@ -267,13 +272,9 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nft.setApprovalForAll(address(vtoken), true);
         vtoken.mint(feeTokenIds, address(this), address(this));
 
-        UniswapV3Pool pool = UniswapV3Pool(
-            factory.getPool(address(weth), address(vtoken), nftxRouter.FEE())
-        );
-
         // distribute fees
-        vtoken.transfer(address(pool), vTokenFees);
-        pool.distributeRewards(vTokenFees, nftxRouter.isVToken0());
+        vtoken.transfer(address(feeDistributor), vTokenFees);
+        feeDistributor.distribute(0);
 
         // NOTE: We have 2 LP positions with the exact same liquidity. So the fees is distributed equally between them both
         // So for nftFees = 2, each position should get 1 NFT as fees, but due to rounding gets 0.999..998 of vTokens as fees

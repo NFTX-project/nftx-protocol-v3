@@ -818,15 +818,15 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         slot0.unlocked = true;
     }
 
-    // TODO: add to IUniswapV3PoolActions
     // TODO: remove noDelegateCall from all functions, else Pool can't be used as proxy
-    // TODO: make only callable by feeDistributor
-    // TODO: instead of pulling tokens, feeDistributor transfers the rewardsAmount first to the pool, then call this function
     // TODO: handle rewards when no liquidity
+    /// @inheritdoc IUniswapV3PoolActions
     function distributeRewards(
         uint256 rewardsAmount,
         bool isToken0
-    ) external noDelegateCall {
+    ) external override noDelegateCall {
+        require(msg.sender == IUniswapV3Factory(factory).feeDistributor());
+
         uint256 feeGrowthGlobalX128 = isToken0 ? feeGrowthGlobal0X128 : feeGrowthGlobal1X128;
 
         // update global fee tracker

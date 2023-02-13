@@ -28,7 +28,7 @@ contract NFTXRouter is ERC721Holder {
     address token0;
     address token1;
 
-    // TODO: dynamic fees
+    // TODO: set fee to the highest tier (1%). Modify UniswapV3Factory to allow for this single fee tier
     uint24 public constant FEE = 3000;
 
     constructor(
@@ -291,6 +291,8 @@ contract NFTXRouter is ERC721Holder {
             })
         );
     }
+
+    // TODO: add view function that returns deployed + computed addresses for corresponding vToken address
 
     receive() external payable {}
 }
