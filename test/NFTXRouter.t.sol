@@ -190,6 +190,9 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         ) = _mintPosition(nftQty);
 
+        // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
+        _mintPosition(nftQty);
+
         _sellNFTs(5);
 
         uint256[] memory nftIds = new uint256[](nftQty);
@@ -252,13 +255,32 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
             uint256 ethUsed
         )
     {
-        tokenIds = nft.mint(qty);
-        nft.setApprovalForAll(address(vtoken), true);
-
         // Current Eg: 1 NFT = 5 ETH, and liquidity provided in the range: 3-6 ETH per NFT
         uint256 currentNFTPrice = 5 ether; // 5 * 10^18 wei for 1*10^18 vTokens
         uint256 lowerNFTPrice = 3 ether;
         uint256 upperNFTPrice = 6 ether;
+
+        return
+            _mintPosition(qty, currentNFTPrice, lowerNFTPrice, upperNFTPrice);
+    }
+
+    function _mintPosition(
+        uint256 qty,
+        uint256 currentNFTPrice,
+        uint256 lowerNFTPrice,
+        uint256 upperNFTPrice
+    )
+        internal
+        returns (
+            uint256[] memory tokenIds,
+            uint256 positionId,
+            int24 tickLower,
+            int24 tickUpper,
+            uint256 ethUsed
+        )
+    {
+        tokenIds = nft.mint(qty);
+        nft.setApprovalForAll(address(vtoken), true);
 
         uint160 currentSqrtP;
         if (nftxRouter.isVToken0()) {
@@ -290,7 +312,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         uint256 preETHBalance = address(this).balance;
 
-        positionId = nftxRouter.addLiquidity{value: qty * 20 ether}(
+        positionId = nftxRouter.addLiquidity{value: qty * 100 ether}(
             NFTXRouter.AddLiquidityParams({
                 nftIds: tokenIds,
                 tickLower: tickLower,

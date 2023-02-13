@@ -165,6 +165,7 @@ contract NFTXRouter is ERC721Holder {
             vTokenAmt = amount1;
         }
 
+        // TODO: make this optional. User can want vTokens
         // swap decimal part of vTokens to WETH
         uint256 fractionalVTokenAmt = vTokenAmt % 1 ether;
         if (fractionalVTokenAmt > 0) {
