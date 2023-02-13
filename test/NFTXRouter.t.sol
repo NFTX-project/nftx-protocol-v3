@@ -7,6 +7,7 @@ import {TestExtend} from "./lib/TestExtend.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 import {UniswapV3Factory} from "@uni-core/UniswapV3Factory.sol";
+import {UniswapV3Pool} from "@uni-core/UniswapV3Pool.sol";
 import {NonfungibleTokenPositionDescriptor} from "@uni-periphery/NonfungibleTokenPositionDescriptor.sol";
 import {NonfungiblePositionManager, INonfungiblePositionManager} from "@uni-periphery/NonfungiblePositionManager.sol";
 import {SwapRouter} from "@uni-periphery/SwapRouter.sol";
@@ -243,6 +244,76 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         );
 
         console.log("ETH removed: ", postETHBalance - preETHBalance);
+    }
+
+    function testFeeDistribution() external {
+        // mint position
+        (
+            uint256[] memory mintTokenIds,
+            uint256 positionId,
+            ,
+            ,
+
+        ) = _mintPosition(5);
+        // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
+        _mintPosition(5);
+        // TODO: add console logs for initial values as well, in all test cases
+
+        // mint vTokens for fees
+        uint256 nftFees = 4;
+        uint256 vTokenFees = nftFees * 1 ether;
+        uint256[] memory feeTokenIds = nft.mint(nftFees);
+
+        nft.setApprovalForAll(address(vtoken), true);
+        vtoken.mint(feeTokenIds, address(this), address(this));
+
+        UniswapV3Pool pool = UniswapV3Pool(
+            factory.getPool(address(weth), address(vtoken), nftxRouter.FEE())
+        );
+
+        // distribute fees
+        vtoken.transfer(address(pool), vTokenFees);
+        pool.distributeRewards(vTokenFees, nftxRouter.isVToken0());
+
+        // NOTE: We have 2 LP positions with the exact same liquidity. So the fees is distributed equally between them both
+        // So for nftFees = 2, each position should get 1 NFT as fees, but due to rounding gets 0.999..998 of vTokens as fees
+        // Hence can't redeem that portion to NFT. The fractional part would get swapped for ETH during removeLiquidity
+        // TODO: check which code portion responsible for leaving out those 2 wei of vTokens
+
+        // remove liquidity
+        uint256[] memory nftIds = new uint256[](5 + 1);
+        nftIds[0] = mintTokenIds[0];
+        nftIds[1] = mintTokenIds[1];
+        nftIds[2] = mintTokenIds[2];
+        nftIds[3] = mintTokenIds[3];
+        nftIds[4] = mintTokenIds[4];
+        nftIds[5] = feeTokenIds[0];
+
+        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
+            positionId
+        );
+
+        positionManager.setApprovalForAll(address(nftxRouter), true);
+        NFTXRouter.RemoveLiquidityParams memory params = NFTXRouter
+            .RemoveLiquidityParams({
+                positionId: positionId,
+                nftIds: nftIds,
+                liquidity: liquidity,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            });
+
+        uint256 preNFTBalance = nft.balanceOf(address(this));
+        uint256 preETHBalance = address(this).balance;
+
+        nftxRouter.removeLiquidity(params);
+
+        uint256 postNFTBalance = nft.balanceOf(address(this));
+        uint256 postETHBalance = address(this).balance;
+
+        console.log("ETH received", postETHBalance - preETHBalance);
+        console.log("NFT received", postNFTBalance - preNFTBalance);
     }
 
     function _mintPosition(uint256 qty)
