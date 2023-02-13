@@ -187,9 +187,12 @@ contract NFTXRouter is ERC721Holder {
         // send all ETH to sender
         MockWETH(WETH).withdraw(wethAmt);
         (bool success, ) = msg.sender.call{value: wethAmt}("");
+        // TODO: replace with custom error
         require(success, "UnableToSendETH");
         // burn vTokens to provided tokenIds array
         vtoken.burn(params.nftIds, address(this), msg.sender);
+
+        // TODO: handle vtoken left (if any)
     }
 
     /**
