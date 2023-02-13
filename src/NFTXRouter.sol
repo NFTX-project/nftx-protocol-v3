@@ -105,7 +105,7 @@ contract NFTXRouter is ERC721Holder {
             amount1Min = amount1Min;
         }
 
-        (positionId, , , ) = positionManager.mint(
+        (positionId, , , ) = positionManager.mint{value: msg.value}(
             INonfungiblePositionManager.MintParams({
                 token0: token0_,
                 token1: token1_,
