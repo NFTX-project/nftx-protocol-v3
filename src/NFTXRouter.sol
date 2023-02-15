@@ -29,6 +29,8 @@ contract NFTXRouter is ERC721Holder {
 
     uint24 public constant FEE = 10000;
 
+    error UnableToSendETH();
+
     constructor(
         INonfungiblePositionManager positionManager_,
         SwapRouter router_,
@@ -185,8 +187,7 @@ contract NFTXRouter is ERC721Holder {
         // send all ETH to sender
         IWETH9(WETH).withdraw(wethAmt);
         (bool success, ) = msg.sender.call{value: wethAmt}("");
-        // TODO: replace with custom error
-        require(success, "UnableToSendETH");
+        if (!success) revert UnableToSendETH();
         // burn vTokens to provided tokenIds array
         vtoken.burn(params.nftIds, address(this), msg.sender);
 
@@ -233,7 +234,7 @@ contract NFTXRouter is ERC721Holder {
         // convert WETH to ETH & send to user
         IWETH9(WETH).withdraw(wethReceived);
         (bool success, ) = msg.sender.call{value: wethReceived}("");
-        require(success, "UnableToSendETH");
+        if (!success) revert UnableToSendETH();
     }
 
     /**
