@@ -13,6 +13,8 @@ import {UniswapV3Pool} from './UniswapV3Pool.sol';
 contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegateCall {
     /// @inheritdoc IUniswapV3Factory
     address public override owner;
+    /// @inheritdoc IUniswapV3Factory
+    address public override feeDistributor;
 
     /// @inheritdoc IUniswapV3Factory
     mapping(uint24 => int24) public override feeAmountTickSpacing;
@@ -55,6 +57,12 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
         require(msg.sender == owner);
         emit OwnerChanged(owner, _owner);
         owner = _owner;
+    }
+
+    /// @inheritdoc IUniswapV3Factory
+    function setFeeDistributor(address feeDistributor_) external override {
+        require(msg.sender == owner);
+        feeDistributor = feeDistributor_;
     }
 
     /// @inheritdoc IUniswapV3Factory

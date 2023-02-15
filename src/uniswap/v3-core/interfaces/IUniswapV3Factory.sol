@@ -33,6 +33,8 @@ interface IUniswapV3Factory {
     /// @return The address of the factory owner
     function owner() external view returns (address);
 
+    function feeDistributor() external view returns (address);
+
     /// @notice Returns the tick spacing for a given fee amount, if enabled, or 0 if not enabled
     /// @dev A fee amount can never be removed, so this value should be hard coded or cached in the calling context
     /// @param fee The enabled fee, denominated in hundredths of a bip. Returns 0 in case of unenabled fee
@@ -69,6 +71,8 @@ interface IUniswapV3Factory {
     /// @dev Must be called by the current owner
     /// @param _owner The new owner of the factory
     function setOwner(address _owner) external;
+
+    function setFeeDistributor(address feeDistributor_) external;
 
     /// @notice Enables a fee amount with the given tickSpacing
     /// @dev Fee amounts may never be removed once enabled

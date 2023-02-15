@@ -17,7 +17,7 @@ contract vToken is ERC20, ERC721Holder {
     /**
      * @param from address to transfer NFTs from
      * @param to address to receive newly minted ERC20
-     * @param amount amount of ERC20 minted
+     * @return amount amount of ERC20 minted
      */
     function mint(
         uint256[] calldata nftIds,
