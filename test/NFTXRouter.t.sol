@@ -283,6 +283,8 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
     // FeeDistributor#distribute
 
     function test_feeDistribution_Success() external {
+        uint256 mintQty = 5;
+
         // mint position
         (
             uint256[] memory mintTokenIds,
@@ -290,9 +292,9 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
             ,
             ,
 
-        ) = _mintPosition(5);
+        ) = _mintPosition(mintQty);
         // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
-        _mintPosition(5);
+        _mintPosition(mintQty);
         // TODO: add console logs for initial values as well, in all test cases
 
         // mint vTokens for fees
@@ -312,8 +314,10 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         // Hence can't redeem that portion to NFT. The fractional part would get swapped for ETH during removeLiquidity
         // TODO: check which code portion responsible for leaving out those 2 wei of vTokens
 
+        uint256 positionNFTFeesShare = nftFees / 2 - 1;
+
         // remove liquidity
-        uint256[] memory nftIds = new uint256[](5 + 1);
+        uint256[] memory nftIds = new uint256[](mintQty + positionNFTFeesShare);
         nftIds[0] = mintTokenIds[0];
         nftIds[1] = mintTokenIds[1];
         nftIds[2] = mintTokenIds[2];
@@ -325,27 +329,28 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
             positionId
         );
 
+        uint256 preNFTBalance = nft.balanceOf(address(this));
+        uint256 preETHBalance = address(this).balance;
+
         positionManager.setApprovalForAll(address(nftxRouter), true);
-        NFTXRouter.RemoveLiquidityParams memory params = NFTXRouter
-            .RemoveLiquidityParams({
+        nftxRouter.removeLiquidity(
+            NFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
                 nftIds: nftIds,
                 liquidity: liquidity,
                 amount0Min: 0,
                 amount1Min: 0,
                 deadline: block.timestamp
-            });
+            })
+        );
 
-        uint256 preNFTBalance = nft.balanceOf(address(this));
-        uint256 preETHBalance = address(this).balance;
+        uint256 nftReceived = nft.balanceOf(address(this)) - preNFTBalance;
+        uint256 ethReceived = address(this).balance - preETHBalance;
 
-        nftxRouter.removeLiquidity(params);
+        console.log("NFT received", nftReceived);
+        console.log("ETH received", ethReceived);
 
-        uint256 postNFTBalance = nft.balanceOf(address(this));
-        uint256 postETHBalance = address(this).balance;
-
-        console.log("ETH received", postETHBalance - preETHBalance);
-        console.log("NFT received", postNFTBalance - preNFTBalance);
+        assertEq(nftReceived, mintQty + positionNFTFeesShare);
     }
 
     function _mintPosition(uint256 qty)
