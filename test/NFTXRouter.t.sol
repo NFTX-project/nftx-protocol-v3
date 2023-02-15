@@ -251,7 +251,38 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         console.log("ETH removed: ", postETHBalance - preETHBalance);
     }
 
-    function testFeeDistribution() external {
+    // ================================
+    // Fee Distribution
+    // ================================
+
+    // UniswapV3Factory#setFeeDistributor
+
+    function test_setFeeDistributor_RevertsForNonOwner() external {
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert();
+        factory.setFeeDistributor(address(feeDistributor));
+    }
+
+    function test_setFeeDistributor_Success() external {
+        address newFeeDistributor = makeAddr("newFeeDistributor");
+        factory.setFeeDistributor(newFeeDistributor);
+        assertEq(factory.feeDistributor(), newFeeDistributor);
+    }
+
+    // UniswapV3Pool#distributeRewards
+    function test_distributeRewards_RevertsForNonFeeDistributor() external {
+        UniswapV3Pool pool = UniswapV3Pool(
+            factory.getPool(address(vtoken), address(weth), nftxRouter.FEE())
+        );
+
+        hoax(makeAddr("nonFeeDistributor"));
+        vm.expectRevert();
+        pool.distributeRewards(1 ether, true);
+    }
+
+    // FeeDistributor#distribute
+
+    function test_feeDistribution_Success() external {
         // mint position
         (
             uint256[] memory mintTokenIds,
@@ -277,7 +308,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         feeDistributor.distribute(0);
 
         // NOTE: We have 2 LP positions with the exact same liquidity. So the fees is distributed equally between them both
-        // So for nftFees = 2, each position should get 1 NFT as fees, but due to rounding gets 0.999..998 of vTokens as fees
+        // So for nftFees = 2, each position should get 1 NFT as fees, but due to rounding(?) gets 0.999..998 of vTokens as fees
         // Hence can't redeem that portion to NFT. The fractional part would get swapped for ETH during removeLiquidity
         // TODO: check which code portion responsible for leaving out those 2 wei of vTokens
 
