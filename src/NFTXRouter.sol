@@ -8,10 +8,9 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
+import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 
 import {vToken} from "@mocks/vToken.sol";
-// TODO: replace with IWETH
-import {MockWETH} from "@mocks/MockWETH.sol";
 
 /**
  * @notice Intermediate Router to facilitate minting + concentrated liquidity addition (and reverse)
@@ -185,7 +184,7 @@ contract NFTXRouter is ERC721Holder {
             wethAmt += fractionalWethAmt;
         }
         // send all ETH to sender
-        MockWETH(WETH).withdraw(wethAmt);
+        IWETH9(WETH).withdraw(wethAmt);
         (bool success, ) = msg.sender.call{value: wethAmt}("");
         // TODO: replace with custom error
         require(success, "UnableToSendETH");
@@ -233,7 +232,7 @@ contract NFTXRouter is ERC721Holder {
         );
 
         // convert WETH to ETH & send to user
-        MockWETH(WETH).withdraw(wethReceived);
+        IWETH9(WETH).withdraw(wethReceived);
         (bool success, ) = msg.sender.call{value: wethReceived}("");
         require(success, "UnableToSendETH");
     }
