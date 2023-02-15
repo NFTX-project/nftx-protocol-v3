@@ -5,10 +5,12 @@ pragma abicoder v2;
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
+import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
+import {PoolAddress} from "@uni-periphery/libraries/PoolAddress.sol";
 
 import {vToken} from "@mocks/vToken.sol";
 
@@ -20,8 +22,9 @@ contract NFTXRouter is ERC721Holder {
     SwapRouter public router;
     IQuoterV2 public quoter;
     IERC721 public nft;
+    // TODO: make vtoken dynamic
     vToken public vtoken;
-    address public WETH;
+    address public immutable WETH;
 
     bool public isVToken0; // check if vToken would be token0
     address token0;
@@ -291,7 +294,24 @@ contract NFTXRouter is ERC721Holder {
         );
     }
 
-    // TODO: add view function that returns deployed + computed addresses for corresponding vToken address
+    /**
+     * @notice Get deployed pool address for vToken. Reverts if pool doesn't exist
+     */
+    function getPool(address vToken_) external view returns (address pool) {
+        pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, FEE);
+        if (pool == address(0)) revert();
+    }
+
+    /**
+     * @notice Compute the pool address corresponding to vToken
+     */
+    function computePool(address vToken_) external view returns (address) {
+        return
+            PoolAddress.computeAddress(
+                router.factory(),
+                PoolAddress.getPoolKey(vToken_, WETH, FEE)
+            );
+    }
 
     receive() external payable {}
 }

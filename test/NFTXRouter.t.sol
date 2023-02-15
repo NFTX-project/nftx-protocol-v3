@@ -66,7 +66,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
             uint24(factory.feeAmountTickSpacing(nftxRouter.FEE()))
         );
 
-        feeDistributor = new MockFeeDistributor(factory, address(weth), vtoken);
+        feeDistributor = new MockFeeDistributor(nftxRouter, vtoken);
         factory.setFeeDistributor(address(feeDistributor));
     }
 
@@ -270,9 +270,9 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
     // UniswapV3Pool#distributeRewards
     function test_distributeRewards_RevertsForNonFeeDistributor() external {
-        UniswapV3Pool pool = UniswapV3Pool(
-            factory.getPool(address(vtoken), address(weth), nftxRouter.FEE())
-        );
+        // minting so that Pool is deployed
+        _mintPosition(1);
+        UniswapV3Pool pool = UniswapV3Pool(nftxRouter.getPool(address(vtoken)));
 
         hoax(makeAddr("nonFeeDistributor"));
         vm.expectRevert();
@@ -350,6 +350,37 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         console.log("ETH received", ethReceived);
 
         assertEq(nftReceived, mintQty + positionNFTFeesShare);
+    }
+
+    // ================================
+    // Pool Address
+    // ================================
+
+    // NFTXRouter#getPool
+
+    function test_getPool_RevertsIfPoolNonExistent() external {
+        vm.expectRevert();
+        nftxRouter.getPool(makeAddr("newVToken"));
+    }
+
+    function test_getPool_Success() external {
+        // deploy pool
+        _mintPosition(1);
+
+        assertEq(
+            nftxRouter.getPool(address(vtoken)),
+            factory.getPool(address(vtoken), address(weth), nftxRouter.FEE())
+        );
+    }
+
+    // NFTXRouter#computePool
+    function test_computePool_Success() external {
+        address expectedPoolAddress = nftxRouter.computePool(address(vtoken));
+
+        // deploy pool
+        _mintPosition(1);
+
+        assertEq(expectedPoolAddress, nftxRouter.getPool(address(vtoken)));
     }
 
     function _mintPosition(uint256 qty)
