@@ -142,7 +142,6 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
     }
 
     function testBuyNFTs() external {
-        // TODO: verify for which mint qty this test fails
         (uint256[] memory allTokenIds, , , , ) = _mintPosition(100);
 
         uint256 nftQty = 2;

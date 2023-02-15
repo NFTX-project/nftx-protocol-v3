@@ -27,8 +27,7 @@ contract NFTXRouter is ERC721Holder {
     address token0;
     address token1;
 
-    // TODO: set fee to the highest tier (1%). Modify UniswapV3Factory to allow for this single fee tier
-    uint24 public constant FEE = 3000;
+    uint24 public constant FEE = 10000;
 
     constructor(
         INonfungiblePositionManager positionManager_,

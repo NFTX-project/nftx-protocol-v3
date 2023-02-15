@@ -12,8 +12,7 @@ contract MockFeeDistributor {
     address public weth;
     vToken public vtoken;
 
-    // TODO: modify fees
-    uint24 public constant FEE = 3000;
+    uint24 public constant FEE = 10000;
 
     constructor(
         IUniswapV3Factory uniFactory_,
