@@ -3,8 +3,6 @@ pragma solidity =0.8.15;
 
 import {IUniswapV3PoolImmutables, IUniswapV3PoolState, IUniswapV3PoolActions, IUniswapV3PoolDerivedState, IUniswapV3PoolOwnerActions, IUniswapV3Pool} from './interfaces/IUniswapV3Pool.sol';
 
-import {NoDelegateCall} from './NoDelegateCall.sol';
-
 import {SafeCast} from './libraries/SafeCast.sol';
 import {Tick} from './libraries/Tick.sol';
 import {TickBitmap} from './libraries/TickBitmap.sol';
@@ -25,7 +23,7 @@ import {IUniswapV3MintCallback} from './interfaces/callback/IUniswapV3MintCallba
 import {IUniswapV3SwapCallback} from './interfaces/callback/IUniswapV3SwapCallback.sol';
 import {IUniswapV3FlashCallback} from './interfaces/callback/IUniswapV3FlashCallback.sol';
 
-contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
+contract UniswapV3Pool is IUniswapV3Pool {
     using SafeCast for uint256;
     using SafeCast for int256;
     using Tick for mapping(int24 => Tick.Info);
@@ -157,7 +155,6 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         external
         view
         override
-        noDelegateCall
         returns (
             int56 tickCumulativeInside,
             uint160 secondsPerLiquidityInsideX128,
@@ -236,7 +233,6 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         external
         view
         override
-        noDelegateCall
         returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s)
     {
         return
@@ -255,7 +251,6 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         external
         override
         lock
-        noDelegateCall
     {
         uint16 observationCardinalityNextOld = slot0.observationCardinalityNext; // for the event
         uint16 observationCardinalityNextNew = observations.grow(
@@ -306,7 +301,6 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
     /// @return amount1 the amount of token1 owed to the pool, negative if the pool should pay the recipient
     function _modifyPosition(ModifyPositionParams memory params)
         private
-        noDelegateCall
         returns (
             Position.Info storage position,
             int256 amount0,
@@ -460,7 +454,6 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
     }
 
     /// @inheritdoc IUniswapV3PoolActions
-    /// @dev noDelegateCall is applied indirectly via _modifyPosition
     function mint(
         address recipient,
         int24 tickLower,
@@ -521,7 +514,6 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
     }
 
     /// @inheritdoc IUniswapV3PoolActions
-    /// @dev noDelegateCall is applied indirectly via _modifyPosition
     function burn(
         int24 tickLower,
         int24 tickUpper,
@@ -608,7 +600,7 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
         bytes calldata data
-    ) external override noDelegateCall returns (int256 amount0, int256 amount1) {
+    ) external override returns (int256 amount0, int256 amount1) {
         if (amountSpecified == 0) revert AS();
 
         Slot0 memory slot0Start = slot0;
@@ -818,13 +810,12 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         slot0.unlocked = true;
     }
 
-    // TODO: remove noDelegateCall from all functions, else Pool can't be used as proxy
     // TODO: handle rewards when no liquidity
     /// @inheritdoc IUniswapV3PoolActions
     function distributeRewards(
         uint256 rewardsAmount,
         bool isToken0
-    ) external override noDelegateCall {
+    ) external override {
         require(msg.sender == IUniswapV3Factory(factory).feeDistributor());
 
         uint256 feeGrowthGlobalX128 = isToken0 ? feeGrowthGlobal0X128 : feeGrowthGlobal1X128;
@@ -849,7 +840,7 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         uint256 amount0,
         uint256 amount1,
         bytes calldata data
-    ) external override lock noDelegateCall {
+    ) external override lock {
         uint128 _liquidity = liquidity;
         if (_liquidity <= 0) revert L();
 
