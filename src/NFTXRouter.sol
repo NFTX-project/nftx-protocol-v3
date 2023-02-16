@@ -21,14 +21,8 @@ contract NFTXRouter is ERC721Holder {
     INonfungiblePositionManager public positionManager;
     SwapRouter public router;
     IQuoterV2 public quoter;
-    IERC721 public nft;
-    // TODO: make vtoken dynamic
-    vToken public vtoken;
-    address public immutable WETH;
 
-    bool public isVToken0; // check if vToken would be token0
-    address token0;
-    address token1;
+    address public immutable WETH;
 
     uint24 public constant FEE = 10000;
 
@@ -37,29 +31,17 @@ contract NFTXRouter is ERC721Holder {
     constructor(
         INonfungiblePositionManager positionManager_,
         SwapRouter router_,
-        IQuoterV2 quoter_,
-        IERC721 nft_,
-        vToken vtoken_
+        IQuoterV2 quoter_
     ) {
         positionManager = positionManager_;
         router = router_;
         quoter = quoter_;
-        nft = nft_;
-        vtoken = vtoken_;
 
         WETH = positionManager_.WETH9();
-
-        if (address(vtoken_) < WETH) {
-            isVToken0 = true;
-            token0 = address(vtoken_);
-            token1 = WETH;
-        } else {
-            token0 = WETH;
-            token1 = address(vtoken_);
-        }
     }
 
     struct AddLiquidityParams {
+        address vtoken;
         uint256[] nftIds;
         int24 tickLower;
         int24 tickUpper;
@@ -75,20 +57,20 @@ contract NFTXRouter is ERC721Holder {
         payable
         returns (uint256 positionId)
     {
-        uint256 vTokensAmount = vtoken.mint(
+        uint256 vTokensAmount = vToken(params.vtoken).mint(
             params.nftIds,
             msg.sender,
             address(this)
         );
-        vtoken.approve(address(positionManager), vTokensAmount);
+        vToken(params.vtoken).approve(address(positionManager), vTokensAmount);
 
-        // cache
-        address token0_ = token0;
-        address token1_ = token1;
+        bool _isVToken0 = isVToken0(params.vtoken);
+        address token0 = _isVToken0 ? params.vtoken : WETH;
+        address token1 = _isVToken0 ? WETH : params.vtoken;
 
         positionManager.createAndInitializePoolIfNecessary(
-            token0_,
-            token1_,
+            token0,
+            token1,
             FEE,
             params.sqrtPriceX96
         );
@@ -98,7 +80,7 @@ contract NFTXRouter is ERC721Holder {
         uint256 amount1Desired;
         uint256 amount0Min;
         uint256 amount1Min;
-        if (isVToken0) {
+        if (_isVToken0) {
             amount0Desired = vTokensAmount;
             amount0Min = amount0Desired;
             amount1Desired = msg.value;
@@ -110,8 +92,8 @@ contract NFTXRouter is ERC721Holder {
 
         (positionId, , , ) = positionManager.mint{value: msg.value}(
             INonfungiblePositionManager.MintParams({
-                token0: token0_,
-                token1: token1_,
+                token0: token0,
+                token1: token1,
                 fee: FEE,
                 tickLower: params.tickLower,
                 tickUpper: params.tickUpper,
@@ -129,6 +111,7 @@ contract NFTXRouter is ERC721Holder {
 
     struct RemoveLiquidityParams {
         uint256 positionId;
+        address vtoken;
         uint256[] nftIds;
         bool receiveVTokens; // directly receive vTokens, instead of redeeming for NFTs
         uint128 liquidity;
@@ -159,19 +142,23 @@ contract NFTXRouter is ERC721Holder {
             })
         );
 
-        uint256 vTokenAmt = isVToken0 ? amount0 : amount1;
-        uint256 wethAmt = isVToken0 ? amount1 : amount0;
+        bool _isVToken0 = isVToken0(params.vtoken);
+        uint256 vTokenAmt = _isVToken0 ? amount0 : amount1;
+        uint256 wethAmt = _isVToken0 ? amount1 : amount0;
 
         if (params.receiveVTokens) {
-            vtoken.transfer(msg.sender, vTokenAmt);
+            vToken(params.vtoken).transfer(msg.sender, vTokenAmt);
         } else {
             // swap decimal part of vTokens to WETH
             uint256 fractionalVTokenAmt = vTokenAmt % 1 ether;
             if (fractionalVTokenAmt > 0) {
-                vtoken.approve(address(router), fractionalVTokenAmt);
+                vToken(params.vtoken).approve(
+                    address(router),
+                    fractionalVTokenAmt
+                );
                 uint256 fractionalWethAmt = router.exactInputSingle(
                     ISwapRouter.ExactInputSingleParams({
-                        tokenIn: address(vtoken),
+                        tokenIn: address(params.vtoken),
                         tokenOut: WETH,
                         fee: FEE,
                         recipient: address(this),
@@ -184,7 +171,7 @@ contract NFTXRouter is ERC721Holder {
                 wethAmt += fractionalWethAmt;
 
                 // burn vTokens to provided tokenIds array
-                uint256 vTokenBurned = vtoken.burn(
+                uint256 vTokenBurned = vToken(params.vtoken).burn(
                     params.nftIds,
                     address(this),
                     msg.sender
@@ -196,7 +183,7 @@ contract NFTXRouter is ERC721Holder {
                     vTokenBurned;
 
                 if (vTokenResidue > 0) {
-                    vtoken.transfer(msg.sender, vTokenResidue);
+                    vToken(params.vtoken).transfer(msg.sender, vTokenResidue);
                 }
             }
         }
@@ -210,6 +197,7 @@ contract NFTXRouter is ERC721Holder {
      * @param sqrtPriceLimitX96 the price limit, if reached, stop swapping
      */
     struct SellNFTsParams {
+        address vtoken;
         uint256[] nftIds;
         uint256 deadline;
         uint256 amountOutMinimum;
@@ -223,16 +211,16 @@ contract NFTXRouter is ERC721Holder {
         external
         returns (uint256 wethReceived)
     {
-        uint256 vTokensAmount = vtoken.mint(
+        uint256 vTokensAmount = vToken(params.vtoken).mint(
             params.nftIds,
             msg.sender,
             address(this)
         );
-        vtoken.approve(address(router), vTokensAmount);
+        vToken(params.vtoken).approve(address(router), vTokensAmount);
 
         wethReceived = router.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
-                tokenIn: address(vtoken),
+                tokenIn: address(params.vtoken),
                 tokenOut: WETH,
                 fee: FEE,
                 recipient: address(this),
@@ -253,6 +241,7 @@ contract NFTXRouter is ERC721Holder {
      * @param sqrtPriceLimitX96 the price limit, if reached, stop swapping
      */
     struct BuyNFTsParams {
+        address vtoken;
         uint256[] nftIds;
         uint256 deadline;
         uint160 sqrtPriceLimitX96;
@@ -265,7 +254,7 @@ contract NFTXRouter is ERC721Holder {
         router.exactOutputSingle{value: msg.value}(
             ISwapRouter.ExactOutputSingleParams({
                 tokenIn: WETH,
-                tokenOut: address(vtoken),
+                tokenOut: address(params.vtoken),
                 fee: FEE,
                 recipient: address(this),
                 deadline: params.deadline,
@@ -276,7 +265,7 @@ contract NFTXRouter is ERC721Holder {
         );
 
         // unwrap vTokens to tokenIds specified, and send to sender
-        vtoken.burn(params.nftIds, address(this), msg.sender);
+        vToken(params.vtoken).burn(params.nftIds, address(this), msg.sender);
 
         // refund ETH
         router.refundETH(msg.sender);
@@ -286,10 +275,11 @@ contract NFTXRouter is ERC721Holder {
      * @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
      * the swap and check the amounts in the callback.
      */
-    function quoteBuyNFTs(uint256[] memory nftIds, uint160 sqrtPriceLimitX96)
-        external
-        returns (uint256 ethRequired)
-    {
+    function quoteBuyNFTs(
+        address vtoken,
+        uint256[] memory nftIds,
+        uint160 sqrtPriceLimitX96
+    ) external returns (uint256 ethRequired) {
         uint256 vTokenAmt = nftIds.length * 1 ether;
 
         (ethRequired, , , ) = quoter.quoteExactOutputSingle(
@@ -320,6 +310,13 @@ contract NFTXRouter is ERC721Holder {
                 router.factory(),
                 PoolAddress.getPoolKey(vToken_, WETH, FEE)
             );
+    }
+
+    /**
+     * @notice Checks if vToken is token0 or not
+     */
+    function isVToken0(address vtoken) public view returns (bool) {
+        return vtoken < WETH;
     }
 
     receive() external payable {}

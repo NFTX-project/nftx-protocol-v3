@@ -32,6 +32,9 @@ contract MockFeeDistributor {
         // send rewards to pool
         vtoken.transfer(address(pool), tokenBalance);
         // distribute rewards with LPs
-        pool.distributeRewards(tokenBalance, nftxRouter.isVToken0());
+        pool.distributeRewards(
+            tokenBalance,
+            nftxRouter.isVToken0(address(vtoken))
+        );
     }
 }

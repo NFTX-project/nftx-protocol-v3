@@ -55,13 +55,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         nft = new MockNFT();
         vtoken = new vToken(nft);
-        nftxRouter = new NFTXRouter(
-            positionManager,
-            router,
-            quoter,
-            nft,
-            vtoken
-        );
+        nftxRouter = new NFTXRouter(positionManager, router, quoter);
         tickDistance = uint256(
             uint24(factory.feeAmountTickSpacing(nftxRouter.FEE()))
         );
@@ -113,12 +107,16 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         assertEqUint24(fee, nftxRouter.FEE(), "Incorrect fee");
         assertEq(
             token0,
-            nftxRouter.isVToken0() ? address(vtoken) : nftxRouter.WETH(),
+            nftxRouter.isVToken0(address(vtoken))
+                ? address(vtoken)
+                : nftxRouter.WETH(),
             "Incorrect token0"
         );
         assertEq(
             token1,
-            !nftxRouter.isVToken0() ? address(vtoken) : nftxRouter.WETH(),
+            !nftxRouter.isVToken0(address(vtoken))
+                ? address(vtoken)
+                : nftxRouter.WETH(),
             "Incorrect token1"
         );
     }
@@ -153,20 +151,23 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         // fetch price to pay for those NFTs
         uint256 ethRequired = nftxRouter.quoteBuyNFTs({
+            vtoken: address(vtoken),
             nftIds: nftIds,
-            sqrtPriceLimitX96: 0
-        });
-        // execute swap
-        NFTXRouter.BuyNFTsParams memory params = NFTXRouter.BuyNFTsParams({
-            nftIds: nftIds,
-            deadline: block.timestamp,
             sqrtPriceLimitX96: 0
         });
 
         uint256 preNFTBalance = nft.balanceOf(address(this));
         uint256 preETHBalance = address(this).balance;
 
-        nftxRouter.buyNFTs{value: ethRequired}(params);
+        // execute swap
+        nftxRouter.buyNFTs{value: ethRequired}(
+            NFTXRouter.BuyNFTsParams({
+                vtoken: address(vtoken),
+                nftIds: nftIds,
+                deadline: block.timestamp,
+                sqrtPriceLimitX96: 0
+            })
+        );
 
         uint256 postNFTBalance = nft.balanceOf(address(this));
         uint256 postETHBalance = address(this).balance;
@@ -234,6 +235,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nftxRouter.removeLiquidity(
             NFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
+                vtoken: address(vtoken),
                 nftIds: nftIds,
                 receiveVTokens: false,
                 liquidity: liquidity,
@@ -311,6 +313,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nftxRouter.removeLiquidity(
             NFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
+                vtoken: address(vtoken),
                 nftIds: nftIds,
                 receiveVTokens: false,
                 liquidity: liquidity,
@@ -361,6 +364,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nftxRouter.removeLiquidity(
             NFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
+                vtoken: address(vtoken),
                 nftIds: new uint256[](0),
                 receiveVTokens: true,
                 liquidity: liquidity,
@@ -473,6 +477,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nftxRouter.removeLiquidity(
             NFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
+                vtoken: address(vtoken),
                 nftIds: nftIds,
                 receiveVTokens: false,
                 liquidity: liquidity,
@@ -560,7 +565,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nft.setApprovalForAll(address(vtoken), true);
 
         uint160 currentSqrtP;
-        if (nftxRouter.isVToken0()) {
+        if (nftxRouter.isVToken0(address(vtoken))) {
             currentSqrtP = Helpers.encodeSqrtRatioX96(currentNFTPrice, 1 ether);
             // price = amount1 / amount0 = 1.0001^tick => tick ∝ price
             tickLower = Helpers.getTickForAmounts(
@@ -591,6 +596,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         positionId = nftxRouter.addLiquidity{value: qty * 100 ether}(
             NFTXRouter.AddLiquidityParams({
+                vtoken: address(vtoken),
                 nftIds: tokenIds,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
@@ -609,16 +615,17 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         tokenIds = nft.mint(qty);
         nft.setApprovalForAll(address(vtoken), true);
 
-        NFTXRouter.SellNFTsParams memory params = NFTXRouter.SellNFTsParams({
-            nftIds: tokenIds,
-            deadline: block.timestamp,
-            amountOutMinimum: 1,
-            sqrtPriceLimitX96: 0
-        });
-
         uint256 preNFTBalance = nft.balanceOf(address(this));
 
-        nftxRouter.sellNFTs(params);
+        nftxRouter.sellNFTs(
+            NFTXRouter.SellNFTsParams({
+                vtoken: address(vtoken),
+                nftIds: tokenIds,
+                deadline: block.timestamp,
+                amountOutMinimum: 1,
+                sqrtPriceLimitX96: 0
+            })
+        );
 
         uint256 postNFTBalance = nft.balanceOf(address(this));
         assertEq(
