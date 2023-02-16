@@ -130,6 +130,7 @@ contract NFTXRouter is ERC721Holder {
     struct RemoveLiquidityParams {
         uint256 positionId;
         uint256[] nftIds;
+        bool receiveVTokens; // directly receive vTokens, instead of redeeming for NFTs
         uint128 liquidity;
         uint256 amount0Min;
         uint256 amount1Min;
@@ -158,43 +159,51 @@ contract NFTXRouter is ERC721Holder {
             })
         );
 
-        uint256 vTokenAmt;
-        uint256 wethAmt;
-        if (isVToken0) {
-            vTokenAmt = amount0;
-            wethAmt = amount1;
-        } else {
-            wethAmt = amount0;
-            vTokenAmt = amount1;
-        }
+        uint256 vTokenAmt = isVToken0 ? amount0 : amount1;
+        uint256 wethAmt = isVToken0 ? amount1 : amount0;
 
-        // TODO: make this optional. User can want vTokens
-        // swap decimal part of vTokens to WETH
-        uint256 fractionalVTokenAmt = vTokenAmt % 1 ether;
-        if (fractionalVTokenAmt > 0) {
-            vtoken.approve(address(router), fractionalVTokenAmt);
-            uint256 fractionalWethAmt = router.exactInputSingle(
-                ISwapRouter.ExactInputSingleParams({
-                    tokenIn: address(vtoken),
-                    tokenOut: WETH,
-                    fee: FEE,
-                    recipient: address(this),
-                    deadline: block.timestamp,
-                    amountIn: fractionalVTokenAmt,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0
-                })
-            );
-            wethAmt += fractionalWethAmt;
+        if (params.receiveVTokens) {
+            vtoken.transfer(msg.sender, vTokenAmt);
+        } else {
+            // swap decimal part of vTokens to WETH
+            uint256 fractionalVTokenAmt = vTokenAmt % 1 ether;
+            if (fractionalVTokenAmt > 0) {
+                vtoken.approve(address(router), fractionalVTokenAmt);
+                uint256 fractionalWethAmt = router.exactInputSingle(
+                    ISwapRouter.ExactInputSingleParams({
+                        tokenIn: address(vtoken),
+                        tokenOut: WETH,
+                        fee: FEE,
+                        recipient: address(this),
+                        deadline: block.timestamp,
+                        amountIn: fractionalVTokenAmt,
+                        amountOutMinimum: 0,
+                        sqrtPriceLimitX96: 0
+                    })
+                );
+                wethAmt += fractionalWethAmt;
+
+                // burn vTokens to provided tokenIds array
+                uint256 vTokenBurned = vtoken.burn(
+                    params.nftIds,
+                    address(this),
+                    msg.sender
+                );
+
+                // if more vTokens collected than burned
+                uint256 vTokenResidue = vTokenAmt -
+                    fractionalVTokenAmt -
+                    vTokenBurned;
+
+                if (vTokenResidue > 0) {
+                    vtoken.transfer(msg.sender, vTokenResidue);
+                }
+            }
         }
         // send all ETH to sender
         IWETH9(WETH).withdraw(wethAmt);
         (bool success, ) = msg.sender.call{value: wethAmt}("");
         if (!success) revert UnableToSendETH();
-        // burn vTokens to provided tokenIds array
-        vtoken.burn(params.nftIds, address(this), msg.sender);
-
-        // TODO: handle vtoken left (if any)
     }
 
     /**

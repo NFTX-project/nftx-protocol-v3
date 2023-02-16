@@ -185,7 +185,11 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         );
     }
 
-    function testRemoveLiquidity() external {
+    // ================================
+    // Remove Liquidity
+    // ================================
+
+    function test_removeLiquidity_ToNFTs_NoResidue() external {
         uint256 nftQty = 10;
         (
             uint256[] memory allTokenIds,
@@ -198,9 +202,13 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
         _mintPosition(nftQty);
 
-        _sellNFTs(5);
+        // selling NFTs to accumulate fractional vTokens as fees
+        // Because of swap, individual Position's vToken balance increases by 2 ether
+        uint256 nftsSold = 5;
+        uint256[] memory soldTokenIds = _sellNFTs(nftsSold);
 
-        uint256[] memory nftIds = new uint256[](nftQty);
+        uint256 expectedNFTQty = nftQty + nftsSold / 2;
+        uint256[] memory nftIds = new uint256[](expectedNFTQty);
         nftIds[0] = allTokenIds[0];
         nftIds[1] = allTokenIds[1];
         nftIds[2] = allTokenIds[2];
@@ -211,34 +219,164 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nftIds[7] = allTokenIds[7];
         nftIds[8] = allTokenIds[8];
         nftIds[9] = allTokenIds[9];
+        nftIds[10] = soldTokenIds[0];
+        nftIds[11] = soldTokenIds[1];
 
         (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
             positionId
         );
 
+        uint256 preNFTBalance = nft.balanceOf(address(this));
+        uint256 preVTokenBalance = vtoken.balanceOf(address(this));
+        uint256 preETHBalance = address(this).balance;
+
         positionManager.setApprovalForAll(address(nftxRouter), true);
-        NFTXRouter.RemoveLiquidityParams memory params = NFTXRouter
-            .RemoveLiquidityParams({
+        nftxRouter.removeLiquidity(
+            NFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
                 nftIds: nftIds,
+                receiveVTokens: false,
                 liquidity: liquidity,
                 amount0Min: 0,
                 amount1Min: 0,
                 deadline: block.timestamp
-            });
-
-        uint256 preNFTBalance = nft.balanceOf(address(this));
-        uint256 preETHBalance = address(this).balance;
-
-        nftxRouter.removeLiquidity(params);
+            })
+        );
 
         uint256 postNFTBalance = nft.balanceOf(address(this));
+        uint256 postVTokenBalance = vtoken.balanceOf(address(this));
         uint256 postETHBalance = address(this).balance;
 
         assertEq(
             postNFTBalance - preNFTBalance,
-            nftQty,
+            expectedNFTQty,
             "Incorrect NFT balance change"
+        );
+        assertEq(
+            postVTokenBalance,
+            preVTokenBalance,
+            "vToken residue received"
+        );
+        assertGt(postETHBalance, preETHBalance, "ETH balance didn't change");
+        assertEq(
+            positionManager.ownerOf(positionId),
+            address(this),
+            "User is no longer the owner of PositionId"
+        );
+
+        console.log("ETH removed: ", postETHBalance - preETHBalance);
+    }
+
+    function test_removeLiquidity_ToNFTs_HandleResidue() external {
+        uint256 nftQty = 10;
+        (
+            uint256[] memory allTokenIds,
+            uint256 positionId,
+            ,
+            ,
+
+        ) = _mintPosition(nftQty);
+
+        // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
+        _mintPosition(nftQty);
+
+        uint256 nftsSold = 5;
+        uint256[] memory soldTokenIds = _sellNFTs(nftsSold);
+
+        uint256 nftResidue = 1;
+        uint256 expectedNFTQty = nftQty + nftsSold / 2 - nftResidue;
+        uint256[] memory nftIds = new uint256[](expectedNFTQty);
+        nftIds[0] = allTokenIds[0];
+        nftIds[1] = allTokenIds[1];
+        nftIds[2] = allTokenIds[2];
+        nftIds[3] = allTokenIds[3];
+        nftIds[4] = allTokenIds[4];
+        nftIds[5] = allTokenIds[5];
+        nftIds[6] = allTokenIds[6];
+        nftIds[7] = allTokenIds[7];
+        nftIds[8] = allTokenIds[8];
+        nftIds[9] = allTokenIds[9];
+        nftIds[10] = soldTokenIds[0];
+        // nftIds[11] = soldTokenIds[1];
+
+        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
+            positionId
+        );
+
+        uint256 preNFTBalance = nft.balanceOf(address(this));
+        uint256 preVTokenBalance = vtoken.balanceOf(address(this));
+        uint256 preETHBalance = address(this).balance;
+
+        positionManager.setApprovalForAll(address(nftxRouter), true);
+        nftxRouter.removeLiquidity(
+            NFTXRouter.RemoveLiquidityParams({
+                positionId: positionId,
+                nftIds: nftIds,
+                receiveVTokens: false,
+                liquidity: liquidity,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            })
+        );
+
+        uint256 postNFTBalance = nft.balanceOf(address(this));
+        uint256 postVTokenBalance = vtoken.balanceOf(address(this));
+        uint256 postETHBalance = address(this).balance;
+
+        assertEq(
+            postNFTBalance - preNFTBalance,
+            expectedNFTQty,
+            "Incorrect NFT balance change"
+        );
+        assertEq(
+            postVTokenBalance - preVTokenBalance,
+            nftResidue * 1 ether,
+            "vToken balance didn't change"
+        );
+        assertGt(postETHBalance, preETHBalance, "ETH balance didn't change");
+        assertEq(
+            positionManager.ownerOf(positionId),
+            address(this),
+            "User is no longer the owner of PositionId"
+        );
+
+        console.log("ETH removed: ", postETHBalance - preETHBalance);
+    }
+
+    function test_removeLiquidity_ToVTokens_Success() external {
+        uint256 nftQty = 10;
+        (, uint256 positionId, , , ) = _mintPosition(nftQty);
+
+        _sellNFTs(5);
+
+        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
+            positionId
+        );
+
+        uint256 preVTokenBalance = vtoken.balanceOf(address(this));
+        uint256 preETHBalance = address(this).balance;
+
+        positionManager.setApprovalForAll(address(nftxRouter), true);
+        nftxRouter.removeLiquidity(
+            NFTXRouter.RemoveLiquidityParams({
+                positionId: positionId,
+                nftIds: new uint256[](0),
+                receiveVTokens: true,
+                liquidity: liquidity,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            })
+        );
+
+        uint256 postVTokenBalance = vtoken.balanceOf(address(this));
+        uint256 postETHBalance = address(this).balance;
+
+        assertGt(
+            postVTokenBalance,
+            preVTokenBalance,
+            "vToken balance didn't change"
         );
         assertGt(postETHBalance, preETHBalance, "ETH balance didn't change");
         assertEq(
@@ -336,6 +474,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
             NFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
                 nftIds: nftIds,
+                receiveVTokens: false,
                 liquidity: liquidity,
                 amount0Min: 0,
                 amount1Min: 0,
@@ -463,8 +602,11 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         ethUsed = preETHBalance - address(this).balance;
     }
 
-    function _sellNFTs(uint256 qty) internal {
-        uint256[] memory tokenIds = nft.mint(qty);
+    function _sellNFTs(uint256 qty)
+        internal
+        returns (uint256[] memory tokenIds)
+    {
+        tokenIds = nft.mint(qty);
         nft.setApprovalForAll(address(vtoken), true);
 
         NFTXRouter.SellNFTsParams memory params = NFTXRouter.SellNFTsParams({

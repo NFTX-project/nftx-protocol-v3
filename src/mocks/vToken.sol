@@ -41,9 +41,9 @@ contract vToken is ERC20, ERC721Holder {
         uint256[] calldata nftIds,
         address from,
         address to
-    ) external {
+    ) external returns (uint256 amount) {
         uint256 count = nftIds.length;
-        uint256 amount = count * 1 ether;
+        amount = count * 1 ether;
         // check if sender is approved to perform this burn
         require(
             msg.sender == from || allowance(from, msg.sender) >= amount,
