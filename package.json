@@ -1,0 +1,11 @@
+{
+  "name": "nftx-protocol-v3",
+  "repository": "https://github.com/NFTX-project/nftx-protocol-v3/",
+  "scripts": {
+    "prepare": "husky install",
+    "test": "forge test"
+  },
+  "devDependencies": {
+    "husky": "^8.0.0"
+  }
+}

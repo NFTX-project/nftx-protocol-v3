@@ -13,3 +13,6 @@ docs/
 
 # Dotenv file
 .env
+
+# JS
+node_modules
