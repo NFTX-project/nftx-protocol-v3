@@ -294,6 +294,21 @@ contract NFTXRouter is ERC721Holder {
     }
 
     /**
+     * @notice Get deployed pool address for vaultId. `exists` is false if pool doesn't exist
+     */
+    function getPoolExists(uint256 vaultId)
+        external
+        view
+        returns (address pool, bool exists)
+    {
+        // TODO: get vToken address from vaultId via NFTXVaultFactory
+        address vToken_;
+        pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, FEE);
+
+        exists = pool != address(0);
+    }
+
+    /**
      * @notice Get deployed pool address for vToken. Reverts if pool doesn't exist
      */
     function getPool(address vToken_) external view returns (address pool) {
@@ -318,6 +333,8 @@ contract NFTXRouter is ERC721Holder {
     function isVToken0(address vtoken) public view returns (bool) {
         return vtoken < WETH;
     }
+
+    // TODO: add function to rescueTokens + ETH
 
     receive() external payable {}
 }
