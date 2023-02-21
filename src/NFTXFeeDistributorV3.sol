@@ -9,8 +9,7 @@ import {INFTXVaultFactory} from "./v2/interface/INFTXVaultFactory.sol";
 import {INFTXVault} from "./v2/interface/INFTXVault.sol";
 import {INFTXInventoryStaking} from "./v2/interface/INFTXInventoryStaking.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";
-// TODO: replace with INFTXRouter
-import {NFTXRouter} from "./NFTXRouter.sol";
+import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
 
 // TODO: Make this compatible with the previous fee distributor by having the required functions
 // TODO: Making FeeDistributor Non-Upgradeable will save gas fees by removing extra delegate calls
@@ -48,7 +47,7 @@ contract NFTXFeeDistributorV3 is Ownable, ReentrancyGuard {
     //                            STORAGE
     // =============================================================
 
-    NFTXRouter public nftxRouter;
+    INFTXRouter public nftxRouter;
     address public treasury;
 
     // Total of allocation points per feeReceiver.
@@ -83,7 +82,7 @@ contract NFTXFeeDistributorV3 is Ownable, ReentrancyGuard {
 
     constructor(
         INFTXInventoryStaking inventoryStaking_,
-        NFTXRouter nftxRouter_,
+        INFTXRouter nftxRouter_,
         address treasury_
     ) {
         nftxVaultFactory = inventoryStaking_.nftxVaultFactory();

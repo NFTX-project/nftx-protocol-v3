@@ -19,7 +19,7 @@ import {MockNFT} from "@mocks/MockNFT.sol";
 import {vToken} from "@mocks/vToken.sol";
 import {MockFeeDistributor} from "@mocks/MockFeeDistributor.sol";
 
-import {NFTXRouter} from "@src/NFTXRouter.sol";
+import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
 contract NFTXRouterTests is TestExtend, ERC721Holder {
     UniswapV3Factory factory;
@@ -161,7 +161,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         // execute swap
         nftxRouter.buyNFTs{value: ethRequired}(
-            NFTXRouter.BuyNFTsParams({
+            INFTXRouter.BuyNFTsParams({
                 vtoken: address(vtoken),
                 nftIds: nftIds,
                 deadline: block.timestamp,
@@ -233,7 +233,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         positionManager.setApprovalForAll(address(nftxRouter), true);
         nftxRouter.removeLiquidity(
-            NFTXRouter.RemoveLiquidityParams({
+            INFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
                 vtoken: address(vtoken),
                 nftIds: nftIds,
@@ -311,7 +311,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         positionManager.setApprovalForAll(address(nftxRouter), true);
         nftxRouter.removeLiquidity(
-            NFTXRouter.RemoveLiquidityParams({
+            INFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
                 vtoken: address(vtoken),
                 nftIds: nftIds,
@@ -362,7 +362,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         positionManager.setApprovalForAll(address(nftxRouter), true);
         nftxRouter.removeLiquidity(
-            NFTXRouter.RemoveLiquidityParams({
+            INFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
                 vtoken: address(vtoken),
                 nftIds: new uint256[](0),
@@ -475,7 +475,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         positionManager.setApprovalForAll(address(nftxRouter), true);
         nftxRouter.removeLiquidity(
-            NFTXRouter.RemoveLiquidityParams({
+            INFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
                 vtoken: address(vtoken),
                 nftIds: nftIds,
@@ -595,7 +595,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         uint256 preETHBalance = address(this).balance;
 
         positionId = nftxRouter.addLiquidity{value: qty * 100 ether}(
-            NFTXRouter.AddLiquidityParams({
+            INFTXRouter.AddLiquidityParams({
                 vtoken: address(vtoken),
                 nftIds: tokenIds,
                 tickLower: tickLower,
@@ -618,7 +618,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         uint256 preNFTBalance = nft.balanceOf(address(this));
 
         nftxRouter.sellNFTs(
-            NFTXRouter.SellNFTsParams({
+            INFTXRouter.SellNFTsParams({
                 vtoken: address(vtoken),
                 nftIds: tokenIds,
                 deadline: block.timestamp,
