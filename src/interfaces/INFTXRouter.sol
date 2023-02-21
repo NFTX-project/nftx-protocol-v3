@@ -6,17 +6,33 @@ import {SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
 
 interface INFTXRouter {
+    // =============================================================
+    //                           CONSTANTS
+    // =============================================================
+
+    function WETH() external returns (address);
+
+    function FEE() external returns (uint24);
+
+    // =============================================================
+    //                            STORAGE
+    // =============================================================
+
     function positionManager() external returns (INonfungiblePositionManager);
 
     function router() external returns (SwapRouter);
 
     function quoter() external returns (IQuoterV2);
 
-    function WETH() external returns (address);
-
-    function FEE() external returns (uint24);
+    // =============================================================
+    //                            ERRORS
+    // =============================================================
 
     error UnableToSendETH();
+
+    // =============================================================
+    //                     PUBLIC / EXTERNAL WRITE
+    // =============================================================
 
     struct AddLiquidityParams {
         address vtoken;
@@ -77,6 +93,10 @@ interface INFTXRouter {
     }
 
     function buyNFTs(BuyNFTsParams calldata params) external payable;
+
+    // =============================================================
+    //                     PUBLIC / EXTERNAL VIEW
+    // =============================================================
 
     /**
      * @dev This function is not gas efficient and should _not_ be called on chain.

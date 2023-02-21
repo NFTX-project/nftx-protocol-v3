@@ -20,13 +20,21 @@ import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
  * @notice Router to facilitate vault tokens minting/burning + addition/removal of concentrated liquidity
  */
 contract NFTXRouter is INFTXRouter, ERC721Holder {
-    INonfungiblePositionManager public override positionManager;
-    SwapRouter public override router;
-    IQuoterV2 public override quoter;
+    // =============================================================
+    //                           CONSTANTS
+    // =============================================================
 
     address public immutable override WETH;
 
-    uint24 public constant override FEE = 10000;
+    uint24 public constant override FEE = 10000; // 1%
+
+    // =============================================================
+    //                            STORAGE
+    // =============================================================
+
+    INonfungiblePositionManager public override positionManager;
+    SwapRouter public override router;
+    IQuoterV2 public override quoter;
 
     constructor(
         INonfungiblePositionManager positionManager_,
@@ -40,6 +48,10 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
         WETH = positionManager_.WETH9();
     }
 
+    // =============================================================
+    //                     PUBLIC / EXTERNAL WRITE
+    // =============================================================
+
     /**
      * @inheritdoc INFTXRouter
      */
@@ -49,6 +61,8 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
         override
         returns (uint256 positionId)
     {
+        // TODO: With NFTXVault, first safeTransferFrom the nftIds from msg.sender to the vault, then mint vTokens to this address
+        // TODO: handle special case of CryptoPunks
         uint256 vTokensAmount = vToken(params.vtoken).mint(
             params.nftIds,
             msg.sender,
@@ -234,6 +248,10 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
         // refund ETH
         router.refundETH(msg.sender);
     }
+
+    // =============================================================
+    //                     PUBLIC / EXTERNAL VIEW
+    // =============================================================
 
     /**
      * @inheritdoc INFTXRouter
