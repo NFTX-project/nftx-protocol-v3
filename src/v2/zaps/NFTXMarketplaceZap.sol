@@ -179,6 +179,7 @@ contract NFTXMarketplaceZap is
         ReentrancyGuard()
     {
         nftxFactory = INFTXVaultFactory(_nftxFactory);
+        // TODO: remove lpStaking for V3
         lpStaking = INFTXLPStaking(
             INFTXFeeDistributor(
                 INFTXVaultFactory(_nftxFactory).feeDistributor()

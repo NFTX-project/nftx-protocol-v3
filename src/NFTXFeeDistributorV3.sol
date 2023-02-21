@@ -11,70 +11,40 @@ import {INFTXInventoryStaking} from "./v2/interface/INFTXInventoryStaking.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";
 import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
 
-// TODO: Make this compatible with the previous fee distributor by having the required functions
-// TODO: Making FeeDistributor Non-Upgradeable will save gas fees by removing extra delegate calls
-// This contract doesn't hold any funds and VaultFactory can just set a new FeeDistributor address, instead of upgrading this
+import {INFTXFeeDistributorV3} from "./interfaces/INFTXFeeDistributorV3.sol";
+
 /**
  * @title NFTX Fee Distributor V3
  * @author @apoorvlathey
  *
  * @notice Allows distribution of vault fees between multiple receivers including inventory stakers and NFTX AMM liquidity providers.
  */
-contract NFTXFeeDistributorV3 is Ownable, ReentrancyGuard {
+contract NFTXFeeDistributorV3 is
+    INFTXFeeDistributorV3,
+    Ownable,
+    ReentrancyGuard
+{
     using SafeERC20 for IERC20;
-
-    // TODO: move to interface
-    enum ReceiverType {
-        INVENTORY,
-        POOL,
-        ADDRESS
-    }
-
-    struct FeeReceiver {
-        address receiver;
-        uint256 allocPoint;
-        ReceiverType receiverType; // NOTE: receiver address is ignored for `POOL` type, as each vaultId has different pool address
-    }
 
     // =============================================================
     //                           CONSTANTS
     // =============================================================
 
-    INFTXVaultFactory public immutable nftxVaultFactory;
-    INFTXInventoryStaking public immutable inventoryStaking;
+    INFTXVaultFactory public immutable override nftxVaultFactory;
+    INFTXInventoryStaking public immutable override inventoryStaking;
 
     // =============================================================
     //                            STORAGE
     // =============================================================
 
-    INFTXRouter public nftxRouter;
-    address public treasury;
+    INFTXRouter public override nftxRouter;
+    address public override treasury;
 
     // Total of allocation points per feeReceiver.
-    uint256 public allocTotal;
+    uint256 public override allocTotal;
     FeeReceiver[] public feeReceivers;
 
-    bool public distributionPaused;
-
-    // =============================================================
-    //                            EVENTS
-    // =============================================================
-
-    // TODO: move to interface
-    event UpdateTreasuryAddress(address newTreasury);
-    event PauseDistribution(bool paused);
-
-    event AddFeeReceiver(address receiver, uint256 allocPoint);
-    event UpdateFeeReceiverAlloc(address receiver, uint256 allocPoint);
-    event UpdateFeeReceiverAddress(address oldReceiver, address newReceiver);
-    event RemoveFeeReceiver(address receiver);
-
-    // =============================================================
-    //                            ERRORS
-    // =============================================================
-
-    error IdOutOfBounds();
-    error AddressIsZero();
+    bool public override distributionPaused;
 
     // =============================================================
     //                          CONSTRUCTOR
@@ -98,11 +68,11 @@ contract NFTXFeeDistributorV3 is Ownable, ReentrancyGuard {
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
-    function initializeVaultReceivers(uint256 vaultId) external {
+    function initializeVaultReceivers(uint256 vaultId) external override {
         inventoryStaking.deployXTokenForVault(vaultId);
     }
 
-    function distribute(uint256 vaultId) external nonReentrant {
+    function distribute(uint256 vaultId) external override nonReentrant {
         INFTXVault vault = INFTXVault(nftxVaultFactory.vault(vaultId));
 
         uint256 tokenBalance = vault.balanceOf(address(this));
@@ -146,12 +116,13 @@ contract NFTXFeeDistributorV3 is Ownable, ReentrancyGuard {
         address receiver,
         uint256 allocPoint,
         ReceiverType receiverType
-    ) external onlyOwner {
+    ) external override onlyOwner {
         _addReceiver(receiver, allocPoint, receiverType);
     }
 
     function changeReceiverAlloc(uint256 receiverId, uint256 allocPoint)
         external
+        override
         onlyOwner
     {
         if (receiverId >= feeReceivers.length) revert IdOutOfBounds();
@@ -168,7 +139,7 @@ contract NFTXFeeDistributorV3 is Ownable, ReentrancyGuard {
         uint256 receiverId,
         address receiver,
         ReceiverType receiverType
-    ) external onlyOwner {
+    ) external override onlyOwner {
         FeeReceiver storage feeReceiver = feeReceivers[receiverId];
         address oldReceiver = feeReceiver.receiver;
         feeReceiver.receiver = receiver;
@@ -177,7 +148,7 @@ contract NFTXFeeDistributorV3 is Ownable, ReentrancyGuard {
         emit UpdateFeeReceiverAddress(oldReceiver, receiver);
     }
 
-    function removeReceiver(uint256 receiverId) external onlyOwner {
+    function removeReceiver(uint256 receiverId) external override onlyOwner {
         uint256 arrLength = feeReceivers.length;
         if (receiverId >= arrLength) revert IdOutOfBounds();
 
@@ -189,19 +160,19 @@ contract NFTXFeeDistributorV3 is Ownable, ReentrancyGuard {
         feeReceivers.pop();
     }
 
-    function setTreasuryAddress(address treasury_) external onlyOwner {
+    function setTreasuryAddress(address treasury_) external override onlyOwner {
         if (treasury_ == address(0)) revert AddressIsZero();
 
         treasury = treasury_;
         emit UpdateTreasuryAddress(treasury_);
     }
 
-    function pauseFeeDistribution(bool pause) external onlyOwner {
+    function pauseFeeDistribution(bool pause) external override onlyOwner {
         distributionPaused = pause;
         emit PauseDistribution(pause);
     }
 
-    function rescueTokens(IERC20 token) external onlyOwner {
+    function rescueTokens(IERC20 token) external override onlyOwner {
         uint256 balance = token.balanceOf(address(this));
         token.safeTransfer(msg.sender, balance);
     }

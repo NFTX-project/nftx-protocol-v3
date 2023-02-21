@@ -199,6 +199,7 @@ contract NFTXStakingZap is
                 address(inventoryStaking) == address(0),
             "not zero"
         );
+        // TODO: remove lpStaking for V3
         lpStaking = INFTXLPStaking(
             INFTXSimpleFeeDistributor(
                 INFTXVaultFactory(nftxFactory).feeDistributor()
