@@ -13,5 +13,7 @@ interface IBeacon {
      */
     function childImplementation() external view returns (address);
 
+    function implementation() external view returns (address);
+
     function upgradeChildTo(address newImplementation) external;
 }
