@@ -13,6 +13,8 @@ import {NonfungiblePositionManager, INonfungiblePositionManager} from "@uni-peri
 import {SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {QuoterV2} from "@uni-periphery/lens/QuoterV2.sol";
 import {TickMath} from "@uni-core/libraries/TickMath.sol";
+import {FullMath} from "@uni-core/libraries/FullMath.sol";
+import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 
 import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
@@ -223,9 +225,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nftIds[10] = soldTokenIds[0];
         nftIds[11] = soldTokenIds[1];
 
-        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
-            positionId
-        );
+        uint128 liquidity = _getLiquidity(positionId);
 
         uint256 preNFTBalance = nft.balanceOf(address(this));
         uint256 preVTokenBalance = vtoken.balanceOf(address(this));
@@ -301,9 +301,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nftIds[10] = soldTokenIds[0];
         // nftIds[11] = soldTokenIds[1];
 
-        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
-            positionId
-        );
+        uint128 liquidity = _getLiquidity(positionId);
 
         uint256 preNFTBalance = nft.balanceOf(address(this));
         uint256 preVTokenBalance = vtoken.balanceOf(address(this));
@@ -353,9 +351,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         _sellNFTs(5);
 
-        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
-            positionId
-        );
+        uint128 liquidity = _getLiquidity(positionId);
 
         uint256 preVTokenBalance = vtoken.balanceOf(address(this));
         uint256 preETHBalance = address(this).balance;
@@ -438,22 +434,18 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         _mintPosition(mintQty);
         // TODO: add console logs for initial values as well, in all test cases
 
-        // mint vTokens for fees
         uint256 nftFees = 4;
-        uint256 vTokenFees = nftFees * 1 ether;
-        uint256[] memory feeTokenIds = nft.mint(nftFees);
-
-        nft.setApprovalForAll(address(vtoken), true);
-        vtoken.mint(feeTokenIds, address(this), address(this));
-
-        // distribute fees
-        vtoken.transfer(address(feeDistributor), vTokenFees);
-        feeDistributor.distribute(0);
+        uint256[] memory feeTokenIds = _mintDistributeFees(nftFees);
 
         // NOTE: We have 2 LP positions with the exact same liquidity. So the fees is distributed equally between them both
-        // So for nftFees = 2, each position should get 1 NFT as fees, but due to rounding(?) gets 0.999..998 of vTokens as fees
+        // So for nftFees = 2, each position should get 1 NFT as fees, but due to rounding gets 0.999..999 of vTokens as fees
         // Hence can't redeem that portion to NFT. The fractional part would get swapped for ETH during removeLiquidity
-        // TODO: check which code portion responsible for leaving out those 2 wei of vTokens
+
+        // Findings: On liquidity withdrawal 1 wei gets left in the pool.
+        // So 1 wei of distributed vToken and 1 wei from initial provided liquidity gets stuck in the pool (for a total of 2 wei)
+        // TODO: ^ this shouldn't affect vault rewards as they'll be now distributed in WETH
+
+        (uint256 _vTokenFees, ) = _getAccumulatedFees(positionId);
 
         uint256 positionNFTFeesShare = nftFees / 2 - 1;
 
@@ -466,9 +458,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         nftIds[4] = mintTokenIds[4];
         nftIds[5] = feeTokenIds[0];
 
-        (, , , , , , , uint128 liquidity, , , , ) = positionManager.positions(
-            positionId
-        );
+        uint128 liquidity = _getLiquidity(positionId);
 
         uint256 preNFTBalance = nft.balanceOf(address(this));
         uint256 preETHBalance = address(this).balance;
@@ -527,7 +517,9 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         assertEq(expectedPoolAddress, nftxRouter.getPool(address(vtoken)));
     }
 
-    function _mintPosition(uint256 qty)
+    function _mintPosition(
+        uint256 qty
+    )
         internal
         returns (
             uint256[] memory tokenIds,
@@ -608,10 +600,9 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         ethUsed = preETHBalance - address(this).balance;
     }
 
-    function _sellNFTs(uint256 qty)
-        internal
-        returns (uint256[] memory tokenIds)
-    {
+    function _sellNFTs(
+        uint256 qty
+    ) internal returns (uint256[] memory tokenIds) {
         tokenIds = nft.mint(qty);
         nft.setApprovalForAll(address(vtoken), true);
 
@@ -633,6 +624,49 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
             qty,
             "NFT balance didn't decrease"
         );
+    }
+
+    function _mintDistributeFees(
+        uint256 nftFees
+    ) internal returns (uint256[] memory feeTokenIds) {
+        // mint vTokens for fees
+        uint256 vTokenFees = nftFees * 1 ether;
+        feeTokenIds = nft.mint(nftFees);
+
+        nft.setApprovalForAll(address(vtoken), true);
+        vtoken.mint(feeTokenIds, address(this), address(this));
+
+        // distribute fees
+        vtoken.transfer(address(feeDistributor), vTokenFees);
+        feeDistributor.distribute(0);
+    }
+
+    function _getLiquidity(
+        uint256 positionId
+    ) internal returns (uint128 liquidity) {
+        (, , , , , , , liquidity, , , , ) = positionManager.positions(
+            positionId
+        );
+    }
+
+    function _getAccumulatedFees(
+        uint256 positionId
+    ) internal returns (uint256 vTokenFees, uint256 wethFees) {
+        // "simulating" call here. Similar to "callStatic" in ethers.js for executing non-view function to just get return values.
+        uint256 snapshot = vm.snapshot();
+        (uint256 amount0, uint256 amount1) = positionManager.collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: positionId,
+                recipient: address(this),
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        );
+        vm.revertTo(snapshot);
+
+        (vTokenFees, wethFees) = nftxRouter.isVToken0(address(vtoken))
+            ? (amount0, amount1)
+            : (amount1, amount0);
     }
 
     // to receive the refunded ETH

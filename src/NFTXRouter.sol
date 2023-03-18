@@ -17,6 +17,9 @@ import {vToken} from "@mocks/vToken.sol";
 import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
 
 /**
+ * @title NFTX Router
+ * @author @apoorvlathey
+ *
  * @notice Router to facilitate vault tokens minting/burning + addition/removal of concentrated liquidity
  */
 contract NFTXRouter is INFTXRouter, ERC721Holder {
@@ -55,12 +58,11 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
     /**
      * @inheritdoc INFTXRouter
      */
-    function addLiquidity(AddLiquidityParams calldata params)
-        external
-        payable
-        override
-        returns (uint256 positionId)
-    {
+
+    // TODO: allow adding liquidity directly with vToken, without wrapping NFTs
+    function addLiquidity(
+        AddLiquidityParams calldata params
+    ) external payable override returns (uint256 positionId) {
         // TODO: With NFTXVault, first safeTransferFrom the nftIds from msg.sender to the vault, then mint vTokens to this address
         // TODO: handle special case of CryptoPunks
         uint256 vTokensAmount = vToken(params.vtoken).mint(
@@ -115,10 +117,9 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
         positionManager.refundETH(msg.sender);
     }
 
-    function removeLiquidity(RemoveLiquidityParams calldata params)
-        external
-        override
-    {
+    function removeLiquidity(
+        RemoveLiquidityParams calldata params
+    ) external override {
         // remove liquidity to get vTokens and ETH
         positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
@@ -194,11 +195,9 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
     /**
      * @inheritdoc INFTXRouter
      */
-    function sellNFTs(SellNFTsParams calldata params)
-        external
-        override
-        returns (uint256 wethReceived)
-    {
+    function sellNFTs(
+        SellNFTsParams calldata params
+    ) external override returns (uint256 wethReceived) {
         uint256 vTokensAmount = vToken(params.vtoken).mint(
             params.nftIds,
             msg.sender,
@@ -277,12 +276,9 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
     /**
      * @inheritdoc INFTXRouter
      */
-    function getPoolExists(uint256 vaultId)
-        external
-        view
-        override
-        returns (address pool, bool exists)
-    {
+    function getPoolExists(
+        uint256 vaultId
+    ) external view override returns (address pool, bool exists) {
         // TODO: get vToken address from vaultId via NFTXVaultFactory
         address vToken_;
         pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, FEE);
@@ -293,12 +289,9 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
     /**
      * @inheritdoc INFTXRouter
      */
-    function getPool(address vToken_)
-        external
-        view
-        override
-        returns (address pool)
-    {
+    function getPool(
+        address vToken_
+    ) external view override returns (address pool) {
         pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, FEE);
         if (pool == address(0)) revert();
     }
@@ -306,12 +299,9 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
     /**
      * @inheritdoc INFTXRouter
      */
-    function computePool(address vToken_)
-        external
-        view
-        override
-        returns (address)
-    {
+    function computePool(
+        address vToken_
+    ) external view override returns (address) {
         return
             PoolAddress.computeAddress(
                 router.factory(),
