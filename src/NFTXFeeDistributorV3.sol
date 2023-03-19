@@ -7,7 +7,7 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
-import {INFTXInventoryStaking} from "@src/v2/interface/INFTXInventoryStaking.sol";
+import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";
 import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
 
@@ -31,7 +31,7 @@ contract NFTXFeeDistributorV3 is
     // =============================================================
 
     INFTXVaultFactory public immutable override nftxVaultFactory;
-    INFTXInventoryStaking public immutable override inventoryStaking;
+    INFTXInventoryStakingV3 public immutable override inventoryStaking;
     IERC20 public immutable override WETH;
     uint24 public constant override REWARD_FEE_TIER = 10000;
 
@@ -53,7 +53,7 @@ contract NFTXFeeDistributorV3 is
     // =============================================================
 
     constructor(
-        INFTXInventoryStaking inventoryStaking_,
+        INFTXInventoryStakingV3 inventoryStaking_,
         INFTXRouter nftxRouter_,
         address treasury_
     ) {
@@ -90,17 +90,17 @@ contract NFTXFeeDistributorV3 is
         for (uint256 i; i < feeReceivers.length; ) {
             FeeReceiver storage feeReceiver = feeReceivers[i];
 
-            uint256 amountToSend = leftover +
+            uint256 wethAmountToSend = leftover +
                 (wethBalance * feeReceiver.allocPoint) /
                 allocTotal;
 
             bool tokenSent = _sendForReceiver(
                 feeReceiver,
-                amountToSend,
+                wethAmountToSend,
                 vaultId,
                 vault
             );
-            leftover = tokenSent ? 0 : amountToSend;
+            leftover = tokenSent ? 0 : wethAmountToSend;
 
             unchecked {
                 ++i;
@@ -201,23 +201,21 @@ contract NFTXFeeDistributorV3 is
 
     function _sendForReceiver(
         FeeReceiver storage feeReceiver,
-        uint256 amountToSend,
+        uint256 wethAmountToSend,
         uint256 vaultId,
         INFTXVault vault
     ) internal returns (bool tokenSent) {
         if (feeReceiver.receiverType == ReceiverType.INVENTORY) {
-            _maxWethApprove(feeReceiver.receiver, amountToSend);
+            _maxWethApprove(feeReceiver.receiver, wethAmountToSend);
 
-            // Inventory Staking might not pull tokens in case where the xToken contract is not yet deployed or the XToken totalSupply is zero
-            // TODO: modify inventory staking to accept rewards in WETH and uncomment this out
-            /**
-                bool pulledTokens = inventoryStaking.receiveRewards(
-                    vaultId,
-                    amountToSend
-                );
-                
-                tokenSent = pulledTokens;
-             */
+            // TODO: update this comment for Inventory Staking V3
+            // Inventory Staking V2 might not pull tokens in case where the xToken contract is not yet deployed or the XToken totalSupply is zero
+            bool pulledTokens = inventoryStaking.receiveRewards(
+                vaultId,
+                wethAmountToSend
+            );
+
+            tokenSent = pulledTokens;
         } else if (feeReceiver.receiverType == ReceiverType.POOL) {
             (address pool, bool exists) = nftxRouter.getPoolExists(
                 vaultId,
@@ -225,17 +223,17 @@ contract NFTXFeeDistributorV3 is
             );
 
             if (exists) {
-                WETH.transfer(pool, amountToSend);
+                WETH.transfer(pool, wethAmountToSend);
                 // TODO: add test case to check this doesn't revert if pool has 0 liquidity
                 IUniswapV3Pool(pool).distributeRewards(
-                    amountToSend,
+                    wethAmountToSend,
                     !nftxRouter.isVToken0(address(vault))
                 );
 
                 tokenSent = true;
             }
         } else {
-            WETH.transfer(feeReceiver.receiver, amountToSend);
+            WETH.transfer(feeReceiver.receiver, wethAmountToSend);
             tokenSent = true;
         }
     }

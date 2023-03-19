@@ -3,7 +3,7 @@ pragma solidity =0.8.15;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
-import {INFTXInventoryStaking} from "@src/v2/interface/INFTXInventoryStaking.sol";
+import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 import {INFTXRouter} from "./INFTXRouter.sol";
 
 interface INFTXFeeDistributorV3 {
@@ -25,7 +25,7 @@ interface INFTXFeeDistributorV3 {
 
     function nftxVaultFactory() external returns (INFTXVaultFactory);
 
-    function inventoryStaking() external returns (INFTXInventoryStaking);
+    function inventoryStaking() external returns (INFTXInventoryStakingV3);
 
     function WETH() external returns (IERC20);
 
