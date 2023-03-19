@@ -9,7 +9,7 @@ import "./ERC1155ReceiverUpgradeable.sol";
  */
 abstract contract ERC1155SafeHolderUpgradeable is ERC1155ReceiverUpgradeable {
     function onERC1155Received(
-        address operator,
+        address /** operator */,
         address,
         uint256,
         uint256,
@@ -19,7 +19,7 @@ abstract contract ERC1155SafeHolderUpgradeable is ERC1155ReceiverUpgradeable {
     }
 
     function onERC1155BatchReceived(
-        address operator,
+        address /** operator */,
         address,
         uint256[] memory,
         uint256[] memory,

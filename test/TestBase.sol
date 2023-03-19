@@ -18,11 +18,11 @@ import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 
 import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
-import {vToken} from "@mocks/vToken.sol";
-import {MockFeeDistributor} from "@mocks/MockFeeDistributor.sol";
-import {MockVaultFactory} from "@mocks/MockVaultFactory.sol";
+import {MockInventoryStakingV3} from "@mocks/MockInventoryStakingV3.sol";
 
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
+import {NFTXVaultFactoryUpgradeable} from "@src/v2/NFTXVaultFactoryUpgradeable.sol";
+import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
 contract TestBase is TestExtend, ERC721Holder {
@@ -34,15 +34,18 @@ contract TestBase is TestExtend, ERC721Holder {
     QuoterV2 quoter;
 
     MockNFT nft;
-    vToken vtoken;
-    // TODO: replace with NFTXFeeDistributorV3
-    MockFeeDistributor feeDistributor;
-    // TODO: replace with NFTXVaultFactory
-    MockVaultFactory vaultFactory;
+    // TODO: replace mock with actual inventory staking v3
+    MockInventoryStakingV3 inventoryStaking;
+
+    INFTXVault vtoken;
+    NFTXFeeDistributorV3 feeDistributor;
+    NFTXVaultUpgradeable vaultImpl;
+    NFTXVaultFactoryUpgradeable vaultFactory;
     NFTXRouter nftxRouter;
 
     // TODO: remove this and add tests for different fee tiers
     uint24 constant DEFAULT_FEE_TIER = 10000;
+    address immutable TREASURY = makeAddr("TREASURY");
 
     function setUp() external {
         weth = new MockWETH();
@@ -62,18 +65,40 @@ contract TestBase is TestExtend, ERC721Holder {
         quoter = new QuoterV2(address(factory), address(weth));
 
         nft = new MockNFT();
-        vtoken = new vToken(nft);
-        vaultFactory = new MockVaultFactory();
-        vaultFactory.addVault(address(vtoken));
+
+        vaultImpl = new NFTXVaultUpgradeable();
+        vaultFactory = new NFTXVaultFactoryUpgradeable();
+        vaultFactory.__NFTXVaultFactory_init(
+            address(vaultImpl),
+            address(1) // temporary feeDistributor address
+        );
+
         nftxRouter = new NFTXRouter(
             positionManager,
             router,
             quoter,
-            INFTXVaultFactory(address(vaultFactory))
+            vaultFactory
         );
+        // V2 currently deducts fees in vTokens which messes up with our calculations atm
+        vaultFactory.setFeeExclusion(address(nftxRouter), true);
 
-        feeDistributor = new MockFeeDistributor(nftxRouter, vtoken);
+        inventoryStaking = new MockInventoryStakingV3(vaultFactory, weth);
+        feeDistributor = new NFTXFeeDistributorV3(
+            inventoryStaking,
+            nftxRouter,
+            TREASURY
+        );
         factory.setFeeDistributor(address(feeDistributor));
+        vaultFactory.setFeeDistributor(address(feeDistributor));
+
+        uint256 vaultId = vaultFactory.createVault(
+            "TEST",
+            "TST",
+            address(nft),
+            false,
+            true
+        );
+        vtoken = INFTXVault(vaultFactory.vault(vaultId));
     }
 
     function _mintPosition(
@@ -122,7 +147,7 @@ contract TestBase is TestExtend, ERC721Holder {
         )
     {
         tokenIds = nft.mint(qty);
-        nft.setApprovalForAll(address(vtoken), true);
+        nft.setApprovalForAll(address(nftxRouter), true);
 
         uint160 currentSqrtP;
         uint256 tickDistance = _getTickDistance(fee);
@@ -175,7 +200,7 @@ contract TestBase is TestExtend, ERC721Holder {
         uint256 qty
     ) internal returns (uint256[] memory tokenIds) {
         tokenIds = nft.mint(qty);
-        nft.setApprovalForAll(address(vtoken), true);
+        nft.setApprovalForAll(address(nftxRouter), true);
 
         uint256 preNFTBalance = nft.balanceOf(address(this));
 

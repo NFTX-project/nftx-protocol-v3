@@ -6,6 +6,7 @@ import "../token/IERC20Upgradeable.sol";
 import "./INFTXVaultFactory.sol";
 import "./INFTXEligibility.sol";
 
+// TODO: organize using comment blocks
 interface INFTXVault is IERC20Upgradeable {
     function manager() external view returns (address);
 
@@ -50,13 +51,7 @@ interface INFTXVault is IERC20Upgradeable {
     function vaultFees()
         external
         view
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256
-        );
+        returns (uint256, uint256, uint256, uint256, uint256);
 
     event VaultInit(
         uint256 indexed vaultId,
@@ -95,8 +90,10 @@ interface INFTXVault is IERC20Upgradeable {
 
     function finalizeVault() external;
 
-    function setVaultMetadata(string memory name_, string memory symbol_)
-        external;
+    function setVaultMetadata(
+        string memory name_,
+        string memory symbol_
+    ) external;
 
     function setVaultFeatures(
         bool _enableMint,
@@ -134,13 +131,14 @@ interface INFTXVault is IERC20Upgradeable {
 
     function mintTo(
         uint256[] calldata tokenIds,
-        uint256[] calldata amounts, /* ignored for ERC721 vaults */
+        uint256[] calldata amounts /* ignored for ERC721 vaults */,
         address to
     ) external returns (uint256);
 
-    function redeem(uint256 amount, uint256[] calldata specificIds)
-        external
-        returns (uint256[] calldata);
+    function redeem(
+        uint256 amount,
+        uint256[] calldata specificIds
+    ) external returns (uint256[] calldata);
 
     function redeemTo(
         uint256 amount,
@@ -150,19 +148,18 @@ interface INFTXVault is IERC20Upgradeable {
 
     function swap(
         uint256[] calldata tokenIds,
-        uint256[] calldata amounts, /* ignored for ERC721 vaults */
+        uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds
     ) external returns (uint256[] calldata);
 
     function swapTo(
         uint256[] calldata tokenIds,
-        uint256[] calldata amounts, /* ignored for ERC721 vaults */
+        uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds,
         address to
     ) external returns (uint256[] calldata);
 
-    function allValidNFTs(uint256[] calldata tokenIds)
-        external
-        view
-        returns (bool);
+    function allValidNFTs(
+        uint256[] calldata tokenIds
+    ) external view returns (bool);
 }

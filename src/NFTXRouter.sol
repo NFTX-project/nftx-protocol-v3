@@ -13,9 +13,8 @@ import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {PoolAddress} from "@uni-periphery/libraries/PoolAddress.sol";
 
-// TODO: replace vToken with NFTXVault
-import {vToken} from "@mocks/vToken.sol";
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
 
 import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
 
@@ -34,10 +33,16 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
 
     address public immutable override WETH;
 
+    // Set a constant address for specific contracts that need special logic
+    address public constant override CRYPTO_PUNKS =
+        0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
+
     INonfungiblePositionManager public immutable override positionManager;
     SwapRouter public immutable override router;
     IQuoterV2 public immutable override quoter;
     INFTXVaultFactory public immutable override nftxVaultFactory;
+
+    // TODO: add events for each operation
 
     constructor(
         INonfungiblePositionManager positionManager_,
@@ -60,13 +65,12 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
     /**
      * @inheritdoc INFTXRouter
      */
-
     function addLiquidity(
         AddLiquidityParams calldata params
     ) external payable override returns (uint256 positionId) {
         uint256 vTokensAmount = params.vTokensAmount;
         if (vTokensAmount > 0) {
-            vToken(params.vtoken).transferFrom(
+            INFTXVault(params.vtoken).transferFrom(
                 msg.sender,
                 address(this),
                 vTokensAmount
@@ -74,20 +78,44 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         }
 
         if (params.nftIds.length > 0) {
-            // TODO: With NFTXVault, first safeTransferFrom the nftIds from msg.sender to the vault, then mint vTokens to this address
-            // TODO: handle special case of CryptoPunks
-            vTokensAmount += vToken(params.vtoken).mint(
-                params.nftIds,
-                msg.sender,
-                address(this)
-            );
+            address assetAddress = INFTXVault(params.vtoken).assetAddress();
+
+            // tranfer NFTs from user to the vault
+            for (uint256 i; i < params.nftIds.length; ) {
+                _transferFromERC721(
+                    assetAddress,
+                    params.nftIds[i],
+                    params.vtoken
+                );
+
+                if (assetAddress == CRYPTO_PUNKS) {
+                    _approveCryptoPunkERC721(
+                        assetAddress,
+                        params.nftIds[i],
+                        params.vtoken
+                    );
+                }
+
+                unchecked {
+                    ++i;
+                }
+            }
+
+            uint256[] memory emptyIds;
+            vTokensAmount +=
+                INFTXVault(params.vtoken).mint(params.nftIds, emptyIds) *
+                1 ether;
         }
 
-        vToken(params.vtoken).approve(address(positionManager), vTokensAmount);
+        INFTXVault(params.vtoken).approve(
+            address(positionManager),
+            vTokensAmount
+        );
 
         bool _isVToken0 = isVToken0(params.vtoken);
-        address token0 = _isVToken0 ? params.vtoken : WETH;
-        address token1 = _isVToken0 ? WETH : params.vtoken;
+        (address token0, address token1) = _isVToken0
+            ? (params.vtoken, WETH)
+            : (WETH, params.vtoken);
 
         positionManager.createAndInitializePoolIfNecessary(
             token0,
@@ -155,16 +183,17 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         );
 
         bool _isVToken0 = isVToken0(params.vtoken);
-        uint256 vTokenAmt = _isVToken0 ? amount0 : amount1;
-        uint256 wethAmt = _isVToken0 ? amount1 : amount0;
+        (uint256 vTokenAmt, uint256 wethAmt) = _isVToken0
+            ? (amount0, amount1)
+            : (amount1, amount0);
 
         if (params.receiveVTokens) {
-            vToken(params.vtoken).transfer(msg.sender, vTokenAmt);
+            INFTXVault(params.vtoken).transfer(msg.sender, vTokenAmt);
         } else {
             // swap decimal part of vTokens to WETH
             uint256 fractionalVTokenAmt = vTokenAmt % 1 ether;
             if (fractionalVTokenAmt > 0) {
-                vToken(params.vtoken).approve(
+                INFTXVault(params.vtoken).approve(
                     address(router),
                     fractionalVTokenAmt
                 );
@@ -183,11 +212,12 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
                 wethAmt += fractionalWethAmt;
 
                 // burn vTokens to provided tokenIds array
-                uint256 vTokenBurned = vToken(params.vtoken).burn(
+                INFTXVault(params.vtoken).redeemTo(
+                    params.nftIds.length,
                     params.nftIds,
-                    address(this),
                     msg.sender
                 );
+                uint256 vTokenBurned = params.nftIds.length * 1 ether;
 
                 // if more vTokens collected than burned
                 uint256 vTokenResidue = vTokenAmt -
@@ -195,7 +225,10 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
                     vTokenBurned;
 
                 if (vTokenResidue > 0) {
-                    vToken(params.vtoken).transfer(msg.sender, vTokenResidue);
+                    INFTXVault(params.vtoken).transfer(
+                        msg.sender,
+                        vTokenResidue
+                    );
                 }
             }
         }
@@ -211,12 +244,33 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
     function sellNFTs(
         SellNFTsParams calldata params
     ) external override returns (uint256 wethReceived) {
-        uint256 vTokensAmount = vToken(params.vtoken).mint(
+        address assetAddress = INFTXVault(params.vtoken).assetAddress();
+
+        // tranfer NFTs from user to the vault
+        for (uint256 i; i < params.nftIds.length; ) {
+            _transferFromERC721(assetAddress, params.nftIds[i], params.vtoken);
+
+            if (assetAddress == CRYPTO_PUNKS) {
+                _approveCryptoPunkERC721(
+                    assetAddress,
+                    params.nftIds[i],
+                    params.vtoken
+                );
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        // mint vToken
+        uint256[] memory emptyIds;
+        uint256 vTokensAmount = INFTXVault(params.vtoken).mint(
             params.nftIds,
-            msg.sender,
-            address(this)
-        );
-        vToken(params.vtoken).approve(address(router), vTokensAmount);
+            emptyIds
+        ) * 1 ether;
+
+        INFTXVault(params.vtoken).approve(address(router), vTokensAmount);
 
         wethReceived = router.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -255,7 +309,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         );
 
         // unwrap vTokens to tokenIds specified, and send to sender
-        vToken(params.vtoken).burn(params.nftIds, address(this), msg.sender);
+        INFTXVault(params.vtoken).redeemTo(
+            params.nftIds.length,
+            params.nftIds,
+            msg.sender
+        );
 
         // refund ETH
         router.refundETH(msg.sender);
@@ -348,6 +406,78 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
      */
     function isVToken0(address vtoken) public view override returns (bool) {
         return vtoken < WETH;
+    }
+
+    // =============================================================
+    //                      INTERNAL / PRIVATE
+    // =============================================================
+
+    /**
+     * @notice Transfers sender's ERC721 tokens to a specified recipient.
+     *
+     * @param assetAddr Address of the asset being transferred
+     * @param tokenId The ID of the token being transferred
+     * @param to The address the token is being transferred to
+     */
+
+    function _transferFromERC721(
+        address assetAddr,
+        uint256 tokenId,
+        address to
+    ) internal virtual {
+        bytes memory data;
+
+        if (assetAddr != CRYPTO_PUNKS) {
+            // We push to the vault to avoid an unneeded transfer.
+            data = abi.encodeWithSignature(
+                "safeTransferFrom(address,address,uint256)",
+                msg.sender,
+                to,
+                tokenId
+            );
+        } else {
+            // Fix here for frontrun attack.
+            bytes memory punkIndexToAddress = abi.encodeWithSignature(
+                "punkIndexToAddress(uint256)",
+                tokenId
+            );
+            (bool checkSuccess, bytes memory result) = address(assetAddr)
+                .staticcall(punkIndexToAddress);
+            address nftOwner = abi.decode(result, (address));
+            require(
+                checkSuccess && nftOwner == msg.sender,
+                "Not the NFT owner"
+            );
+            data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
+        }
+
+        (bool success, bytes memory resultData) = address(assetAddr).call(data);
+        require(success, string(resultData));
+    }
+
+    /**
+     * @notice Approves our Cryptopunk ERC721 tokens to be transferred.
+     *
+     * @dev This is only required to provide special logic for Cryptopunks.
+     *
+     * @param assetAddr Address of the asset being transferred
+     * @param tokenId The ID of the token being transferred
+     * @param to The address the token is being transferred to
+     */
+
+    function _approveCryptoPunkERC721(
+        address assetAddr,
+        uint256 tokenId,
+        address to
+    ) internal virtual {
+        bytes memory data = abi.encodeWithSignature(
+            "offerPunkForSaleToAddress(uint256,uint256,address)",
+            tokenId,
+            0,
+            to
+        );
+        (bool success, bytes memory resultData) = address(assetAddr).call(data);
+        require(success, string(resultData));
     }
 
     receive() external payable {}

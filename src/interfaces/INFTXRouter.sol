@@ -16,6 +16,8 @@ interface INFTXRouter {
 
     function WETH() external returns (address);
 
+    function CRYPTO_PUNKS() external returns (address);
+
     function positionManager() external returns (INonfungiblePositionManager);
 
     function router() external returns (SwapRouter);

@@ -17,7 +17,7 @@ contract ERC721SafeHolderUpgradeable is IERC721ReceiverUpgradeable {
      * Always returns `IERC721Receiver.onERC721Received.selector`.
      */
     function onERC721Received(
-        address operator,
+        address /** operator */,
         address,
         uint256,
         bytes memory
