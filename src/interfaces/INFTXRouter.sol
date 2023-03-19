@@ -16,8 +16,6 @@ interface INFTXRouter {
 
     function WETH() external returns (address);
 
-    function FEE() external returns (uint24);
-
     function positionManager() external returns (INonfungiblePositionManager);
 
     function router() external returns (SwapRouter);
@@ -42,6 +40,7 @@ interface INFTXRouter {
         uint256[] nftIds;
         int24 tickLower;
         int24 tickUpper;
+        uint24 fee;
         uint160 sqrtPriceX96;
         uint256 deadline;
     }
@@ -59,6 +58,7 @@ interface INFTXRouter {
         uint256[] nftIds;
         bool receiveVTokens; // directly receive vTokens, instead of redeeming for NFTs
         uint128 liquidity;
+        uint24 swapPoolFee; // the pool through which the fractional vToken to ETH swap should go through
         uint256 amount0Min;
         uint256 amount1Min;
         uint256 deadline;
@@ -73,6 +73,7 @@ interface INFTXRouter {
         address vtoken;
         uint256[] nftIds;
         uint256 deadline;
+        uint24 fee;
         uint256 amountOutMinimum;
         uint160 sqrtPriceLimitX96;
     }
@@ -91,6 +92,7 @@ interface INFTXRouter {
         address vtoken;
         uint256[] nftIds;
         uint256 deadline;
+        uint24 fee;
         uint160 sqrtPriceLimitX96;
     }
 
@@ -115,6 +117,7 @@ interface INFTXRouter {
     function quoteBuyNFTs(
         address vtoken,
         uint256[] memory nftIds,
+        uint24 fee,
         uint160 sqrtPriceLimitX96
     ) external returns (uint256 ethRequired);
 
@@ -122,18 +125,25 @@ interface INFTXRouter {
      * @notice Get deployed pool address for vaultId. `exists` is false if pool doesn't exist. `vaultId` must be valid.
      */
     function getPoolExists(
-        uint256 vaultId
+        uint256 vaultId,
+        uint24 fee
     ) external view returns (address pool, bool exists);
 
     /**
      * @notice Get deployed pool address for vToken. Reverts if pool doesn't exist
      */
-    function getPool(address vToken_) external view returns (address pool);
+    function getPool(
+        address vToken_,
+        uint24 fee
+    ) external view returns (address pool);
 
     /**
      * @notice Compute the pool address corresponding to vToken
      */
-    function computePool(address vToken_) external view returns (address);
+    function computePool(
+        address vToken_,
+        uint24 fee
+    ) external view returns (address);
 
     /**
      * @notice Checks if vToken is token0 or not

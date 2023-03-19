@@ -41,7 +41,8 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
     MockVaultFactory vaultFactory;
     NFTXRouter nftxRouter;
 
-    uint256 tickDistance;
+    // TODO: remove this and add tests for different fee tiers
+    uint24 constant DEFAULT_FEE_TIER = 10000;
 
     function setUp() external {
         weth = new MockWETH();
@@ -70,9 +71,6 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
             quoter,
             INFTXVaultFactory(address(vaultFactory))
         );
-        tickDistance = uint256(
-            uint24(factory.feeAmountTickSpacing(nftxRouter.FEE()))
-        );
 
         feeDistributor = new MockFeeDistributor(nftxRouter, vtoken);
         factory.setFeeDistributor(address(feeDistributor));
@@ -96,7 +94,9 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
     function test_distributeRewards_RevertsForNonFeeDistributor() external {
         // minting so that Pool is deployed
         _mintPosition(1);
-        UniswapV3Pool pool = UniswapV3Pool(nftxRouter.getPool(address(vtoken)));
+        UniswapV3Pool pool = UniswapV3Pool(
+            nftxRouter.getPool(address(vtoken), DEFAULT_FEE_TIER)
+        );
 
         hoax(makeAddr("nonFeeDistributor"));
         vm.expectRevert();
@@ -158,6 +158,7 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
                 nftIds: nftIds,
                 receiveVTokens: false,
                 liquidity: liquidity,
+                swapPoolFee: 10000,
                 amount0Min: 0,
                 amount1Min: 0,
                 deadline: block.timestamp
@@ -188,16 +189,24 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
         uint256 currentNFTPrice = 5 ether; // 5 * 10^18 wei for 1*10^18 vTokens
         uint256 lowerNFTPrice = 3 ether;
         uint256 upperNFTPrice = 6 ether;
+        uint24 fee = 10000;
 
         return
-            _mintPosition(qty, currentNFTPrice, lowerNFTPrice, upperNFTPrice);
+            _mintPosition(
+                qty,
+                currentNFTPrice,
+                lowerNFTPrice,
+                upperNFTPrice,
+                fee
+            );
     }
 
     function _mintPosition(
         uint256 qty,
         uint256 currentNFTPrice,
         uint256 lowerNFTPrice,
-        uint256 upperNFTPrice
+        uint256 upperNFTPrice,
+        uint24 fee
     )
         internal
         returns (
@@ -212,6 +221,7 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
         nft.setApprovalForAll(address(vtoken), true);
 
         uint160 currentSqrtP;
+        uint256 tickDistance = _getTickDistance(fee);
         if (nftxRouter.isVToken0(address(vtoken))) {
             currentSqrtP = Helpers.encodeSqrtRatioX96(currentNFTPrice, 1 ether);
             // price = amount1 / amount0 = 1.0001^tick => tick ∝ price
@@ -248,12 +258,19 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
                 nftIds: tokenIds,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
+                fee: fee,
                 sqrtPriceX96: currentSqrtP,
                 deadline: block.timestamp
             })
         );
 
         ethUsed = preETHBalance - address(this).balance;
+    }
+
+    function _getTickDistance(
+        uint24 fee
+    ) internal view returns (uint256 tickDistance) {
+        tickDistance = uint256(uint24(factory.feeAmountTickSpacing(fee)));
     }
 
     function _getLiquidity(

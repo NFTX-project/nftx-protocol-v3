@@ -33,6 +33,7 @@ contract NFTXFeeDistributorV3 is
     INFTXVaultFactory public immutable override nftxVaultFactory;
     INFTXInventoryStaking public immutable override inventoryStaking;
     IERC20 public immutable override WETH;
+    uint24 public constant override REWARD_FEE_TIER = 10000;
 
     // =============================================================
     //                            STORAGE
@@ -70,6 +71,7 @@ contract NFTXFeeDistributorV3 is
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
+    // TODO: modify/remove for new Inventory Staking V3
     function initializeVaultReceivers(uint256 vaultId) external override {
         inventoryStaking.deployXTokenForVault(vaultId);
     }
@@ -217,7 +219,10 @@ contract NFTXFeeDistributorV3 is
                 tokenSent = pulledTokens;
              */
         } else if (feeReceiver.receiverType == ReceiverType.POOL) {
-            (address pool, bool exists) = nftxRouter.getPoolExists(vaultId);
+            (address pool, bool exists) = nftxRouter.getPoolExists(
+                vaultId,
+                REWARD_FEE_TIER
+            );
 
             if (exists) {
                 WETH.transfer(pool, amountToSend);

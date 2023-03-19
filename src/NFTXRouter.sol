@@ -34,9 +34,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
 
     address public immutable override WETH;
 
-    // TODO: make fees dynamic
-    uint24 public constant override FEE = 10000; // 1%
-
     INonfungiblePositionManager public immutable override positionManager;
     SwapRouter public immutable override router;
     IQuoterV2 public immutable override quoter;
@@ -95,7 +92,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         positionManager.createAndInitializePoolIfNecessary(
             token0,
             token1,
-            FEE,
+            params.fee,
             params.sqrtPriceX96
         );
 
@@ -118,7 +115,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             INonfungiblePositionManager.MintParams({
                 token0: token0,
                 token1: token1,
-                fee: FEE,
+                fee: params.fee,
                 tickLower: params.tickLower,
                 tickUpper: params.tickUpper,
                 amount0Desired: amount0Desired,
@@ -175,7 +172,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
                     ISwapRouter.ExactInputSingleParams({
                         tokenIn: address(params.vtoken),
                         tokenOut: WETH,
-                        fee: FEE,
+                        fee: params.swapPoolFee,
                         recipient: address(this),
                         deadline: block.timestamp,
                         amountIn: fractionalVTokenAmt,
@@ -225,7 +222,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: address(params.vtoken),
                 tokenOut: WETH,
-                fee: FEE,
+                fee: params.fee,
                 recipient: address(this),
                 deadline: params.deadline,
                 amountIn: vTokensAmount,
@@ -248,7 +245,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             ISwapRouter.ExactOutputSingleParams({
                 tokenIn: WETH,
                 tokenOut: address(params.vtoken),
-                fee: FEE,
+                fee: params.fee,
                 recipient: address(this),
                 deadline: params.deadline,
                 amountOut: vTokenAmt,
@@ -292,6 +289,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
     function quoteBuyNFTs(
         address vtoken,
         uint256[] memory nftIds,
+        uint24 fee,
         uint160 sqrtPriceLimitX96
     ) external override returns (uint256 ethRequired) {
         uint256 vTokenAmt = nftIds.length * 1 ether;
@@ -301,7 +299,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
                 tokenIn: WETH,
                 tokenOut: address(vtoken),
                 amount: vTokenAmt,
-                fee: FEE,
+                fee: fee,
                 sqrtPriceLimitX96: sqrtPriceLimitX96
             })
         );
@@ -311,10 +309,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
      * @inheritdoc INFTXRouter
      */
     function getPoolExists(
-        uint256 vaultId
+        uint256 vaultId,
+        uint24 fee
     ) external view override returns (address pool, bool exists) {
         address vToken_ = nftxVaultFactory.vault(vaultId);
-        pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, FEE);
+        pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, fee);
 
         exists = pool != address(0);
     }
@@ -323,9 +322,10 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
      * @inheritdoc INFTXRouter
      */
     function getPool(
-        address vToken_
+        address vToken_,
+        uint24 fee
     ) external view override returns (address pool) {
-        pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, FEE);
+        pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, fee);
         if (pool == address(0)) revert();
     }
 
@@ -333,12 +333,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
      * @inheritdoc INFTXRouter
      */
     function computePool(
-        address vToken_
+        address vToken_,
+        uint24 fee
     ) external view override returns (address) {
         return
             PoolAddress.computeAddress(
                 router.factory(),
-                PoolAddress.getPoolKey(vToken_, WETH, FEE)
+                PoolAddress.getPoolKey(vToken_, WETH, fee)
             );
     }
 

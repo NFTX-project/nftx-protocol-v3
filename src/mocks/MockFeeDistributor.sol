@@ -5,18 +5,18 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";
 
-import {NFTXRouter} from "@src/NFTXRouter.sol";
+import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 
 import {vToken} from "./vToken.sol";
 
 contract MockFeeDistributor {
-    NFTXRouter public nftxRouter;
+    INFTXRouter public nftxRouter;
     vToken public vtoken;
 
     IERC20 public immutable WETH;
-    uint24 public constant FEE = 10000;
+    uint24 public constant REWARD_FEE_TIER = 10000;
 
-    constructor(NFTXRouter nftxRouter_, vToken vtoken_) {
+    constructor(INFTXRouter nftxRouter_, vToken vtoken_) {
         WETH = IERC20(nftxRouter_.WETH());
         nftxRouter = nftxRouter_;
         vtoken = vtoken_;
@@ -24,7 +24,7 @@ contract MockFeeDistributor {
 
     function distribute(uint256 /** vaultId */) external {
         IUniswapV3Pool pool = IUniswapV3Pool(
-            nftxRouter.getPool(address(vtoken))
+            nftxRouter.getPool(address(vtoken), REWARD_FEE_TIER)
         );
 
         uint256 wethBalance = WETH.balanceOf(address(this));

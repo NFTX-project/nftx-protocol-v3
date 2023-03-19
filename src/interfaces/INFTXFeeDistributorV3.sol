@@ -29,6 +29,8 @@ interface INFTXFeeDistributorV3 {
 
     function WETH() external returns (IERC20);
 
+    function REWARD_FEE_TIER() external returns (uint24);
+
     // =============================================================
     //                            STORAGE
     // =============================================================
