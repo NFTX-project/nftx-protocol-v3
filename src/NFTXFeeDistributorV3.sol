@@ -32,6 +32,7 @@ contract NFTXFeeDistributorV3 is
 
     INFTXVaultFactory public immutable override nftxVaultFactory;
     INFTXInventoryStaking public immutable override inventoryStaking;
+    IERC20 public immutable override WETH;
 
     // =============================================================
     //                            STORAGE
@@ -57,6 +58,7 @@ contract NFTXFeeDistributorV3 is
     ) {
         nftxVaultFactory = inventoryStaking_.nftxVaultFactory();
         inventoryStaking = inventoryStaking_;
+        WETH = IERC20(nftxRouter_.WETH());
         nftxRouter = nftxRouter_;
         treasury = treasury_;
 
@@ -75,10 +77,10 @@ contract NFTXFeeDistributorV3 is
     function distribute(uint256 vaultId) external override nonReentrant {
         INFTXVault vault = INFTXVault(nftxVaultFactory.vault(vaultId));
 
-        uint256 tokenBalance = vault.balanceOf(address(this));
+        uint256 wethBalance = WETH.balanceOf(address(this));
 
         if (distributionPaused || allocTotal == 0) {
-            vault.transfer(treasury, tokenBalance);
+            WETH.transfer(treasury, wethBalance);
             return;
         }
 
@@ -87,7 +89,7 @@ contract NFTXFeeDistributorV3 is
             FeeReceiver storage feeReceiver = feeReceivers[i];
 
             uint256 amountToSend = leftover +
-                (tokenBalance * feeReceiver.allocPoint) /
+                (wethBalance * feeReceiver.allocPoint) /
                 allocTotal;
 
             bool tokenSent = _sendForReceiver(
@@ -104,7 +106,7 @@ contract NFTXFeeDistributorV3 is
         }
 
         if (leftover > 0) {
-            vault.transfer(treasury, leftover);
+            WETH.transfer(treasury, leftover);
         }
     }
 
@@ -120,11 +122,10 @@ contract NFTXFeeDistributorV3 is
         _addReceiver(receiver, allocPoint, receiverType);
     }
 
-    function changeReceiverAlloc(uint256 receiverId, uint256 allocPoint)
-        external
-        override
-        onlyOwner
-    {
+    function changeReceiverAlloc(
+        uint256 receiverId,
+        uint256 allocPoint
+    ) external override onlyOwner {
         if (receiverId >= feeReceivers.length) revert IdOutOfBounds();
 
         FeeReceiver storage feeReceiver = feeReceivers[receiverId];
@@ -203,30 +204,33 @@ contract NFTXFeeDistributorV3 is
         INFTXVault vault
     ) internal returns (bool tokenSent) {
         if (feeReceiver.receiverType == ReceiverType.INVENTORY) {
-            _maxApprove(vault, feeReceiver.receiver, amountToSend);
+            _maxWethApprove(feeReceiver.receiver, amountToSend);
 
             // Inventory Staking might not pull tokens in case where the xToken contract is not yet deployed or the XToken totalSupply is zero
-            bool pulledTokens = inventoryStaking.receiveRewards(
-                vaultId,
-                amountToSend
-            );
-
-            tokenSent = pulledTokens;
+            // TODO: modify inventory staking to accept rewards in WETH and uncomment this out
+            /**
+                bool pulledTokens = inventoryStaking.receiveRewards(
+                    vaultId,
+                    amountToSend
+                );
+                
+                tokenSent = pulledTokens;
+             */
         } else if (feeReceiver.receiverType == ReceiverType.POOL) {
             (address pool, bool exists) = nftxRouter.getPoolExists(vaultId);
 
             if (exists) {
-                vault.transfer(pool, amountToSend);
+                WETH.transfer(pool, amountToSend);
                 // TODO: add test case to check this doesn't revert if pool has 0 liquidity
                 IUniswapV3Pool(pool).distributeRewards(
                     amountToSend,
-                    nftxRouter.isVToken0(address(vault))
+                    !nftxRouter.isVToken0(address(vault))
                 );
 
                 tokenSent = true;
             }
         } else {
-            vault.transfer(feeReceiver.receiver, amountToSend);
+            WETH.transfer(feeReceiver.receiver, amountToSend);
             tokenSent = true;
         }
     }
@@ -235,15 +239,11 @@ contract NFTXFeeDistributorV3 is
      * @dev Setting max allowance to save on gas on subsequent calls.
      * As this contract doesn't hold funds, so this is safe. Also the spender address is only provided by owner via addReceiver.
      */
-    function _maxApprove(
-        INFTXVault vault,
-        address spender,
-        uint256 amount
-    ) internal {
-        uint256 allowance = vault.allowance(address(this), spender);
+    function _maxWethApprove(address spender, uint256 amount) internal {
+        uint256 allowance = WETH.allowance(address(this), spender);
 
         if (amount > allowance) {
-            vault.approve(spender, type(uint256).max);
+            WETH.approve(spender, type(uint256).max);
         }
     }
 }

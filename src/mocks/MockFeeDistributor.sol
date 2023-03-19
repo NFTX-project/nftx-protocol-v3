@@ -13,28 +13,28 @@ contract MockFeeDistributor {
     NFTXRouter public nftxRouter;
     vToken public vtoken;
 
+    IERC20 public immutable WETH;
     uint24 public constant FEE = 10000;
 
     constructor(NFTXRouter nftxRouter_, vToken vtoken_) {
+        WETH = IERC20(nftxRouter_.WETH());
         nftxRouter = nftxRouter_;
         vtoken = vtoken_;
     }
 
-    function distribute(
-        uint256 /** vaultId */
-    ) external {
+    function distribute(uint256 /** vaultId */) external {
         IUniswapV3Pool pool = IUniswapV3Pool(
             nftxRouter.getPool(address(vtoken))
         );
 
-        uint256 tokenBalance = vtoken.balanceOf(address(this));
+        uint256 wethBalance = WETH.balanceOf(address(this));
 
         // send rewards to pool
-        vtoken.transfer(address(pool), tokenBalance);
+        WETH.transfer(address(pool), wethBalance);
         // distribute rewards with LPs
         pool.distributeRewards(
-            tokenBalance,
-            nftxRouter.isVToken0(address(vtoken))
+            wethBalance,
+            !nftxRouter.isVToken0(address(vtoken))
         );
     }
 }

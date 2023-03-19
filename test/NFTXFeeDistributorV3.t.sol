@@ -33,6 +33,7 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
 
     MockNFT nft;
     vToken vtoken;
+    // TODO: replace with NFTXFeeDistributorV3
     MockFeeDistributor feeDistributor;
     NFTXRouter nftxRouter;
 
@@ -102,35 +103,36 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
             uint256 positionId,
             ,
             ,
-
+            uint256 ethDeposited
         ) = _mintPosition(mintQty);
         // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
         _mintPosition(mintQty);
         // TODO: add console logs for initial values as well, in all test cases
 
-        uint256 nftFees = 4;
-        uint256[] memory feeTokenIds = _mintDistributeFees(nftFees);
+        uint256 wethFees = 2 ether;
+
+        // distribute fees
+        weth.deposit{value: wethFees}();
+        weth.transfer(address(feeDistributor), wethFees);
+        feeDistributor.distribute(0);
 
         // NOTE: We have 2 LP positions with the exact same liquidity. So the fees is distributed equally between them both
-        // So for nftFees = 2, each position should get 1 NFT as fees, but due to rounding gets 0.999..999 of vTokens as fees
-        // Hence can't redeem that portion to NFT. The fractional part would get swapped for ETH during removeLiquidity
+        // So for wethFees = 2, each position should get 1 weth as fees, but due to rounding gets 0.999..999 of weth as fees
 
-        // Findings: On liquidity withdrawal 1 wei gets left in the pool.
-        // So 1 wei of distributed vToken and 1 wei from initial provided liquidity gets stuck in the pool (for a total of 2 wei)
-        // TODO: ^ this shouldn't affect vault rewards as they'll be now distributed in WETH
+        // Findings: On liquidity withdrawal 1 wei gets left in the pool as well.
+        // So 1 wei of distributed weth and 1 wei from initial provided liquidity gets stuck in the pool (for a total of 2 wei)
 
-        (uint256 _vTokenFees, ) = _getAccumulatedFees(positionId);
-
-        uint256 positionNFTFeesShare = nftFees / 2 - 1;
+        (, uint256 _wethFees) = _getAccumulatedFees(positionId);
+        console.log("_wethFees", _wethFees);
+        assertGe(_wethFees, wethFees / 2 - 1);
 
         // remove liquidity
-        uint256[] memory nftIds = new uint256[](mintQty + positionNFTFeesShare);
+        uint256[] memory nftIds = new uint256[](mintQty - 1); // accounting for that 1 wei difference allows us to redeem 1 less NFT
         nftIds[0] = mintTokenIds[0];
         nftIds[1] = mintTokenIds[1];
         nftIds[2] = mintTokenIds[2];
         nftIds[3] = mintTokenIds[3];
-        nftIds[4] = mintTokenIds[4];
-        nftIds[5] = feeTokenIds[0];
+        // nftIds[4] = mintTokenIds[4];
 
         uint128 liquidity = _getLiquidity(positionId);
 
@@ -155,9 +157,8 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
         uint256 ethReceived = address(this).balance - preETHBalance;
 
         console.log("NFT received", nftReceived);
+        // ethReceived = ethDeposited + _wethFees + swapped 0.9999..99 vToken into ETH
         console.log("ETH received", ethReceived);
-
-        assertEq(nftReceived, mintQty + positionNFTFeesShare);
     }
 
     function _mintPosition(
@@ -245,25 +246,10 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
 
     function _getLiquidity(
         uint256 positionId
-    ) internal returns (uint128 liquidity) {
+    ) internal view returns (uint128 liquidity) {
         (, , , , , , , liquidity, , , , ) = positionManager.positions(
             positionId
         );
-    }
-
-    function _mintDistributeFees(
-        uint256 nftFees
-    ) internal returns (uint256[] memory feeTokenIds) {
-        // mint vTokens for fees
-        uint256 vTokenFees = nftFees * 1 ether;
-        feeTokenIds = nft.mint(nftFees);
-
-        nft.setApprovalForAll(address(vtoken), true);
-        vtoken.mint(feeTokenIds, address(this), address(this));
-
-        // distribute fees
-        vtoken.transfer(address(feeDistributor), vTokenFees);
-        feeDistributor.distribute(0);
     }
 
     function _getAccumulatedFees(

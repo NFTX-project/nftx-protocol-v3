@@ -27,6 +27,8 @@ interface INFTXFeeDistributorV3 {
 
     function inventoryStaking() external returns (INFTXInventoryStaking);
 
+    function WETH() external returns (IERC20);
+
     // =============================================================
     //                            STORAGE
     // =============================================================
@@ -91,8 +93,10 @@ interface INFTXFeeDistributorV3 {
         ReceiverType receiverType
     ) external;
 
-    function changeReceiverAlloc(uint256 receiverId, uint256 allocPoint)
-        external;
+    function changeReceiverAlloc(
+        uint256 receiverId,
+        uint256 allocPoint
+    ) external;
 
     function changeReceiverAddress(
         uint256 receiverId,
