@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 import {SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
@@ -93,6 +95,15 @@ interface INFTXRouter {
     }
 
     function buyNFTs(BuyNFTsParams calldata params) external payable;
+
+    // =============================================================
+    //                        ONLY OWNER WRITE
+    // =============================================================
+
+    /**
+     * @param token ERC20 token address or address(0) in case of ETH
+     */
+    function rescueTokens(IERC20 token) external;
 
     // =============================================================
     //                     PUBLIC / EXTERNAL VIEW

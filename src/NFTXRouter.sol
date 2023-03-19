@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
@@ -23,7 +25,9 @@ import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
  *
  * @notice Router to facilitate vault tokens minting/burning + addition/removal of concentrated liquidity
  */
-contract NFTXRouter is INFTXRouter, ERC721Holder {
+contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
+    using SafeERC20 for IERC20;
+
     // =============================================================
     //                           CONSTANTS
     // =============================================================
@@ -261,6 +265,24 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
     }
 
     // =============================================================
+    //                        ONLY OWNER WRITE
+    // =============================================================
+
+    /**
+     * @inheritdoc INFTXRouter
+     */
+    function rescueTokens(IERC20 token) external override onlyOwner {
+        if (address(token) != address(0)) {
+            uint256 balance = token.balanceOf(address(this));
+            token.safeTransfer(msg.sender, balance);
+        } else {
+            uint256 balance = address(this).balance;
+            (bool success, ) = msg.sender.call{value: balance}("");
+            if (!success) revert UnableToSendETH();
+        }
+    }
+
+    // =============================================================
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
 
@@ -326,8 +348,6 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
     function isVToken0(address vtoken) public view override returns (bool) {
         return vtoken < WETH;
     }
-
-    // TODO: add function to rescueTokens + ETH
 
     receive() external payable {}
 }
