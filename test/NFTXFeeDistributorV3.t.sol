@@ -20,7 +20,9 @@ import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
 import {vToken} from "@mocks/vToken.sol";
 import {MockFeeDistributor} from "@mocks/MockFeeDistributor.sol";
+import {MockVaultFactory} from "@mocks/MockVaultFactory.sol";
 
+import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
 contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
@@ -35,6 +37,8 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
     vToken vtoken;
     // TODO: replace with NFTXFeeDistributorV3
     MockFeeDistributor feeDistributor;
+    // TODO: replace with NFTXVaultFactory
+    MockVaultFactory vaultFactory;
     NFTXRouter nftxRouter;
 
     uint256 tickDistance;
@@ -58,7 +62,14 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
 
         nft = new MockNFT();
         vtoken = new vToken(nft);
-        nftxRouter = new NFTXRouter(positionManager, router, quoter);
+        vaultFactory = new MockVaultFactory();
+        vaultFactory.addVault(address(vtoken));
+        nftxRouter = new NFTXRouter(
+            positionManager,
+            router,
+            quoter,
+            INFTXVaultFactory(address(vaultFactory))
+        );
         tickDistance = uint256(
             uint24(factory.feeAmountTickSpacing(nftxRouter.FEE()))
         );
@@ -103,8 +114,9 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
             uint256 positionId,
             ,
             ,
-            uint256 ethDeposited
-        ) = _mintPosition(mintQty);
+
+        ) = // uint256 ethDeposited
+            _mintPosition(mintQty);
         // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
         _mintPosition(mintQty);
         // TODO: add console logs for initial values as well, in all test cases

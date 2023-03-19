@@ -5,6 +5,8 @@ import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungibl
 import {SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
 
+import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+
 interface INFTXRouter {
     // =============================================================
     //                           CONSTANTS
@@ -14,15 +16,13 @@ interface INFTXRouter {
 
     function FEE() external returns (uint24);
 
-    // =============================================================
-    //                            STORAGE
-    // =============================================================
-
     function positionManager() external returns (INonfungiblePositionManager);
 
     function router() external returns (SwapRouter);
 
     function quoter() external returns (IQuoterV2);
+
+    function nftxVaultFactory() external returns (INFTXVaultFactory);
 
     // =============================================================
     //                            ERRORS
@@ -46,10 +46,9 @@ interface INFTXRouter {
     /**
      * @notice User should have given NFT approval to vtoken contract, else revert
      */
-    function addLiquidity(AddLiquidityParams calldata params)
-        external
-        payable
-        returns (uint256 positionId);
+    function addLiquidity(
+        AddLiquidityParams calldata params
+    ) external payable returns (uint256 positionId);
 
     struct RemoveLiquidityParams {
         uint256 positionId;
@@ -78,9 +77,9 @@ interface INFTXRouter {
     /**
      * @notice User should have given NFT approval to vtoken contract, else revert
      */
-    function sellNFTs(SellNFTsParams calldata params)
-        external
-        returns (uint256 wethReceived);
+    function sellNFTs(
+        SellNFTsParams calldata params
+    ) external returns (uint256 wethReceived);
 
     /**
      * @param sqrtPriceLimitX96 the price limit, if reached, stop swapping
@@ -108,12 +107,11 @@ interface INFTXRouter {
     ) external returns (uint256 ethRequired);
 
     /**
-     * @notice Get deployed pool address for vaultId. `exists` is false if pool doesn't exist
+     * @notice Get deployed pool address for vaultId. `exists` is false if pool doesn't exist. `vaultId` must be valid.
      */
-    function getPoolExists(uint256 vaultId)
-        external
-        view
-        returns (address pool, bool exists);
+    function getPoolExists(
+        uint256 vaultId
+    ) external view returns (address pool, bool exists);
 
     /**
      * @notice Get deployed pool address for vToken. Reverts if pool doesn't exist

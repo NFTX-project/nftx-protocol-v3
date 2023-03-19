@@ -2,8 +2,8 @@
 pragma solidity =0.8.15;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {INFTXVaultFactory} from "../v2/interface/INFTXVaultFactory.sol";
-import {INFTXInventoryStaking} from "../v2/interface/INFTXInventoryStaking.sol";
+import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXInventoryStaking} from "@src/v2/interface/INFTXInventoryStaking.sol";
 import {INFTXRouter} from "./INFTXRouter.sol";
 
 interface INFTXFeeDistributorV3 {

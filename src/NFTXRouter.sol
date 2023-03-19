@@ -13,6 +13,7 @@ import {PoolAddress} from "@uni-periphery/libraries/PoolAddress.sol";
 
 // TODO: replace vToken with NFTXVault
 import {vToken} from "@mocks/vToken.sol";
+import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 
 import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
 
@@ -29,24 +30,24 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
 
     address public immutable override WETH;
 
+    // TODO: make fees dynamic
     uint24 public constant override FEE = 10000; // 1%
 
-    // =============================================================
-    //                            STORAGE
-    // =============================================================
-
-    INonfungiblePositionManager public override positionManager;
-    SwapRouter public override router;
-    IQuoterV2 public override quoter;
+    INonfungiblePositionManager public immutable override positionManager;
+    SwapRouter public immutable override router;
+    IQuoterV2 public immutable override quoter;
+    INFTXVaultFactory public immutable override nftxVaultFactory;
 
     constructor(
         INonfungiblePositionManager positionManager_,
         SwapRouter router_,
-        IQuoterV2 quoter_
+        IQuoterV2 quoter_,
+        INFTXVaultFactory nftxVaultFactory_
     ) {
         positionManager = positionManager_;
         router = router_;
         quoter = quoter_;
+        nftxVaultFactory = nftxVaultFactory_;
 
         WETH = positionManager_.WETH9();
     }
@@ -279,8 +280,7 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
     function getPoolExists(
         uint256 vaultId
     ) external view override returns (address pool, bool exists) {
-        // TODO: get vToken address from vaultId via NFTXVaultFactory
-        address vToken_;
+        address vToken_ = nftxVaultFactory.vault(vaultId);
         pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, FEE);
 
         exists = pool != address(0);

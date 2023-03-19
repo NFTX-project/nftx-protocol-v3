@@ -20,7 +20,9 @@ import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
 import {vToken} from "@mocks/vToken.sol";
 import {MockFeeDistributor} from "@mocks/MockFeeDistributor.sol";
+import {MockVaultFactory} from "@mocks/MockVaultFactory.sol";
 
+import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
 contract NFTXRouterTests is TestExtend, ERC721Holder {
@@ -33,7 +35,10 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
     MockNFT nft;
     vToken vtoken;
+    // TODO: replace with NFTXFeeDistributorV3
     MockFeeDistributor feeDistributor;
+    // TODO: replace with NFTXVaultFactory
+    MockVaultFactory vaultFactory;
     NFTXRouter nftxRouter;
 
     uint256 tickDistance;
@@ -57,7 +62,14 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
         nft = new MockNFT();
         vtoken = new vToken(nft);
-        nftxRouter = new NFTXRouter(positionManager, router, quoter);
+        vaultFactory = new MockVaultFactory();
+        vaultFactory.addVault(address(vtoken));
+        nftxRouter = new NFTXRouter(
+            positionManager,
+            router,
+            quoter,
+            INFTXVaultFactory(address(vaultFactory))
+        );
         tickDistance = uint256(
             uint24(factory.feeAmountTickSpacing(nftxRouter.FEE()))
         );
@@ -392,6 +404,28 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
     // Pool Address
     // ================================
 
+    // NFTXRouter#getPoolExists
+
+    function test_getPoolExists_IfPoolNonExistent() external {
+        (address pool, bool exists) = nftxRouter.getPoolExists(0);
+
+        assertEq(exists, false);
+        assertEq(pool, address(0));
+    }
+
+    function test_getPoolExists_Success() external {
+        // deploy pool
+        _mintPosition(1);
+
+        (address pool, bool exists) = nftxRouter.getPoolExists(0);
+
+        assertEq(exists, true);
+        assertEq(
+            pool,
+            factory.getPool(address(vtoken), address(weth), nftxRouter.FEE())
+        );
+    }
+
     // NFTXRouter#getPool
 
     function test_getPool_RevertsIfPoolNonExistent() external {
@@ -530,7 +564,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
 
     function _getLiquidity(
         uint256 positionId
-    ) internal returns (uint128 liquidity) {
+    ) internal view returns (uint128 liquidity) {
         (, , , , , , , liquidity, , , , ) = positionManager.positions(
             positionId
         );
