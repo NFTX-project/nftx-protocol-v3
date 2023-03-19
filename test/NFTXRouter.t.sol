@@ -389,104 +389,6 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
     }
 
     // ================================
-    // Fee Distribution
-    // ================================
-
-    // UniswapV3Factory#setFeeDistributor
-
-    function test_setFeeDistributor_RevertsForNonOwner() external {
-        hoax(makeAddr("nonOwner"));
-        vm.expectRevert();
-        factory.setFeeDistributor(address(feeDistributor));
-    }
-
-    function test_setFeeDistributor_Success() external {
-        address newFeeDistributor = makeAddr("newFeeDistributor");
-        factory.setFeeDistributor(newFeeDistributor);
-        assertEq(factory.feeDistributor(), newFeeDistributor);
-    }
-
-    // UniswapV3Pool#distributeRewards
-    function test_distributeRewards_RevertsForNonFeeDistributor() external {
-        // minting so that Pool is deployed
-        _mintPosition(1);
-        UniswapV3Pool pool = UniswapV3Pool(nftxRouter.getPool(address(vtoken)));
-
-        hoax(makeAddr("nonFeeDistributor"));
-        vm.expectRevert();
-        pool.distributeRewards(1 ether, true);
-    }
-
-    // FeeDistributor#distribute
-
-    function test_feeDistribution_Success() external {
-        uint256 mintQty = 5;
-
-        // mint position
-        (
-            uint256[] memory mintTokenIds,
-            uint256 positionId,
-            ,
-            ,
-
-        ) = _mintPosition(mintQty);
-        // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
-        _mintPosition(mintQty);
-        // TODO: add console logs for initial values as well, in all test cases
-
-        uint256 nftFees = 4;
-        uint256[] memory feeTokenIds = _mintDistributeFees(nftFees);
-
-        // NOTE: We have 2 LP positions with the exact same liquidity. So the fees is distributed equally between them both
-        // So for nftFees = 2, each position should get 1 NFT as fees, but due to rounding gets 0.999..999 of vTokens as fees
-        // Hence can't redeem that portion to NFT. The fractional part would get swapped for ETH during removeLiquidity
-
-        // Findings: On liquidity withdrawal 1 wei gets left in the pool.
-        // So 1 wei of distributed vToken and 1 wei from initial provided liquidity gets stuck in the pool (for a total of 2 wei)
-        // TODO: ^ this shouldn't affect vault rewards as they'll be now distributed in WETH
-
-        (uint256 _vTokenFees, ) = _getAccumulatedFees(positionId);
-
-        uint256 positionNFTFeesShare = nftFees / 2 - 1;
-
-        // remove liquidity
-        uint256[] memory nftIds = new uint256[](mintQty + positionNFTFeesShare);
-        nftIds[0] = mintTokenIds[0];
-        nftIds[1] = mintTokenIds[1];
-        nftIds[2] = mintTokenIds[2];
-        nftIds[3] = mintTokenIds[3];
-        nftIds[4] = mintTokenIds[4];
-        nftIds[5] = feeTokenIds[0];
-
-        uint128 liquidity = _getLiquidity(positionId);
-
-        uint256 preNFTBalance = nft.balanceOf(address(this));
-        uint256 preETHBalance = address(this).balance;
-
-        positionManager.setApprovalForAll(address(nftxRouter), true);
-        nftxRouter.removeLiquidity(
-            INFTXRouter.RemoveLiquidityParams({
-                positionId: positionId,
-                vtoken: address(vtoken),
-                nftIds: nftIds,
-                receiveVTokens: false,
-                liquidity: liquidity,
-                amount0Min: 0,
-                amount1Min: 0,
-                deadline: block.timestamp
-            })
-        );
-
-        uint256 nftReceived = nft.balanceOf(address(this)) - preNFTBalance;
-        uint256 ethReceived = address(this).balance - preETHBalance;
-
-        console.log("NFT received", nftReceived);
-        console.log("ETH received", ethReceived);
-
-        assertEq(nftReceived, mintQty + positionNFTFeesShare);
-    }
-
-    // ================================
     // Pool Address
     // ================================
 
@@ -626,47 +528,12 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         );
     }
 
-    function _mintDistributeFees(
-        uint256 nftFees
-    ) internal returns (uint256[] memory feeTokenIds) {
-        // mint vTokens for fees
-        uint256 vTokenFees = nftFees * 1 ether;
-        feeTokenIds = nft.mint(nftFees);
-
-        nft.setApprovalForAll(address(vtoken), true);
-        vtoken.mint(feeTokenIds, address(this), address(this));
-
-        // distribute fees
-        vtoken.transfer(address(feeDistributor), vTokenFees);
-        feeDistributor.distribute(0);
-    }
-
     function _getLiquidity(
         uint256 positionId
     ) internal returns (uint128 liquidity) {
         (, , , , , , , liquidity, , , , ) = positionManager.positions(
             positionId
         );
-    }
-
-    function _getAccumulatedFees(
-        uint256 positionId
-    ) internal returns (uint256 vTokenFees, uint256 wethFees) {
-        // "simulating" call here. Similar to "callStatic" in ethers.js for executing non-view function to just get return values.
-        uint256 snapshot = vm.snapshot();
-        (uint256 amount0, uint256 amount1) = positionManager.collect(
-            INonfungiblePositionManager.CollectParams({
-                tokenId: positionId,
-                recipient: address(this),
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
-            })
-        );
-        vm.revertTo(snapshot);
-
-        (vTokenFees, wethFees) = nftxRouter.isVToken0(address(vtoken))
-            ? (amount0, amount1)
-            : (amount1, amount0);
     }
 
     // to receive the refunded ETH
