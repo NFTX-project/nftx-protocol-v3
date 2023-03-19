@@ -60,17 +60,28 @@ contract NFTXRouter is INFTXRouter, ERC721Holder {
      * @inheritdoc INFTXRouter
      */
 
-    // TODO: allow adding liquidity directly with vToken, without wrapping NFTs
     function addLiquidity(
         AddLiquidityParams calldata params
     ) external payable override returns (uint256 positionId) {
-        // TODO: With NFTXVault, first safeTransferFrom the nftIds from msg.sender to the vault, then mint vTokens to this address
-        // TODO: handle special case of CryptoPunks
-        uint256 vTokensAmount = vToken(params.vtoken).mint(
-            params.nftIds,
-            msg.sender,
-            address(this)
-        );
+        uint256 vTokensAmount = params.vTokensAmount;
+        if (vTokensAmount > 0) {
+            vToken(params.vtoken).transferFrom(
+                msg.sender,
+                address(this),
+                vTokensAmount
+            );
+        }
+
+        if (params.nftIds.length > 0) {
+            // TODO: With NFTXVault, first safeTransferFrom the nftIds from msg.sender to the vault, then mint vTokens to this address
+            // TODO: handle special case of CryptoPunks
+            vTokensAmount += vToken(params.vtoken).mint(
+                params.nftIds,
+                msg.sender,
+                address(this)
+            );
+        }
+
         vToken(params.vtoken).approve(address(positionManager), vTokensAmount);
 
         bool _isVToken0 = isVToken0(params.vtoken);

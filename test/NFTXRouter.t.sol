@@ -78,6 +78,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         factory.setFeeDistributor(address(feeDistributor));
     }
 
+    // TODO: addLiquidity test with just vTokens and a combo of both
     function testAddLiquidity() external {
         uint256 prePositionNFTBalance = positionManager.balanceOf(
             address(this)
@@ -525,6 +526,7 @@ contract NFTXRouterTests is TestExtend, ERC721Holder {
         positionId = nftxRouter.addLiquidity{value: qty * 100 ether}(
             INFTXRouter.AddLiquidityParams({
                 vtoken: address(vtoken),
+                vTokensAmount: 0,
                 nftIds: tokenIds,
                 tickLower: tickLower,
                 tickUpper: tickUpper,

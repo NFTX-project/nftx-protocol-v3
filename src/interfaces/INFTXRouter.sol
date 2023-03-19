@@ -36,6 +36,7 @@ interface INFTXRouter {
 
     struct AddLiquidityParams {
         address vtoken;
+        uint256 vTokensAmount; // user can provide just vTokens or NFTs or both
         uint256[] nftIds;
         int24 tickLower;
         int24 tickUpper;

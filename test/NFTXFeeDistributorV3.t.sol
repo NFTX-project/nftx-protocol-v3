@@ -111,12 +111,11 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
         // mint position
         (
             uint256[] memory mintTokenIds,
-            uint256 positionId,
+            uint256 positionId, // uint256 ethDeposited
             ,
             ,
 
-        ) = // uint256 ethDeposited
-            _mintPosition(mintQty);
+        ) = _mintPosition(mintQty);
         // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
         _mintPosition(mintQty);
         // TODO: add console logs for initial values as well, in all test cases
@@ -245,6 +244,7 @@ contract NFTXFeeDistributorV3Tests is TestExtend, ERC721Holder {
         positionId = nftxRouter.addLiquidity{value: qty * 100 ether}(
             INFTXRouter.AddLiquidityParams({
                 vtoken: address(vtoken),
+                vTokensAmount: 0,
                 nftIds: tokenIds,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
