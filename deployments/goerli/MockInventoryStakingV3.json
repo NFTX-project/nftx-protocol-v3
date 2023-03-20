@@ -1,0 +1,138 @@
+{
+  "address": "0xF8ac4aE079DB547D0f4e7f145E0AdFc79B9a7eD2",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract INFTXVaultFactory",
+          "name": "nftxVaultFactory_",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IERC20",
+          "name": "WETH_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "WETH",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "vaultId",
+          "type": "uint256"
+        }
+      ],
+      "name": "deployXTokenForVault",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nftxVaultFactory",
+      "outputs": [
+        {
+          "internalType": "contract INFTXVaultFactory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "wethAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "receiveRewards",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x32d12461feee5edadd37921c4e95777b7ecf726f4db99701e2f0249187fd6e64",
+  "receipt": {
+    "to": null,
+    "from": "0xb06a64615842CbA9b3Bdb7e6F726F3a5BD20daC2",
+    "contractAddress": "0xF8ac4aE079DB547D0f4e7f145E0AdFc79B9a7eD2",
+    "transactionIndex": 88,
+    "gasUsed": "194468",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x1269445b80663c1b5e61d1150ef5eeb8eb7d8424a5e321f4475c3296c2d8416a",
+    "transactionHash": "0x32d12461feee5edadd37921c4e95777b7ecf726f4db99701e2f0249187fd6e64",
+    "logs": [],
+    "blockNumber": 8688014,
+    "cumulativeGasUsed": "7949415",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x666738678c6FbdE71bb7Ca7B4DD1d41AFF218d7F",
+    "0x18Def0E9754385eC1C91e176585f1eb1fd7265f5"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "bec004d9b1b2142a40b20f41be4e23d6",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract INFTXVaultFactory\",\"name\":\"nftxVaultFactory_\",\"type\":\"address\"},{\"internalType\":\"contract IERC20\",\"name\":\"WETH_\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"WETH\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"vaultId\",\"type\":\"uint256\"}],\"name\":\"deployXTokenForVault\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nftxVaultFactory\",\"outputs\":[{\"internalType\":\"contract INFTXVaultFactory\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"wethAmount\",\"type\":\"uint256\"}],\"name\":\"receiveRewards\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/mocks/MockInventoryStakingV3.sol\":\"MockInventoryStakingV3\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":800},\"remappings\":[\":@mocks/=src/mocks/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@src/=src/\",\":@uni-core/=src/uniswap/v3-core/\",\":@uni-periphery/=src/uniswap/v3-periphery/\",\":@uniswap/lib/=lib/solidity-lib/\",\":@uniswap/v2-core/=lib/v2-core/\",\":@uniswap/v3-core/contracts/=src/uniswap/v3-core/\",\":base64-sol/=src/uniswap/v3-periphery/libraries/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":solidity-lib/=lib/solidity-lib/contracts/\",\":v2-core/=lib/v2-core/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.6.0) (token/ERC20/IERC20.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC20 standard as defined in the EIP.\\n */\\ninterface IERC20 {\\n    /**\\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\\n     * another (`to`).\\n     *\\n     * Note that `value` may be zero.\\n     */\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n    /**\\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\\n     * a call to {approve}. `value` is the new allowance.\\n     */\\n    event Approval(address indexed owner, address indexed spender, uint256 value);\\n\\n    /**\\n     * @dev Returns the amount of tokens in existence.\\n     */\\n    function totalSupply() external view returns (uint256);\\n\\n    /**\\n     * @dev Returns the amount of tokens owned by `account`.\\n     */\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    /**\\n     * @dev Moves `amount` tokens from the caller's account to `to`.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transfer(address to, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Returns the remaining number of tokens that `spender` will be\\n     * allowed to spend on behalf of `owner` through {transferFrom}. This is\\n     * zero by default.\\n     *\\n     * This value changes when {approve} or {transferFrom} are called.\\n     */\\n    function allowance(address owner, address spender) external view returns (uint256);\\n\\n    /**\\n     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * IMPORTANT: Beware that changing an allowance with this method brings the risk\\n     * that someone may use both the old and the new allowance by unfortunate\\n     * transaction ordering. One possible solution to mitigate this race\\n     * condition is to first reduce the spender's allowance to 0 and set the\\n     * desired value afterwards:\\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\\n     *\\n     * Emits an {Approval} event.\\n     */\\n    function approve(address spender, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Moves `amount` tokens from `from` to `to` using the\\n     * allowance mechanism. `amount` is then deducted from the caller's\\n     * allowance.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transferFrom(\\n        address from,\\n        address to,\\n        uint256 amount\\n    ) external returns (bool);\\n}\\n\",\"keccak256\":\"0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b\",\"license\":\"MIT\"},\"src/interfaces/INFTXInventoryStakingV3.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity =0.8.15;\\n\\nimport {INFTXVaultFactory} from \\\"@src/v2/interface/INFTXVaultFactory.sol\\\";\\n\\ninterface INFTXInventoryStakingV3 {\\n    function nftxVaultFactory() external view returns (INFTXVaultFactory);\\n\\n    function deployXTokenForVault(uint256 vaultId) external;\\n\\n    function receiveRewards(\\n        uint256 vaultId,\\n        uint256 wethAmount\\n    ) external returns (bool);\\n}\\n\",\"keccak256\":\"0xf99c15f60254b17843f8eb958ebdc59f642f969f3ae9d64768b428917021b064\",\"license\":\"MIT\"},\"src/mocks/MockInventoryStakingV3.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity =0.8.15;\\nimport {IERC20} from \\\"@openzeppelin/contracts/token/ERC20/IERC20.sol\\\";\\n\\nimport {INFTXVaultFactory} from \\\"@src/v2/interface/INFTXVaultFactory.sol\\\";\\n\\nimport {INFTXInventoryStakingV3} from \\\"@src/interfaces/INFTXInventoryStakingV3.sol\\\";\\n\\ncontract MockInventoryStakingV3 is INFTXInventoryStakingV3 {\\n    INFTXVaultFactory public override nftxVaultFactory;\\n\\n    IERC20 public immutable WETH;\\n\\n    constructor(INFTXVaultFactory nftxVaultFactory_, IERC20 WETH_) {\\n        nftxVaultFactory = nftxVaultFactory_;\\n        WETH = WETH_;\\n    }\\n\\n    function deployXTokenForVault(uint256 vaultId) external override {}\\n\\n    function receiveRewards(\\n        uint256 /** vaultId */,\\n        uint256 wethAmount\\n    ) external returns (bool) {\\n        WETH.transferFrom(msg.sender, address(this), wethAmount);\\n        return true;\\n    }\\n}\\n\",\"keccak256\":\"0x2f03cfddfd269ff0f5b4f0ff656b3870b8bfbc138f3c52cf27aa155e4c6ddad0\",\"license\":\"UNLICENSED\"},\"src/v2/interface/INFTXVaultFactory.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../proxy/IBeacon.sol\\\";\\n\\ninterface INFTXVaultFactory is IBeacon {\\n    // Read functions.\\n    function numVaults() external view returns (uint256);\\n\\n    function zapContract() external view returns (address);\\n\\n    function zapContracts(address addr) external view returns (bool);\\n\\n    function feeDistributor() external view returns (address);\\n\\n    function eligibilityManager() external view returns (address);\\n\\n    function vault(uint256 vaultId) external view returns (address);\\n\\n    function allVaults() external view returns (address[] memory);\\n\\n    function vaultsForAsset(address asset)\\n        external\\n        view\\n        returns (address[] memory);\\n\\n    function isLocked(uint256 id) external view returns (bool);\\n\\n    function excludedFromFees(address addr) external view returns (bool);\\n\\n    function factoryMintFee() external view returns (uint64);\\n\\n    function factoryRandomRedeemFee() external view returns (uint64);\\n\\n    function factoryTargetRedeemFee() external view returns (uint64);\\n\\n    function factoryRandomSwapFee() external view returns (uint64);\\n\\n    function factoryTargetSwapFee() external view returns (uint64);\\n\\n    function vaultFees(uint256 vaultId)\\n        external\\n        view\\n        returns (\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256\\n        );\\n\\n    event NewFeeDistributor(address oldDistributor, address newDistributor);\\n    event NewZapContract(address oldZap, address newZap);\\n    event UpdatedZapContract(address zap, bool excluded);\\n    event FeeExclusion(address feeExcluded, bool excluded);\\n    event NewEligibilityManager(address oldEligManager, address newEligManager);\\n    event NewVault(\\n        uint256 indexed vaultId,\\n        address vaultAddress,\\n        address assetAddress\\n    );\\n    event UpdateVaultFees(\\n        uint256 vaultId,\\n        uint256 mintFee,\\n        uint256 randomRedeemFee,\\n        uint256 targetRedeemFee,\\n        uint256 randomSwapFee,\\n        uint256 targetSwapFee\\n    );\\n    event DisableVaultFees(uint256 vaultId);\\n    event UpdateFactoryFees(\\n        uint256 mintFee,\\n        uint256 randomRedeemFee,\\n        uint256 targetRedeemFee,\\n        uint256 randomSwapFee,\\n        uint256 targetSwapFee\\n    );\\n\\n    // Write functions.\\n    function __NFTXVaultFactory_init(\\n        address _vaultImpl,\\n        address _feeDistributor\\n    ) external;\\n\\n    function createVault(\\n        string calldata name,\\n        string calldata symbol,\\n        address _assetAddress,\\n        bool is1155,\\n        bool allowAllItems\\n    ) external returns (uint256);\\n\\n    function setFeeDistributor(address _feeDistributor) external;\\n\\n    function setEligibilityManager(address _eligibilityManager) external;\\n\\n    function setZapContract(address _zapContract, bool _excluded) external;\\n\\n    function setFeeExclusion(address _excludedAddr, bool excluded) external;\\n\\n    function setFactoryFees(\\n        uint256 mintFee,\\n        uint256 randomRedeemFee,\\n        uint256 targetRedeemFee,\\n        uint256 randomSwapFee,\\n        uint256 targetSwapFee\\n    ) external;\\n\\n    function setVaultFees(\\n        uint256 vaultId,\\n        uint256 mintFee,\\n        uint256 randomRedeemFee,\\n        uint256 targetRedeemFee,\\n        uint256 randomSwapFee,\\n        uint256 targetSwapFee\\n    ) external;\\n\\n    function disableVaultFees(uint256 vaultId) external;\\n}\\n\",\"keccak256\":\"0xb6d64ca7f387cb11b1a345add3556c21d2b3c9fa9b8d8645a3312bcbb33ce9bb\",\"license\":\"MIT\"},\"src/v2/proxy/IBeacon.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev This is the interface that {BeaconProxy} expects of its beacon.\\n */\\ninterface IBeacon {\\n    /**\\n     * @dev Must return an address that can be used as a delegate call target.\\n     *\\n     * {BeaconProxy} will check that this address is a contract.\\n     */\\n    function childImplementation() external view returns (address);\\n\\n    function implementation() external view returns (address);\\n\\n    function upgradeChildTo(address newImplementation) external;\\n}\\n\",\"keccak256\":\"0x9992f3a4f9a6162af7eb1ef2267eb6c7e2af32f1acd623eab1aa732e315720fe\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x60a060405234801561001057600080fd5b506040516102e13803806102e183398101604081905261002f9161006c565b600080546001600160a01b0319166001600160a01b03938416179055166080526100a6565b6001600160a01b038116811461006957600080fd5b50565b6000806040838503121561007f57600080fd5b825161008a81610054565b602084015190925061009b81610054565b809150509250929050565b60805161021a6100c76000396000818160a0015261011d015261021a6000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80633801daf114610051578063ad5c46481461009b578063f0f2a4d7146100c2578063f36d52da146100d5575b600080fd5b6000546100719073ffffffffffffffffffffffffffffffffffffffff1681565b60405173ffffffffffffffffffffffffffffffffffffffff90911681526020015b60405180910390f35b6100717f000000000000000000000000000000000000000000000000000000000000000081565b6100d36100d03660046101a9565b50565b005b6100e86100e33660046101c2565b6100f8565b6040519015158152602001610092565b6040516323b872dd60e01b8152336004820152306024820152604481018290526000907f000000000000000000000000000000000000000000000000000000000000000073ffffffffffffffffffffffffffffffffffffffff16906323b872dd906064016020604051808303816000875af115801561017b573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061019f91906101e4565b5060019392505050565b6000602082840312156101bb57600080fd5b5035919050565b600080604083850312156101d557600080fd5b50508035926020909101359150565b6000602082840312156101f657600080fd5b8151801515811461020657600080fd5b939250505056fea164736f6c634300080f000a",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061004c5760003560e01c80633801daf114610051578063ad5c46481461009b578063f0f2a4d7146100c2578063f36d52da146100d5575b600080fd5b6000546100719073ffffffffffffffffffffffffffffffffffffffff1681565b60405173ffffffffffffffffffffffffffffffffffffffff90911681526020015b60405180910390f35b6100717f000000000000000000000000000000000000000000000000000000000000000081565b6100d36100d03660046101a9565b50565b005b6100e86100e33660046101c2565b6100f8565b6040519015158152602001610092565b6040516323b872dd60e01b8152336004820152306024820152604481018290526000907f000000000000000000000000000000000000000000000000000000000000000073ffffffffffffffffffffffffffffffffffffffff16906323b872dd906064016020604051808303816000875af115801561017b573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061019f91906101e4565b5060019392505050565b6000602082840312156101bb57600080fd5b5035919050565b600080604083850312156101d557600080fd5b50508035926020909101359150565b6000602082840312156101f657600080fd5b8151801515811461020657600080fd5b939250505056fea164736f6c634300080f000a",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 6421,
+        "contract": "src/mocks/MockInventoryStakingV3.sol:MockInventoryStakingV3",
+        "label": "nftxVaultFactory",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_contract(INFTXVaultFactory)30536"
+      }
+    ],
+    "types": {
+      "t_contract(INFTXVaultFactory)30536": {
+        "encoding": "inplace",
+        "label": "contract INFTXVaultFactory",
+        "numberOfBytes": "20"
+      }
+    }
+  }
+}
