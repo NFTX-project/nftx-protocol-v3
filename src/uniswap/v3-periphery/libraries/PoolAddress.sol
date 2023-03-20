@@ -8,7 +8,7 @@ library PoolAddress {
     // FIXME: Ensure this value is latest & corresponds to current UniswapV3Pool code
     // keccak256(type(UniswapV3Pool).creationCode);
     bytes32 internal constant POOL_INIT_CODE_HASH =
-        0xd5434d767ebc6acf4874d8815d312148f989d462d9022a440475be26b89d9269;
+        0x05653972eaa0d614b835dff6f428c7a232784ba45eab039a61222cb5b3109dcd;
 
     /// @notice The identifying key of the pool
     struct PoolKey {
