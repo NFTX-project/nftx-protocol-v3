@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.7.0;
-pragma abicoder v2;
+pragma solidity =0.8.15;
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
@@ -11,7 +10,6 @@ import "base64-sol/base64.sol";
 import "./HexStrings.sol";
 import "./NFTSVG.sol";
 
-// NOTE: This library contains a public function and hence needs to be deployed externally
 library NFTDescriptor {
     using TickMath for int24;
     using Strings for uint256;
@@ -43,37 +41,23 @@ library NFTDescriptor {
             params,
             feeToPercentString(params.fee)
         );
-        string memory descriptionPartOne = generateDescriptionPartOne(
-            escapeQuotes(params.quoteTokenSymbol),
-            escapeQuotes(params.baseTokenSymbol),
-            addressToString(params.poolAddress)
-        );
-        string memory descriptionPartTwo = generateDescriptionPartTwo(
-            params.tokenId.toString(),
-            escapeQuotes(params.baseTokenSymbol),
-            addressToString(params.quoteTokenAddress),
-            addressToString(params.baseTokenAddress),
-            feeToPercentString(params.fee)
-        );
+
         string memory image = Base64.encode(bytes(generateSVGImage(params)));
 
         return
-            string(
-                abi.encodePacked(
-                    "data:application/json;base64,",
-                    Base64.encode(
-                        bytes(
-                            abi.encodePacked(
-                                '{"name":"',
-                                name,
-                                '", "description":"',
-                                descriptionPartOne,
-                                descriptionPartTwo,
-                                '", "image": "',
-                                "data:image/svg+xml;base64,",
-                                image,
-                                '"}'
-                            )
+            string.concat(
+                "data:application/json;base64,",
+                Base64.encode(
+                    bytes(
+                        string.concat(
+                            '{"name":"',
+                            name,
+                            '", "description":"',
+                            "NFT representing liquidity position on NFTXAMM",
+                            '", "image": "',
+                            "data:image/svg+xml;base64,",
+                            image,
+                            '"}'
                         )
                     )
                 )
@@ -106,83 +90,33 @@ library NFTDescriptor {
         return symbol;
     }
 
-    function generateDescriptionPartOne(
-        string memory quoteTokenSymbol,
-        string memory baseTokenSymbol,
-        string memory poolAddress
-    ) private pure returns (string memory) {
-        return
-            string(
-                abi.encodePacked(
-                    "This NFT represents a liquidity position in a Uniswap V3 ",
-                    quoteTokenSymbol,
-                    "-",
-                    baseTokenSymbol,
-                    " pool. ",
-                    "The owner of this NFT can modify or redeem the position.\\n",
-                    "\\nPool Address: ",
-                    poolAddress,
-                    "\\n",
-                    quoteTokenSymbol
-                )
-            );
-    }
-
-    function generateDescriptionPartTwo(
-        string memory tokenId,
-        string memory baseTokenSymbol,
-        string memory quoteTokenAddress,
-        string memory baseTokenAddress,
-        string memory feeTier
-    ) private pure returns (string memory) {
-        return
-            string(
-                abi.encodePacked(
-                    " Address: ",
-                    quoteTokenAddress,
-                    "\\n",
-                    baseTokenSymbol,
-                    " Address: ",
-                    baseTokenAddress,
-                    "\\nFee Tier: ",
-                    feeTier,
-                    "\\nToken ID: ",
-                    tokenId,
-                    "\\n\\n",
-                    unicode"⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated."
-                )
-            );
-    }
-
     function generateName(
         ConstructTokenURIParams memory params,
         string memory feeTier
     ) private pure returns (string memory) {
         return
-            string(
-                abi.encodePacked(
-                    "Uniswap - ",
-                    feeTier,
-                    " - ",
-                    escapeQuotes(params.quoteTokenSymbol),
-                    "/",
-                    escapeQuotes(params.baseTokenSymbol),
-                    " - ",
-                    tickToDecimalString(
-                        !params.flipRatio ? params.tickLower : params.tickUpper,
-                        params.tickSpacing,
-                        params.baseTokenDecimals,
-                        params.quoteTokenDecimals,
-                        params.flipRatio
-                    ),
-                    "<>",
-                    tickToDecimalString(
-                        !params.flipRatio ? params.tickUpper : params.tickLower,
-                        params.tickSpacing,
-                        params.baseTokenDecimals,
-                        params.quoteTokenDecimals,
-                        params.flipRatio
-                    )
+            string.concat(
+                "Uniswap - ",
+                feeTier,
+                " - ",
+                escapeQuotes(params.quoteTokenSymbol),
+                "/",
+                escapeQuotes(params.baseTokenSymbol),
+                " - ",
+                tickToDecimalString(
+                    !params.flipRatio ? params.tickLower : params.tickUpper,
+                    params.tickSpacing,
+                    params.baseTokenDecimals,
+                    params.quoteTokenDecimals,
+                    params.flipRatio
+                ),
+                "<>",
+                tickToDecimalString(
+                    !params.flipRatio ? params.tickUpper : params.tickLower,
+                    params.tickSpacing,
+                    params.baseTokenDecimals,
+                    params.quoteTokenDecimals,
+                    params.flipRatio
                 )
             );
     }

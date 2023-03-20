@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.7.6;
-pragma abicoder v2;
+pragma solidity =0.8.15;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@uniswap/v3-core/contracts/libraries/BitMath.sol";
@@ -64,47 +63,80 @@ library NFTSVG {
         SVGBodyParams memory params
     ) internal pure returns (string memory body) {
         return
-            string(
-                abi.encodePacked(
-                    generateSVGBorderText(
-                        params.quoteToken,
-                        params.baseToken,
-                        params.quoteTokenSymbol,
-                        params.baseTokenSymbol
-                    ),
-                    generateSVGCardMantle(
-                        params.quoteTokenSymbol,
-                        params.baseTokenSymbol,
-                        params.feeTier
-                    ),
-                    generageSvgCurve(
-                        params.tickLower,
-                        params.tickUpper,
-                        params.tickSpacing,
-                        params.overRange
-                    ),
-                    generateSVGPositionDataAndLocationCurve(
-                        params.tokenId.toString(),
-                        params.tickLower,
-                        params.tickUpper
-                    ),
-                    generateSVGRareSparkle(params.tokenId, params.poolAddress)
+            string.concat(
+                generateSVGBodyPartOne(params),
+                generateSVGBodyPartTwo(
+                    params.poolAddress,
+                    params.tickLower,
+                    params.tickUpper,
+                    params.tokenId
                 )
+            );
+    }
+
+    function generateSVGBodyPartOne(
+        SVGBodyParams memory params
+    ) private pure returns (string memory) {
+        return
+            string.concat(
+                generateSVGBorderText(
+                    params.quoteToken,
+                    params.baseToken,
+                    params.quoteTokenSymbol,
+                    params.baseTokenSymbol
+                ),
+                generateSVGCardMantle(
+                    params.quoteTokenSymbol,
+                    params.baseTokenSymbol,
+                    params.feeTier
+                ),
+                generageSvgCurve(
+                    params.tickLower,
+                    params.tickUpper,
+                    params.tickSpacing,
+                    params.overRange
+                )
+            );
+    }
+
+    function generateSVGBodyPartTwo(
+        address poolAddress,
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 tokenId
+    ) private pure returns (string memory) {
+        return
+            string.concat(
+                generateSVGPositionDataAndLocationCurve(
+                    tokenId.toString(),
+                    tickLower,
+                    tickUpper
+                ),
+                generateSVGRareSparkle(tokenId, poolAddress)
             );
     }
 
     function generateSVGDefs(
         SVGDefsParams memory params
     ) internal pure returns (string memory svg) {
-        svg = string(
-            abi.encodePacked(
+        svg = string.concat(
+            generateSVGDefsPartOne(params),
+            generateSVGDefsPartTwo(params)
+        );
+    }
+
+    function generateSVGDefsPartOne(
+        SVGDefsParams memory params
+    ) private pure returns (string memory) {
+        return
+            string.concat(
                 '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"',
                 " xmlns:xlink='http://www.w3.org/1999/xlink'>",
                 "<defs>",
                 '<filter id="f1"><feImage result="p0" xlink:href="data:image/svg+xml;base64,',
                 Base64.encode(
                     bytes(
-                        abi.encodePacked(
+                        string.concat(
                             "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><rect width='290px' height='500px' fill='#",
                             params.color0,
                             "'/></svg>"
@@ -114,7 +146,7 @@ library NFTSVG {
                 '"/><feImage result="p1" xlink:href="data:image/svg+xml;base64,',
                 Base64.encode(
                     bytes(
-                        abi.encodePacked(
+                        string.concat(
                             "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><circle cx='",
                             params.x1,
                             "' cy='",
@@ -128,7 +160,7 @@ library NFTSVG {
                 '"/><feImage result="p2" xlink:href="data:image/svg+xml;base64,',
                 Base64.encode(
                     bytes(
-                        abi.encodePacked(
+                        string.concat(
                             "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><circle cx='",
                             params.x2,
                             "' cy='",
@@ -140,10 +172,18 @@ library NFTSVG {
                     )
                 ),
                 '" />',
-                '<feImage result="p3" xlink:href="data:image/svg+xml;base64,',
+                '<feImage result="p3" xlink:href="data:image/svg+xml;base64,'
+            );
+    }
+
+    function generateSVGDefsPartTwo(
+        SVGDefsParams memory params
+    ) private pure returns (string memory) {
+        return
+            string.concat(
                 Base64.encode(
                     bytes(
-                        abi.encodePacked(
+                        string.concat(
                             "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><circle cx='",
                             params.x3,
                             "' cy='",
@@ -176,8 +216,7 @@ library NFTSVG {
                 '<rect fill="none" x="0px" y="0px" width="290px" height="500px" />',
                 '<ellipse cx="50%" cy="0px" rx="180px" ry="120px" fill="#000" opacity="0.85" /></g>',
                 '<rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" /></g>'
-            )
-        );
+            );
     }
 
     function generateSVGBorderText(
@@ -186,30 +225,28 @@ library NFTSVG {
         string memory quoteTokenSymbol,
         string memory baseTokenSymbol
     ) private pure returns (string memory svg) {
-        svg = string(
-            abi.encodePacked(
-                '<text text-rendering="optimizeSpeed">',
-                '<textPath startOffset="-100%" fill="white" font-family="\'Courier New\', monospace" font-size="10px" xlink:href="#text-path-a">',
-                baseToken,
-                unicode" • ",
-                baseTokenSymbol,
-                ' <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" />',
-                '</textPath> <textPath startOffset="0%" fill="white" font-family="\'Courier New\', monospace" font-size="10px" xlink:href="#text-path-a">',
-                baseToken,
-                unicode" • ",
-                baseTokenSymbol,
-                ' <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" /> </textPath>',
-                '<textPath startOffset="50%" fill="white" font-family="\'Courier New\', monospace" font-size="10px" xlink:href="#text-path-a">',
-                quoteToken,
-                unicode" • ",
-                quoteTokenSymbol,
-                ' <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s"',
-                ' repeatCount="indefinite" /></textPath><textPath startOffset="-50%" fill="white" font-family="\'Courier New\', monospace" font-size="10px" xlink:href="#text-path-a">',
-                quoteToken,
-                unicode" • ",
-                quoteTokenSymbol,
-                ' <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" /></textPath></text>'
-            )
+        svg = string.concat(
+            '<text text-rendering="optimizeSpeed">',
+            '<textPath startOffset="-100%" fill="white" font-family="\'Courier New\', monospace" font-size="10px" xlink:href="#text-path-a">',
+            baseToken,
+            unicode" • ",
+            baseTokenSymbol,
+            ' <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" />',
+            '</textPath> <textPath startOffset="0%" fill="white" font-family="\'Courier New\', monospace" font-size="10px" xlink:href="#text-path-a">',
+            baseToken,
+            unicode" • ",
+            baseTokenSymbol,
+            ' <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" /> </textPath>',
+            '<textPath startOffset="50%" fill="white" font-family="\'Courier New\', monospace" font-size="10px" xlink:href="#text-path-a">',
+            quoteToken,
+            unicode" • ",
+            quoteTokenSymbol,
+            ' <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s"',
+            ' repeatCount="indefinite" /></textPath><textPath startOffset="-50%" fill="white" font-family="\'Courier New\', monospace" font-size="10px" xlink:href="#text-path-a">',
+            quoteToken,
+            unicode" • ",
+            quoteTokenSymbol,
+            ' <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" /></textPath></text>'
         );
     }
 
@@ -218,17 +255,15 @@ library NFTSVG {
         string memory baseTokenSymbol,
         string memory feeTier
     ) private pure returns (string memory svg) {
-        svg = string(
-            abi.encodePacked(
-                '<g mask="url(#fade-symbol)"><rect fill="none" x="0px" y="0px" width="290px" height="200px" /> <text y="70px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="36px">',
-                quoteTokenSymbol,
-                "/",
-                baseTokenSymbol,
-                '</text><text y="115px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="36px">',
-                feeTier,
-                "</text></g>",
-                '<rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />'
-            )
+        svg = string.concat(
+            '<g mask="url(#fade-symbol)"><rect fill="none" x="0px" y="0px" width="290px" height="200px" /> <text y="70px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="36px">',
+            quoteTokenSymbol,
+            "/",
+            baseTokenSymbol,
+            '</text><text y="115px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="36px">',
+            feeTier,
+            "</text></g>",
+            '<rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />'
         );
     }
 
@@ -242,26 +277,24 @@ library NFTSVG {
             ? "#fade-down"
             : "#none";
         string memory curve = getCurve(tickLower, tickUpper, tickSpacing);
-        svg = string(
-            abi.encodePacked(
-                '<g mask="url(',
-                fade,
-                ')"',
-                ' style="transform:translate(72px,189px)">'
-                '<rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />'
-                '<path d="',
-                curve,
-                '" stroke="rgba(0,0,0,0.3)" stroke-width="32px" fill="none" stroke-linecap="round" />',
-                '</g><g mask="url(',
-                fade,
-                ')"',
-                ' style="transform:translate(72px,189px)">',
-                '<rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />',
-                '<path d="',
-                curve,
-                '" stroke="rgba(255,255,255,1)" fill="none" stroke-linecap="round" /></g>',
-                generateSVGCurveCircle(overRange)
-            )
+        svg = string.concat(
+            '<g mask="url(',
+            fade,
+            ')"',
+            ' style="transform:translate(72px,189px)">'
+            '<rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />'
+            '<path d="',
+            curve,
+            '" stroke="rgba(0,0,0,0.3)" stroke-width="32px" fill="none" stroke-linecap="round" />',
+            '</g><g mask="url(',
+            fade,
+            ')"',
+            ' style="transform:translate(72px,189px)">',
+            '<rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />',
+            '<path d="',
+            curve,
+            '" stroke="rgba(255,255,255,1)" fill="none" stroke-linecap="round" /></g>',
+            generateSVGCurveCircle(overRange)
         );
     }
 
@@ -298,33 +331,29 @@ library NFTSVG {
         string memory curvex2 = "217";
         string memory curvey2 = "334";
         if (overRange == 1 || overRange == -1) {
-            svg = string(
-                abi.encodePacked(
-                    '<circle cx="',
-                    overRange == -1 ? curvex1 : curvex2,
-                    'px" cy="',
-                    overRange == -1 ? curvey1 : curvey2,
-                    'px" r="4px" fill="white" /><circle cx="',
-                    overRange == -1 ? curvex1 : curvex2,
-                    'px" cy="',
-                    overRange == -1 ? curvey1 : curvey2,
-                    'px" r="24px" fill="none" stroke="white" />'
-                )
+            svg = string.concat(
+                '<circle cx="',
+                overRange == -1 ? curvex1 : curvex2,
+                'px" cy="',
+                overRange == -1 ? curvey1 : curvey2,
+                'px" r="4px" fill="white" /><circle cx="',
+                overRange == -1 ? curvex1 : curvex2,
+                'px" cy="',
+                overRange == -1 ? curvey1 : curvey2,
+                'px" r="24px" fill="none" stroke="white" />'
             );
         } else {
-            svg = string(
-                abi.encodePacked(
-                    '<circle cx="',
-                    curvex1,
-                    'px" cy="',
-                    curvey1,
-                    'px" r="4px" fill="white" />',
-                    '<circle cx="',
-                    curvex2,
-                    'px" cy="',
-                    curvey2,
-                    'px" r="4px" fill="white" />'
-                )
+            svg = string.concat(
+                '<circle cx="',
+                curvex1,
+                'px" cy="',
+                curvey1,
+                'px" r="4px" fill="white" />',
+                '<circle cx="',
+                curvex2,
+                'px" cy="',
+                curvey2,
+                'px" r="4px" fill="white" />'
             );
         }
     }
@@ -343,8 +372,37 @@ library NFTSVG {
             tickLower,
             tickUpper
         );
-        svg = string(
-            abi.encodePacked(
+        svg = string.concat(
+            generateSVGPositionDataAndLocationCurvePartOne(
+                tokenId,
+                str1length,
+                str2length,
+                str3length,
+                tickLowerStr,
+                tickUpperStr
+            ),
+            "</text></g>"
+            '<g style="transform:translate(226px, 433px)">',
+            '<rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
+            '<path stroke-linecap="round" d="M8 9C8.00004 22.9494 16.2099 28 27 28" fill="none" stroke="white" />',
+            '<circle style="transform:translate3d(',
+            xCoord,
+            "px, ",
+            yCoord,
+            'px, 0px)" cx="0px" cy="0px" r="4px" fill="white"/></g>'
+        );
+    }
+
+    function generateSVGPositionDataAndLocationCurvePartOne(
+        string memory tokenId,
+        uint256 str1length,
+        uint256 str2length,
+        uint256 str3length,
+        string memory tickLowerStr,
+        string memory tickUpperStr
+    ) private pure returns (string memory) {
+        return
+            string.concat(
                 ' <g style="transform:translate(29px, 384px)">',
                 '<rect width="',
                 uint256(7 * (str1length + 4)).toString(),
@@ -364,18 +422,8 @@ library NFTSVG {
                 uint256(7 * (str3length + 4)).toString(),
                 'px" height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />',
                 '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Max Tick: </tspan>',
-                tickUpperStr,
-                "</text></g>"
-                '<g style="transform:translate(226px, 433px)">',
-                '<rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
-                '<path stroke-linecap="round" d="M8 9C8.00004 22.9494 16.2099 28 27 28" fill="none" stroke="white" />',
-                '<circle style="transform:translate3d(',
-                xCoord,
-                "px, ",
-                yCoord,
-                'px, 0px)" cx="0px" cy="0px" r="4px" fill="white"/></g>'
-            )
-        );
+                tickUpperStr
+            );
     }
 
     function tickToString(int24 tick) private pure returns (string memory) {
@@ -420,14 +468,12 @@ library NFTSVG {
         address poolAddress
     ) private pure returns (string memory svg) {
         if (isRare(tokenId, poolAddress)) {
-            svg = string(
-                abi.encodePacked(
-                    '<g style="transform:translate(226px, 392px)"><rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
-                    '<g><path style="transform:translate(6px,6px)" d="M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 ',
-                    "11.3478L24 12L14.4341 12.6522L22.3923 18L13.7819 13.7819L18 22.3923L12.6522 14.4341L12 24L11.3478 14.4341L6 22.39",
-                    '23L10.2181 13.7819L1.6077 18L9.56587 12.6522L0 12L9.56587 11.3478L1.6077 6L10.2181 10.2181L6 1.6077L11.3478 9.56587L12 0Z" fill="white" />',
-                    '<animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="10s" repeatCount="indefinite"/></g></g>'
-                )
+            svg = string.concat(
+                '<g style="transform:translate(226px, 392px)"><rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
+                '<g><path style="transform:translate(6px,6px)" d="M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 ',
+                "11.3478L24 12L14.4341 12.6522L22.3923 18L13.7819 13.7819L18 22.3923L12.6522 14.4341L12 24L11.3478 14.4341L6 22.39",
+                '23L10.2181 13.7819L1.6077 18L9.56587 12.6522L0 12L9.56587 11.3478L1.6077 6L10.2181 10.2181L6 1.6077L11.3478 9.56587L12 0Z" fill="white" />',
+                '<animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="10s" repeatCount="indefinite"/></g></g>'
             );
         } else {
             svg = "";
