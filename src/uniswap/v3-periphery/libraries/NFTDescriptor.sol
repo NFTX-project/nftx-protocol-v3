@@ -11,6 +11,7 @@ import "base64-sol/base64.sol";
 import "./HexStrings.sol";
 import "./NFTSVG.sol";
 
+// NOTE: This library contains a public function and hence needs to be deployed externally
 library NFTDescriptor {
     using TickMath for int24;
     using Strings for uint256;

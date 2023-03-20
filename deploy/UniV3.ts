@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment, Network } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
+import { ethers, constants } from "ethers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -14,9 +15,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
 
+  const NFTDescriptor = await deploy("NFTDescriptor", {
+    from: deployer,
+    log: true,
+  });
+
   const descriptor = await deploy("NonfungibleTokenPositionDescriptor", {
     from: deployer,
-    args: [weth.address, ""],
+    libraries: {
+      NFTDescriptor: NFTDescriptor.address,
+    },
+    args: [weth.address, constants.HashZero],
     log: true,
   });
 
