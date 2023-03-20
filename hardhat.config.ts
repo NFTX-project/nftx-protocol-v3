@@ -11,15 +11,83 @@ import "hardhat-deploy-ethers";
 import "hardhat-abi-exporter";
 import "hardhat-tracer";
 import "@nomicfoundation/hardhat-foundry";
+import "hardhat-contract-sizer";
+
+const DEFAULT_COMPILER_SETTINGS = {
+  version: "0.8.15",
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 800,
+    },
+    metadata: {
+      bytecodeHash: "none",
+    },
+  },
+};
+
+const LOW_OPTIMIZER_COMPILER_SETTINGS = {
+  version: "0.8.15",
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 2_000,
+    },
+    metadata: {
+      bytecodeHash: "none",
+    },
+  },
+};
+
+const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
+  version: "0.8.15",
+  settings: {
+    viaIR: true,
+    optimizer: {
+      enabled: true,
+      runs: 1_000,
+    },
+    metadata: {
+      bytecodeHash: "none",
+    },
+  },
+};
+
+const UNICORE_OPTIMIZER_COMPILER_SETTINGS = {
+  version: "0.8.15",
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 380,
+    },
+    metadata: {
+      bytecodeHash: "none",
+    },
+  },
+};
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.15",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 800,
-      },
+    compilers: [DEFAULT_COMPILER_SETTINGS],
+    overrides: {
+      "src/uniswap/v3-core/UniswapV3Factory.sol":
+        UNICORE_OPTIMIZER_COMPILER_SETTINGS,
+      "src/uniswap/v3-core/UniswapV3Pool.sol":
+        UNICORE_OPTIMIZER_COMPILER_SETTINGS,
+      "src/uniswap/v3-core/UniswapV3PoolDeployer.sol":
+        UNICORE_OPTIMIZER_COMPILER_SETTINGS,
+      "src/uniswap/v3-periphery/NonfungiblePositionManager.sol":
+        LOW_OPTIMIZER_COMPILER_SETTINGS,
+      "src/uniswap/v3-periphery/test/MockTimeNonfungiblePositionManager.sol":
+        LOW_OPTIMIZER_COMPILER_SETTINGS,
+      "src/uniswap/v3-periphery/test/NFTDescriptorTest.sol":
+        LOWEST_OPTIMIZER_COMPILER_SETTINGS,
+      "src/uniswap/v3-periphery/NonfungibleTokenPositionDescriptor.sol":
+        LOWEST_OPTIMIZER_COMPILER_SETTINGS,
+      "src/uniswap/v3-periphery/libraries/NFTDescriptor.sol":
+        LOWEST_OPTIMIZER_COMPILER_SETTINGS,
+      "src/uniswap/v3-periphery/libraries/NFTSVG.sol":
+        LOWEST_OPTIMIZER_COMPILER_SETTINGS,
     },
   },
   namedAccounts: {
@@ -68,7 +136,13 @@ const config: HardhatUserConfig = {
   },
   paths: {
     sources: "src",
-    cache: "hh-cache",
+    cache: "cache/hh",
+  },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
   },
 };
 

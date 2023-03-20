@@ -4,6 +4,8 @@
   "scripts": {
     "prepare": "husky install",
     "test": "forge test",
+    "compile": "hardhat compile",
+    "clean": "hardhat clean",
     "deploy:goerli": "hardhat deploy --network goerli",
     "verify:goerli": "hardhat --network goerli etherscan-verify",
     "deploy:mainnet": "hardhat deploy --network mainnet",
@@ -25,6 +27,7 @@
     "ethers": "^5.7.2",
     "hardhat": "^2.4.1",
     "hardhat-abi-exporter": "^2.2.1",
+    "hardhat-contract-sizer": "^2.8.0",
     "hardhat-deploy": "^0.11.22",
     "hardhat-deploy-ethers": "0.3.0-beta.13",
     "hardhat-tracer": "^1.0.0-alpha.6",

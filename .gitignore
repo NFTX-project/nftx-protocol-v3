@@ -23,7 +23,6 @@ bin
 # Hardhat
 abi
 artifacts
-hh-cache
 typechain
 deployments/localhost
 
