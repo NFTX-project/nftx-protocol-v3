@@ -44,7 +44,7 @@ contract NFTXFeeDistributorV3 is
 
     // Total of allocation points per feeReceiver.
     uint256 public override allocTotal;
-    FeeReceiver[] public feeReceivers;
+    FeeReceiver[] public override feeReceivers;
 
     bool public override distributionPaused;
 
@@ -143,6 +143,8 @@ contract NFTXFeeDistributorV3 is
         address receiver,
         ReceiverType receiverType
     ) external override onlyOwner {
+        if (receiverId >= feeReceivers.length) revert IdOutOfBounds();
+        
         FeeReceiver storage feeReceiver = feeReceivers[receiverId];
         address oldReceiver = feeReceiver.receiver;
         feeReceiver.receiver = receiver;

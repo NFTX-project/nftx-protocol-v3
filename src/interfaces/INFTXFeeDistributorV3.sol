@@ -40,9 +40,6 @@ interface INFTXFeeDistributorV3 {
     function treasury() external returns (address);
 
     function allocTotal() external returns (uint256);
-
-    /**
-    // Overriding with the following functions doesn't work:
     
     function feeReceivers(uint256)
         external
@@ -50,11 +47,8 @@ interface INFTXFeeDistributorV3 {
         returns (
             address receiver,
             uint256 allocPoint,
-            uint8 receiverType
+            ReceiverType receiverType
         );
-
-    function feeReceivers(uint256) external view returns (FeeReceiver memory);
-    */
 
     function distributionPaused() external returns (bool);
 
