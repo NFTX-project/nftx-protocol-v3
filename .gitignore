@@ -16,3 +16,15 @@ docs/
 
 # JS
 node_modules
+
+# VSCode Solidity Plugin
+bin
+
+# Hardhat
+abi
+artifacts
+typechain
+deployments/localhost
+
+# Misc
+.DS_STORE

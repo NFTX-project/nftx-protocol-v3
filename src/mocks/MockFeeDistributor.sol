@@ -5,36 +5,37 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";
 
-import {NFTXRouter} from "@src/NFTXRouter.sol";
-
-import {vToken} from "./vToken.sol";
+import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
+import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 
 contract MockFeeDistributor {
-    NFTXRouter public nftxRouter;
-    vToken public vtoken;
+    INFTXRouter public nftxRouter;
+    INFTXVaultFactory public immutable nftxVaultFactory;
 
-    uint24 public constant FEE = 10000;
+    IERC20 public immutable WETH;
+    uint24 public constant REWARD_FEE_TIER = 10000;
 
-    constructor(NFTXRouter nftxRouter_, vToken vtoken_) {
+    constructor(INFTXRouter nftxRouter_, INFTXVaultFactory nftxVaultFactory_) {
+        WETH = IERC20(nftxRouter_.WETH());
         nftxRouter = nftxRouter_;
-        vtoken = vtoken_;
+        nftxVaultFactory = nftxVaultFactory_;
     }
 
-    function distribute(
-        uint256 /** vaultId */
-    ) external {
+    function initializeVaultReceivers(uint256 /** vaultId */) external {}
+
+    function distribute(uint256 vaultId) external {
+        address vtoken = nftxVaultFactory.vault(vaultId);
+
         IUniswapV3Pool pool = IUniswapV3Pool(
-            nftxRouter.getPool(address(vtoken))
+            nftxRouter.getPool(vtoken, REWARD_FEE_TIER)
         );
 
-        uint256 tokenBalance = vtoken.balanceOf(address(this));
+        uint256 wethBalance = WETH.balanceOf(address(this));
 
         // send rewards to pool
-        vtoken.transfer(address(pool), tokenBalance);
+        WETH.transfer(address(pool), wethBalance);
         // distribute rewards with LPs
-        pool.distributeRewards(
-            tokenBalance,
-            nftxRouter.isVToken0(address(vtoken))
-        );
+        pool.distributeRewards(wethBalance, !nftxRouter.isVToken0(vtoken));
     }
 }

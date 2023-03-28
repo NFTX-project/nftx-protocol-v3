@@ -46,11 +46,10 @@ library NFTSVG {
         string y3;
     }
 
-    function generateSVG(string memory defs, string memory body)
-        internal
-        pure
-        returns (string memory svg)
-    {
+    function generateSVG(
+        string memory defs,
+        string memory body
+    ) internal pure returns (string memory svg) {
         /*
         address: "0xe8ab59d3bcde16a29912de83a90eb39628cfc163",
         msg: "Forged in SVG for Uniswap in 2021 by 0xe8ab59d3bcde16a29912de83a90eb39628cfc163",
@@ -60,11 +59,9 @@ library NFTSVG {
         return string(abi.encodePacked(defs, body, "</svg>"));
     }
 
-    function generateSVGBody(SVGBodyParams memory params)
-        internal
-        pure
-        returns (string memory body)
-    {
+    function generateSVGBody(
+        SVGBodyParams memory params
+    ) internal pure returns (string memory body) {
         return
             string.concat(
                 generateSVGBodyPartOne(params),
@@ -77,11 +74,9 @@ library NFTSVG {
             );
     }
 
-    function generateSVGBodyPartOne(SVGBodyParams memory params)
-        private
-        pure
-        returns (string memory)
-    {
+    function generateSVGBodyPartOne(
+        SVGBodyParams memory params
+    ) private pure returns (string memory) {
         return
             string.concat(
                 generateSVGBorderText(
@@ -121,22 +116,18 @@ library NFTSVG {
             );
     }
 
-    function generateSVGDefs(SVGDefsParams memory params)
-        internal
-        pure
-        returns (string memory svg)
-    {
+    function generateSVGDefs(
+        SVGDefsParams memory params
+    ) internal pure returns (string memory svg) {
         svg = string.concat(
             generateSVGDefsPartOne(params),
             generateSVGDefsPartTwo(params)
         );
     }
 
-    function generateSVGDefsPartOne(SVGDefsParams memory params)
-        private
-        pure
-        returns (string memory)
-    {
+    function generateSVGDefsPartOne(
+        SVGDefsParams memory params
+    ) private pure returns (string memory) {
         return
             string.concat(
                 '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"',
@@ -185,11 +176,9 @@ library NFTSVG {
             );
     }
 
-    function generateSVGDefsPartTwo(SVGDefsParams memory params)
-        private
-        pure
-        returns (string memory)
-    {
+    function generateSVGDefsPartTwo(
+        SVGDefsParams memory params
+    ) private pure returns (string memory) {
         return
             string.concat(
                 Base64.encode(
@@ -334,11 +323,9 @@ library NFTSVG {
         }
     }
 
-    function generateSVGCurveCircle(int8 overRange)
-        internal
-        pure
-        returns (string memory svg)
-    {
+    function generateSVGCurveCircle(
+        int8 overRange
+    ) internal pure returns (string memory svg) {
         string memory curvex1 = "73";
         string memory curvey1 = "190";
         string memory curvex2 = "217";
@@ -448,11 +435,10 @@ library NFTSVG {
         return string(abi.encodePacked(sign, uint256(uint24(tick)).toString()));
     }
 
-    function rangeLocation(int24 tickLower, int24 tickUpper)
-        internal
-        pure
-        returns (string memory, string memory)
-    {
+    function rangeLocation(
+        int24 tickLower,
+        int24 tickUpper
+    ) internal pure returns (string memory, string memory) {
         int24 midPoint = (tickLower + tickUpper) / 2;
         if (midPoint < -125_000) {
             return ("8", "7");
@@ -477,11 +463,10 @@ library NFTSVG {
         }
     }
 
-    function generateSVGRareSparkle(uint256 tokenId, address poolAddress)
-        private
-        pure
-        returns (string memory svg)
-    {
+    function generateSVGRareSparkle(
+        uint256 tokenId,
+        address poolAddress
+    ) private pure returns (string memory svg) {
         if (isRare(tokenId, poolAddress)) {
             svg = string.concat(
                 '<g style="transform:translate(226px, 392px)"><rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
@@ -495,11 +480,10 @@ library NFTSVG {
         }
     }
 
-    function isRare(uint256 tokenId, address poolAddress)
-        internal
-        pure
-        returns (bool)
-    {
+    function isRare(
+        uint256 tokenId,
+        address poolAddress
+    ) internal pure returns (bool) {
         bytes32 h = keccak256(abi.encodePacked(tokenId, poolAddress));
         return
             uint256(h) <
