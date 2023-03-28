@@ -88,6 +88,24 @@ contract NFTXFeeDistributorV3Tests is TestBase {
     }
 
     function test_feeDistribution_Success() external {
+        uint256 poolAllocPoint = 0.8 ether;
+        uint256 inventoryAllocPoint = 0.15 ether;
+        uint256 addressAllocPoint = 0.05 ether;
+
+        address receiverAddress = makeAddr("receiverAddress");
+
+        // add remaining types of receivers as well
+        feeDistributor.addReceiver(
+            address(inventoryStaking),
+            inventoryAllocPoint,
+            INFTXFeeDistributorV3.ReceiverType.INVENTORY
+        );
+        feeDistributor.addReceiver(
+            receiverAddress,
+            addressAllocPoint,
+            INFTXFeeDistributorV3.ReceiverType.ADDRESS
+        );
+
         uint256 mintQty = 5;
 
         // mint position
@@ -102,6 +120,13 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         _mintPosition(mintQty);
         // TODO: add console logs for initial values as well, in all test cases
 
+        uint256 preInventoryStakingWethBalance = weth.balanceOf(
+            address(inventoryStaking)
+        );
+        uint256 preReceiverAddressWethBalance = weth.balanceOf(
+            address(receiverAddress)
+        );
+
         uint256 wethFees = 2 ether;
 
         // distribute fees
@@ -109,15 +134,32 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         weth.transfer(address(feeDistributor), wethFees);
         feeDistributor.distribute(0);
 
+        uint256 postInventoryStakingWethBalance = weth.balanceOf(
+            address(inventoryStaking)
+        );
+        uint256 postReceiverAddressWethBalance = weth.balanceOf(
+            address(receiverAddress)
+        );
+
+        uint256 expectedPoolWethFees = (wethFees * poolAllocPoint) / 1 ether;
+
         // NOTE: We have 2 LP positions with the exact same liquidity. So the fees is distributed equally between them both
         // So for wethFees = 2, each position should get 1 weth as fees, but due to rounding gets 0.999..999 of weth as fees
 
         // Findings: On liquidity withdrawal 1 wei gets left in the pool as well.
         // So 1 wei of distributed weth and 1 wei from initial provided liquidity gets stuck in the pool (for a total of 2 wei)
 
-        (, uint256 _wethFees) = _getAccumulatedFees(positionId);
-        console.log("_wethFees", _wethFees);
-        assertGe(_wethFees, wethFees / 2 - 1);
+        (, uint256 poolWethFees) = _getAccumulatedFees(positionId);
+        console.log("poolWethFees", poolWethFees);
+        assertGe(poolWethFees, expectedPoolWethFees / 2 - 1);
+        assertEq(
+            postInventoryStakingWethBalance - preInventoryStakingWethBalance,
+            (wethFees * inventoryAllocPoint) / 1 ether
+        );
+        assertEq(
+            postReceiverAddressWethBalance - preReceiverAddressWethBalance,
+            (wethFees * addressAllocPoint) / 1 ether
+        );
 
         // remove liquidity
         uint256[] memory nftIds = new uint256[](mintQty - 1); // accounting for that 1 wei difference allows us to redeem 1 less NFT
@@ -151,7 +193,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         uint256 ethReceived = address(this).balance - preETHBalance;
 
         console.log("NFT received", nftReceived);
-        // ethReceived = ethDeposited + _wethFees + swapped 0.9999..99 vToken into ETH
+        // ethReceived = ethDeposited + poolWethFees + swapped 0.9999..99 vToken into ETH
         console.log("ETH received", ethReceived);
     }
 

@@ -33,7 +33,7 @@ contract NFTXFeeDistributorV3 is
     INFTXVaultFactory public immutable override nftxVaultFactory;
     INFTXInventoryStakingV3 public immutable override inventoryStaking;
     IERC20 public immutable override WETH;
-    uint24 public constant override REWARD_FEE_TIER = 10000;
+    uint24 public constant override REWARD_FEE_TIER = 10_000;
 
     // =============================================================
     //                            STORAGE
@@ -144,7 +144,7 @@ contract NFTXFeeDistributorV3 is
         ReceiverType receiverType
     ) external override onlyOwner {
         if (receiverId >= feeReceivers.length) revert IdOutOfBounds();
-        
+
         FeeReceiver storage feeReceiver = feeReceivers[receiverId];
         address oldReceiver = feeReceiver.receiver;
         feeReceiver.receiver = receiver;
