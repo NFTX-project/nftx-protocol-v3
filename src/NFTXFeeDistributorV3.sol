@@ -225,14 +225,17 @@ contract NFTXFeeDistributorV3 is
             );
 
             if (exists) {
-                WETH.transfer(pool, wethAmountToSend);
-                // TODO: add test case to check this doesn't revert if pool has 0 liquidity
-                IUniswapV3Pool(pool).distributeRewards(
-                    wethAmountToSend,
-                    !nftxRouter.isVToken0(address(vault))
-                );
+                uint256 liquidity = IUniswapV3Pool(pool).liquidity();
 
-                tokenSent = true;
+                if (liquidity > 0) {
+                    WETH.transfer(pool, wethAmountToSend);
+                    IUniswapV3Pool(pool).distributeRewards(
+                        wethAmountToSend,
+                        !nftxRouter.isVToken0(address(vault))
+                    );
+
+                    tokenSent = true;
+                }
             }
         } else {
             WETH.transfer(feeReceiver.receiver, wethAmountToSend);

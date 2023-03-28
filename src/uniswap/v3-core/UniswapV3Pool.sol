@@ -821,16 +821,16 @@ contract UniswapV3Pool is IUniswapV3Pool {
         uint256 feeGrowthGlobalX128 = isToken0 ? feeGrowthGlobal0X128 : feeGrowthGlobal1X128;
 
         // update global fee tracker
-        if (liquidity > 0) {
-            unchecked {
-                feeGrowthGlobalX128 += FullMath.mulDiv(rewardsAmount, FixedPoint128.Q128, liquidity);
-            }
+        // NOTE: liquidity > 0 check enforced in FeeDistributor, before calling this function
 
-            if (isToken0) {
-                feeGrowthGlobal0X128 = feeGrowthGlobalX128;
-            } else {
-                feeGrowthGlobal1X128 = feeGrowthGlobalX128;
-            }
+        unchecked {
+            feeGrowthGlobalX128 += FullMath.mulDiv(rewardsAmount, FixedPoint128.Q128, liquidity);
+        }
+
+        if (isToken0) {
+            feeGrowthGlobal0X128 = feeGrowthGlobalX128;
+        } else {
+            feeGrowthGlobal1X128 = feeGrowthGlobalX128;
         }
     }
 

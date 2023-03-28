@@ -2,8 +2,9 @@
 pragma solidity =0.8.15;
 
 import {console} from "forge-std/Test.sol";
+import {Helpers} from "./lib/Helpers.sol";
 
-import {UniswapV3Pool} from "@uni-core/UniswapV3Pool.sol";
+import {UniswapV3Pool, IUniswapV3Pool} from "@uni-core/UniswapV3Pool.sol";
 import {INFTXRouter} from "@src/NFTXRouter.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 
@@ -77,6 +78,36 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         uint256 preTreasuryWethBalance = weth.balanceOf(TREASURY);
 
         uint256 wethFees = 2 ether;
+
+        // distribute fees
+        weth.deposit{value: wethFees}();
+        weth.transfer(address(feeDistributor), wethFees);
+        feeDistributor.distribute(0);
+
+        uint256 postTreasuryWethBalance = weth.balanceOf(TREASURY);
+        assertEq(postTreasuryWethBalance - preTreasuryWethBalance, wethFees);
+    }
+
+    function test_feeDistribution_whenZeroLiquidity() external {
+        // deploy pool, but not provide any liquidity
+        positionManager.createAndInitializePoolIfNecessary(
+            address(vtoken) < address(weth) ? address(vtoken) : address(weth),
+            address(vtoken) < address(weth) ? address(weth) : address(vtoken),
+            feeDistributor.REWARD_FEE_TIER(),
+            Helpers.encodeSqrtRatioX96(5 ether, 1 ether)
+        );
+
+        (address pool, bool exists) = nftxRouter.getPoolExists(
+            0,
+            feeDistributor.REWARD_FEE_TIER()
+        );
+        uint256 liquidity = IUniswapV3Pool(pool).liquidity();
+        assertTrue(exists);
+        assertEq(liquidity, 0);
+
+        uint256 wethFees = 2 ether;
+
+        uint256 preTreasuryWethBalance = weth.balanceOf(TREASURY);
 
         // distribute fees
         weth.deposit{value: wethFees}();
