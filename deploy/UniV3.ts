@@ -10,8 +10,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const weth = await deployments.get("MockWETH");
 
-  const factory = await deploy("UniswapV3Factory", {
+  const factory = await deploy("UniswapV3FactoryUpgradeable", {
     from: deployer,
+    proxy: {
+      proxyContract: "OpenZeppelinTransparentProxy",
+      execute: {
+        init: {
+          methodName: "__UniswapV3FactoryUpgradeable_init",
+          args: [],
+        },
+      },
+    },
     log: true,
   });
 

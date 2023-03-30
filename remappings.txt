@@ -1,5 +1,6 @@
 @uniswap/v3-core/contracts/=src/uniswap/v3-core/
 @openzeppelin/=lib/openzeppelin-contracts/
+@openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/
 @uniswap/lib/=lib/solidity-lib/
 @uniswap/v2-core/=lib/v2-core/
 base64-sol/=src/uniswap/v3-periphery/libraries/

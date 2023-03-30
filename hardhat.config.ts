@@ -70,7 +70,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [DEFAULT_COMPILER_SETTINGS],
     overrides: {
-      "src/uniswap/v3-core/UniswapV3Factory.sol":
+      "src/uniswap/v3-core/UniswapV3FactoryUpgradeable.sol":
         UNICORE_OPTIMIZER_COMPILER_SETTINGS,
       "src/uniswap/v3-core/UniswapV3Pool.sol":
         UNICORE_OPTIMIZER_COMPILER_SETTINGS,

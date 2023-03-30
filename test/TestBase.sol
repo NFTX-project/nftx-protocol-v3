@@ -6,7 +6,7 @@ import {Helpers} from "./lib/Helpers.sol";
 import {TestExtend} from "./lib/TestExtend.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
-import {UniswapV3Factory} from "@uni-core/UniswapV3Factory.sol";
+import {UniswapV3FactoryUpgradeable} from "@uni-core/UniswapV3FactoryUpgradeable.sol";
 import {UniswapV3Pool} from "@uni-core/UniswapV3Pool.sol";
 import {NonfungibleTokenPositionDescriptor} from "@uni-periphery/NonfungibleTokenPositionDescriptor.sol";
 import {NonfungiblePositionManager, INonfungiblePositionManager} from "@uni-periphery/NonfungiblePositionManager.sol";
@@ -26,7 +26,7 @@ import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
 contract TestBase is TestExtend, ERC721Holder {
-    UniswapV3Factory factory;
+    UniswapV3FactoryUpgradeable factory;
     NonfungibleTokenPositionDescriptor descriptor;
     MockWETH weth;
     NonfungiblePositionManager positionManager;
@@ -50,7 +50,8 @@ contract TestBase is TestExtend, ERC721Holder {
     function setUp() external {
         weth = new MockWETH();
 
-        factory = new UniswapV3Factory();
+        factory = new UniswapV3FactoryUpgradeable();
+        factory.__UniswapV3FactoryUpgradeable_init();
         descriptor = new NonfungibleTokenPositionDescriptor(
             address(weth),
             bytes32(0)

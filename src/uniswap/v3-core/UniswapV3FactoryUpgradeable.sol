@@ -2,6 +2,7 @@
 pragma solidity =0.8.15;
 
 import {IUniswapV3Factory} from "./interfaces/IUniswapV3Factory.sol";
+import {Initializable} from "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 
 import {UniswapV3PoolDeployer} from "./UniswapV3PoolDeployer.sol";
 
@@ -9,7 +10,11 @@ import {UniswapV3Pool} from "./UniswapV3Pool.sol";
 
 /// @title Canonical Uniswap V3 factory
 /// @notice Deploys Uniswap V3 pools and manages ownership and control over pool protocol fees
-contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer {
+contract UniswapV3FactoryUpgradeable is
+    IUniswapV3Factory,
+    Initializable,
+    UniswapV3PoolDeployer
+{
     /// @inheritdoc IUniswapV3Factory
     address public override owner;
     /// @inheritdoc IUniswapV3Factory
@@ -22,7 +27,7 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer {
         public
         override getPool;
 
-    constructor() {
+    function __UniswapV3FactoryUpgradeable_init() external {
         owner = msg.sender;
         emit OwnerChanged(address(0), msg.sender);
 

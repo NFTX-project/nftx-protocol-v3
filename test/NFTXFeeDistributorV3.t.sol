@@ -18,7 +18,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
     event UpdateTreasuryAddress(address newTreasury);
     event PauseDistribution(bool paused);
 
-    // UniswapV3Factory#setFeeDistributor
+    // UniswapV3FactoryUpgradeable#setFeeDistributor
 
     function test_setFeeDistributor_RevertsForNonOwner() external {
         hoax(makeAddr("nonOwner"));
