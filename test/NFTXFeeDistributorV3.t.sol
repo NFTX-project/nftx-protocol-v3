@@ -28,6 +28,10 @@ contract NFTXFeeDistributorV3Tests is TestBase {
 
     function test_setFeeDistributor_Success() external {
         address newFeeDistributor = makeAddr("newFeeDistributor");
+
+        address preFeeDistributor = factory.feeDistributor();
+        assertTrue(preFeeDistributor != newFeeDistributor);
+
         factory.setFeeDistributor(newFeeDistributor);
         assertEq(factory.feeDistributor(), newFeeDistributor);
     }
@@ -446,7 +450,6 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         address newTreasury = makeAddr("newTreasury");
 
         address preTreasury = feeDistributor.treasury();
-
         assertTrue(preTreasury != newTreasury);
 
         vm.expectEmit(false, false, false, true);

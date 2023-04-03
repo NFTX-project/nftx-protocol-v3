@@ -9,3 +9,4 @@ base64-sol/=src/uniswap/v3-periphery/libraries/
 @uni-periphery/=src/uniswap/v3-periphery/
 forge-std/=lib/forge-std/src/
 @src/=src/
+@test/=test/
