@@ -74,7 +74,7 @@ const config: HardhatUserConfig = {
         UNICORE_OPTIMIZER_COMPILER_SETTINGS,
       "src/uniswap/v3-core/UniswapV3PoolUpgradeable.sol":
         UNICORE_OPTIMIZER_COMPILER_SETTINGS,
-      "src/uniswap/v3-core/UniswapV3PoolDeployer.sol":
+      "src/uniswap/v3-core/UniswapV3PoolDeployerUpgradeable.sol":
         UNICORE_OPTIMIZER_COMPILER_SETTINGS,
       "src/uniswap/v3-periphery/NonfungiblePositionManager.sol":
         LOW_OPTIMIZER_COMPILER_SETTINGS,
