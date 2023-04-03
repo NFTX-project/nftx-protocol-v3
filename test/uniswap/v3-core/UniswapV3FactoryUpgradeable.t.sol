@@ -20,7 +20,7 @@ contract UniswapV3FactoryUpgradeableTests is TestExtend {
 
     // UniswapV3FactoryUpgradeable#init
 
-    function test_init() external {
+    function test_init_Success() external {
         assertEq(factory.owner(), address(this));
         assertEq(factory.implementation(), address(poolImpl));
     }
