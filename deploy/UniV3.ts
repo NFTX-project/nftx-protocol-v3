@@ -10,6 +10,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const weth = await deployments.get("MockWETH");
 
+  const poolImpl = await deploy("UniswapV3PoolUpgradeable", {
+    from: deployer,
+    log: true,
+  });
+
   const factory = await deploy("UniswapV3FactoryUpgradeable", {
     from: deployer,
     proxy: {
@@ -17,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "__UniswapV3FactoryUpgradeable_init",
-          args: [],
+          args: [poolImpl.address],
         },
       },
     },
