@@ -4,8 +4,8 @@ pragma solidity =0.8.15;
 import "../libraries/PoolAddress.sol";
 
 contract PoolAddressTest {
-    function BEACON_CODE() external pure returns (bytes memory) {
-        return PoolAddress.BEACON_CODE;
+    function BEACON_CODE_HASH() external pure returns (bytes32) {
+        return PoolAddress.BEACON_CODE_HASH;
     }
 
     function computeAddress(

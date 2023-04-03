@@ -6,7 +6,8 @@ import {Create2BeaconProxy} from "@src/proxy/Create2BeaconProxy.sol";
 
 /// @title Provides functions for deriving a pool address from the factory, tokens, and the fee
 library PoolAddress {
-    bytes internal constant BEACON_CODE = type(Create2BeaconProxy).creationCode;
+    bytes32 internal constant BEACON_CODE_HASH =
+        keccak256(type(Create2BeaconProxy).creationCode);
 
     /// @notice The identifying key of the pool
     struct PoolKey {
@@ -40,7 +41,7 @@ library PoolAddress {
         require(key.token0 < key.token1);
         pool = Create2Upgradeable.computeAddress(
             keccak256(abi.encode(key.token0, key.token1, key.fee)),
-            keccak256(BEACON_CODE),
+            BEACON_CODE_HASH,
             factory
         );
     }
