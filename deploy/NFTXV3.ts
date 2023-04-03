@@ -65,7 +65,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   await execute(
-    "UniswapV3Factory",
+    "UniswapV3FactoryUpgradeable",
     { from: deployer },
     "setFeeDistributor",
     feeDistributor.address

@@ -4,7 +4,7 @@ pragma solidity =0.8.15;
 import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 
-import {UniswapV3Pool, IUniswapV3Pool} from "@uni-core/UniswapV3Pool.sol";
+import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolUpgradeable.sol";
 import {INFTXRouter} from "@src/NFTXRouter.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 
@@ -18,7 +18,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
     event UpdateTreasuryAddress(address newTreasury);
     event PauseDistribution(bool paused);
 
-    // UniswapV3Factory#setFeeDistributor
+    // UniswapV3FactoryUpgradeable#setFeeDistributor
 
     function test_setFeeDistributor_RevertsForNonOwner() external {
         hoax(makeAddr("nonOwner"));
@@ -28,16 +28,20 @@ contract NFTXFeeDistributorV3Tests is TestBase {
 
     function test_setFeeDistributor_Success() external {
         address newFeeDistributor = makeAddr("newFeeDistributor");
+
+        address preFeeDistributor = factory.feeDistributor();
+        assertTrue(preFeeDistributor != newFeeDistributor);
+
         factory.setFeeDistributor(newFeeDistributor);
         assertEq(factory.feeDistributor(), newFeeDistributor);
     }
 
-    // UniswapV3Pool#distributeRewards
+    // UniswapV3PoolUpgradeable#distributeRewards
 
     function test_distributeRewards_RevertsForNonFeeDistributor() external {
         // minting so that Pool is deployed
         _mintPosition(1);
-        UniswapV3Pool pool = UniswapV3Pool(
+        UniswapV3PoolUpgradeable pool = UniswapV3PoolUpgradeable(
             nftxRouter.getPool(address(vtoken), DEFAULT_FEE_TIER)
         );
 
@@ -446,7 +450,6 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         address newTreasury = makeAddr("newTreasury");
 
         address preTreasury = feeDistributor.treasury();
-
         assertTrue(preTreasury != newTreasury);
 
         vm.expectEmit(false, false, false, true);

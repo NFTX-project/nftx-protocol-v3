@@ -2,16 +2,16 @@
 pragma solidity =0.8.15;
 
 import {IUniswapV3Factory} from "./interfaces/IUniswapV3Factory.sol";
+import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
-import {UniswapV3PoolDeployer} from "./UniswapV3PoolDeployer.sol";
-
-import {UniswapV3Pool} from "./UniswapV3Pool.sol";
+import {UniswapV3PoolDeployerUpgradeable, UpgradeableBeacon} from "./UniswapV3PoolDeployerUpgradeable.sol";
 
 /// @title Canonical Uniswap V3 factory
 /// @notice Deploys Uniswap V3 pools and manages ownership and control over pool protocol fees
-contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer {
-    /// @inheritdoc IUniswapV3Factory
-    address public override owner;
+contract UniswapV3FactoryUpgradeable is
+    IUniswapV3Factory,
+    UniswapV3PoolDeployerUpgradeable
+{
     /// @inheritdoc IUniswapV3Factory
     address public override feeDistributor;
 
@@ -22,9 +22,10 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer {
         public
         override getPool;
 
-    constructor() {
-        owner = msg.sender;
-        emit OwnerChanged(address(0), msg.sender);
+    function __UniswapV3FactoryUpgradeable_init(
+        address beaconImplementation_
+    ) external initializer {
+        __UniswapV3PoolDeployerUpgradeable_init(beaconImplementation_);
 
         // TODO: allow different fee tiers
 
@@ -58,21 +59,17 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer {
     }
 
     /// @inheritdoc IUniswapV3Factory
-    function setOwner(address _owner) external override {
-        require(msg.sender == owner);
-        emit OwnerChanged(owner, _owner);
-        owner = _owner;
-    }
-
-    /// @inheritdoc IUniswapV3Factory
-    function setFeeDistributor(address feeDistributor_) external override {
-        require(msg.sender == owner);
+    function setFeeDistributor(
+        address feeDistributor_
+    ) external override onlyOwner {
         feeDistributor = feeDistributor_;
     }
 
     /// @inheritdoc IUniswapV3Factory
-    function enableFeeAmount(uint24 fee, int24 tickSpacing) public override {
-        require(msg.sender == owner);
+    function enableFeeAmount(
+        uint24 fee,
+        int24 tickSpacing
+    ) public override onlyOwner {
         require(fee < 1000000);
         // tick spacing is capped at 16384 to prevent the situation where tickSpacing is so large that
         // TickBitmap#nextInitializedTickWithinOneWord overflows int24 container from a valid tick
@@ -82,5 +79,14 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer {
 
         feeAmountTickSpacing[fee] = tickSpacing;
         emit FeeAmountEnabled(fee, tickSpacing);
+    }
+
+    function owner()
+        public
+        view
+        override(IUniswapV3Factory, OwnableUpgradeable)
+        returns (address)
+    {
+        return super.owner();
     }
 }
