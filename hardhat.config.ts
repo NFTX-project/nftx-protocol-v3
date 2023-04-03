@@ -72,7 +72,7 @@ const config: HardhatUserConfig = {
     overrides: {
       "src/uniswap/v3-core/UniswapV3FactoryUpgradeable.sol":
         UNICORE_OPTIMIZER_COMPILER_SETTINGS,
-      "src/uniswap/v3-core/UniswapV3Pool.sol":
+      "src/uniswap/v3-core/UniswapV3PoolUpgradeable.sol":
         UNICORE_OPTIMIZER_COMPILER_SETTINGS,
       "src/uniswap/v3-core/UniswapV3PoolDeployer.sol":
         UNICORE_OPTIMIZER_COMPILER_SETTINGS,

@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
-// import {UniswapV3Pool} from "@uni-core/UniswapV3Pool.sol";
+import {Create2Upgradeable} from "@openzeppelin-upgradeable/contracts/utils/Create2Upgradeable.sol";
+import {Create2BeaconProxy} from "@src/proxy/Create2BeaconProxy.sol";
 
 /// @title Provides functions for deriving a pool address from the factory, tokens, and the fee
 library PoolAddress {
-    // FIXME: Ensure this value is latest & corresponds to current UniswapV3Pool code
-    // keccak256(type(UniswapV3Pool).creationCode);
-    bytes32 internal constant POOL_INIT_CODE_HASH =
-        0x0a09d935b2baef299d0c7307747ebca250219712e8758e2722ab2e056d32a88f;
+    bytes internal constant BEACON_CODE = type(Create2BeaconProxy).creationCode;
 
     /// @notice The identifying key of the pool
     struct PoolKey {
@@ -40,21 +38,10 @@ library PoolAddress {
         PoolKey memory key
     ) internal pure returns (address pool) {
         require(key.token0 < key.token1);
-        pool = address(
-            uint160(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(
-                            hex"ff",
-                            factory,
-                            keccak256(
-                                abi.encode(key.token0, key.token1, key.fee)
-                            ),
-                            POOL_INIT_CODE_HASH
-                        )
-                    )
-                )
-            )
+        pool = Create2Upgradeable.computeAddress(
+            keccak256(abi.encode(key.token0, key.token1, key.fee)),
+            keccak256(BEACON_CODE),
+            factory
         );
     }
 }
