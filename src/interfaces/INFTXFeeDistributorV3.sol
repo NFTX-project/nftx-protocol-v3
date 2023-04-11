@@ -40,8 +40,10 @@ interface INFTXFeeDistributorV3 {
     function treasury() external returns (address);
 
     function allocTotal() external returns (uint256);
-    
-    function feeReceivers(uint256)
+
+    function feeReceivers(
+        uint256
+    )
         external
         view
         returns (
@@ -74,8 +76,6 @@ interface INFTXFeeDistributorV3 {
     // =============================================================
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
-
-    function initializeVaultReceivers(uint256 vaultId) external;
 
     function distribute(uint256 vaultId) external;
 

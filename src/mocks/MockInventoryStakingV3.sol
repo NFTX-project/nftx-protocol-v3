@@ -16,8 +16,6 @@ contract MockInventoryStakingV3 is INFTXInventoryStakingV3 {
         WETH = WETH_;
     }
 
-    function deployXTokenForVault(uint256 vaultId) external override {}
-
     function receiveRewards(
         uint256 /** vaultId */,
         uint256 wethAmount

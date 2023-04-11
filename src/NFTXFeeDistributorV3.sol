@@ -71,11 +71,6 @@ contract NFTXFeeDistributorV3 is
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
-    // TODO: modify/remove for new Inventory Staking V3
-    function initializeVaultReceivers(uint256 vaultId) external override {
-        inventoryStaking.deployXTokenForVault(vaultId);
-    }
-
     function distribute(uint256 vaultId) external override nonReentrant {
         INFTXVault vault = INFTXVault(nftxVaultFactory.vault(vaultId));
 
