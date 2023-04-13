@@ -18,10 +18,10 @@ import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 
 import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
-import {MockInventoryStakingV3} from "@mocks/MockInventoryStakingV3.sol";
 
 import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
 import {NFTXVaultFactoryUpgradeable} from "@src/v2/NFTXVaultFactoryUpgradeable.sol";
+import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
@@ -34,14 +34,13 @@ contract TestBase is TestExtend, ERC721Holder {
     QuoterV2 quoter;
 
     MockNFT nft;
-    // TODO: replace mock with actual inventory staking v3
-    MockInventoryStakingV3 inventoryStaking;
 
     INFTXVault vtoken;
     NFTXFeeDistributorV3 feeDistributor;
     NFTXVaultUpgradeable vaultImpl;
     NFTXVaultFactoryUpgradeable vaultFactory;
     NFTXRouter nftxRouter;
+    NFTXInventoryStakingV3Upgradeable inventoryStaking;
 
     // TODO: remove this and add tests for different fee tiers
     uint24 constant DEFAULT_FEE_TIER = 10000;
@@ -85,7 +84,8 @@ contract TestBase is TestExtend, ERC721Holder {
         // V2 currently deducts fees in vTokens which messes up with our calculations atm
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
 
-        inventoryStaking = new MockInventoryStakingV3(vaultFactory, weth);
+        inventoryStaking = new NFTXInventoryStakingV3Upgradeable();
+        inventoryStaking.__NFTXInventoryStaking_init(vaultFactory);
         feeDistributor = new NFTXFeeDistributorV3(
             inventoryStaking,
             nftxRouter,

@@ -14,8 +14,17 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         address recipient
     ) external returns (uint256 tokenId);
 
+    function withdraw(uint256 positionId, uint256 vTokenShares) external;
+
+    function collectWethFees(uint256 positionId) external;
+
     function receiveRewards(
         uint256 vaultId,
-        uint256 wethAmount
+        uint256 amount,
+        bool isRewardWeth
     ) external returns (bool);
+
+    function pricePerShareVToken(
+        uint256 vaultId
+    ) external view returns (uint256);
 }

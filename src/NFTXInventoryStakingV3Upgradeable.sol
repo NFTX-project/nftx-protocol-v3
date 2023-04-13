@@ -10,6 +10,7 @@ import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 
 import {INFTXFeeDistributorV3} from "./interfaces/INFTXFeeDistributorV3.sol";
+import {INFTXInventoryStakingV3} from "./interfaces/INFTXInventoryStakingV3.sol";
 
 /**
  * @title NFTX Inventory Staking V3
@@ -19,7 +20,7 @@ import {INFTXFeeDistributorV3} from "./interfaces/INFTXFeeDistributorV3.sol";
  */
 
 contract NFTXInventoryStakingV3Upgradeable is
-    INFTXFeeDistributorV3,
+    INFTXInventoryStakingV3,
     ERC721Upgradeable,
     OwnableUpgradeable
 {
@@ -33,8 +34,9 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vTokenLiquidity;
         // timestamp at which this position was minted
         uint256 mintTimestamp;
-        // shares balance is used to track position's ownership of total vToken or Weth balance
+        // shares balance is used to track position's ownership of total vToken balance
         uint256 vTokenShareBalance;
+        // used to evaluate weth fees accumulated per vTokenShare since this snapshot
         uint256 wethFeesPerVTokenShareSnapshotX128;
     }
 
@@ -49,7 +51,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     /// @dev The ID of the next token that will be minted. Skips 0
     uint256 private _nextId = 1;
 
-    address public WETH;
+    IERC20 public WETH;
 
     /// @dev The token ID position data
     mapping(uint256 => Position) public positions;
@@ -95,13 +97,10 @@ contract NFTXInventoryStakingV3Upgradeable is
         if (_vaultGlobal.totalVTokenShares == 0) {
             vTokenShares = amount;
         } else {
-            uint256 pricePerShareVToken = (_vaultGlobal.netVTokenBalance *
-                1 ether) / _vaultGlobal.totalVTokenShares;
             vTokenShares =
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
-
         _vaultGlobal.totalVTokenShares += vTokenShares;
 
         positions[tokenId] = Position({
@@ -110,7 +109,8 @@ contract NFTXInventoryStakingV3Upgradeable is
             vTokenLiquidity: amount,
             mintTimestamp: block.timestamp,
             vTokenShareBalance: vTokenShares,
-            wethFeesPerVTokenShareSnapshotX128: _vaultGlobal.globalWethFeesPerVTokenShareX128;
+            wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
+                .globalWethFeesPerVTokenShareX128
         });
 
         //TODO: emit Deposit event
@@ -124,20 +124,27 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 positionvTokenShareBalance = position.vTokenShareBalance;
         require(positionvTokenShareBalance >= vTokenShares);
 
-        VaultGlobal storage _vaultGlobal = vaultGlobal[position.vaultId];
+        uint256 vaultId = position.vaultId;
+        VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
         // withdraw vTokens corresponding to the vTokenShares requested
-        uint256 vTokenOwed = _vaultGlobal.netVTokenBalance * vTokenShares / _vaultGlobal.totalVTokenShares;
+        uint256 vTokenOwed = (_vaultGlobal.netVTokenBalance * vTokenShares) /
+            _vaultGlobal.totalVTokenShares;
         // withdraw all the weth fees accrued
         uint256 wethOwed = FullMath.mulDiv(
-            _vaultGlobal.globalWethFeesPerVTokenShareX128 - position.wethFeesPerVTokenShareSnapshotX128,
+            _vaultGlobal.globalWethFeesPerVTokenShareX128 -
+                position.wethFeesPerVTokenShareSnapshotX128,
             positionvTokenShareBalance,
             FixedPoint128.Q128
         );
-        position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal.globalWethFeesPerVTokenShareX128;
+        position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
+            .globalWethFeesPerVTokenShareX128;
 
         // transfer tokens to the user
-        IERC20(nftxVaultFactory.vault(vaultId)).transfer(msg.sender, vTokenOwed);
-        IERC20(WETH).transfer(msg.sender, wethOwed);
+        IERC20(nftxVaultFactory.vault(vaultId)).transfer(
+            msg.sender,
+            vTokenOwed
+        );
+        WETH.transfer(msg.sender, wethOwed);
 
         // TODO: emit withdraw event
     }
@@ -149,13 +156,15 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 positionvTokenShareBalance = position.vTokenShareBalance;
         VaultGlobal storage _vaultGlobal = vaultGlobal[position.vaultId];
         uint256 wethOwed = FullMath.mulDiv(
-            _vaultGlobal.globalWethFeesPerVTokenShareX128 - position.wethFeesPerVTokenShareSnapshotX128,
+            _vaultGlobal.globalWethFeesPerVTokenShareX128 -
+                position.wethFeesPerVTokenShareSnapshotX128,
             positionvTokenShareBalance,
             FixedPoint128.Q128
         );
-        position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal.globalWethFeesPerVTokenShareX128;
+        position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
+            .globalWethFeesPerVTokenShareX128;
 
-        IERC20(WETH).transfer(msg.sender, wethOwed);
+        WETH.transfer(msg.sender, wethOwed);
 
         // TODO: emit collect event
     }
@@ -165,11 +174,14 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vaultId,
         uint256 amount,
         bool isRewardWeth
-    ) external returns (bool) {
+    ) external returns (bool rewardsDistributed) {
         require(msg.sender == nftxVaultFactory.feeDistributor());
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
-        require(_vaultGlobal.totalVTokenShares > 0);
+        if (_vaultGlobal.totalVTokenShares == 0) {
+            return false;
+        }
+        rewardsDistributed = true;
 
         if (isRewardWeth) {
             _vaultGlobal.globalWethFeesPerVTokenShareX128 += FullMath.mulDiv(
@@ -180,5 +192,14 @@ contract NFTXInventoryStakingV3Upgradeable is
         } else {
             _vaultGlobal.netVTokenBalance += amount;
         }
+    }
+
+    function pricePerShareVToken(
+        uint256 vaultId
+    ) external view returns (uint256) {
+        VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
+        return
+            (_vaultGlobal.netVTokenBalance * 1 ether) /
+            _vaultGlobal.totalVTokenShares;
     }
 }

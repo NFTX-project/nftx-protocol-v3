@@ -209,7 +209,8 @@ contract NFTXFeeDistributorV3 is
             // Inventory Staking V2 might not pull tokens in case where the xToken contract is not yet deployed or the XToken totalSupply is zero
             bool pulledTokens = inventoryStaking.receiveRewards(
                 vaultId,
-                wethAmountToSend
+                wethAmountToSend,
+                true
             );
 
             tokenSent = pulledTokens;
