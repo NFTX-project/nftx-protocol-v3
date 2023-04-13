@@ -29,25 +29,27 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 nonce; // TODO: add permit logic
         // vaultId corresponding to the vTokens staked in this position
         uint256 vaultId;
-        // the vTokenAmount staked
-        uint256 vTokenAmount;
+        // the vToken amount staked
+        uint256 vTokenLiquidity;
         // timestamp at which this position was minted
         uint256 mintTimestamp;
-        // the fee growth of the aggregate position as of the last action on the individual position
-        uint256 feeGrowthInsideVTokenLastX128;
-        uint256 feeGrowthInsideWETHLastX128;
+        // shares balance is used to track position's ownership of total vToken or Weth balance
+        uint256 vTokenShareBalance;
+        uint256 wethFeesPerVTokenShareSnapshotX128;
     }
 
     struct VaultGlobal {
-        uint256 feeGrowthGlobalVTokenX128;
-        uint256 feeGrowthGlobalWETHX128;
-        uint256 totalVTokenAmount;
+        uint256 netVTokenBalance; // vToken liquidity + earned fees
+        uint256 totalVTokenShares;
+        uint256 globalWethFeesPerVTokenShareX128;
     }
 
     INFTXVaultFactory public override nftxVaultFactory;
 
     /// @dev The ID of the next token that will be minted. Skips 0
     uint256 private _nextId = 1;
+
+    address public WETH;
 
     /// @dev The token ID position data
     mapping(uint256 => Position) public positions;
@@ -67,6 +69,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         __Ownable_init();
 
         nftxVaultFactory = nftxVaultFactory_;
+        WETH = INFTXFeeDistributorV3(nftxVaultFactory_.feeDistributor()).WETH();
     }
 
     // =============================================================
@@ -79,33 +82,82 @@ contract NFTXInventoryStakingV3Upgradeable is
         address recipient
     ) external returns (uint256 tokenId) {
         // TODO: onlyOwnerIfPaused(10)
-
         address vToken = nftxVaultFactory.vault(vaultId);
+        VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
+
+        uint256 preVTokenBalance = _vaultGlobal.netVTokenBalance;
         IERC20(vToken).transferFrom(msg.sender, address(this), amount);
+        _vaultGlobal.netVTokenBalance = preVTokenBalance + amount;
 
         _mint(recipient, (tokenId = _nextId++));
 
-        VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
-        _vaultGlobal.totalVTokenAmount += amount;
+        uint256 vTokenShares;
+        if (_vaultGlobal.totalVTokenShares == 0) {
+            vTokenShares = amount;
+        } else {
+            uint256 pricePerShareVToken = (_vaultGlobal.netVTokenBalance *
+                1 ether) / _vaultGlobal.totalVTokenShares;
+            vTokenShares =
+                (amount * _vaultGlobal.totalVTokenShares) /
+                preVTokenBalance;
+        }
+
+        _vaultGlobal.totalVTokenShares += vTokenShares;
+
         positions[tokenId] = Position({
             nonce: 0,
             vaultId: vaultId,
-            vTokenAmount: amount,
+            vTokenLiquidity: amount,
             mintTimestamp: block.timestamp,
-            feeGrowthInsideVTokenLastX128: _vaultGlobal
-                .feeGrowthGlobalVTokenX128,
-            feeGrowthInsideWETHLastX128: _vaultGlobal.feeGrowthGlobalWETHX128
+            vTokenShareBalance: vTokenShares,
+            wethFeesPerVTokenShareSnapshotX128: _vaultGlobal.globalWethFeesPerVTokenShareX128;
         });
 
         //TODO: emit Deposit event
     }
 
-    function withdraw(uint256 positionId, uint256 amount) external {
-        require(amount > 0);
+    function withdraw(uint256 positionId, uint256 vTokenShares) external {
+        // TODO: add pause
+
         Position storage position = positions[positionId];
 
-        uint256 positionVTokenAmount = position.vTokenAmount;
-        require(positionVTokenAmount >= amount);
+        uint256 positionvTokenShareBalance = position.vTokenShareBalance;
+        require(positionvTokenShareBalance >= vTokenShares);
+
+        VaultGlobal storage _vaultGlobal = vaultGlobal[position.vaultId];
+        // withdraw vTokens corresponding to the vTokenShares requested
+        uint256 vTokenOwed = _vaultGlobal.netVTokenBalance * vTokenShares / _vaultGlobal.totalVTokenShares;
+        // withdraw all the weth fees accrued
+        uint256 wethOwed = FullMath.mulDiv(
+            _vaultGlobal.globalWethFeesPerVTokenShareX128 - position.wethFeesPerVTokenShareSnapshotX128,
+            positionvTokenShareBalance,
+            FixedPoint128.Q128
+        );
+        position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal.globalWethFeesPerVTokenShareX128;
+
+        // transfer tokens to the user
+        IERC20(nftxVaultFactory.vault(vaultId)).transfer(msg.sender, vTokenOwed);
+        IERC20(WETH).transfer(msg.sender, wethOwed);
+
+        // TODO: emit withdraw event
+    }
+
+    function collectWethFees(uint256 positionId) external {
+        // TODO: add pause
+
+        Position storage position = positions[positionId];
+        uint256 positionvTokenShareBalance = position.vTokenShareBalance;
+        VaultGlobal storage _vaultGlobal = vaultGlobal[position.vaultId];
+        uint256 wethOwed = FullMath.mulDiv(
+            _vaultGlobal.globalWethFeesPerVTokenShareX128 - position.wethFeesPerVTokenShareSnapshotX128,
+            positionvTokenShareBalance,
+            FixedPoint128.Q128
+        );
+        position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal.globalWethFeesPerVTokenShareX128;
+
+        IERC20(WETH).transfer(msg.sender, wethOwed);
+
+        // TODO: emit collect event
     }
 
     /// @dev Can only be called by feeDistributor, after it sends the reward tokens to this contract
@@ -117,24 +169,16 @@ contract NFTXInventoryStakingV3Upgradeable is
         require(msg.sender == nftxVaultFactory.feeDistributor());
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
-        require(_vaultGlobal.totalVTokenAmount > 0);
-
-        uint256 feeGrowthGlobalX128 = isRewardWeth
-            ? _vaultGlobal.feeGrowthGlobalWETHX128
-            : _vaultGlobal.feeGrowthGlobalVTokenX128;
-
-        unchecked {
-            feeGrowthGlobalX128 += FullMath.mulDiv(
-                amount,
-                FixedPoint128.Q128,
-                _vaultGlobal.totalVTokenAmount
-            );
-        }
+        require(_vaultGlobal.totalVTokenShares > 0);
 
         if (isRewardWeth) {
-            _vaultGlobal.feeGrowthGlobalWETHX128 = feeGrowthGlobalX128;
+            _vaultGlobal.globalWethFeesPerVTokenShareX128 += FullMath.mulDiv(
+                amount,
+                FixedPoint128.Q128,
+                _vaultGlobal.totalVTokenShares
+            );
         } else {
-            _vaultGlobal.feeGrowthGlobalVTokenX128 = feeGrowthGlobalX128;
+            _vaultGlobal.netVTokenBalance += amount;
         }
     }
 }
