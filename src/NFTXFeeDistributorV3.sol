@@ -53,11 +53,12 @@ contract NFTXFeeDistributorV3 is
     // =============================================================
 
     constructor(
+        INFTXVaultFactory nftxVaultFactory_,
         INFTXInventoryStakingV3 inventoryStaking_,
         INFTXRouter nftxRouter_,
         address treasury_
     ) {
-        nftxVaultFactory = inventoryStaking_.nftxVaultFactory();
+        nftxVaultFactory = nftxVaultFactory_;
         inventoryStaking = inventoryStaking_;
         WETH = IERC20(nftxRouter_.WETH());
         nftxRouter = nftxRouter_;
@@ -206,7 +207,7 @@ contract NFTXFeeDistributorV3 is
             _maxWethApprove(feeReceiver.receiver, wethAmountToSend);
 
             // TODO: update this comment for Inventory Staking V3
-            // Inventory Staking V2 might not pull tokens in case where the xToken contract is not yet deployed or the XToken totalSupply is zero
+            // Inventory Staking might not pull tokens in case where vaultGlobal[vaultId].totalVTokenShares is zero
             bool pulledTokens = inventoryStaking.receiveRewards(
                 vaultId,
                 wethAmountToSend,

@@ -182,6 +182,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             return false;
         }
         rewardsDistributed = true;
+        WETH.transferFrom(msg.sender, address(this), amount);
 
         if (isRewardWeth) {
             _vaultGlobal.globalWethFeesPerVTokenShareX128 += FullMath.mulDiv(

@@ -85,14 +85,15 @@ contract TestBase is TestExtend, ERC721Holder {
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
 
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable();
-        inventoryStaking.__NFTXInventoryStaking_init(vaultFactory);
         feeDistributor = new NFTXFeeDistributorV3(
+            vaultFactory,
             inventoryStaking,
             nftxRouter,
             TREASURY
         );
         factory.setFeeDistributor(address(feeDistributor));
         vaultFactory.setFeeDistributor(address(feeDistributor));
+        inventoryStaking.__NFTXInventoryStaking_init(vaultFactory);
 
         uint256 vaultId = vaultFactory.createVault(
             "TEST",

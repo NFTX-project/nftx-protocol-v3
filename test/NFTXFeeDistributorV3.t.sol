@@ -123,7 +123,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
     }
 
     function test_feeDistribution_Success() external {
-        uint256 poolAllocPoint = 0.8 ether;
+        uint256 poolAllocPoint = 0.8 ether; // this value is set in the constructor of NFTXFeeDistributorV3
         uint256 inventoryAllocPoint = 0.15 ether;
         uint256 addressAllocPoint = 0.05 ether;
 
@@ -154,6 +154,21 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
         _mintPosition(mintQty);
         // TODO: add console logs for initial values as well, in all test cases
+
+        {
+            // stake vTokens so that inventoryStaking has stakers to distribute to
+            uint256[] memory tokenIds = nft.mint(1);
+            nft.setApprovalForAll(address(vtoken), true);
+            uint256[] memory amounts = new uint256[](0);
+            vaultFactory.setFeeExclusion(address(this), true); // setting fee exclusion to ease calulations below
+            uint256 mintedVTokens = vtoken.mint(tokenIds, amounts) * 1 ether;
+            vtoken.approve(address(inventoryStaking), type(uint256).max);
+            inventoryStaking.deposit(0, mintedVTokens, address(this));
+            vaultFactory.setFeeExclusion(address(this), false); // setting this back
+
+            (, uint256 totalVTokenShares, ) = inventoryStaking.vaultGlobal(0);
+            console.log("totalVTokenShares", totalVTokenShares);
+        }
 
         uint256 preInventoryStakingWethBalance = weth.balanceOf(
             address(inventoryStaking)
