@@ -38,8 +38,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vaultId;
         // the vToken amount staked
         uint256 vTokenLiquidity;
-        // timestamp at which this position was minted
-        uint256 mintTimestamp;
+        // timestamp at which the timelock expires
+        uint256 timelockedUntil;
         // shares balance is used to track position's ownership of total vToken balance
         uint256 vTokenShareBalance;
         // used to evaluate weth fees accumulated per vTokenShare since this snapshot
@@ -57,6 +57,12 @@ contract NFTXInventoryStakingV3Upgradeable is
     /// @dev The ID of the next token that will be minted. Skips 0
     uint256 private _nextId = 1;
 
+    /// @dev timelock in seconds
+    // TODO: add timelock exclusion
+    uint256 public timelock;
+    /// @dev the max penalty applicable. The penalty goes down linearly as the `timelockedUntil` approaches
+    uint256 public earlyWithdrawPenaltyInWei;
+
     IERC20 public WETH;
 
     /// @dev The token ID position data
@@ -70,7 +76,9 @@ contract NFTXInventoryStakingV3Upgradeable is
     // =============================================================
 
     function __NFTXInventoryStaking_init(
-        INFTXVaultFactory nftxVaultFactory_
+        INFTXVaultFactory nftxVaultFactory_,
+        uint256 timelock_,
+        uint256 earlyWithdrawPenaltyInWei_
     ) external initializer {
         // TODO: finalize token name and symbol
         __ERC721_init("NFTX Inventory Staking", "xNFT");
@@ -78,6 +86,10 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         nftxVaultFactory = nftxVaultFactory_;
         WETH = INFTXFeeDistributorV3(nftxVaultFactory_.feeDistributor()).WETH();
+
+        if (timelock_ > 14 days) revert TimelockTooLong();
+        timelock = timelock_;
+        earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
     }
 
     // =============================================================
@@ -114,17 +126,15 @@ contract NFTXInventoryStakingV3Upgradeable is
             nonce: 0,
             vaultId: vaultId,
             vTokenLiquidity: amount,
-            mintTimestamp: block.timestamp,
+            timelockedUntil: block.timestamp + timelock,
             vTokenShareBalance: vTokenShares,
             wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
-                .globalWethFeesPerVTokenShareX128
+                .globalWethFeesPerVTokenShareX128 // TODO: `globalWethFeesPerVTokenShareX128` value should update as there are more vTokens now
         });
 
         //TODO: emit Deposit event
     }
 
-    // TODO: verify redeem timelock and impose penalty if required
-    // TODO: distribute penalty to other inventory stakers
     function withdraw(uint256 positionId, uint256 vTokenShares) external {
         onlyOwnerIfPaused(1);
 
@@ -139,6 +149,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vTokenOwed = (_vaultGlobal.netVTokenBalance * vTokenShares) /
             _vaultGlobal.totalVTokenShares;
         // withdraw all the weth fees accrued
+        // TODO: modify `globalWethFeesPerVTokenShareX128`
         uint256 wethOwed = FullMath.mulDiv(
             _vaultGlobal.globalWethFeesPerVTokenShareX128 -
                 position.wethFeesPerVTokenShareSnapshotX128,
@@ -147,6 +158,24 @@ contract NFTXInventoryStakingV3Upgradeable is
         );
         position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
             .globalWethFeesPerVTokenShareX128;
+
+        if (block.timestamp <= position.timelockedUntil) {
+            // Eg: timelock = 10 days, vTokenOwed = 100, penalty% = 5%
+            // Case 1: Instant withdraw, with 10 days left
+            // penaltyAmt = 100 * 5% = 5
+            // Case 2: With 2 days timelock left
+            // penaltyAmt = (100 * 5%) * 2 / 10 = 1
+            uint256 vTokenPenalty = ((position.timelockedUntil -
+                block.timestamp) *
+                vTokenOwed *
+                earlyWithdrawPenaltyInWei) / (timelock * 1 ether);
+            vTokenOwed -= vTokenPenalty;
+        }
+
+        // in case of penalty, more shares are burned than the corresponding vToken balance
+        // resulting in an increase of `pricePerShareVToken`, hence the penalty collected is distributed amongst other stakers
+        _vaultGlobal.netVTokenBalance -= vTokenOwed;
+        _vaultGlobal.totalVTokenShares -= vTokenShares;
 
         // transfer tokens to the user
         IERC20(nftxVaultFactory.vault(vaultId)).transfer(
@@ -170,6 +199,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             positionvTokenShareBalance,
             FixedPoint128.Q128
         );
+        // TODO: modify `globalWethFeesPerVTokenShareX128`
         position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
             .globalWethFeesPerVTokenShareX128;
 
@@ -203,6 +233,22 @@ contract NFTXInventoryStakingV3Upgradeable is
         } else {
             _vaultGlobal.netVTokenBalance += amount;
         }
+    }
+
+    // =============================================================
+    //                        ONLY OWNER WRITE
+    // =============================================================
+
+    function setTimelock(uint256 timelock_) external onlyOwner {
+        if (timelock_ > 14 days) revert TimelockTooLong();
+
+        timelock = timelock_;
+    }
+
+    function setEarlyWithdrawPenalty(
+        uint256 earlyWithdrawPenaltyInWei_
+    ) external onlyOwner {
+        earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
     }
 
     // =============================================================

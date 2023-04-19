@@ -6,6 +6,12 @@ import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC7
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 
 interface INFTXInventoryStakingV3 is IERC721Upgradeable {
+    // =============================================================
+    //                            ERRORS
+    // =============================================================
+
+    error TimelockTooLong();
+
     function nftxVaultFactory() external view returns (INFTXVaultFactory);
 
     function deposit(
@@ -27,4 +33,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     function pricePerShareVToken(
         uint256 vaultId
     ) external view returns (uint256);
+
+    // TODO: add missing functions
 }
