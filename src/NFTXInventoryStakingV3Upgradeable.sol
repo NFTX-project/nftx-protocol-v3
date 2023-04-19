@@ -16,13 +16,19 @@ import {INFTXInventoryStakingV3} from "./interfaces/INFTXInventoryStakingV3.sol"
  * @title NFTX Inventory Staking V3
  * @author @apoorvlathey
  *
+ * @dev lockId's:
+ * 0: deposit
+ * 1: withdraw
+ * 2: collectWethFees
+ * 3: receiveRewards
+ *
  * @notice Allows users to stake vTokens to earn fees in vTokens and WETH. The position is minted as xNFT.
  */
 
 contract NFTXInventoryStakingV3Upgradeable is
     INFTXInventoryStakingV3,
     ERC721Upgradeable,
-    OwnableUpgradeable
+    PausableUpgradeable
 {
     // details about the staking position
     struct Position {
@@ -68,7 +74,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     ) external initializer {
         // TODO: finalize token name and symbol
         __ERC721_init("NFTX Inventory Staking", "xNFT");
-        __Ownable_init();
+        __Pausable_init();
 
         nftxVaultFactory = nftxVaultFactory_;
         WETH = INFTXFeeDistributorV3(nftxVaultFactory_.feeDistributor()).WETH();
@@ -83,7 +89,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 amount,
         address recipient
     ) external returns (uint256 tokenId) {
-        // TODO: onlyOwnerIfPaused(10)
+        onlyOwnerIfPaused(0);
+
         address vToken = nftxVaultFactory.vault(vaultId);
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
 
@@ -116,8 +123,10 @@ contract NFTXInventoryStakingV3Upgradeable is
         //TODO: emit Deposit event
     }
 
+    // TODO: verify redeem timelock and impose penalty if required
+    // TODO: distribute penalty to other inventory stakers
     function withdraw(uint256 positionId, uint256 vTokenShares) external {
-        // TODO: add pause
+        onlyOwnerIfPaused(1);
 
         Position storage position = positions[positionId];
 
@@ -150,7 +159,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     }
 
     function collectWethFees(uint256 positionId) external {
-        // TODO: add pause
+        onlyOwnerIfPaused(2);
 
         Position storage position = positions[positionId];
         uint256 positionvTokenShareBalance = position.vTokenShareBalance;
@@ -175,6 +184,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 amount,
         bool isRewardWeth
     ) external returns (bool rewardsDistributed) {
+        onlyOwnerIfPaused(3);
         require(msg.sender == nftxVaultFactory.feeDistributor());
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
@@ -194,6 +204,12 @@ contract NFTXInventoryStakingV3Upgradeable is
             _vaultGlobal.netVTokenBalance += amount;
         }
     }
+
+    // =============================================================
+    //                     PUBLIC / EXTERNAL VIEW
+    // =============================================================
+
+    // TODO: add ability to combine multiple xNFTs (if timelock expired)
 
     function pricePerShareVToken(
         uint256 vaultId
