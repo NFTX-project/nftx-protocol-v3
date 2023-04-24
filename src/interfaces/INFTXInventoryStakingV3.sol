@@ -7,6 +7,23 @@ import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 
 interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     // =============================================================
+    //                            EVENTS
+    // =============================================================
+
+    event Deposit(
+        uint256 indexed vaultId,
+        uint256 indexed positionId,
+        uint256 amount
+    );
+    event Withdraw(
+        uint256 indexed positionId,
+        uint256 vTokenShares,
+        uint256 vTokenAmount,
+        uint256 wethAmount
+    );
+    event CollectWethFees(uint256 indexed positionId, uint256 wethAmount);
+
+    // =============================================================
     //                            ERRORS
     // =============================================================
 

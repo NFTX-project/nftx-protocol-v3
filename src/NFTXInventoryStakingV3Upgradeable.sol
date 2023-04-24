@@ -129,10 +129,10 @@ contract NFTXInventoryStakingV3Upgradeable is
             timelockedUntil: block.timestamp + timelock,
             vTokenShareBalance: vTokenShares,
             wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
-                .globalWethFeesPerVTokenShareX128 // TODO: `globalWethFeesPerVTokenShareX128` value should update as there are more vTokens now
+                .globalWethFeesPerVTokenShareX128
         });
 
-        //TODO: emit Deposit event
+        emit Deposit(vaultId, tokenId, amount);
     }
 
     function withdraw(uint256 positionId, uint256 vTokenShares) external {
@@ -149,7 +149,6 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vTokenOwed = (_vaultGlobal.netVTokenBalance * vTokenShares) /
             _vaultGlobal.totalVTokenShares;
         // withdraw all the weth fees accrued
-        // TODO: modify `globalWethFeesPerVTokenShareX128`
         uint256 wethOwed = FullMath.mulDiv(
             _vaultGlobal.globalWethFeesPerVTokenShareX128 -
                 position.wethFeesPerVTokenShareSnapshotX128,
@@ -184,7 +183,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         );
         WETH.transfer(msg.sender, wethOwed);
 
-        // TODO: emit withdraw event
+        emit Withdraw(positionId, vTokenShares, vTokenOwed, wethOwed);
     }
 
     function collectWethFees(uint256 positionId) external {
@@ -199,13 +198,12 @@ contract NFTXInventoryStakingV3Upgradeable is
             positionvTokenShareBalance,
             FixedPoint128.Q128
         );
-        // TODO: modify `globalWethFeesPerVTokenShareX128`
         position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
             .globalWethFeesPerVTokenShareX128;
 
         WETH.transfer(msg.sender, wethOwed);
 
-        // TODO: emit collect event
+        emit CollectWethFees(positionId, wethOwed);
     }
 
     /// @dev Can only be called by feeDistributor, after it sends the reward tokens to this contract
