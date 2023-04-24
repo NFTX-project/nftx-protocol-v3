@@ -93,7 +93,11 @@ contract TestBase is TestExtend, ERC721Holder {
         );
         factory.setFeeDistributor(address(feeDistributor));
         vaultFactory.setFeeDistributor(address(feeDistributor));
-        inventoryStaking.__NFTXInventoryStaking_init(vaultFactory);
+        inventoryStaking.__NFTXInventoryStaking_init(
+            vaultFactory,
+            2 days, // timelock
+            0.05 ether // 5% penalty
+        );
 
         uint256 vaultId = vaultFactory.createVault(
             "TEST",

@@ -2,12 +2,12 @@
 pragma solidity =0.8.15;
 
 import {ERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {PausableUpgradeable} from "./util/PausableUpgradeable.sol";
 
 import {INFTXFeeDistributorV3} from "./interfaces/INFTXFeeDistributorV3.sol";
 import {INFTXInventoryStakingV3} from "./interfaces/INFTXInventoryStakingV3.sol";
