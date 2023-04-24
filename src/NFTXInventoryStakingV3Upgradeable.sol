@@ -37,14 +37,14 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 nonce; // TODO: add permit logic
         // vaultId corresponding to the vTokens staked in this position
         uint256 vaultId;
-        // the vToken amount staked
-        uint256 vTokenLiquidity;
         // timestamp at which the timelock expires
         uint256 timelockedUntil;
         // shares balance is used to track position's ownership of total vToken balance
         uint256 vTokenShareBalance;
         // used to evaluate weth fees accumulated per vTokenShare since this snapshot
         uint256 wethFeesPerVTokenShareSnapshotX128;
+        // owed weth fees, updates when positions merged
+        uint256 wethOwed;
     }
 
     struct VaultGlobal {
@@ -129,13 +129,13 @@ contract NFTXInventoryStakingV3Upgradeable is
         positions[tokenId] = Position({
             nonce: 0,
             vaultId: vaultId,
-            vTokenLiquidity: amount,
             timelockedUntil: timelockExcludeList.isExcluded(msg.sender, vaultId)
                 ? 0
                 : block.timestamp + timelock,
             vTokenShareBalance: vTokenShares,
             wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
-                .globalWethFeesPerVTokenShareX128
+                .globalWethFeesPerVTokenShareX128,
+            wethOwed: 0
         });
 
         emit Deposit(vaultId, tokenId, amount);
@@ -143,6 +143,8 @@ contract NFTXInventoryStakingV3Upgradeable is
 
     function withdraw(uint256 positionId, uint256 vTokenShares) external {
         onlyOwnerIfPaused(1);
+
+        if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
 
         Position storage position = positions[positionId];
 
@@ -187,13 +189,75 @@ contract NFTXInventoryStakingV3Upgradeable is
             msg.sender,
             vTokenOwed
         );
-        WETH.transfer(msg.sender, wethOwed);
+        WETH.transfer(msg.sender, wethOwed + position.wethOwed);
 
         emit Withdraw(positionId, vTokenShares, vTokenOwed, wethOwed);
     }
 
+    // combine multiple xNFTs (if timelock expired)
+    function combinePositions(
+        uint256 parentPositionId,
+        uint256[] calldata childrenPositionIds
+    ) external {
+        if (ownerOf(parentPositionId) != msg.sender) revert NotPositionOwner();
+        Position storage parentPosition = positions[parentPositionId];
+        uint256 parentVaultId = parentPosition.vaultId;
+
+        VaultGlobal storage _vaultGlobal = vaultGlobal[parentVaultId];
+
+        if (block.timestamp <= parentPosition.timelockedUntil)
+            revert Timelocked();
+
+        uint256 netWethOwed;
+        uint256 childrenPositionsCount = childrenPositionIds.length;
+        for (uint256 i; i < childrenPositionsCount; ) {
+            if (ownerOf(childrenPositionIds[i]) != msg.sender)
+                revert NotPositionOwner();
+
+            Position storage childPosition = positions[childrenPositionIds[i]];
+            if (block.timestamp <= childPosition.timelockedUntil)
+                revert Timelocked();
+            if (childPosition.vaultId != parentVaultId)
+                revert VaultIdMismatch();
+
+            // add weth owed for this child position
+            netWethOwed += FullMath.mulDiv(
+                _vaultGlobal.globalWethFeesPerVTokenShareX128 -
+                    childPosition.wethFeesPerVTokenShareSnapshotX128,
+                childPosition.vTokenShareBalance,
+                FixedPoint128.Q128
+            );
+            netWethOwed += childPosition.wethOwed;
+            // transfer vToken share balance to parent position
+            parentPosition.vTokenShareBalance += childPosition
+                .vTokenShareBalance;
+            childPosition.vTokenShareBalance = 0;
+            childPosition.wethOwed = 0;
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        // add weth owed for the parent position
+        netWethOwed += FullMath.mulDiv(
+            _vaultGlobal.globalWethFeesPerVTokenShareX128 -
+                parentPosition.wethFeesPerVTokenShareSnapshotX128,
+            parentPosition.vTokenShareBalance,
+            FixedPoint128.Q128
+        );
+        // set new wethFeesPerVTokenShare snapshot
+        parentPosition.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
+            .globalWethFeesPerVTokenShareX128;
+
+        // add net wethOwed to the parent position
+        parentPosition.wethOwed += netWethOwed;
+    }
+
     function collectWethFees(uint256 positionId) external {
         onlyOwnerIfPaused(2);
+
+        if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
 
         Position storage position = positions[positionId];
         uint256 positionvTokenShareBalance = position.vTokenShareBalance;
@@ -207,7 +271,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
             .globalWethFeesPerVTokenShareX128;
 
-        WETH.transfer(msg.sender, wethOwed);
+        WETH.transfer(msg.sender, wethOwed + position.wethOwed);
 
         emit CollectWethFees(positionId, wethOwed);
     }
@@ -258,8 +322,6 @@ contract NFTXInventoryStakingV3Upgradeable is
     // =============================================================
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
-
-    // TODO: add ability to combine multiple xNFTs (if timelock expired)
 
     function pricePerShareVToken(
         uint256 vaultId

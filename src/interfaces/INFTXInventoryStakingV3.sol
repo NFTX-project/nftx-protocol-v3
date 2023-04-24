@@ -29,6 +29,12 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
 
     error TimelockTooLong();
 
+    error NotPositionOwner();
+
+    error Timelocked();
+
+    error VaultIdMismatch();
+
     function nftxVaultFactory() external view returns (INFTXVaultFactory);
 
     function deposit(
