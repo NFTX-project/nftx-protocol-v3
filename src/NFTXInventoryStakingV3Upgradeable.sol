@@ -6,9 +6,10 @@ import {ERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC72
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {PausableUpgradeable} from "./util/PausableUpgradeable.sol";
 
+import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
 import {INFTXFeeDistributorV3} from "./interfaces/INFTXFeeDistributorV3.sol";
 import {INFTXInventoryStakingV3} from "./interfaces/INFTXInventoryStakingV3.sol";
 
@@ -58,10 +59,11 @@ contract NFTXInventoryStakingV3Upgradeable is
     uint256 private _nextId = 1;
 
     /// @dev timelock in seconds
-    // TODO: add timelock exclusion
     uint256 public timelock;
     /// @dev the max penalty applicable. The penalty goes down linearly as the `timelockedUntil` approaches
     uint256 public earlyWithdrawPenaltyInWei;
+
+    ITimelockExcludeList public timelockExcludeList;
 
     IERC20 public WETH;
 
@@ -78,7 +80,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     function __NFTXInventoryStaking_init(
         INFTXVaultFactory nftxVaultFactory_,
         uint256 timelock_,
-        uint256 earlyWithdrawPenaltyInWei_
+        uint256 earlyWithdrawPenaltyInWei_,
+        ITimelockExcludeList timelockExcludeList_
     ) external initializer {
         // TODO: finalize token name and symbol
         __ERC721_init("NFTX Inventory Staking", "xNFT");
@@ -90,6 +93,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         if (timelock_ > 14 days) revert TimelockTooLong();
         timelock = timelock_;
         earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
+        timelockExcludeList = timelockExcludeList_;
     }
 
     // =============================================================
@@ -126,7 +130,9 @@ contract NFTXInventoryStakingV3Upgradeable is
             nonce: 0,
             vaultId: vaultId,
             vTokenLiquidity: amount,
-            timelockedUntil: block.timestamp + timelock,
+            timelockedUntil: timelockExcludeList.isExcluded(msg.sender, vaultId)
+                ? 0
+                : block.timestamp + timelock,
             vTokenShareBalance: vTokenShares,
             wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
                 .globalWethFeesPerVTokenShareX128

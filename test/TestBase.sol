@@ -23,6 +23,8 @@ import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol
 import {NFTXVaultFactoryUpgradeable} from "@src/v2/NFTXVaultFactoryUpgradeable.sol";
 import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
+import {TimelockExcludeList} from "@src/v2/other/TimelockExcludeList.sol";
+import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
 contract TestBase is TestExtend, ERC721Holder {
@@ -36,6 +38,7 @@ contract TestBase is TestExtend, ERC721Holder {
     MockNFT nft;
 
     INFTXVault vtoken;
+    TimelockExcludeList timelockExcludeList;
     NFTXFeeDistributorV3 feeDistributor;
     NFTXVaultUpgradeable vaultImpl;
     NFTXVaultFactoryUpgradeable vaultFactory;
@@ -93,10 +96,12 @@ contract TestBase is TestExtend, ERC721Holder {
         );
         factory.setFeeDistributor(address(feeDistributor));
         vaultFactory.setFeeDistributor(address(feeDistributor));
+        timelockExcludeList = new TimelockExcludeList();
         inventoryStaking.__NFTXInventoryStaking_init(
             vaultFactory,
             2 days, // timelock
-            0.05 ether // 5% penalty
+            0.05 ether, // 5% penalty
+            ITimelockExcludeList(address(timelockExcludeList))
         );
 
         uint256 vaultId = vaultFactory.createVault(
