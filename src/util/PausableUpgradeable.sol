@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 contract PausableUpgradeable is OwnableUpgradeable {
-    function __Pausable_init() internal initializer {
+    function __Pausable_init() internal onlyInitializing {
         __Ownable_init();
     }
 
