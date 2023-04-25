@@ -3,7 +3,7 @@ pragma solidity =0.8.15;
 
 import {ERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
 
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 import {PausableUpgradeable} from "./util/PausableUpgradeable.sol";
@@ -31,47 +31,31 @@ contract NFTXInventoryStakingV3Upgradeable is
     ERC721Upgradeable,
     PausableUpgradeable
 {
-    // details about the staking position
-    struct Position {
-        // the nonce for permits
-        uint256 nonce; // TODO: add permit logic
-        // vaultId corresponding to the vTokens staked in this position
-        uint256 vaultId;
-        // timestamp at which the timelock expires
-        uint256 timelockedUntil;
-        // shares balance is used to track position's ownership of total vToken balance
-        uint256 vTokenShareBalance;
-        // used to evaluate weth fees accumulated per vTokenShare since this snapshot
-        uint256 wethFeesPerVTokenShareSnapshotX128;
-        // owed weth fees, updates when positions merged
-        uint256 wethOwed;
-    }
-
-    struct VaultGlobal {
-        uint256 netVTokenBalance; // vToken liquidity + earned fees
-        uint256 totalVTokenShares;
-        uint256 globalWethFeesPerVTokenShareX128;
-    }
+    // =============================================================
+    //                           CONSTANTS
+    // =============================================================
 
     INFTXVaultFactory public override nftxVaultFactory;
+    ITimelockExcludeList public override timelockExcludeList;
+    IERC20 public override WETH;
+
+    // =============================================================
+    //                            STORAGE
+    // =============================================================
 
     /// @dev The ID of the next token that will be minted. Skips 0
     uint256 private _nextId = 1;
 
     /// @dev timelock in seconds
-    uint256 public timelock;
+    uint256 public override timelock;
     /// @dev the max penalty applicable. The penalty goes down linearly as the `timelockedUntil` approaches
-    uint256 public earlyWithdrawPenaltyInWei;
-
-    ITimelockExcludeList public timelockExcludeList;
-
-    IERC20 public WETH;
+    uint256 public override earlyWithdrawPenaltyInWei;
 
     /// @dev The token ID position data
-    mapping(uint256 => Position) public positions;
+    mapping(uint256 => Position) public override positions;
 
     /// @dev vaultId => VaultGlobal
-    mapping(uint256 => VaultGlobal) public vaultGlobal;
+    mapping(uint256 => VaultGlobal) public override vaultGlobal;
 
     // =============================================================
     //                           INIT
@@ -82,8 +66,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 timelock_,
         uint256 earlyWithdrawPenaltyInWei_,
         ITimelockExcludeList timelockExcludeList_
-    ) external initializer {
-        // TODO: finalize token name and symbol
+    ) external override initializer {
         __ERC721_init("NFTX Inventory Staking", "xNFT");
         __Pausable_init();
 
@@ -104,7 +87,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vaultId,
         uint256 amount,
         address recipient
-    ) external returns (uint256 tokenId) {
+    ) external override returns (uint256 tokenId) {
         onlyOwnerIfPaused(0);
 
         address vToken = nftxVaultFactory.vault(vaultId);
@@ -141,7 +124,10 @@ contract NFTXInventoryStakingV3Upgradeable is
         emit Deposit(vaultId, tokenId, amount);
     }
 
-    function withdraw(uint256 positionId, uint256 vTokenShares) external {
+    function withdraw(
+        uint256 positionId,
+        uint256 vTokenShares
+    ) external override {
         onlyOwnerIfPaused(1);
 
         if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
@@ -198,7 +184,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     function combinePositions(
         uint256 parentPositionId,
         uint256[] calldata childrenPositionIds
-    ) external {
+    ) external override {
         if (ownerOf(parentPositionId) != msg.sender) revert NotPositionOwner();
         Position storage parentPosition = positions[parentPositionId];
         uint256 parentVaultId = parentPosition.vaultId;
@@ -254,7 +240,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         parentPosition.wethOwed += netWethOwed;
     }
 
-    function collectWethFees(uint256 positionId) external {
+    function collectWethFees(uint256 positionId) external override {
         onlyOwnerIfPaused(2);
 
         if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
@@ -281,7 +267,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vaultId,
         uint256 amount,
         bool isRewardWeth
-    ) external returns (bool rewardsDistributed) {
+    ) external override returns (bool rewardsDistributed) {
         onlyOwnerIfPaused(3);
         require(msg.sender == nftxVaultFactory.feeDistributor());
 
@@ -307,7 +293,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     //                        ONLY OWNER WRITE
     // =============================================================
 
-    function setTimelock(uint256 timelock_) external onlyOwner {
+    function setTimelock(uint256 timelock_) external override onlyOwner {
         if (timelock_ > 14 days) revert TimelockTooLong();
 
         timelock = timelock_;
@@ -315,7 +301,7 @@ contract NFTXInventoryStakingV3Upgradeable is
 
     function setEarlyWithdrawPenalty(
         uint256 earlyWithdrawPenaltyInWei_
-    ) external onlyOwner {
+    ) external override onlyOwner {
         earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
     }
 
