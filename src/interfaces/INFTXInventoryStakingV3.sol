@@ -89,17 +89,17 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 wethAmount
     );
     event CollectWethFees(uint256 indexed positionId, uint256 wethAmount);
+    event UpdateTimelock(uint256 newTimelock);
+    event UpdateEarlyWithdrawPenalty(uint256 newEarlyWithdrawPenaltyInWei);
 
     // =============================================================
     //                            ERRORS
     // =============================================================
 
     error TimelockTooLong();
-
+    error InvalidEarlyWithdrawPenalty();
     error NotPositionOwner();
-
     error Timelocked();
-
     error VaultIdMismatch();
 
     // =============================================================

@@ -21,7 +21,6 @@ import {INFTXInventoryStakingV3} from "./interfaces/INFTXInventoryStakingV3.sol"
  * 0: deposit
  * 1: withdraw
  * 2: collectWethFees
- * 3: receiveRewards
  *
  * @notice Allows users to stake vTokens to earn fees in vTokens and WETH. The position is minted as xNFT.
  */
@@ -74,6 +73,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         WETH = INFTXFeeDistributorV3(nftxVaultFactory_.feeDistributor()).WETH();
 
         if (timelock_ > 14 days) revert TimelockTooLong();
+        if (earlyWithdrawPenaltyInWei_ > 1 ether)
+            revert InvalidEarlyWithdrawPenalty();
         timelock = timelock_;
         earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
         timelockExcludeList = timelockExcludeList_;
@@ -87,7 +88,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vaultId,
         uint256 amount,
         address recipient
-    ) external override returns (uint256 tokenId) {
+    ) external override returns (uint256 positionId) {
         onlyOwnerIfPaused(0);
 
         address vToken = nftxVaultFactory.vault(vaultId);
@@ -97,7 +98,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         IERC20(vToken).transferFrom(msg.sender, address(this), amount);
         _vaultGlobal.netVTokenBalance = preVTokenBalance + amount;
 
-        _mint(recipient, (tokenId = _nextId++));
+        _mint(recipient, (positionId = _nextId++));
 
         uint256 vTokenShares;
         if (_vaultGlobal.totalVTokenShares == 0) {
@@ -109,7 +110,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         }
         _vaultGlobal.totalVTokenShares += vTokenShares;
 
-        positions[tokenId] = Position({
+        positions[positionId] = Position({
             nonce: 0,
             vaultId: vaultId,
             timelockedUntil: timelockExcludeList.isExcluded(msg.sender, vaultId)
@@ -121,7 +122,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             wethOwed: 0
         });
 
-        emit Deposit(vaultId, tokenId, amount);
+        emit Deposit(vaultId, positionId, amount);
     }
 
     function withdraw(
@@ -268,7 +269,6 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 amount,
         bool isRewardWeth
     ) external override returns (bool rewardsDistributed) {
-        onlyOwnerIfPaused(3);
         require(msg.sender == nftxVaultFactory.feeDistributor());
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
@@ -276,15 +276,17 @@ contract NFTXInventoryStakingV3Upgradeable is
             return false;
         }
         rewardsDistributed = true;
-        WETH.transferFrom(msg.sender, address(this), amount);
 
         if (isRewardWeth) {
+            WETH.transferFrom(msg.sender, address(this), amount);
             _vaultGlobal.globalWethFeesPerVTokenShareX128 += FullMath.mulDiv(
                 amount,
                 FixedPoint128.Q128,
                 _vaultGlobal.totalVTokenShares
             );
         } else {
+            address vToken = nftxVaultFactory.vault(vaultId);
+            IERC20(vToken).transferFrom(msg.sender, address(this), amount);
             _vaultGlobal.netVTokenBalance += amount;
         }
     }
@@ -297,12 +299,17 @@ contract NFTXInventoryStakingV3Upgradeable is
         if (timelock_ > 14 days) revert TimelockTooLong();
 
         timelock = timelock_;
+        emit UpdateTimelock(timelock_);
     }
 
     function setEarlyWithdrawPenalty(
         uint256 earlyWithdrawPenaltyInWei_
     ) external override onlyOwner {
+        if (earlyWithdrawPenaltyInWei_ > 1 ether)
+            revert InvalidEarlyWithdrawPenalty();
+
         earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
+        emit UpdateEarlyWithdrawPenalty(earlyWithdrawPenaltyInWei_);
     }
 
     // =============================================================
@@ -317,4 +324,6 @@ contract NFTXInventoryStakingV3Upgradeable is
             (_vaultGlobal.netVTokenBalance * 1 ether) /
             _vaultGlobal.totalVTokenShares;
     }
+
+    // TODO: add tokenURI for these xNFTs
 }

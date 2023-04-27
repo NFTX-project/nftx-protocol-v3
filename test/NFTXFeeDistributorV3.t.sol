@@ -157,14 +157,9 @@ contract NFTXFeeDistributorV3Tests is TestBase {
 
         {
             // stake vTokens so that inventoryStaking has stakers to distribute to
-            uint256[] memory tokenIds = nft.mint(1);
-            nft.setApprovalForAll(address(vtoken), true);
-            uint256[] memory amounts = new uint256[](0);
-            vaultFactory.setFeeExclusion(address(this), true); // setting fee exclusion to ease calulations below
-            uint256 mintedVTokens = vtoken.mint(tokenIds, amounts) * 1 ether;
+            uint256 mintedVTokens = _mintVToken(1);
             vtoken.approve(address(inventoryStaking), type(uint256).max);
             inventoryStaking.deposit(0, mintedVTokens, address(this));
-            vaultFactory.setFeeExclusion(address(this), false); // setting this back
 
             (, uint256 totalVTokenShares, ) = inventoryStaking.vaultGlobal(0);
             console.log("totalVTokenShares", totalVTokenShares);

@@ -48,6 +48,7 @@ contract TestBase is TestExtend, ERC721Holder {
     // TODO: remove this and add tests for different fee tiers
     uint24 constant DEFAULT_FEE_TIER = 10000;
     address immutable TREASURY = makeAddr("TREASURY");
+    uint256 constant VAULT_ID = 0;
 
     function setUp() external {
         weth = new MockWETH();
@@ -103,6 +104,7 @@ contract TestBase is TestExtend, ERC721Holder {
             0.05 ether, // 5% penalty
             ITimelockExcludeList(address(timelockExcludeList))
         );
+        inventoryStaking.setIsGuardian(address(this), true);
 
         uint256 vaultId = vaultFactory.createVault(
             "TEST",
@@ -112,6 +114,18 @@ contract TestBase is TestExtend, ERC721Holder {
             true
         );
         vtoken = INFTXVault(vaultFactory.vault(vaultId));
+    }
+
+    function _mintVToken(uint256 qty) internal returns (uint256 mintedVTokens) {
+        vaultFactory.setFeeExclusion(address(this), true); // setting fee exclusion to ease calulations below
+
+        uint256[] memory tokenIds = nft.mint(qty);
+
+        nft.setApprovalForAll(address(vtoken), true);
+        uint256[] memory amounts = new uint256[](0);
+        mintedVTokens = vtoken.mint(tokenIds, amounts) * 1 ether;
+
+        vaultFactory.setFeeExclusion(address(this), false); // setting this back
     }
 
     function _mintPosition(
