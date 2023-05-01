@@ -889,6 +889,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         uint256 preWethBalance = weth.balanceOf(address(this));
         uint256 preVTokenBalance = vtoken.balanceOf(address(this));
+        // pricePerShare should increase to represent penalty being distributed among the remaining stakers
+        uint256 prePricePerShareVToken = inventoryStaking.pricePerShareVToken(
+            VAULT_ID
+        );
 
         vm.expectEmit(true, false, false, true);
         emit Withdraw(
@@ -901,6 +905,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         uint256 postWethBalance = weth.balanceOf(address(this));
         uint256 postVTokenBalance = vtoken.balanceOf(address(this));
+        uint256 postPricePerShareVToken = inventoryStaking.pricePerShareVToken(
+            VAULT_ID
+        );
 
         (
             uint256 postVTokenShareBalance,
@@ -945,6 +952,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             wd.preTotalVTokenShares - wd.vTokenSharesToWithdraw,
             "postTotalVTokenShares mismatch"
         );
+        assertGt(postPricePerShareVToken, prePricePerShareVToken);
     }
 
     // InventoryStaking#setTimelock
