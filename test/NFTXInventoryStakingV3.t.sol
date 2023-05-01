@@ -4,6 +4,8 @@ pragma solidity =0.8.15;
 import {console, stdError} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 
+import {MockNFT} from "@mocks/MockNFT.sol";
+import {INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
@@ -18,6 +20,13 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 indexed positionId,
         uint256 amount
     );
+    event Withdraw(
+        uint256 indexed positionId,
+        uint256 vTokenShares,
+        uint256 vTokenAmount,
+        uint256 wethAmount
+    );
+    event CollectWethFees(uint256 indexed positionId, uint256 wethAmount);
     event UpdateTimelock(uint256 newTimelock);
     event UpdateEarlyWithdrawPenalty(uint256 newEarlyWithdrawPenaltyInWei);
 
@@ -119,6 +128,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             recipient
         );
 
+        assertEq(positionId, 1);
         // mints position nft to the recipient
         assertEq(inventoryStaking.ownerOf(positionId), recipient);
 
@@ -152,10 +162,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
     function test_deposit_Success_WhenPreTotalSharesNonZero() external {
         // initial stake to make totalVTokenShares non zero
-        uint256 mintedVTokens = _mintVToken(1);
-        vtoken.approve(address(inventoryStaking), type(uint256).max);
-        address recipient = makeAddr("recipient");
-        inventoryStaking.deposit(VAULT_ID, mintedVTokens, recipient);
+        _mintXNFT(1);
 
         (
             uint256 preNetVTokenBalance,
@@ -164,7 +171,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
         assertTrue(preTotalVTokenShares != 0);
 
-        mintedVTokens = _mintVToken(3);
+        uint256 mintedVTokens = _mintVToken(3);
+        address recipient = makeAddr("recipient");
 
         vm.expectEmit(true, true, false, true);
         emit Deposit(VAULT_ID, 2, mintedVTokens);
@@ -215,10 +223,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         timelockExcludeList.setExcludeFromAll(address(this), true);
 
         // initial stake to make totalVTokenShares non zero
-        uint256 mintedVTokens = _mintVToken(1);
-        vtoken.approve(address(inventoryStaking), type(uint256).max);
-        address recipient = makeAddr("recipient");
-        inventoryStaking.deposit(VAULT_ID, mintedVTokens, recipient);
+        _mintXNFT(1);
 
         (
             uint256 preNetVTokenBalance,
@@ -227,7 +232,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
         assertTrue(preTotalVTokenShares != 0);
 
-        mintedVTokens = _mintVToken(3);
+        uint256 mintedVTokens = _mintVToken(3);
+        address recipient = makeAddr("recipient");
 
         vm.expectEmit(true, true, false, true);
         emit Deposit(VAULT_ID, 2, mintedVTokens);
@@ -323,17 +329,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
     function test_receiveRewards_Success_WhenRewardIsWeth() external {
         // initial stake to make totalVTokenShares non zero
-        uint256 mintedVTokens = _mintVToken(1);
-        vtoken.approve(address(inventoryStaking), type(uint256).max);
-        address recipient = makeAddr("recipient");
-        inventoryStaking.deposit(VAULT_ID, mintedVTokens, recipient);
+        _mintXNFT(1);
 
         uint256 wethRewardAmt = 2 ether;
-        weth.deposit{value: wethRewardAmt}();
-        weth.transfer(address(feeDistributor), wethRewardAmt);
-
-        startHoax(address(feeDistributor));
-        weth.approve(address(inventoryStaking), type(uint256).max);
 
         (
             uint256 preNetVTokenBalance,
@@ -342,12 +340,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
         uint256 preWethBalance = weth.balanceOf(address(inventoryStaking));
 
-        bool rewardsDistributed = inventoryStaking.receiveRewards(
-            VAULT_ID,
-            wethRewardAmt,
-            true
-        );
-        vm.stopPrank();
+        bool rewardsDistributed = _distributeWethRewards(wethRewardAmt);
 
         uint256 postWethBalance = weth.balanceOf(address(inventoryStaking));
         (
@@ -381,10 +374,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
     function test_receiveRewards_Success_WhenRewardIsVToken() external {
         // initial stake to make totalVTokenShares non zero
-        uint256 mintedVTokens = _mintVToken(1);
-        vtoken.approve(address(inventoryStaking), type(uint256).max);
-        address recipient = makeAddr("recipient");
-        inventoryStaking.deposit(VAULT_ID, mintedVTokens, recipient);
+        _mintXNFT(1);
 
         uint256 vTokenRewardAmt = _mintVToken(2);
         vtoken.transfer(address(feeDistributor), vTokenRewardAmt);
@@ -428,6 +418,532 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             postNetVTokenBalance - preNetVTokenBalance,
             vTokenRewardAmt,
             "netVTokenBalance was modified incorrectly"
+        );
+    }
+
+    // InventoryStaking#collectWethFees
+
+    function test_collectWethFees_RevertsForNonOwnerIfPaused() external {
+        inventoryStaking.pause(2);
+
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert("Paused");
+        inventoryStaking.collectWethFees(1);
+    }
+
+    function test_collectWethFees_RevertsForNonPositionOwner() external {
+        // stake to mint positionId
+        uint256 positionId = _mintXNFT(1);
+
+        hoax(makeAddr("nonPositionOwner"));
+        vm.expectRevert(INFTXInventoryStakingV3.NotPositionOwner.selector);
+        inventoryStaking.collectWethFees(positionId);
+    }
+
+    function test_collectWethFees_Success() external {
+        // position where wethOwed > 0
+        uint256 positionId = _mintXNFTWithWethOwed(1);
+
+        (
+            ,
+            ,
+            ,
+            uint256 vTokenShareBalance,
+            uint256 preWethFeesPerVTokenShareSnapshotX128,
+            uint256 preWethOwed
+        ) = inventoryStaking.positions(positionId);
+        assertGt(preWethOwed, 0);
+        (, , uint256 globalWethFeesPerVTokenShareX128) = inventoryStaking
+            .vaultGlobal(VAULT_ID);
+
+        uint256 preWethBalance = weth.balanceOf(address(this));
+
+        uint256 expectedWethAmount = _calcWethOwed(
+            globalWethFeesPerVTokenShareX128,
+            preWethFeesPerVTokenShareSnapshotX128,
+            vTokenShareBalance
+        ) + preWethOwed;
+
+        vm.expectEmit(true, false, false, true);
+        emit CollectWethFees(positionId, expectedWethAmount);
+        inventoryStaking.collectWethFees(positionId);
+
+        (
+            ,
+            ,
+            ,
+            ,
+            uint256 postWethFeesPerVTokenShareSnapshotX128,
+            uint256 postWethOwed
+        ) = inventoryStaking.positions(positionId);
+        uint256 postWethBalance = weth.balanceOf(address(this));
+
+        assertEq(postWethBalance - preWethBalance, expectedWethAmount);
+        assertEq(
+            postWethFeesPerVTokenShareSnapshotX128,
+            globalWethFeesPerVTokenShareX128
+        );
+        assertEq(postWethOwed, 0);
+    }
+
+    // InventoryStaking#combinePositions
+
+    function test_combinePositions_RevertsForNonParentPositionOwner() external {
+        uint256 parentPositionId = _mintXNFT(1);
+        uint256[] memory childPositionIds = new uint256[](0);
+
+        hoax(makeAddr("nonParentPositionOwner"));
+        vm.expectRevert(INFTXInventoryStakingV3.NotPositionOwner.selector);
+        inventoryStaking.combinePositions(parentPositionId, childPositionIds);
+    }
+
+    function test_combinePositions_RevertsForNonChildPositionOwner() external {
+        uint256 parentPositionId = _mintXNFT(1);
+        uint256[] memory childPositionIds = new uint256[](3);
+        childPositionIds[0] = _mintXNFT(1);
+        childPositionIds[1] = _mintXNFT(1);
+        childPositionIds[2] = _mintXNFT(1);
+
+        inventoryStaking.safeTransferFrom(
+            address(this),
+            makeAddr("newChildPositionOwner"),
+            childPositionIds[1]
+        );
+
+        (, , uint256 parentTimelockedUntil, , , ) = inventoryStaking.positions(
+            parentPositionId
+        );
+        // jumping into the future, so it doesn't throw timelocked error
+        vm.warp(parentTimelockedUntil + 1);
+
+        vm.expectRevert(INFTXInventoryStakingV3.NotPositionOwner.selector);
+        inventoryStaking.combinePositions(parentPositionId, childPositionIds);
+    }
+
+    function test_combinePositions_RevertsIfParentPositionTimelocked()
+        external
+    {
+        uint256 parentPositionId = _mintXNFT(1);
+        uint256[] memory childPositionIds = new uint256[](0);
+
+        vm.expectRevert(INFTXInventoryStakingV3.Timelocked.selector);
+        inventoryStaking.combinePositions(parentPositionId, childPositionIds);
+    }
+
+    function test_combinePositions_RevertsIfChildPositionTimelocked() external {
+        uint256 parentPositionId = _mintXNFT(1);
+        (, , uint256 parentTimelockedUntil, , , ) = inventoryStaking.positions(
+            parentPositionId
+        );
+        vm.warp(parentTimelockedUntil + 1);
+
+        uint256[] memory childPositionIds = new uint256[](1);
+        childPositionIds[0] = _mintXNFT(1);
+
+        vm.expectRevert(INFTXInventoryStakingV3.Timelocked.selector);
+        inventoryStaking.combinePositions(parentPositionId, childPositionIds);
+    }
+
+    function test_combinePositions_RevertsIfChildVaultIdMismatch() external {
+        uint256 parentPositionId = _mintXNFT(1);
+
+        vaultFactory.setFeeExclusion(address(this), true); // setting fee exclusion to ease calulations below
+        // deploy new NFT collection
+        MockNFT newNFT = new MockNFT();
+        uint256[] memory tokenIds = newNFT.mint(1);
+        // create new vaultId
+        uint256 newVaultId = vaultFactory.createVault(
+            "TEST2",
+            "TST2",
+            address(newNFT),
+            false,
+            true
+        );
+        INFTXVault newVtoken = INFTXVault(vaultFactory.vault(newVaultId));
+        newNFT.setApprovalForAll(address(newVtoken), true);
+        uint256[] memory amounts = new uint256[](0);
+        uint256 mintedVTokens = newVtoken.mint(tokenIds, amounts) * 1 ether;
+        vaultFactory.setFeeExclusion(address(this), false); // setting this back
+
+        newVtoken.approve(address(inventoryStaking), type(uint256).max);
+
+        uint256[] memory childPositionIds = new uint256[](1);
+        childPositionIds[0] = inventoryStaking.deposit(
+            newVaultId,
+            mintedVTokens,
+            address(this)
+        );
+        (, , uint256 childTimelockedUntil, , , ) = inventoryStaking.positions(
+            childPositionIds[0]
+        );
+        vm.warp(childTimelockedUntil + 1);
+
+        // combine positions
+        vm.expectRevert(INFTXInventoryStakingV3.VaultIdMismatch.selector);
+        inventoryStaking.combinePositions(parentPositionId, childPositionIds);
+    }
+
+    function test_combinePositions_RevertsIfChildAndParentPositionSame()
+        external
+    {
+        uint256 parentPositionId = _mintXNFT(1);
+
+        uint256[] memory childPositionIds = new uint256[](2);
+        childPositionIds[0] = _mintXNFT(1);
+        childPositionIds[1] = parentPositionId;
+
+        (, , uint256 childTimelockedUntil, , , ) = inventoryStaking.positions(
+            childPositionIds[0]
+        );
+        vm.warp(childTimelockedUntil + 1);
+
+        vm.expectRevert(INFTXInventoryStakingV3.ParentChildSame.selector);
+        inventoryStaking.combinePositions(parentPositionId, childPositionIds);
+    }
+
+    function test_combinePositions_Success() external {
+        uint256 parentPositionId = _mintXNFTWithWethOwed(3);
+
+        uint256[] memory childPositionIds = new uint256[](2);
+        childPositionIds[0] = _mintXNFTWithWethOwed(1);
+        childPositionIds[1] = _mintXNFTWithWethOwed(2);
+
+        (, , uint256 globalWethFeesPerVTokenShareX128) = inventoryStaking
+            .vaultGlobal(VAULT_ID);
+
+        uint256 expectedParentWethOwed;
+        uint256 expectedParentVTokenShareBalance;
+        {
+            (
+                ,
+                ,
+                ,
+                uint256 preParentVTokenShareBalance,
+                uint256 preParentWethFeesPerVTokenShareSnapshotX128,
+                uint256 preParentWethOwed
+            ) = inventoryStaking.positions(parentPositionId);
+            (
+                ,
+                ,
+                ,
+                uint256 preChildAVTokenShareBalance,
+                uint256 preChildAWethFeesPerVTokenShareSnapshotX128,
+                uint256 preChildAWethOwed
+            ) = inventoryStaking.positions(childPositionIds[0]);
+            (
+                ,
+                ,
+                ,
+                uint256 preChildBVTokenShareBalance,
+                uint256 preChildBWethFeesPerVTokenShareSnapshotX128,
+                uint256 preChildBWethOwed
+            ) = inventoryStaking.positions(childPositionIds[1]);
+
+            expectedParentWethOwed =
+                preParentWethOwed +
+                preChildAWethOwed +
+                preChildBWethOwed +
+                _calcWethOwed(
+                    globalWethFeesPerVTokenShareX128,
+                    preParentWethFeesPerVTokenShareSnapshotX128,
+                    preParentVTokenShareBalance
+                ) +
+                _calcWethOwed(
+                    globalWethFeesPerVTokenShareX128,
+                    preChildAWethFeesPerVTokenShareSnapshotX128,
+                    preChildAVTokenShareBalance
+                ) +
+                _calcWethOwed(
+                    globalWethFeesPerVTokenShareX128,
+                    preChildBWethFeesPerVTokenShareSnapshotX128,
+                    preChildBVTokenShareBalance
+                );
+
+            expectedParentVTokenShareBalance =
+                preParentVTokenShareBalance +
+                preChildAVTokenShareBalance +
+                preChildBVTokenShareBalance;
+        }
+
+        inventoryStaking.combinePositions(parentPositionId, childPositionIds);
+
+        (
+            ,
+            ,
+            ,
+            uint256 postParentVTokenShareBalance,
+            uint256 postParentWethFeesPerVTokenShareSnapshotX128,
+            uint256 postParentWethOwed
+        ) = inventoryStaking.positions(parentPositionId);
+        (
+            ,
+            ,
+            ,
+            uint256 postChildAVTokenShareBalance,
+            ,
+            uint256 postChildAWethOwed
+        ) = inventoryStaking.positions(childPositionIds[0]);
+        (
+            ,
+            ,
+            ,
+            uint256 postChildBVTokenShareBalance,
+            ,
+            uint256 postChildBWethOwed
+        ) = inventoryStaking.positions(childPositionIds[1]);
+
+        assertEq(
+            postParentVTokenShareBalance,
+            expectedParentVTokenShareBalance
+        );
+        assertEq(
+            postParentWethFeesPerVTokenShareSnapshotX128,
+            globalWethFeesPerVTokenShareX128
+        );
+        assertEq(postParentWethOwed, expectedParentWethOwed);
+        assertEq(postChildAVTokenShareBalance, 0);
+        assertEq(postChildBVTokenShareBalance, 0);
+        assertEq(postChildAWethOwed, 0);
+        assertEq(postChildBWethOwed, 0);
+    }
+
+    // InventoryStaking#withdraw
+
+    function test_withdraw_RevertsForNonOwnerIfPaused() external {
+        inventoryStaking.pause(1);
+
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert("Paused");
+        inventoryStaking.withdraw(1, 1 ether);
+    }
+
+    function test_withdraw_RevertsForNonPositionOwner() external {
+        uint256 positionId = _mintXNFT(1);
+
+        hoax(makeAddr("nonPositionOwner"));
+        vm.expectRevert(INFTXInventoryStakingV3.NotPositionOwner.selector);
+        inventoryStaking.withdraw(positionId, 1 ether);
+    }
+
+    function test_withdraw_RevertsIfSharesMoreThanBalanceRequested() external {
+        uint256 positionId = _mintXNFT(1);
+
+        (, , , uint256 vTokenShareBalance, , ) = inventoryStaking.positions(
+            positionId
+        );
+
+        vm.expectRevert();
+        inventoryStaking.withdraw(positionId, vTokenShareBalance + 1);
+    }
+
+    struct WithdrawData {
+        uint256 preVTokenShareBalance;
+        uint256 preWethFeesPerVTokenShareSnapshotX128;
+        uint256 preWethOwed;
+        uint256 vTokenSharesToWithdraw;
+        uint256 preNetVTokenBalance;
+        uint256 preTotalVTokenShares;
+        uint256 globalWethFeesPerVTokenShareX128;
+    }
+    WithdrawData wd;
+
+    function test_withdraw_Success_WhenNoTimelock() external {
+        // timelock already up for combined positions, so no penalty would be deducted on withdraw
+        uint256 positionId = _mintXNFTWithWethOwed(2);
+        // distributing rewards so that initially position's wethFeesPerVTokenShareSnapshotX128 different from the global value
+        _distributeWethRewards(1 ether);
+
+        (
+            wd.preVTokenShareBalance,
+            wd.preWethFeesPerVTokenShareSnapshotX128,
+            wd.preWethOwed
+        ) = _getPosition(positionId);
+        assertGt(wd.preWethOwed, 0);
+
+        wd.vTokenSharesToWithdraw = wd.preVTokenShareBalance / 2;
+
+        (
+            wd.preNetVTokenBalance,
+            wd.preTotalVTokenShares,
+            wd.globalWethFeesPerVTokenShareX128
+        ) = inventoryStaking.vaultGlobal(VAULT_ID);
+        assertTrue(
+            wd.globalWethFeesPerVTokenShareX128 !=
+                wd.preWethFeesPerVTokenShareSnapshotX128
+        );
+
+        uint256 expectedWethAmount = _calcWethOwed(
+            wd.globalWethFeesPerVTokenShareX128,
+            wd.preWethFeesPerVTokenShareSnapshotX128,
+            wd.vTokenSharesToWithdraw
+        ) + wd.preWethOwed;
+        uint256 expectedVTokenAmount = (wd.preNetVTokenBalance *
+            wd.vTokenSharesToWithdraw) / wd.preTotalVTokenShares;
+
+        uint256 preWethBalance = weth.balanceOf(address(this));
+        uint256 preVTokenBalance = vtoken.balanceOf(address(this));
+
+        vm.expectEmit(true, false, false, true);
+        emit Withdraw(
+            positionId,
+            wd.vTokenSharesToWithdraw,
+            expectedVTokenAmount,
+            expectedWethAmount
+        );
+        inventoryStaking.withdraw(positionId, wd.vTokenSharesToWithdraw);
+
+        uint256 postWethBalance = weth.balanceOf(address(this));
+        uint256 postVTokenBalance = vtoken.balanceOf(address(this));
+
+        (
+            uint256 postVTokenShareBalance,
+            uint256 postWethFeesPerVTokenShareSnapshotX128,
+            uint256 postWethOwed
+        ) = _getPosition(positionId);
+
+        (
+            uint256 postNetVTokenBalance,
+            uint256 postTotalVTokenShares,
+
+        ) = inventoryStaking.vaultGlobal(VAULT_ID);
+
+        assertEq(
+            postWethBalance - preWethBalance,
+            expectedWethAmount,
+            "expectedWethAmount mismatch"
+        );
+        assertEq(
+            postVTokenBalance - preVTokenBalance,
+            expectedVTokenAmount,
+            "expectedVTokenAmount mismatch"
+        );
+        assertEq(
+            postVTokenShareBalance,
+            wd.preVTokenShareBalance - wd.vTokenSharesToWithdraw,
+            "postVTokenShareBalance mismatch"
+        );
+        assertEq(
+            postWethFeesPerVTokenShareSnapshotX128,
+            wd.globalWethFeesPerVTokenShareX128,
+            "postWethFeesPerVTokenShareSnapshotX128 mismatch"
+        );
+        assertEq(postWethOwed, 0, "postWethOwed mismatch");
+        assertEq(
+            postNetVTokenBalance,
+            wd.preNetVTokenBalance - expectedVTokenAmount,
+            "postNetVTokenBalance mismatch"
+        );
+        assertEq(
+            postTotalVTokenShares,
+            wd.preTotalVTokenShares - wd.vTokenSharesToWithdraw,
+            "postTotalVTokenShares mismatch"
+        );
+    }
+
+    function test_withdraw_Success_WithPenaltyForTimelock() external {
+        uint256 timelockPercentLeft = 20; // 20% timelock left
+        uint256 positionId = _mintXNFT(2);
+        // distributing rewards so that initially position's wethFeesPerVTokenShareSnapshotX128 different from the global value
+        _distributeWethRewards(1 ether);
+
+        uint256 timelockedUntil;
+        (
+            ,
+            ,
+            timelockedUntil,
+            wd.preVTokenShareBalance,
+            wd.preWethFeesPerVTokenShareSnapshotX128,
+            wd.preWethOwed
+        ) = inventoryStaking.positions(positionId);
+        // jump to when 20% timelock left
+        vm.warp(
+            timelockedUntil -
+                (inventoryStaking.timelock() * timelockPercentLeft) /
+                100
+        );
+
+        wd.vTokenSharesToWithdraw = wd.preVTokenShareBalance / 2;
+
+        (
+            wd.preNetVTokenBalance,
+            wd.preTotalVTokenShares,
+            wd.globalWethFeesPerVTokenShareX128
+        ) = inventoryStaking.vaultGlobal(VAULT_ID);
+        assertTrue(
+            wd.globalWethFeesPerVTokenShareX128 !=
+                wd.preWethFeesPerVTokenShareSnapshotX128
+        );
+
+        uint256 expectedWethAmount = _calcWethOwed(
+            wd.globalWethFeesPerVTokenShareX128,
+            wd.preWethFeesPerVTokenShareSnapshotX128,
+            wd.vTokenSharesToWithdraw
+        ) + wd.preWethOwed;
+        uint256 expectedVTokenAmount = (wd.preNetVTokenBalance *
+            wd.vTokenSharesToWithdraw) / wd.preTotalVTokenShares;
+        expectedVTokenAmount -=
+            (expectedVTokenAmount *
+                inventoryStaking.earlyWithdrawPenaltyInWei() *
+                timelockPercentLeft) /
+            (100 * 1 ether);
+
+        uint256 preWethBalance = weth.balanceOf(address(this));
+        uint256 preVTokenBalance = vtoken.balanceOf(address(this));
+
+        vm.expectEmit(true, false, false, true);
+        emit Withdraw(
+            positionId,
+            wd.vTokenSharesToWithdraw,
+            expectedVTokenAmount,
+            expectedWethAmount
+        );
+        inventoryStaking.withdraw(positionId, wd.vTokenSharesToWithdraw);
+
+        uint256 postWethBalance = weth.balanceOf(address(this));
+        uint256 postVTokenBalance = vtoken.balanceOf(address(this));
+
+        (
+            uint256 postVTokenShareBalance,
+            uint256 postWethFeesPerVTokenShareSnapshotX128,
+            uint256 postWethOwed
+        ) = _getPosition(positionId);
+
+        (
+            uint256 postNetVTokenBalance,
+            uint256 postTotalVTokenShares,
+
+        ) = inventoryStaking.vaultGlobal(VAULT_ID);
+
+        assertEq(
+            postWethBalance - preWethBalance,
+            expectedWethAmount,
+            "expectedWethAmount mismatch"
+        );
+        assertEq(
+            postVTokenBalance - preVTokenBalance,
+            expectedVTokenAmount,
+            "expectedVTokenAmount mismatch"
+        );
+        assertEq(
+            postVTokenShareBalance,
+            wd.preVTokenShareBalance - wd.vTokenSharesToWithdraw,
+            "postVTokenShareBalance mismatch"
+        );
+        assertEq(
+            postWethFeesPerVTokenShareSnapshotX128,
+            wd.globalWethFeesPerVTokenShareX128,
+            "postWethFeesPerVTokenShareSnapshotX128 mismatch"
+        );
+        assertEq(postWethOwed, 0, "postWethOwed mismatch");
+        assertEq(
+            postNetVTokenBalance,
+            wd.preNetVTokenBalance - expectedVTokenAmount,
+            "postNetVTokenBalance mismatch"
+        );
+        assertEq(
+            postTotalVTokenShares,
+            wd.preTotalVTokenShares - wd.vTokenSharesToWithdraw,
+            "postTotalVTokenShares mismatch"
         );
     }
 
@@ -498,5 +1014,90 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             .earlyWithdrawPenaltyInWei();
 
         assertEq(postEarlyWithdrawPenalty, newEarlyWithdrawPenalty);
+    }
+
+    // =============================================================
+    //                        INTERNAL HELPERS
+    // =============================================================
+
+    function _mintXNFT(
+        uint256 nftsToWrap
+    ) internal returns (uint256 positionId) {
+        uint256 mintedVTokens = _mintVToken(nftsToWrap);
+        vtoken.approve(address(inventoryStaking), type(uint256).max);
+        positionId = inventoryStaking.deposit(
+            VAULT_ID,
+            mintedVTokens,
+            address(this)
+        );
+    }
+
+    function _mintXNFTWithWethOwed(
+        uint256 nftsToWrap
+    ) internal returns (uint256 parentPositionId) {
+        parentPositionId = _mintXNFT(nftsToWrap);
+        _distributeWethRewards(3 ether);
+        // minting new position then combining, so that position.wethOwed is non zero
+        uint256 newPositionId = _mintXNFT(1);
+        (, , uint256 timelockedUntil, , , ) = inventoryStaking.positions(
+            newPositionId
+        );
+        // jump to future when timelock is over
+        vm.warp(timelockedUntil + 1);
+        uint256[] memory childPositionIds = new uint256[](1);
+        childPositionIds[0] = newPositionId;
+        inventoryStaking.combinePositions(parentPositionId, childPositionIds);
+    }
+
+    function _distributeWethRewards(
+        uint256 wethRewardAmt
+    ) internal returns (bool rewardsDistributed) {
+        weth.deposit{value: wethRewardAmt}();
+        weth.transfer(address(feeDistributor), wethRewardAmt);
+
+        startHoax(address(feeDistributor));
+        weth.approve(address(inventoryStaking), type(uint256).max);
+
+        rewardsDistributed = inventoryStaking.receiveRewards(
+            VAULT_ID,
+            wethRewardAmt,
+            true
+        );
+        vm.stopPrank();
+    }
+
+    function _calcWethOwed(
+        uint256 globalWethFeesPerVTokenShareX128,
+        uint256 positionWethFeesPerVTokenShareSnapshotX128,
+        uint256 positionVTokenShareBalance
+    ) internal pure returns (uint256 wethOwed) {
+        wethOwed = FullMath.mulDiv(
+            globalWethFeesPerVTokenShareX128 -
+                positionWethFeesPerVTokenShareSnapshotX128,
+            positionVTokenShareBalance,
+            FixedPoint128.Q128
+        );
+    }
+
+    // only get the required position info
+    function _getPosition(
+        uint256 positionId
+    )
+        internal
+        view
+        returns (
+            uint256 vTokenShareBalance,
+            uint256 wethFeesPerVTokenShareSnapshotX128,
+            uint256 wethOwed
+        )
+    {
+        (
+            ,
+            ,
+            ,
+            vTokenShareBalance,
+            wethFeesPerVTokenShareSnapshotX128,
+            wethOwed
+        ) = inventoryStaking.positions(positionId);
     }
 }

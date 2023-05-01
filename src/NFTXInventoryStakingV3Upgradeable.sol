@@ -135,8 +135,8 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         Position storage position = positions[positionId];
 
-        uint256 positionvTokenShareBalance = position.vTokenShareBalance;
-        require(positionvTokenShareBalance >= vTokenShares);
+        uint256 positionVTokenShareBalance = position.vTokenShareBalance;
+        require(positionVTokenShareBalance >= vTokenShares);
 
         uint256 vaultId = position.vaultId;
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
@@ -144,14 +144,14 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vTokenOwed = (_vaultGlobal.netVTokenBalance * vTokenShares) /
             _vaultGlobal.totalVTokenShares;
         // withdraw all the weth fees accrued
-        uint256 wethOwed = FullMath.mulDiv(
-            _vaultGlobal.globalWethFeesPerVTokenShareX128 -
-                position.wethFeesPerVTokenShareSnapshotX128,
-            positionvTokenShareBalance,
-            FixedPoint128.Q128
-        );
+        uint256 wethOwed = _calcWethOwed(
+            _vaultGlobal.globalWethFeesPerVTokenShareX128,
+            position.wethFeesPerVTokenShareSnapshotX128,
+            vTokenShares
+        ) + position.wethOwed;
         position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
             .globalWethFeesPerVTokenShareX128;
+        position.wethOwed = 0;
 
         if (block.timestamp <= position.timelockedUntil) {
             // Eg: timelock = 10 days, vTokenOwed = 100, penalty% = 5%
@@ -170,13 +170,14 @@ contract NFTXInventoryStakingV3Upgradeable is
         // resulting in an increase of `pricePerShareVToken`, hence the penalty collected is distributed amongst other stakers
         _vaultGlobal.netVTokenBalance -= vTokenOwed;
         _vaultGlobal.totalVTokenShares -= vTokenShares;
+        position.vTokenShareBalance -= vTokenShares;
 
         // transfer tokens to the user
         IERC20(nftxVaultFactory.vault(vaultId)).transfer(
             msg.sender,
             vTokenOwed
         );
-        WETH.transfer(msg.sender, wethOwed + position.wethOwed);
+        WETH.transfer(msg.sender, wethOwed);
 
         emit Withdraw(positionId, vTokenShares, vTokenOwed, wethOwed);
     }
@@ -184,8 +185,9 @@ contract NFTXInventoryStakingV3Upgradeable is
     // combine multiple xNFTs (if timelock expired)
     function combinePositions(
         uint256 parentPositionId,
-        uint256[] calldata childrenPositionIds
+        uint256[] calldata childPositionIds
     ) external override {
+        // `ownerOf` handles invalid positionId
         if (ownerOf(parentPositionId) != msg.sender) revert NotPositionOwner();
         Position storage parentPosition = positions[parentPositionId];
         uint256 parentVaultId = parentPosition.vaultId;
@@ -195,26 +197,34 @@ contract NFTXInventoryStakingV3Upgradeable is
         if (block.timestamp <= parentPosition.timelockedUntil)
             revert Timelocked();
 
-        uint256 netWethOwed;
-        uint256 childrenPositionsCount = childrenPositionIds.length;
+        // weth owed for the parent position
+        uint256 netWethOwed = _calcWethOwed(
+            _vaultGlobal.globalWethFeesPerVTokenShareX128,
+            parentPosition.wethFeesPerVTokenShareSnapshotX128,
+            parentPosition.vTokenShareBalance
+        );
+        uint256 childrenPositionsCount = childPositionIds.length;
         for (uint256 i; i < childrenPositionsCount; ) {
-            if (ownerOf(childrenPositionIds[i]) != msg.sender)
+            if (childPositionIds[i] == parentPositionId)
+                revert ParentChildSame();
+            // `ownerOf` handles invalid positionId
+            if (ownerOf(childPositionIds[i]) != msg.sender)
                 revert NotPositionOwner();
 
-            Position storage childPosition = positions[childrenPositionIds[i]];
+            Position storage childPosition = positions[childPositionIds[i]];
             if (block.timestamp <= childPosition.timelockedUntil)
                 revert Timelocked();
             if (childPosition.vaultId != parentVaultId)
                 revert VaultIdMismatch();
 
             // add weth owed for this child position
-            netWethOwed += FullMath.mulDiv(
-                _vaultGlobal.globalWethFeesPerVTokenShareX128 -
+            netWethOwed +=
+                _calcWethOwed(
+                    _vaultGlobal.globalWethFeesPerVTokenShareX128,
                     childPosition.wethFeesPerVTokenShareSnapshotX128,
-                childPosition.vTokenShareBalance,
-                FixedPoint128.Q128
-            );
-            netWethOwed += childPosition.wethOwed;
+                    childPosition.vTokenShareBalance
+                ) +
+                childPosition.wethOwed;
             // transfer vToken share balance to parent position
             parentPosition.vTokenShareBalance += childPosition
                 .vTokenShareBalance;
@@ -226,13 +236,6 @@ contract NFTXInventoryStakingV3Upgradeable is
             }
         }
 
-        // add weth owed for the parent position
-        netWethOwed += FullMath.mulDiv(
-            _vaultGlobal.globalWethFeesPerVTokenShareX128 -
-                parentPosition.wethFeesPerVTokenShareSnapshotX128,
-            parentPosition.vTokenShareBalance,
-            FixedPoint128.Q128
-        );
         // set new wethFeesPerVTokenShare snapshot
         parentPosition.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
             .globalWethFeesPerVTokenShareX128;
@@ -247,18 +250,17 @@ contract NFTXInventoryStakingV3Upgradeable is
         if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
 
         Position storage position = positions[positionId];
-        uint256 positionvTokenShareBalance = position.vTokenShareBalance;
         VaultGlobal storage _vaultGlobal = vaultGlobal[position.vaultId];
-        uint256 wethOwed = FullMath.mulDiv(
-            _vaultGlobal.globalWethFeesPerVTokenShareX128 -
-                position.wethFeesPerVTokenShareSnapshotX128,
-            positionvTokenShareBalance,
-            FixedPoint128.Q128
-        );
+        uint256 wethOwed = _calcWethOwed(
+            _vaultGlobal.globalWethFeesPerVTokenShareX128,
+            position.wethFeesPerVTokenShareSnapshotX128,
+            position.vTokenShareBalance
+        ) + position.wethOwed;
         position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
             .globalWethFeesPerVTokenShareX128;
+        position.wethOwed = 0;
 
-        WETH.transfer(msg.sender, wethOwed + position.wethOwed);
+        WETH.transfer(msg.sender, wethOwed);
 
         emit CollectWethFees(positionId, wethOwed);
     }
@@ -326,4 +328,21 @@ contract NFTXInventoryStakingV3Upgradeable is
     }
 
     // TODO: add tokenURI for these xNFTs
+
+    // =============================================================
+    //                        INTERNAL HELPERS
+    // =============================================================
+
+    function _calcWethOwed(
+        uint256 globalWethFeesPerVTokenShareX128,
+        uint256 positionWethFeesPerVTokenShareSnapshotX128,
+        uint256 positionVTokenShareBalance
+    ) internal pure returns (uint256 wethOwed) {
+        wethOwed = FullMath.mulDiv(
+            globalWethFeesPerVTokenShareX128 -
+                positionWethFeesPerVTokenShareSnapshotX128,
+            positionVTokenShareBalance,
+            FixedPoint128.Q128
+        );
+    }
 }

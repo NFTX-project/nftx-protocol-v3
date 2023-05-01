@@ -101,6 +101,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     error NotPositionOwner();
     error Timelocked();
     error VaultIdMismatch();
+    error ParentChildSame();
 
     // =============================================================
     //                           INIT
@@ -127,7 +128,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
 
     function combinePositions(
         uint256 parentPositionId,
-        uint256[] calldata childrenPositionIds
+        uint256[] calldata childPositionIds
     ) external;
 
     function collectWethFees(uint256 positionId) external;
