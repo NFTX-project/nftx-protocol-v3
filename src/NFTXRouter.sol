@@ -136,7 +136,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         } else {
             amount0Desired = msg.value;
             amount1Desired = vTokensAmount;
-            amount1Min = amount1Min;
+            amount1Min = amount1Desired;
         }
 
         (positionId, , , ) = positionManager.mint{value: msg.value}(

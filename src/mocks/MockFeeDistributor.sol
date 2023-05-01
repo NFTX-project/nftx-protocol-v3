@@ -22,8 +22,6 @@ contract MockFeeDistributor {
         nftxVaultFactory = nftxVaultFactory_;
     }
 
-    function initializeVaultReceivers(uint256 /** vaultId */) external {}
-
     function distribute(uint256 vaultId) external {
         address vtoken = nftxVaultFactory.vault(vaultId);
 

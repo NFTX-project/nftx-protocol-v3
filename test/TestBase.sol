@@ -18,11 +18,13 @@ import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 
 import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
-import {MockInventoryStakingV3} from "@mocks/MockInventoryStakingV3.sol";
 
 import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
 import {NFTXVaultFactoryUpgradeable} from "@src/v2/NFTXVaultFactoryUpgradeable.sol";
+import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
+import {TimelockExcludeList} from "@src/v2/other/TimelockExcludeList.sol";
+import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
 contract TestBase is TestExtend, ERC721Holder {
@@ -34,18 +36,19 @@ contract TestBase is TestExtend, ERC721Holder {
     QuoterV2 quoter;
 
     MockNFT nft;
-    // TODO: replace mock with actual inventory staking v3
-    MockInventoryStakingV3 inventoryStaking;
 
     INFTXVault vtoken;
+    TimelockExcludeList timelockExcludeList;
     NFTXFeeDistributorV3 feeDistributor;
     NFTXVaultUpgradeable vaultImpl;
     NFTXVaultFactoryUpgradeable vaultFactory;
     NFTXRouter nftxRouter;
+    NFTXInventoryStakingV3Upgradeable inventoryStaking;
 
     // TODO: remove this and add tests for different fee tiers
     uint24 constant DEFAULT_FEE_TIER = 10000;
     address immutable TREASURY = makeAddr("TREASURY");
+    uint256 constant VAULT_ID = 0;
 
     function setUp() external {
         weth = new MockWETH();
@@ -85,14 +88,23 @@ contract TestBase is TestExtend, ERC721Holder {
         // V2 currently deducts fees in vTokens which messes up with our calculations atm
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
 
-        inventoryStaking = new MockInventoryStakingV3(vaultFactory, weth);
+        inventoryStaking = new NFTXInventoryStakingV3Upgradeable();
         feeDistributor = new NFTXFeeDistributorV3(
+            vaultFactory,
             inventoryStaking,
             nftxRouter,
             TREASURY
         );
         factory.setFeeDistributor(address(feeDistributor));
         vaultFactory.setFeeDistributor(address(feeDistributor));
+        timelockExcludeList = new TimelockExcludeList();
+        inventoryStaking.__NFTXInventoryStaking_init(
+            vaultFactory,
+            2 days, // timelock
+            0.05 ether, // 5% penalty
+            ITimelockExcludeList(address(timelockExcludeList))
+        );
+        inventoryStaking.setIsGuardian(address(this), true);
 
         uint256 vaultId = vaultFactory.createVault(
             "TEST",
@@ -102,6 +114,18 @@ contract TestBase is TestExtend, ERC721Holder {
             true
         );
         vtoken = INFTXVault(vaultFactory.vault(vaultId));
+    }
+
+    function _mintVToken(uint256 qty) internal returns (uint256 mintedVTokens) {
+        vaultFactory.setFeeExclusion(address(this), true); // setting fee exclusion to ease calulations below
+
+        uint256[] memory tokenIds = nft.mint(qty);
+
+        nft.setApprovalForAll(address(vtoken), true);
+        uint256[] memory amounts = new uint256[](0);
+        mintedVTokens = vtoken.mint(tokenIds, amounts) * 1 ether;
+
+        vaultFactory.setFeeExclusion(address(this), false); // setting this back
     }
 
     function _mintPosition(

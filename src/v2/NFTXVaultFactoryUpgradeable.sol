@@ -82,7 +82,7 @@ contract NFTXVaultFactoryUpgradeable is
         uint256 _vaultId = vaults.length;
         _vaultsForAsset[_assetAddress].push(vaultAddr);
         vaults.push(vaultAddr);
-        INFTXFeeDistributor(feeDistributor).initializeVaultReceivers(_vaultId);
+
         emit NewVault(_vaultId, vaultAddr, _assetAddress);
         return _vaultId;
     }
@@ -160,59 +160,45 @@ contract NFTXVaultFactoryUpgradeable is
         emit DisableVaultFees(vaultId);
     }
 
-    function setFeeDistributor(address _feeDistributor)
-        public
-        virtual
-        override
-        onlyOwner
-    {
+    function setFeeDistributor(
+        address _feeDistributor
+    ) public virtual override onlyOwner {
         require(_feeDistributor != address(0));
         emit NewFeeDistributor(feeDistributor, _feeDistributor);
         feeDistributor = _feeDistributor;
     }
 
-    function setZapContract(address _zapContract, bool _excluded)
-        public
-        virtual
-        override
-        onlyOwner
-    {
+    function setZapContract(
+        address _zapContract,
+        bool _excluded
+    ) public virtual override onlyOwner {
         emit UpdatedZapContract(_zapContract, _excluded);
         zapContracts[_zapContract] = _excluded;
     }
 
-    function setFeeExclusion(address _excludedAddr, bool excluded)
-        public
-        virtual
-        override
-        onlyOwner
-    {
+    function setFeeExclusion(
+        address _excludedAddr,
+        bool excluded
+    ) public virtual override onlyOwner {
         emit FeeExclusion(_excludedAddr, excluded);
         excludedFromFees[_excludedAddr] = excluded;
     }
 
-    function setEligibilityManager(address _eligibilityManager)
-        external
-        virtual
-        override
-        onlyOwner
-    {
+    function setEligibilityManager(
+        address _eligibilityManager
+    ) external virtual override onlyOwner {
         emit NewEligibilityManager(eligibilityManager, _eligibilityManager);
         eligibilityManager = _eligibilityManager;
     }
 
-    function vaultFees(uint256 vaultId)
+    function vaultFees(
+        uint256 vaultId
+    )
         external
         view
         virtual
         override
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256
-        )
+        returns (uint256, uint256, uint256, uint256, uint256)
     {
         VaultFees memory fees = _vaultFees[vaultId];
         if (fees.active) {
@@ -234,33 +220,21 @@ contract NFTXVaultFactoryUpgradeable is
         );
     }
 
-    function isLocked(uint256 lockId)
-        external
-        view
-        virtual
-        override
-        returns (bool)
-    {
+    function isLocked(
+        uint256 lockId
+    ) external view virtual override returns (bool) {
         return isPaused[lockId];
     }
 
-    function vaultsForAsset(address assetAddress)
-        external
-        view
-        virtual
-        override
-        returns (address[] memory)
-    {
+    function vaultsForAsset(
+        address assetAddress
+    ) external view virtual override returns (address[] memory) {
         return _vaultsForAsset[assetAddress];
     }
 
-    function vault(uint256 vaultId)
-        external
-        view
-        virtual
-        override
-        returns (address)
-    {
+    function vault(
+        uint256 vaultId
+    ) external view virtual override returns (address) {
         return vaults[vaultId];
     }
 
