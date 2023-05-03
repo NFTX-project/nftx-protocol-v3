@@ -131,12 +131,14 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         uint256 amount1Min;
         if (_isVToken0) {
             amount0Desired = vTokensAmount;
-            amount0Min = amount0Desired;
+            // have a 5000 wei buffer to account for any dust amounts
+            amount0Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
             amount1Desired = msg.value;
         } else {
             amount0Desired = msg.value;
             amount1Desired = vTokensAmount;
-            amount1Min = amount1Desired;
+            // have a 5000 wei buffer to account for any dust amounts
+            amount1Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
         }
 
         (positionId, , , ) = positionManager.mint{value: msg.value}(
@@ -156,6 +158,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         );
 
         positionManager.refundETH(msg.sender);
+        // refund vTokens dust (if any left)
+        positionManager.sweepToken(params.vtoken, 0, msg.sender);
     }
 
     function removeLiquidity(
