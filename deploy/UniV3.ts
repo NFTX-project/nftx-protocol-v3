@@ -60,6 +60,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: [factory.address, weth.address],
     log: true,
   });
+
+  const tickLens = await deploy("TickLens", {
+    from: deployer,
+    args: [],
+    log: true,
+  });
 };
 export default func;
 func.tags = ["UniV3"];
