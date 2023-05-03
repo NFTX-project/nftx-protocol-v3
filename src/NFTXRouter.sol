@@ -159,7 +159,12 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
 
         positionManager.refundETH(msg.sender);
         // refund vTokens dust (if any left)
-        positionManager.sweepToken(params.vtoken, 0, msg.sender);
+        uint256 vTokenBalance = INFTXVault(params.vtoken).balanceOf(
+            address(this)
+        );
+        if (vTokenBalance > 0) {
+            INFTXVault(params.vtoken).transfer(msg.sender, vTokenBalance);
+        }
     }
 
     function removeLiquidity(
