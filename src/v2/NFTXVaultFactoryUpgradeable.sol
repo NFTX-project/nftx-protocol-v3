@@ -33,9 +33,9 @@ contract NFTXVaultFactoryUpgradeable is
     struct VaultFees {
         bool active;
         uint64 mintFee;
-        uint64 randomRedeemFee;
+        uint64 randomRedeemFee; // TODO: remove random
         uint64 targetRedeemFee;
-        uint64 randomSwapFee;
+        uint64 randomSwapFee; // TODO: remove random
         uint64 targetSwapFee;
     }
     mapping(uint256 => VaultFees) private _vaultFees;
@@ -118,9 +118,9 @@ contract NFTXVaultFactoryUpgradeable is
     function setVaultFees(
         uint256 vaultId,
         uint256 mintFee,
-        uint256 randomRedeemFee,
+        uint256 randomRedeemFee, // TODO: remove random
         uint256 targetRedeemFee,
-        uint256 randomSwapFee,
+        uint256 randomSwapFee, // TODO: remove random
         uint256 targetSwapFee
     ) public virtual override {
         if (msg.sender != owner()) {
