@@ -96,7 +96,7 @@ library NFTDescriptor {
     ) private pure returns (string memory) {
         return
             string.concat(
-                "Uniswap - ",
+                "NFTX - ",
                 feeTier,
                 " - ",
                 escapeQuotes(params.quoteTokenSymbol),
