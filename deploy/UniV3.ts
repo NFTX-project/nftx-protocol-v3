@@ -1,14 +1,14 @@
 import { HardhatRuntimeEnvironment, Network } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, constants } from "ethers";
+import deployConfig from "../deployConfig";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
   const { deploy, execute } = deployments;
 
   const { deployer } = await getNamedAccounts();
-
-  const weth = await deployments.get("MockWETH");
+  const config = deployConfig[network.name];
 
   const poolImpl = await deploy("UniswapV3PoolUpgradeable", {
     from: deployer,
@@ -39,25 +39,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     libraries: {
       NFTDescriptor: NFTDescriptor.address,
     },
-    args: [weth.address, constants.HashZero],
+    args: [config.WETH, ethers.utils.formatBytes32String("WETH")],
     log: true,
   });
 
   const positionManager = await deploy("NonfungiblePositionManager", {
     from: deployer,
-    args: [factory.address, weth.address, descriptor.address],
+    args: [factory.address, config.WETH, descriptor.address],
     log: true,
   });
 
   const router = await deploy("SwapRouter", {
     from: deployer,
-    args: [factory.address, weth.address],
+    args: [factory.address, config.WETH],
     log: true,
   });
 
   const quoter = await deploy("QuoterV2", {
     from: deployer,
-    args: [factory.address, weth.address],
+    args: [factory.address, config.WETH],
     log: true,
   });
 
@@ -69,4 +69,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.tags = ["UniV3"];
-func.dependencies = ["Mocks"];
+func.dependencies = [];

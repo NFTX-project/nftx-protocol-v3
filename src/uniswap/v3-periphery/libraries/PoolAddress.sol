@@ -2,12 +2,13 @@
 pragma solidity >=0.5.0;
 
 import {Create2Upgradeable} from "@openzeppelin-upgradeable/contracts/utils/Create2Upgradeable.sol";
-import {Create2BeaconProxy} from "@src/proxy/Create2BeaconProxy.sol";
 
 /// @title Provides functions for deriving a pool address from the factory, tokens, and the fee
 library PoolAddress {
+    // NOTE: Ensure this value is latest & corresponds to current Create2BeaconProxy code
+    // keccak256(type(Create2BeaconProxy).creationCode);
     bytes32 internal constant BEACON_CODE_HASH =
-        keccak256(type(Create2BeaconProxy).creationCode);
+        0x25e3ec08b5481ab6736bacbc1babb737902563de379be5263db365452e048cc1;
 
     /// @notice The identifying key of the pool
     struct PoolKey {

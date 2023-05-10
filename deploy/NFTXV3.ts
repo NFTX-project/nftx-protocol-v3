@@ -12,7 +12,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const positionManager = await deployments.get("NonfungiblePositionManager");
   const router = await deployments.get("SwapRouter");
   const quoter = await deployments.get("QuoterV2");
-  const weth = await deployments.get("MockWETH");
   const nft = await deployments.get("MockNFT");
 
   const vaultImpl = await deploy("NFTXVaultUpgradeable", {
@@ -54,7 +53,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const inventoryStaking = await deploy("MockInventoryStakingV3", {
     from: deployer,
-    args: [vaultFactory.address, weth.address],
+    args: [vaultFactory.address, config.WETH],
     log: true,
   });
 
