@@ -33,16 +33,16 @@ contract NFTXVaultFactoryUpgradeable is
     struct VaultFees {
         bool active;
         uint64 mintFee;
-        uint64 randomRedeemFee; // TODO: remove random
+        uint64 NOT_USED4; // Removed, no longer needed.
         uint64 targetRedeemFee;
-        uint64 randomSwapFee; // TODO: remove random
+        uint64 NOT_USED5; // Removed, no longer needed.
         uint64 targetSwapFee;
     }
     mapping(uint256 => VaultFees) private _vaultFees;
     uint64 public override factoryMintFee;
-    uint64 public override factoryRandomRedeemFee;
+    uint64 private NOT_USED6; // Removed, no longer needed.
     uint64 public override factoryTargetRedeemFee;
-    uint64 public override factoryRandomSwapFee;
+    uint64 private NOT_USED7; // Removed, no longer needed.
     uint64 public override factoryTargetSwapFee;
 
     // v1.0.3
@@ -56,7 +56,7 @@ contract NFTXVaultFactoryUpgradeable is
         // We use a beacon proxy so that every child contract follows the same implementation code.
         __UpgradeableBeacon__init(_vaultImpl);
         setFeeDistributor(_feeDistributor);
-        setFactoryFees(0.1 ether, 0.05 ether, 0.1 ether, 0.05 ether, 0.1 ether);
+        setFactoryFees(0.1 ether, 0.1 ether, 0.1 ether);
     }
 
     function createVault(
@@ -89,38 +89,24 @@ contract NFTXVaultFactoryUpgradeable is
 
     function setFactoryFees(
         uint256 mintFee,
-        uint256 randomRedeemFee,
         uint256 targetRedeemFee,
-        uint256 randomSwapFee,
         uint256 targetSwapFee
     ) public virtual override onlyOwner {
         require(mintFee <= 0.5 ether, "Cannot > 0.5 ether");
-        require(randomRedeemFee <= 0.5 ether, "Cannot > 0.5 ether");
         require(targetRedeemFee <= 0.5 ether, "Cannot > 0.5 ether");
-        require(randomSwapFee <= 0.5 ether, "Cannot > 0.5 ether");
         require(targetSwapFee <= 0.5 ether, "Cannot > 0.5 ether");
 
         factoryMintFee = uint64(mintFee);
-        factoryRandomRedeemFee = uint64(randomRedeemFee);
         factoryTargetRedeemFee = uint64(targetRedeemFee);
-        factoryRandomSwapFee = uint64(randomSwapFee);
         factoryTargetSwapFee = uint64(targetSwapFee);
 
-        emit UpdateFactoryFees(
-            mintFee,
-            randomRedeemFee,
-            targetRedeemFee,
-            randomSwapFee,
-            targetSwapFee
-        );
+        emit UpdateFactoryFees(mintFee, targetRedeemFee, targetSwapFee);
     }
 
     function setVaultFees(
         uint256 vaultId,
         uint256 mintFee,
-        uint256 randomRedeemFee, // TODO: remove random
         uint256 targetRedeemFee,
-        uint256 randomSwapFee, // TODO: remove random
         uint256 targetSwapFee
     ) public virtual override {
         if (msg.sender != owner()) {
@@ -128,27 +114,18 @@ contract NFTXVaultFactoryUpgradeable is
             require(msg.sender == vaultAddr, "Not from vault");
         }
         require(mintFee <= 0.5 ether, "Cannot > 0.5 ether");
-        require(randomRedeemFee <= 0.5 ether, "Cannot > 0.5 ether");
         require(targetRedeemFee <= 0.5 ether, "Cannot > 0.5 ether");
-        require(randomSwapFee <= 0.5 ether, "Cannot > 0.5 ether");
         require(targetSwapFee <= 0.5 ether, "Cannot > 0.5 ether");
 
         _vaultFees[vaultId] = VaultFees(
             true,
             uint64(mintFee),
-            uint64(randomRedeemFee),
+            0,
             uint64(targetRedeemFee),
-            uint64(randomSwapFee),
+            0,
             uint64(targetSwapFee)
         );
-        emit UpdateVaultFees(
-            vaultId,
-            mintFee,
-            randomRedeemFee,
-            targetRedeemFee,
-            randomSwapFee,
-            targetSwapFee
-        );
+        emit UpdateVaultFees(vaultId, mintFee, targetRedeemFee, targetSwapFee);
     }
 
     function disableVaultFees(uint256 vaultId) public virtual override {
@@ -193,29 +170,19 @@ contract NFTXVaultFactoryUpgradeable is
 
     function vaultFees(
         uint256 vaultId
-    )
-        external
-        view
-        virtual
-        override
-        returns (uint256, uint256, uint256, uint256, uint256)
-    {
+    ) external view virtual override returns (uint256, uint256, uint256) {
         VaultFees memory fees = _vaultFees[vaultId];
         if (fees.active) {
             return (
                 uint256(fees.mintFee),
-                uint256(fees.randomRedeemFee),
                 uint256(fees.targetRedeemFee),
-                uint256(fees.randomSwapFee),
                 uint256(fees.targetSwapFee)
             );
         }
 
         return (
             uint256(factoryMintFee),
-            uint256(factoryRandomRedeemFee),
             uint256(factoryTargetRedeemFee),
-            uint256(factoryRandomSwapFee),
             uint256(factoryTargetSwapFee)
         );
     }

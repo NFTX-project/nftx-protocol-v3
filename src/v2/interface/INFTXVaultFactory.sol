@@ -20,10 +20,9 @@ interface INFTXVaultFactory is IBeacon {
 
     function allVaults() external view returns (address[] memory);
 
-    function vaultsForAsset(address asset)
-        external
-        view
-        returns (address[] memory);
+    function vaultsForAsset(
+        address asset
+    ) external view returns (address[] memory);
 
     function isLocked(uint256 id) external view returns (bool);
 
@@ -31,24 +30,13 @@ interface INFTXVaultFactory is IBeacon {
 
     function factoryMintFee() external view returns (uint64);
 
-    function factoryRandomRedeemFee() external view returns (uint64);
-
     function factoryTargetRedeemFee() external view returns (uint64);
-
-    function factoryRandomSwapFee() external view returns (uint64);
 
     function factoryTargetSwapFee() external view returns (uint64);
 
-    function vaultFees(uint256 vaultId)
-        external
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256
-        );
+    function vaultFees(
+        uint256 vaultId
+    ) external view returns (uint256, uint256, uint256);
 
     event NewFeeDistributor(address oldDistributor, address newDistributor);
     event NewZapContract(address oldZap, address newZap);
@@ -63,17 +51,13 @@ interface INFTXVaultFactory is IBeacon {
     event UpdateVaultFees(
         uint256 vaultId,
         uint256 mintFee,
-        uint256 randomRedeemFee,
         uint256 targetRedeemFee,
-        uint256 randomSwapFee,
         uint256 targetSwapFee
     );
     event DisableVaultFees(uint256 vaultId);
     event UpdateFactoryFees(
         uint256 mintFee,
-        uint256 randomRedeemFee,
         uint256 targetRedeemFee,
-        uint256 randomSwapFee,
         uint256 targetSwapFee
     );
 
@@ -101,18 +85,14 @@ interface INFTXVaultFactory is IBeacon {
 
     function setFactoryFees(
         uint256 mintFee,
-        uint256 randomRedeemFee,
         uint256 targetRedeemFee,
-        uint256 randomSwapFee,
         uint256 targetSwapFee
     ) external;
 
     function setVaultFees(
         uint256 vaultId,
         uint256 mintFee,
-        uint256 randomRedeemFee,
         uint256 targetRedeemFee,
-        uint256 randomSwapFee,
         uint256 targetSwapFee
     ) external;
 

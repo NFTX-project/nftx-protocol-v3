@@ -42,7 +42,7 @@ contract NFTXVaultUpgradeable is
     INFTXVaultFactory public override vaultFactory;
     INFTXEligibility public override eligibilityStorage;
 
-    uint256 randNonce;
+    uint256 UNUSED_FEE4;
     uint256 private UNUSED_FEE1;
     uint256 private UNUSED_FEE2;
     uint256 private UNUSED_FEE3;
@@ -50,16 +50,16 @@ contract NFTXVaultUpgradeable is
     bool public override is1155;
     bool public override allowAllItems;
     bool public override enableMint;
-    bool public override enableRandomRedeem;
-    bool public override enableTargetRedeem;
+    bool private UNUSED_FEE5;
+    bool private UNUSED_FEE6;
 
     EnumerableSetUpgradeable.UintSet holdings;
     mapping(uint256 => uint256) quantity1155;
 
-    bool public override enableRandomSwap;
-    bool public override enableTargetSwap;
+    bool private UNUSED_FEE7;
+    bool private UNUSED_FEE8;
 
-    uint32 public twapInterval;
+    uint32 public override twapInterval;
 
     // =============================================================
     //                           INIT
@@ -83,9 +83,7 @@ contract NFTXVaultUpgradeable is
         emit VaultInit(vaultId, _assetAddress, _is1155, _allowAllItems);
         setVaultFeatures(
             true /*enableMint*/,
-            true /*enableRandomRedeem*/,
             true /*enableTargetRedeem*/,
-            true /*enableRandomSwap*/,
             true /*enableTargetSwap*/
         );
     }
@@ -126,7 +124,7 @@ contract NFTXVaultUpgradeable is
     function redeem(
         uint256 amount,
         uint256[] calldata specificIds
-    ) external payable virtual override returns (uint256[] memory) {
+    ) external payable virtual override {
         return redeemTo(amount, specificIds, msg.sender);
     }
 
@@ -134,48 +132,33 @@ contract NFTXVaultUpgradeable is
         uint256 amount,
         uint256[] memory specificIds,
         address to
-    ) public payable virtual override nonReentrant returns (uint256[] memory) {
+    ) public payable virtual override nonReentrant {
         onlyOwnerIfPaused(2);
-        // TODO: remove random
         require(
-            amount == specificIds.length || enableRandomRedeem,
+            amount == specificIds.length,
             "NFTXVault: Random redeem not enabled"
-        );
-        require(
-            specificIds.length == 0 || enableTargetRedeem,
-            "NFTXVault: Target redeem not enabled"
         );
 
         // We burn all from sender and mint to fee receiver to reduce costs.
         _burn(msg.sender, base * amount);
 
-        // TODO: charge fees in ETH
-        // Pay the tokens + toll.
-        (
-            ,
-            uint256 _randomRedeemFee,
-            uint256 _targetRedeemFee,
-            ,
-
-        ) = vaultFees();
-        uint256 totalVTokenFee = (_targetRedeemFee * specificIds.length) +
-            (_randomRedeemFee * (amount - specificIds.length));
+        (, uint256 _targetRedeemFee, ) = vaultFees();
+        uint256 totalVTokenFee = (_targetRedeemFee * specificIds.length);
         uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
 
         // Withdraw from vault.
-        uint256[] memory redeemedIds = withdrawNFTsTo(amount, specificIds, to);
+        withdrawNFTsTo(amount, specificIds, to);
 
         _refundETH(msg.value, ethFees);
 
-        emit Redeemed(redeemedIds, specificIds, to);
-        return redeemedIds;
+        emit Redeemed(specificIds, to);
     }
 
     function swap(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds
-    ) external payable virtual override returns (uint256[] memory) {
+    ) external payable virtual override {
         return swapTo(tokenIds, amounts, specificIds, msg.sender);
     }
 
@@ -184,7 +167,7 @@ contract NFTXVaultUpgradeable is
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         uint256[] memory specificIds,
         address to
-    ) public payable virtual override nonReentrant returns (uint256[] memory) {
+    ) public payable virtual override nonReentrant {
         onlyOwnerIfPaused(3);
         uint256 count;
         if (is1155) {
@@ -197,31 +180,20 @@ contract NFTXVaultUpgradeable is
             count = tokenIds.length;
         }
 
-        // TODO: remove random
-        require(
-            count == specificIds.length || enableRandomSwap,
-            "NFTXVault: Random swap disabled"
-        );
-        require(
-            specificIds.length == 0 || enableTargetSwap,
-            "NFTXVault: Target swap disabled"
-        );
+        require(count == specificIds.length, "NFTXVault: Random swap disabled");
 
-        // TODO: charge fees in ETH
-        (, , , uint256 _randomSwapFee, uint256 _targetSwapFee) = vaultFees();
-        uint256 totalVTokenFee = (_targetSwapFee * specificIds.length) +
-            (_randomSwapFee * (count - specificIds.length));
+        (, , uint256 _targetSwapFee) = vaultFees();
+        uint256 totalVTokenFee = (_targetSwapFee * specificIds.length);
         uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
 
         // Give the NFTs first, so the user wont get the same thing back, just to be nice.
-        uint256[] memory ids = withdrawNFTsTo(count, specificIds, to);
+        withdrawNFTsTo(count, specificIds, to);
 
         receiveNFTs(tokenIds, amounts);
 
         _refundETH(msg.value, ethFees);
 
-        emit Swapped(tokenIds, amounts, specificIds, ids, to);
-        return ids;
+        emit Swapped(tokenIds, amounts, specificIds, to);
     }
 
     function flashLoan(
@@ -253,39 +225,27 @@ contract NFTXVaultUpgradeable is
 
     function setVaultFeatures(
         bool _enableMint,
-        bool _enableRandomRedeem,
         bool _enableTargetRedeem,
-        bool _enableRandomSwap,
         bool _enableTargetSwap
     ) public virtual override {
         onlyPrivileged();
         enableMint = _enableMint;
-        enableRandomRedeem = _enableRandomRedeem;
-        enableTargetRedeem = _enableTargetRedeem;
-        enableRandomSwap = _enableRandomSwap;
-        enableTargetSwap = _enableTargetSwap;
 
         emit EnableMintUpdated(_enableMint);
-        emit EnableRandomRedeemUpdated(_enableRandomRedeem);
         emit EnableTargetRedeemUpdated(_enableTargetRedeem);
-        emit EnableRandomSwapUpdated(_enableRandomSwap);
         emit EnableTargetSwapUpdated(_enableTargetSwap);
     }
 
     function setFees(
         uint256 _mintFee,
-        uint256 _randomRedeemFee,
         uint256 _targetRedeemFee,
-        uint256 _randomSwapFee,
         uint256 _targetSwapFee
     ) public virtual override {
         onlyPrivileged();
         vaultFactory.setVaultFees(
             vaultId,
             _mintFee,
-            _randomRedeemFee,
             _targetRedeemFee,
-            _randomSwapFee,
             _targetSwapFee
         );
     }
@@ -352,41 +312,27 @@ contract NFTXVaultUpgradeable is
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
 
-    // TODO: fees in ETH
     function mintFee() public view virtual override returns (uint256) {
-        (uint256 _mintFee, , , , ) = vaultFactory.vaultFees(vaultId);
+        (uint256 _mintFee, , ) = vaultFactory.vaultFees(vaultId);
         return _mintFee;
     }
 
-    // TODO: remove random
-    function randomRedeemFee() public view virtual override returns (uint256) {
-        (, uint256 _randomRedeemFee, , , ) = vaultFactory.vaultFees(vaultId);
-        return _randomRedeemFee;
-    }
-
     function targetRedeemFee() public view virtual override returns (uint256) {
-        (, , uint256 _targetRedeemFee, , ) = vaultFactory.vaultFees(vaultId);
+        (, uint256 _targetRedeemFee, ) = vaultFactory.vaultFees(vaultId);
         return _targetRedeemFee;
     }
 
-    // TODO: redeem random
-    function randomSwapFee() public view virtual override returns (uint256) {
-        (, , , uint256 _randomSwapFee, ) = vaultFactory.vaultFees(vaultId);
-        return _randomSwapFee;
-    }
-
     function targetSwapFee() public view virtual override returns (uint256) {
-        (, , , , uint256 _targetSwapFee) = vaultFactory.vaultFees(vaultId);
+        (, , uint256 _targetSwapFee) = vaultFactory.vaultFees(vaultId);
         return _targetSwapFee;
     }
 
-    // TODO: remove random
     function vaultFees()
         public
         view
         virtual
         override
-        returns (uint256, uint256, uint256, uint256, uint256)
+        returns (uint256, uint256, uint256)
     {
         return vaultFactory.vaultFees(vaultId);
     }
@@ -432,10 +378,9 @@ contract NFTXVaultUpgradeable is
         return holdings.length();
     }
 
-    // TODO: update version
     // Added in v1.0.3.
     function version() external pure returns (string memory) {
-        return "v1.0.5";
+        return "v1.0.6";
     }
 
     // =============================================================
@@ -500,19 +445,20 @@ contract NFTXVaultUpgradeable is
     // TODO: share a portion of premium with the original depositor
     function withdrawNFTsTo(
         uint256 amount,
-        uint256[] memory specificIds,
+        uint256[] memory specificIds, // TODO: length must match amount
         address to
-    ) internal virtual returns (uint256[] memory) {
+    ) internal virtual {
         bool _is1155 = is1155;
         address _assetAddress = assetAddress;
-        uint256[] memory redeemedIds = new uint256[](amount);
-        uint256 specificLength = specificIds.length;
+
+        require(
+            amount == specificIds.length,
+            "NFTXVault: Random redeem not enabled"
+        );
+
         for (uint256 i; i < amount; ++i) {
             // This will always be fine considering the validations made above.
-            uint256 tokenId = i < specificLength
-                ? specificIds[i]
-                : getRandomTokenIdFromVault();
-            redeemedIds[i] = tokenId;
+            uint256 tokenId = specificIds[i];
 
             if (_is1155) {
                 quantity1155[tokenId] -= 1;
@@ -532,8 +478,7 @@ contract NFTXVaultUpgradeable is
                 transferERC721(_assetAddress, to, tokenId);
             }
         }
-        afterRedeemHook(redeemedIds);
-        return redeemedIds;
+        afterRedeemHook(specificIds);
     }
 
     /// @dev Uses TWAP to calculate fees `ethAmount` corresponding to the given `vTokenAmount`
@@ -713,23 +658,6 @@ contract NFTXVaultUpgradeable is
         }
         (bool success, bytes memory resultData) = address(assetAddr).call(data);
         require(success, string(resultData));
-    }
-
-    // TODO: remove random
-    function getRandomTokenIdFromVault() internal virtual returns (uint256) {
-        uint256 randomIndex = uint256(
-            keccak256(
-                abi.encodePacked(
-                    blockhash(block.number - 1),
-                    randNonce,
-                    block.coinbase,
-                    block.difficulty,
-                    block.timestamp
-                )
-            )
-        ) % holdings.length();
-        ++randNonce;
-        return holdings.at(randomIndex);
     }
 
     function onlyPrivileged() internal view {
