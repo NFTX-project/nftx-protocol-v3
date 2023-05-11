@@ -80,6 +80,9 @@ interface INFTXVault is IERC20Upgradeable {
         address to
     );
 
+    error InsufficientETHSent();
+    error UnableToRefundETH();
+
     function __NFTXVault_init(
         string calldata _name,
         string calldata _symbol,
@@ -113,6 +116,8 @@ interface INFTXVault is IERC20Upgradeable {
 
     function disableVaultFees() external;
 
+    function setTwapInterval(uint32 twapInterval_) external;
+
     // This function allows for an easy setup of any eligibility module contract from the EligibilityManager.
     // It takes in ABI encoded parameters for the desired module. This is to make sure they can all follow
     // a similar interface.
@@ -127,37 +132,37 @@ interface INFTXVault is IERC20Upgradeable {
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external returns (uint256);
+    ) external payable returns (uint256);
 
     function mintTo(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         address to
-    ) external returns (uint256);
+    ) external payable returns (uint256);
 
     function redeem(
         uint256 amount,
         uint256[] calldata specificIds
-    ) external returns (uint256[] calldata);
+    ) external payable returns (uint256[] calldata);
 
     function redeemTo(
         uint256 amount,
         uint256[] calldata specificIds,
         address to
-    ) external returns (uint256[] calldata);
+    ) external payable returns (uint256[] calldata);
 
     function swap(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds
-    ) external returns (uint256[] calldata);
+    ) external payable returns (uint256[] calldata);
 
     function swapTo(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds,
         address to
-    ) external returns (uint256[] calldata);
+    ) external payable returns (uint256[] calldata);
 
     function allValidNFTs(
         uint256[] calldata tokenIds

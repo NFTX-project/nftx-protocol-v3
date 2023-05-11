@@ -14,6 +14,14 @@ import "./interface/INFTXVault.sol";
 import "./interface/INFTXEligibilityManager.sol";
 import "./interface/INFTXFeeDistributor.sol";
 
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
+import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
+import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
+import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
+import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
+
 // Authors: @0xKiwi_, @alexgausman and @apoorvlathey
 
 contract NFTXVaultUpgradeable is
@@ -51,6 +59,8 @@ contract NFTXVaultUpgradeable is
     bool public override enableRandomSwap;
     bool public override enableTargetSwap;
 
+    uint32 public twapInterval;
+
     // =============================================================
     //                           INIT
     // =============================================================
@@ -87,7 +97,7 @@ contract NFTXVaultUpgradeable is
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external virtual override returns (uint256) {
+    ) external payable virtual override returns (uint256) {
         return mintTo(tokenIds, amounts, msg.sender);
     }
 
@@ -95,7 +105,7 @@ contract NFTXVaultUpgradeable is
         uint256[] memory tokenIds,
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         address to
-    ) public virtual override nonReentrant returns (uint256) {
+    ) public payable virtual override nonReentrant returns (uint256) {
         onlyOwnerIfPaused(1);
         require(enableMint, "Minting not enabled");
         // Take the NFTs.
@@ -103,9 +113,11 @@ contract NFTXVaultUpgradeable is
 
         // Mint to the user.
         _mint(to, base * count);
-        // TODO: charge fees in ETH
-        uint256 totalFee = mintFee() * count;
-        _chargeAndDistributeFees(to, totalFee);
+
+        uint256 totalVTokenFee = mintFee() * count;
+        uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
+
+        _refundETH(msg.value, ethFees);
 
         emit Minted(tokenIds, amounts, to);
         return count;
@@ -114,7 +126,7 @@ contract NFTXVaultUpgradeable is
     function redeem(
         uint256 amount,
         uint256[] calldata specificIds
-    ) external virtual override returns (uint256[] memory) {
+    ) external payable virtual override returns (uint256[] memory) {
         return redeemTo(amount, specificIds, msg.sender);
     }
 
@@ -122,7 +134,7 @@ contract NFTXVaultUpgradeable is
         uint256 amount,
         uint256[] memory specificIds,
         address to
-    ) public virtual override nonReentrant returns (uint256[] memory) {
+    ) public payable virtual override nonReentrant returns (uint256[] memory) {
         onlyOwnerIfPaused(2);
         // TODO: remove random
         require(
@@ -146,12 +158,15 @@ contract NFTXVaultUpgradeable is
             ,
 
         ) = vaultFees();
-        uint256 totalFee = (_targetRedeemFee * specificIds.length) +
+        uint256 totalVTokenFee = (_targetRedeemFee * specificIds.length) +
             (_randomRedeemFee * (amount - specificIds.length));
-        _chargeAndDistributeFees(msg.sender, totalFee);
+        uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
 
         // Withdraw from vault.
         uint256[] memory redeemedIds = withdrawNFTsTo(amount, specificIds, to);
+
+        _refundETH(msg.value, ethFees);
+
         emit Redeemed(redeemedIds, specificIds, to);
         return redeemedIds;
     }
@@ -160,7 +175,7 @@ contract NFTXVaultUpgradeable is
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds
-    ) external virtual override returns (uint256[] memory) {
+    ) external payable virtual override returns (uint256[] memory) {
         return swapTo(tokenIds, amounts, specificIds, msg.sender);
     }
 
@@ -169,7 +184,7 @@ contract NFTXVaultUpgradeable is
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         uint256[] memory specificIds,
         address to
-    ) public virtual override nonReentrant returns (uint256[] memory) {
+    ) public payable virtual override nonReentrant returns (uint256[] memory) {
         onlyOwnerIfPaused(3);
         uint256 count;
         if (is1155) {
@@ -194,14 +209,16 @@ contract NFTXVaultUpgradeable is
 
         // TODO: charge fees in ETH
         (, , , uint256 _randomSwapFee, uint256 _targetSwapFee) = vaultFees();
-        uint256 totalFee = (_targetSwapFee * specificIds.length) +
+        uint256 totalVTokenFee = (_targetSwapFee * specificIds.length) +
             (_randomSwapFee * (count - specificIds.length));
-        _chargeAndDistributeFees(msg.sender, totalFee);
+        uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
 
         // Give the NFTs first, so the user wont get the same thing back, just to be nice.
         uint256[] memory ids = withdrawNFTsTo(count, specificIds, to);
 
         receiveNFTs(tokenIds, amounts);
+
+        _refundETH(msg.value, ethFees);
 
         emit Swapped(tokenIds, amounts, specificIds, ids, to);
         return ids;
@@ -271,6 +288,11 @@ contract NFTXVaultUpgradeable is
             _randomSwapFee,
             _targetSwapFee
         );
+    }
+
+    function setTwapInterval(uint32 twapInterval_) external virtual override {
+        onlyPrivileged();
+        twapInterval = twapInterval_;
     }
 
     function disableVaultFees() public virtual override {
@@ -514,26 +536,89 @@ contract NFTXVaultUpgradeable is
         return redeemedIds;
     }
 
+    /// @dev Uses TWAP to calculate fees `ethAmount` corresponding to the given `vTokenAmount`
+    /// Returns 0 if pool doesn't exist or sender is excluded from fees.
     function _chargeAndDistributeFees(
-        address user,
-        uint256 amount
-    ) internal virtual {
-        // Do not charge fees if the zap contract is calling
-        // Added in v1.0.3. Changed to mapping in v1.0.5.
-
+        uint256 vTokenAmount,
+        uint256 ethReceived
+    ) internal returns (uint256 ethAmount) {
+        // cache
         INFTXVaultFactory _vaultFactory = vaultFactory;
 
         if (_vaultFactory.excludedFromFees(msg.sender)) {
-            return;
+            return 0;
         }
 
-        // Mint fees directly to the distributor and distribute.
-        if (amount > 0) {
-            // TODO: distribute fees in ETH
-            address feeDistributor = _vaultFactory.feeDistributor();
-            // Changed to a _transfer() in v1.0.3.
-            _transfer(user, feeDistributor, amount);
-            INFTXFeeDistributor(feeDistributor).distribute(vaultId);
+        INFTXFeeDistributorV3 feeDistributor = INFTXFeeDistributorV3(
+            _vaultFactory.feeDistributor()
+        );
+        INFTXRouter nftxRouter = INFTXRouter(feeDistributor.nftxRouter());
+
+        (address pool, bool exists) = nftxRouter.getPoolExists(
+            address(this),
+            feeDistributor.REWARD_FEE_TIER()
+        );
+        if (!exists) {
+            return 0;
+        }
+
+        // price = amount1 / amount0
+        // priceX96 = price * 2^96
+        uint256 priceX96 = _getTwapX96(pool);
+        bool isVToken0 = nftxRouter.isVToken0(address(this));
+
+        if (isVToken0) {
+            ethAmount = FullMath.mulDiv(
+                vTokenAmount,
+                priceX96,
+                FixedPoint96.Q96
+            );
+        } else {
+            ethAmount = FullMath.mulDiv(
+                vTokenAmount,
+                FixedPoint96.Q96,
+                priceX96
+            );
+        }
+
+        if (ethReceived < ethAmount) revert InsufficientETHSent();
+
+        IWETH9 weth = IWETH9(address(feeDistributor.WETH()));
+        weth.deposit{value: ethAmount}();
+        weth.transfer(address(feeDistributor), ethAmount);
+        feeDistributor.distribute(vaultId);
+    }
+
+    function _getTwapX96(
+        address pool
+    ) internal view returns (uint256 priceX96) {
+        uint32[] memory secondsAgos = new uint32[](2);
+        secondsAgos[0] = twapInterval; // from (before)
+        secondsAgos[1] = 0; // to (now)
+
+        (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(
+            secondsAgos
+        );
+
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(
+            int24(
+                (tickCumulatives[1] - tickCumulatives[0]) /
+                    int56(int32(twapInterval))
+            )
+        );
+        priceX96 = FullMath.mulDiv(
+            sqrtPriceX96,
+            sqrtPriceX96,
+            FixedPoint96.Q96
+        );
+    }
+
+    /// @dev Must satisfy ethReceived >= ethFees
+    function _refundETH(uint256 ethReceived, uint256 ethFees) internal {
+        uint256 ethRefund = ethReceived - ethFees;
+        if (ethRefund > 0) {
+            (bool success, ) = payable(msg.sender).call{value: ethRefund}("");
+            if (!success) revert UnableToRefundETH();
         }
     }
 

@@ -388,6 +388,18 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
     /**
      * @inheritdoc INFTXRouter
      */
+    function getPoolExists(
+        address vToken_,
+        uint24 fee
+    ) external view override returns (address pool, bool exists) {
+        pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, fee);
+
+        exists = pool != address(0);
+    }
+
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function getPool(
         address vToken_,
         uint24 fee
