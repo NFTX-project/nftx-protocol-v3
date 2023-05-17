@@ -38,6 +38,12 @@ interface INFTXVaultFactory is IBeacon {
         uint256 vaultId
     ) external view returns (uint256, uint256, uint256);
 
+    function twapInterval() external view returns (uint32);
+
+    function premiumDuration() external view returns (uint256);
+
+    function premiumMax() external view returns (uint256);
+
     event NewFeeDistributor(address oldDistributor, address newDistributor);
     event NewZapContract(address oldZap, address newZap);
     event UpdatedZapContract(address zap, bool excluded);
@@ -95,6 +101,12 @@ interface INFTXVaultFactory is IBeacon {
         uint256 targetRedeemFee,
         uint256 targetSwapFee
     ) external;
+
+    function setTwapInterval(uint32 twapInterval_) external;
+
+    function setPremiumDuration(uint256 premiumDuration_) external;
+
+    function setPremiumMax(uint256 premiumMax_) external;
 
     function disableVaultFees(uint256 vaultId) external;
 }

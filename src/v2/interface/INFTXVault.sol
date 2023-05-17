@@ -30,8 +30,6 @@ interface INFTXVault is IERC20Upgradeable {
 
     function totalHoldings() external view returns (uint256);
 
-    function twapInterval() external view returns (uint32);
-
     function mintFee() external view returns (uint256);
 
     function targetRedeemFee() external view returns (uint256);
@@ -95,8 +93,6 @@ interface INFTXVault is IERC20Upgradeable {
     ) external;
 
     function disableVaultFees() external;
-
-    function setTwapInterval(uint32 twapInterval_) external;
 
     // This function allows for an easy setup of any eligibility module contract from the EligibilityManager.
     // It takes in ABI encoded parameters for the desired module. This is to make sure they can all follow

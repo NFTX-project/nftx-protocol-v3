@@ -13,6 +13,7 @@ import "./token/IERC721Upgradeable.sol";
 import "./interface/INFTXVault.sol";
 import "./interface/INFTXEligibilityManager.sol";
 import "./interface/INFTXFeeDistributor.sol";
+import {ExponentialPremium} from "./lib/ExponentialPremium.sol";
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
@@ -59,7 +60,8 @@ contract NFTXVaultUpgradeable is
     bool private UNUSED_FEE7;
     bool private UNUSED_FEE8;
 
-    uint32 public override twapInterval;
+    // tokenId => info
+    mapping(uint256 => uint256) public tokenDepositedAt;
 
     // =============================================================
     //                           INIT
@@ -144,10 +146,14 @@ contract NFTXVaultUpgradeable is
 
         (, uint256 _targetRedeemFee, ) = vaultFees();
         uint256 totalVTokenFee = (_targetRedeemFee * specificIds.length);
-        uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
 
         // Withdraw from vault.
-        withdrawNFTsTo(amount, specificIds, to);
+        uint256 vTokenPremium = withdrawNFTsTo(amount, specificIds, to);
+        // TODO: add public view function that returns net ETH fees payable
+        uint256 ethFees = _chargeAndDistributeFees(
+            totalVTokenFee + vTokenPremium,
+            msg.value
+        );
 
         _refundETH(msg.value, ethFees);
 
@@ -184,10 +190,14 @@ contract NFTXVaultUpgradeable is
 
         (, , uint256 _targetSwapFee) = vaultFees();
         uint256 totalVTokenFee = (_targetSwapFee * specificIds.length);
-        uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
 
         // Give the NFTs first, so the user wont get the same thing back, just to be nice.
-        withdrawNFTsTo(count, specificIds, to);
+        uint256 vTokenPremium = withdrawNFTsTo(count, specificIds, to);
+
+        uint256 ethFees = _chargeAndDistributeFees(
+            totalVTokenFee + vTokenPremium,
+            msg.value
+        );
 
         receiveNFTs(tokenIds, amounts);
 
@@ -248,11 +258,6 @@ contract NFTXVaultUpgradeable is
             _targetRedeemFee,
             _targetSwapFee
         );
-    }
-
-    function setTwapInterval(uint32 twapInterval_) external virtual override {
-        onlyPrivileged();
-        twapInterval = twapInterval_;
     }
 
     function disableVaultFees() public virtual override {
@@ -422,6 +427,12 @@ contract NFTXVaultUpgradeable is
                 }
                 quantity1155[tokenId] += amount;
                 count += amount;
+
+                // TODO: calculate premium for ERC1155
+                // tokenDepositInfo[tokenId] = TokenDepositInfo({
+                //     depositor: msg.sender,
+                //     depositedAt: block.timestamp
+                // });
             }
             return count;
         } else {
@@ -436,18 +447,17 @@ contract NFTXVaultUpgradeable is
                 //   -If not, we "pull" it from the msg.sender and add to holdings.
                 transferFromERC721(_assetAddress, tokenId);
                 holdings.add(tokenId);
+                tokenDepositedAt[tokenId] = block.timestamp;
             }
             return length;
         }
     }
 
-    // TODO: calculate premium based on timestamp the NFT was transferred to the vault
-    // TODO: share a portion of premium with the original depositor
     function withdrawNFTsTo(
         uint256 amount,
-        uint256[] memory specificIds, // TODO: length must match amount
+        uint256[] memory specificIds,
         address to
-    ) internal virtual {
+    ) internal virtual returns (uint256 vTokenPremium) {
         bool _is1155 = is1155;
         address _assetAddress = assetAddress;
 
@@ -473,7 +483,13 @@ contract NFTXVaultUpgradeable is
                     1,
                     ""
                 );
+                // TODO: vTokenPremium for ERC1155
             } else {
+                vTokenPremium += ExponentialPremium.getPremium(
+                    tokenDepositedAt[tokenId],
+                    vaultFactory.premiumMax(),
+                    vaultFactory.premiumDuration()
+                );
                 holdings.remove(tokenId);
                 transferERC721(_assetAddress, to, tokenId);
             }
@@ -484,7 +500,7 @@ contract NFTXVaultUpgradeable is
     /// @dev Uses TWAP to calculate fees `ethAmount` corresponding to the given `vTokenAmount`
     /// Returns 0 if pool doesn't exist or sender is excluded from fees.
     function _chargeAndDistributeFees(
-        uint256 vTokenAmount,
+        uint256 vTokenFeeAmount,
         uint256 ethReceived
     ) internal returns (uint256 ethAmount) {
         // cache
@@ -514,13 +530,13 @@ contract NFTXVaultUpgradeable is
 
         if (isVToken0) {
             ethAmount = FullMath.mulDiv(
-                vTokenAmount,
+                vTokenFeeAmount,
                 priceX96,
                 FixedPoint96.Q96
             );
         } else {
             ethAmount = FullMath.mulDiv(
-                vTokenAmount,
+                vTokenFeeAmount,
                 FixedPoint96.Q96,
                 priceX96
             );
@@ -537,8 +553,11 @@ contract NFTXVaultUpgradeable is
     function _getTwapX96(
         address pool
     ) internal view returns (uint256 priceX96) {
+        // cache
+        uint32 _twapInterval = vaultFactory.twapInterval();
+
         uint32[] memory secondsAgos = new uint32[](2);
-        secondsAgos[0] = twapInterval; // from (before)
+        secondsAgos[0] = _twapInterval; // from (before)
         secondsAgos[1] = 0; // to (now)
 
         (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(
@@ -548,7 +567,7 @@ contract NFTXVaultUpgradeable is
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(
             int24(
                 (tickCumulatives[1] - tickCumulatives[0]) /
-                    int56(int32(twapInterval))
+                    int56(int32(_twapInterval))
             )
         );
         priceX96 = FullMath.mulDiv(
@@ -606,8 +625,6 @@ contract NFTXVaultUpgradeable is
         address assetAddr,
         uint256 tokenId
     ) internal virtual {
-        // TODO: store timestamp of when vault received this NFT & the msg.sender as well
-
         address kitties = 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
         address punks = 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
         bytes memory data;

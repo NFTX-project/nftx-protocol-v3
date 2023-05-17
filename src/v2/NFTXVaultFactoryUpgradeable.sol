@@ -48,6 +48,12 @@ contract NFTXVaultFactoryUpgradeable is
     // v1.0.3
     mapping(address => bool) public override zapContracts;
 
+    uint32 public override twapInterval;
+    // time during which a deposited tokenId incurs premium during withdrawal from the vault
+    uint256 public override premiumDuration;
+    // max premium value in vTokens when NFT just deposited
+    uint256 public override premiumMax;
+
     function __NFTXVaultFactory_init(
         address _vaultImpl,
         address _feeDistributor
@@ -166,6 +172,24 @@ contract NFTXVaultFactoryUpgradeable is
     ) external virtual override onlyOwner {
         emit NewEligibilityManager(eligibilityManager, _eligibilityManager);
         eligibilityManager = _eligibilityManager;
+    }
+
+    function setTwapInterval(
+        uint32 twapInterval_
+    ) external virtual override onlyOwner {
+        twapInterval = twapInterval_;
+    }
+
+    function setPremiumDuration(
+        uint256 premiumDuration_
+    ) external virtual override onlyOwner {
+        premiumDuration = premiumDuration_;
+    }
+
+    function setPremiumMax(
+        uint256 premiumMax_
+    ) external virtual override onlyOwner {
+        premiumMax = premiumMax_;
     }
 
     function vaultFees(
