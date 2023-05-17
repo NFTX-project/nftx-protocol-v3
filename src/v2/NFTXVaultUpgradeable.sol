@@ -130,6 +130,7 @@ contract NFTXVaultUpgradeable is
         return redeemTo(amount, specificIds, msg.sender);
     }
 
+    // TODO: remove amount param as it always equals array length now
     function redeemTo(
         uint256 amount,
         uint256[] memory specificIds,
@@ -526,8 +527,9 @@ contract NFTXVaultUpgradeable is
         // price = amount1 / amount0
         // priceX96 = price * 2^96
         uint256 priceX96 = _getTwapX96(pool);
-        bool isVToken0 = nftxRouter.isVToken0(address(this));
+        if (priceX96 == 0) return 0;
 
+        bool isVToken0 = nftxRouter.isVToken0(address(this));
         if (isVToken0) {
             ethAmount = FullMath.mulDiv(
                 vTokenFeeAmount,
@@ -556,9 +558,24 @@ contract NFTXVaultUpgradeable is
         // cache
         uint32 _twapInterval = vaultFactory.twapInterval();
 
+        (, , uint16 observationIndex, , , , ) = IUniswapV3Pool(pool).slot0();
+        (uint32 lastObsTimestamp, , , bool initialized) = IUniswapV3Pool(pool)
+            .observations(observationIndex);
+        if (!initialized) {
+            return 0;
+        }
+
+        // secondsAgos[0] (from [before]) -> secondsAgos[1] (to [now])
         uint32[] memory secondsAgos = new uint32[](2);
-        secondsAgos[0] = _twapInterval; // from (before)
-        secondsAgos[1] = 0; // to (now)
+        secondsAgos[1] = 0;
+        if (block.timestamp - _twapInterval < lastObsTimestamp) {
+            secondsAgos[0] = uint32(block.timestamp) - lastObsTimestamp;
+        } else {
+            secondsAgos[0] = _twapInterval;
+        }
+        if (secondsAgos[0] == 0) {
+            return 0;
+        }
 
         (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(
             secondsAgos
@@ -567,7 +584,7 @@ contract NFTXVaultUpgradeable is
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(
             int24(
                 (tickCumulatives[1] - tickCumulatives[0]) /
-                    int56(int32(_twapInterval))
+                    int56(int32(secondsAgos[0]))
             )
         );
         priceX96 = FullMath.mulDiv(

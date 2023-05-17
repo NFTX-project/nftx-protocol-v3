@@ -9,6 +9,8 @@ import {TestBase} from "./TestBase.sol";
 
 contract NFTXRouterTests is TestBase {
     // TODO: addLiquidity test with just vTokens and a combo of both
+
+    // TODO: all testcases with ETH vault fees enabled
     function testAddLiquidity() external {
         uint256 prePositionNFTBalance = positionManager.balanceOf(
             address(this)
@@ -340,9 +342,9 @@ contract NFTXRouterTests is TestBase {
     // Pool Address
     // ================================
 
-    // NFTXRouter#getPoolExists
+    // NFTXRouter#getPoolExists(vaultId)
 
-    function test_getPoolExists_IfPoolNonExistent() external {
+    function test_getPoolExistsVaultId_IfPoolNonExistent() external {
         (address pool, bool exists) = nftxRouter.getPoolExists(
             0,
             DEFAULT_FEE_TIER
@@ -352,12 +354,40 @@ contract NFTXRouterTests is TestBase {
         assertEq(pool, address(0));
     }
 
-    function test_getPoolExists_Success() external {
+    function test_getPoolExistsVaultId_Success() external {
         // deploy pool
         _mintPosition(1);
 
         (address pool, bool exists) = nftxRouter.getPoolExists(
             0,
+            DEFAULT_FEE_TIER
+        );
+
+        assertEq(exists, true);
+        assertEq(
+            pool,
+            factory.getPool(address(vtoken), address(weth), DEFAULT_FEE_TIER)
+        );
+    }
+
+    // NFTXRouter#getPoolExists(vToken)
+
+    function test_getPoolExistsVToken_IfPoolNonExistent() external {
+        (address pool, bool exists) = nftxRouter.getPoolExists(
+            address(vtoken),
+            DEFAULT_FEE_TIER
+        );
+
+        assertEq(exists, false);
+        assertEq(pool, address(0));
+    }
+
+    function test_getPoolExistsVToken_Success() external {
+        // deploy pool
+        _mintPosition(1);
+
+        (address pool, bool exists) = nftxRouter.getPoolExists(
+            address(vtoken),
             DEFAULT_FEE_TIER
         );
 

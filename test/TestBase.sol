@@ -51,6 +51,9 @@ contract TestBase is TestExtend, ERC721Holder {
     uint256 constant VAULT_ID = 0;
 
     function setUp() external {
+        // to prevent underflow during calculations involving block.timestamp
+        vm.warp(100 days);
+
         weth = new MockWETH();
 
         UniswapV3PoolUpgradeable poolImpl = new UniswapV3PoolUpgradeable();
@@ -78,6 +81,10 @@ contract TestBase is TestExtend, ERC721Holder {
             address(vaultImpl),
             address(1) // temporary feeDistributor address
         );
+        // set premium related values
+        vaultFactory.setTwapInterval(7 days);
+        vaultFactory.setPremiumDuration(10 hours);
+        vaultFactory.setPremiumMax(5 ether);
 
         nftxRouter = new NFTXRouter(
             positionManager,
@@ -116,10 +123,12 @@ contract TestBase is TestExtend, ERC721Holder {
         vtoken = INFTXVault(vaultFactory.vault(vaultId));
     }
 
-    function _mintVToken(uint256 qty) internal returns (uint256 mintedVTokens) {
+    function _mintVToken(
+        uint256 qty
+    ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
         vaultFactory.setFeeExclusion(address(this), true); // setting fee exclusion to ease calulations below
 
-        uint256[] memory tokenIds = nft.mint(qty);
+        tokenIds = nft.mint(qty);
 
         nft.setApprovalForAll(address(vtoken), true);
         uint256[] memory amounts = new uint256[](0);
