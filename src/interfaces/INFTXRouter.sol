@@ -132,6 +132,14 @@ interface INFTXRouter {
     ) external view returns (address pool, bool exists);
 
     /**
+     * @notice Get deployed pool address for vToken. `exists` is false if pool doesn't exist.
+     */
+    function getPoolExists(
+        address vToken_,
+        uint24 fee
+    ) external view returns (address pool, bool exists);
+
+    /**
      * @notice Get deployed pool address for vToken. Reverts if pool doesn't exist
      */
     function getPool(

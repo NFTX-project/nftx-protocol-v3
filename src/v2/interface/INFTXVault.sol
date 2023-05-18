@@ -22,14 +22,6 @@ interface INFTXVault is IERC20Upgradeable {
 
     function enableMint() external view returns (bool);
 
-    function enableRandomRedeem() external view returns (bool);
-
-    function enableTargetRedeem() external view returns (bool);
-
-    function enableRandomSwap() external view returns (bool);
-
-    function enableTargetSwap() external view returns (bool);
-
     function vaultId() external view returns (uint256);
 
     function nftIdAt(uint256 holdingsIndex) external view returns (uint256);
@@ -40,18 +32,11 @@ interface INFTXVault is IERC20Upgradeable {
 
     function mintFee() external view returns (uint256);
 
-    function randomRedeemFee() external view returns (uint256);
-
     function targetRedeemFee() external view returns (uint256);
-
-    function randomSwapFee() external view returns (uint256);
 
     function targetSwapFee() external view returns (uint256);
 
-    function vaultFees()
-        external
-        view
-        returns (uint256, uint256, uint256, uint256, uint256);
+    function vaultFees() external view returns (uint256, uint256, uint256);
 
     event VaultInit(
         uint256 indexed vaultId,
@@ -65,20 +50,20 @@ interface INFTXVault is IERC20Upgradeable {
     // event CustomEligibilityDeployed(address eligibilityAddr);
 
     event EnableMintUpdated(bool enabled);
-    event EnableRandomRedeemUpdated(bool enabled);
     event EnableTargetRedeemUpdated(bool enabled);
-    event EnableRandomSwapUpdated(bool enabled);
     event EnableTargetSwapUpdated(bool enabled);
 
     event Minted(uint256[] nftIds, uint256[] amounts, address to);
-    event Redeemed(uint256[] nftIds, uint256[] specificIds, address to);
+    event Redeemed(uint256[] specificIds, address to);
     event Swapped(
         uint256[] nftIds,
         uint256[] amounts,
         uint256[] specificIds,
-        uint256[] redeemedIds,
         address to
     );
+
+    error InsufficientETHSent();
+    error UnableToRefundETH();
 
     function __NFTXVault_init(
         string calldata _name,
@@ -97,17 +82,13 @@ interface INFTXVault is IERC20Upgradeable {
 
     function setVaultFeatures(
         bool _enableMint,
-        bool _enableRandomRedeem,
         bool _enableTargetRedeem,
-        bool _enableRandomSwap,
         bool _enableTargetSwap
     ) external;
 
     function setFees(
         uint256 _mintFee,
-        uint256 _randomRedeemFee,
         uint256 _targetRedeemFee,
-        uint256 _randomSwapFee,
         uint256 _targetSwapFee
     ) external;
 
@@ -127,39 +108,40 @@ interface INFTXVault is IERC20Upgradeable {
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external returns (uint256);
+    ) external payable returns (uint256);
 
     function mintTo(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         address to
-    ) external returns (uint256);
+    ) external payable returns (uint256);
 
-    function redeem(
-        uint256 amount,
-        uint256[] calldata specificIds
-    ) external returns (uint256[] calldata);
+    function redeem(uint256[] calldata specificIds) external payable;
 
     function redeemTo(
-        uint256 amount,
         uint256[] calldata specificIds,
         address to
-    ) external returns (uint256[] calldata);
+    ) external payable;
 
     function swap(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds
-    ) external returns (uint256[] calldata);
+    ) external payable;
 
     function swapTo(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds,
         address to
-    ) external returns (uint256[] calldata);
+    ) external payable;
 
     function allValidNFTs(
         uint256[] calldata tokenIds
     ) external view returns (bool);
+
+    function getVTokenPremium(uint256 tokenId) external view returns (uint256);
+
+    // Calculate ETH amount corresponding to the vToken amount, calculated via TWAP from the AMM
+    function vTokenToETH(uint256 vTokenAmount) external view returns (uint256);
 }

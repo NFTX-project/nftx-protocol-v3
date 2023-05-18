@@ -23,23 +23,23 @@ interface INFTXFeeDistributorV3 {
     //                           CONSTANTS
     // =============================================================
 
-    function nftxVaultFactory() external returns (INFTXVaultFactory);
+    function nftxVaultFactory() external view returns (INFTXVaultFactory);
 
-    function inventoryStaking() external returns (INFTXInventoryStakingV3);
+    function inventoryStaking() external view returns (INFTXInventoryStakingV3);
 
-    function WETH() external returns (IERC20);
+    function WETH() external view returns (IERC20);
 
-    function REWARD_FEE_TIER() external returns (uint24);
+    function REWARD_FEE_TIER() external view returns (uint24);
 
     // =============================================================
     //                            STORAGE
     // =============================================================
 
-    function nftxRouter() external returns (INFTXRouter);
+    function nftxRouter() external view returns (INFTXRouter);
 
-    function treasury() external returns (address);
+    function treasury() external view returns (address);
 
-    function allocTotal() external returns (uint256);
+    function allocTotal() external view returns (uint256);
 
     function feeReceivers(
         uint256
@@ -52,7 +52,7 @@ interface INFTXFeeDistributorV3 {
             ReceiverType receiverType
         );
 
-    function distributionPaused() external returns (bool);
+    function distributionPaused() external view returns (bool);
 
     // =============================================================
     //                            EVENTS

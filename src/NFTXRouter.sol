@@ -221,11 +221,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
                 wethAmt += fractionalWethAmt;
 
                 // burn vTokens to provided tokenIds array
-                INFTXVault(params.vtoken).redeemTo(
-                    params.nftIds.length,
-                    params.nftIds,
-                    msg.sender
-                );
+                INFTXVault(params.vtoken).redeemTo(params.nftIds, msg.sender);
                 uint256 vTokenBurned = params.nftIds.length * 1 ether;
 
                 // if more vTokens collected than burned
@@ -318,11 +314,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         );
 
         // unwrap vTokens to tokenIds specified, and send to sender
-        INFTXVault(params.vtoken).redeemTo(
-            params.nftIds.length,
-            params.nftIds,
-            msg.sender
-        );
+        INFTXVault(params.vtoken).redeemTo(params.nftIds, msg.sender);
 
         // refund ETH
         router.refundETH(msg.sender);
@@ -380,6 +372,18 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         uint24 fee
     ) external view override returns (address pool, bool exists) {
         address vToken_ = nftxVaultFactory.vault(vaultId);
+        pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, fee);
+
+        exists = pool != address(0);
+    }
+
+    /**
+     * @inheritdoc INFTXRouter
+     */
+    function getPoolExists(
+        address vToken_,
+        uint24 fee
+    ) external view override returns (address pool, bool exists) {
         pool = IUniswapV3Factory(router.factory()).getPool(vToken_, WETH, fee);
 
         exists = pool != address(0);

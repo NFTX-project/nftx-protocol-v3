@@ -116,7 +116,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
         assertEq(preTotalVTokenShares, 0);
 
-        uint256 mintedVTokens = _mintVToken(3);
+        (uint256 mintedVTokens, ) = _mintVToken(3);
 
         vtoken.approve(address(inventoryStaking), type(uint256).max);
         address recipient = makeAddr("recipient");
@@ -171,7 +171,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
         assertTrue(preTotalVTokenShares != 0);
 
-        uint256 mintedVTokens = _mintVToken(3);
+        (uint256 mintedVTokens, ) = _mintVToken(3);
         address recipient = makeAddr("recipient");
 
         vm.expectEmit(true, true, false, true);
@@ -232,7 +232,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
         assertTrue(preTotalVTokenShares != 0);
 
-        uint256 mintedVTokens = _mintVToken(3);
+        (uint256 mintedVTokens, ) = _mintVToken(3);
         address recipient = makeAddr("recipient");
 
         vm.expectEmit(true, true, false, true);
@@ -376,7 +376,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         // initial stake to make totalVTokenShares non zero
         _mintXNFT(1);
 
-        uint256 vTokenRewardAmt = _mintVToken(2);
+        (uint256 vTokenRewardAmt, ) = _mintVToken(2);
         vtoken.transfer(address(feeDistributor), vTokenRewardAmt);
 
         startHoax(address(feeDistributor));
@@ -1031,7 +1031,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
     function _mintXNFT(
         uint256 nftsToWrap
     ) internal returns (uint256 positionId) {
-        uint256 mintedVTokens = _mintVToken(nftsToWrap);
+        (uint256 mintedVTokens, ) = _mintVToken(nftsToWrap);
         vtoken.approve(address(inventoryStaking), type(uint256).max);
         positionId = inventoryStaking.deposit(
             VAULT_ID,
