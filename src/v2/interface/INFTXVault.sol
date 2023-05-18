@@ -139,4 +139,9 @@ interface INFTXVault is IERC20Upgradeable {
     function allValidNFTs(
         uint256[] calldata tokenIds
     ) external view returns (bool);
+
+    function getVTokenPremium(uint256 tokenId) external view returns (uint256);
+
+    // Calculate ETH amount corresponding to the vToken amount, calculated via TWAP from the AMM
+    function vTokenToETH(uint256 vTokenAmount) external view returns (uint256);
 }

@@ -109,7 +109,7 @@ contract NFTXVaultUpgradeable is
         onlyOwnerIfPaused(1);
         require(enableMint, "Minting not enabled");
         // Take the NFTs.
-        uint256 count = receiveNFTs(tokenIds, amounts);
+        uint256 count = _receiveNFTs(tokenIds, amounts);
 
         // Mint to the user.
         _mint(to, base * count);
@@ -143,8 +143,8 @@ contract NFTXVaultUpgradeable is
         uint256 totalVTokenFee = (_targetRedeemFee * count);
 
         // Withdraw from vault.
-        uint256 vTokenPremium = withdrawNFTsTo(specificIds, to);
-        // TODO: add public view function that returns net ETH fees payable
+        uint256 vTokenPremium = _withdrawNFTsTo(specificIds, to);
+
         uint256 ethFees = _chargeAndDistributeFees(
             totalVTokenFee + vTokenPremium,
             msg.value
@@ -187,14 +187,14 @@ contract NFTXVaultUpgradeable is
         uint256 totalVTokenFee = (_targetSwapFee * specificIds.length);
 
         // Give the NFTs first, so the user wont get the same thing back, just to be nice.
-        uint256 vTokenPremium = withdrawNFTsTo(specificIds, to);
+        uint256 vTokenPremium = _withdrawNFTsTo(specificIds, to);
 
         uint256 ethFees = _chargeAndDistributeFees(
             totalVTokenFee + vTokenPremium,
             msg.value
         );
 
-        receiveNFTs(tokenIds, amounts);
+        _receiveNFTs(tokenIds, amounts);
 
         _refundETH(msg.value, ethFees);
 
@@ -383,12 +383,29 @@ contract NFTXVaultUpgradeable is
         return "v1.0.6";
     }
 
+    function getVTokenPremium(
+        uint256 tokenId
+    ) public view override returns (uint256) {
+        return
+            ExponentialPremium.getPremium(
+                tokenDepositedAt[tokenId],
+                vaultFactory.premiumMax(),
+                vaultFactory.premiumDuration()
+            );
+    }
+
+    function vTokenToETH(
+        uint256 vTokenAmount
+    ) external view override returns (uint256 ethAmount) {
+        (ethAmount, ) = _vTokenToETH(vaultFactory, vTokenAmount);
+    }
+
     // =============================================================
     //                        INTERNAL HELPERS
     // =============================================================
 
     // We set a hook to the eligibility module (if it exists) after redeems in case anything needs to be modified.
-    function afterRedeemHook(uint256[] memory tokenIds) internal virtual {
+    function _afterRedeemHook(uint256[] memory tokenIds) internal virtual {
         INFTXEligibility _eligibilityStorage = eligibilityStorage;
         if (address(_eligibilityStorage) == address(0)) {
             return;
@@ -396,7 +413,7 @@ contract NFTXVaultUpgradeable is
         _eligibilityStorage.afterRedeemHook(tokenIds);
     }
 
-    function receiveNFTs(
+    function _receiveNFTs(
         uint256[] memory tokenIds,
         uint256[] memory amounts
     ) internal virtual returns (uint256) {
@@ -448,7 +465,7 @@ contract NFTXVaultUpgradeable is
         }
     }
 
-    function withdrawNFTsTo(
+    function _withdrawNFTsTo(
         uint256[] memory specificIds,
         address to
     ) internal virtual returns (uint256 vTokenPremium) {
@@ -474,16 +491,12 @@ contract NFTXVaultUpgradeable is
                 );
                 // TODO: vTokenPremium for ERC1155
             } else {
-                vTokenPremium += ExponentialPremium.getPremium(
-                    tokenDepositedAt[tokenId],
-                    vaultFactory.premiumMax(),
-                    vaultFactory.premiumDuration()
-                );
+                vTokenPremium += getVTokenPremium(tokenId);
                 holdings.remove(tokenId);
                 transferERC721(_assetAddress, to, tokenId);
             }
         }
-        afterRedeemHook(specificIds);
+        _afterRedeemHook(specificIds);
     }
 
     /// @dev Uses TWAP to calculate fees `ethAmount` corresponding to the given `vTokenAmount`
@@ -499,38 +512,11 @@ contract NFTXVaultUpgradeable is
             return 0;
         }
 
-        INFTXFeeDistributorV3 feeDistributor = INFTXFeeDistributorV3(
-            _vaultFactory.feeDistributor()
+        INFTXFeeDistributorV3 feeDistributor;
+        (ethAmount, feeDistributor) = _vTokenToETH(
+            _vaultFactory,
+            vTokenFeeAmount
         );
-        INFTXRouter nftxRouter = INFTXRouter(feeDistributor.nftxRouter());
-
-        (address pool, bool exists) = nftxRouter.getPoolExists(
-            address(this),
-            feeDistributor.REWARD_FEE_TIER()
-        );
-        if (!exists) {
-            return 0;
-        }
-
-        // price = amount1 / amount0
-        // priceX96 = price * 2^96
-        uint256 priceX96 = _getTwapX96(pool);
-        if (priceX96 == 0) return 0;
-
-        bool isVToken0 = nftxRouter.isVToken0(address(this));
-        if (isVToken0) {
-            ethAmount = FullMath.mulDiv(
-                vTokenFeeAmount,
-                priceX96,
-                FixedPoint96.Q96
-            );
-        } else {
-            ethAmount = FullMath.mulDiv(
-                vTokenFeeAmount,
-                FixedPoint96.Q96,
-                priceX96
-            );
-        }
 
         if (ethReceived < ethAmount) revert InsufficientETHSent();
 
@@ -580,6 +566,46 @@ contract NFTXVaultUpgradeable is
             sqrtPriceX96,
             FixedPoint96.Q96
         );
+    }
+
+    function _vTokenToETH(
+        INFTXVaultFactory _vaultFactory,
+        uint256 vTokenAmount
+    )
+        internal
+        view
+        returns (uint256 ethAmount, INFTXFeeDistributorV3 feeDistributor)
+    {
+        feeDistributor = INFTXFeeDistributorV3(_vaultFactory.feeDistributor());
+        INFTXRouter nftxRouter = INFTXRouter(feeDistributor.nftxRouter());
+
+        (address pool, bool exists) = nftxRouter.getPoolExists(
+            address(this),
+            feeDistributor.REWARD_FEE_TIER()
+        );
+        if (!exists) {
+            return (0, feeDistributor);
+        }
+
+        // price = amount1 / amount0
+        // priceX96 = price * 2^96
+        uint256 priceX96 = _getTwapX96(pool);
+        if (priceX96 == 0) return (0, feeDistributor);
+
+        bool isVToken0 = nftxRouter.isVToken0(address(this));
+        if (isVToken0) {
+            ethAmount = FullMath.mulDiv(
+                vTokenAmount,
+                priceX96,
+                FixedPoint96.Q96
+            );
+        } else {
+            ethAmount = FullMath.mulDiv(
+                vTokenAmount,
+                FixedPoint96.Q96,
+                priceX96
+            );
+        }
     }
 
     /// @dev Must satisfy ethReceived >= ethFees
