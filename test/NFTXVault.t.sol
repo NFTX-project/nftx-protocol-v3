@@ -70,7 +70,7 @@ contract NFTXVaultTests is TestBase {
         uint256 prevETHBal = address(this).balance;
 
         // double ETH value here to check if refund working as well
-        vtoken.redeem{value: expectedETHPaid * 2}(qty, tokenIds);
+        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds);
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with No Premium", ethPaid);
@@ -92,7 +92,7 @@ contract NFTXVaultTests is TestBase {
         uint256 prevETHBal = address(this).balance;
 
         // double ETH value here to check if refund working as well
-        vtoken.redeem{value: expectedETHPaid * 2}(qty, tokenIds);
+        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds);
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with Premium", ethPaid);
@@ -113,7 +113,7 @@ contract NFTXVaultTests is TestBase {
         uint256 prevETHBal = address(this).balance;
 
         // double ETH value here to check if refund working as well
-        vtoken.redeem{value: expectedETHPaid * 2}(qty, tokenIds);
+        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds);
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with Premium", ethPaid);

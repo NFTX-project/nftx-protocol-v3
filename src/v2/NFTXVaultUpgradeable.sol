@@ -124,32 +124,26 @@ contract NFTXVaultUpgradeable is
     }
 
     function redeem(
-        uint256 amount,
         uint256[] calldata specificIds
     ) external payable virtual override {
-        return redeemTo(amount, specificIds, msg.sender);
+        return redeemTo(specificIds, msg.sender);
     }
 
-    // TODO: remove amount param as it always equals array length now
     function redeemTo(
-        uint256 amount,
         uint256[] memory specificIds,
         address to
     ) public payable virtual override nonReentrant {
         onlyOwnerIfPaused(2);
-        require(
-            amount == specificIds.length,
-            "NFTXVault: Random redeem not enabled"
-        );
+        uint256 count = specificIds.length;
 
         // We burn all from sender and mint to fee receiver to reduce costs.
-        _burn(msg.sender, base * amount);
+        _burn(msg.sender, base * count);
 
         (, uint256 _targetRedeemFee, ) = vaultFees();
-        uint256 totalVTokenFee = (_targetRedeemFee * specificIds.length);
+        uint256 totalVTokenFee = (_targetRedeemFee * count);
 
         // Withdraw from vault.
-        uint256 vTokenPremium = withdrawNFTsTo(amount, specificIds, to);
+        uint256 vTokenPremium = withdrawNFTsTo(specificIds, to);
         // TODO: add public view function that returns net ETH fees payable
         uint256 ethFees = _chargeAndDistributeFees(
             totalVTokenFee + vTokenPremium,
@@ -193,7 +187,7 @@ contract NFTXVaultUpgradeable is
         uint256 totalVTokenFee = (_targetSwapFee * specificIds.length);
 
         // Give the NFTs first, so the user wont get the same thing back, just to be nice.
-        uint256 vTokenPremium = withdrawNFTsTo(count, specificIds, to);
+        uint256 vTokenPremium = withdrawNFTsTo(specificIds, to);
 
         uint256 ethFees = _chargeAndDistributeFees(
             totalVTokenFee + vTokenPremium,
@@ -455,19 +449,13 @@ contract NFTXVaultUpgradeable is
     }
 
     function withdrawNFTsTo(
-        uint256 amount,
         uint256[] memory specificIds,
         address to
     ) internal virtual returns (uint256 vTokenPremium) {
         bool _is1155 = is1155;
         address _assetAddress = assetAddress;
 
-        require(
-            amount == specificIds.length,
-            "NFTXVault: Random redeem not enabled"
-        );
-
-        for (uint256 i; i < amount; ++i) {
+        for (uint256 i; i < specificIds.length; ++i) {
             // This will always be fine considering the validations made above.
             uint256 tokenId = specificIds[i];
 

@@ -221,11 +221,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
                 wethAmt += fractionalWethAmt;
 
                 // burn vTokens to provided tokenIds array
-                INFTXVault(params.vtoken).redeemTo(
-                    params.nftIds.length,
-                    params.nftIds,
-                    msg.sender
-                );
+                INFTXVault(params.vtoken).redeemTo(params.nftIds, msg.sender);
                 uint256 vTokenBurned = params.nftIds.length * 1 ether;
 
                 // if more vTokens collected than burned
@@ -318,11 +314,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         );
 
         // unwrap vTokens to tokenIds specified, and send to sender
-        INFTXVault(params.vtoken).redeemTo(
-            params.nftIds.length,
-            params.nftIds,
-            msg.sender
-        );
+        INFTXVault(params.vtoken).redeemTo(params.nftIds, msg.sender);
 
         // refund ETH
         router.refundETH(msg.sender);

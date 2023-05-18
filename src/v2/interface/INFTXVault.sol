@@ -116,13 +116,9 @@ interface INFTXVault is IERC20Upgradeable {
         address to
     ) external payable returns (uint256);
 
-    function redeem(
-        uint256 amount,
-        uint256[] calldata specificIds
-    ) external payable;
+    function redeem(uint256[] calldata specificIds) external payable;
 
     function redeemTo(
-        uint256 amount,
         uint256[] calldata specificIds,
         address to
     ) external payable;
