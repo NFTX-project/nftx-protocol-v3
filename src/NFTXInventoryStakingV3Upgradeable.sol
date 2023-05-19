@@ -192,7 +192,8 @@ contract NFTXInventoryStakingV3Upgradeable is
 
     function withdraw(
         uint256 positionId,
-        uint256 vTokenShares
+        uint256 vTokenShares,
+        uint256[] calldata nftIds
     ) external override {
         onlyOwnerIfPaused(2);
 
@@ -237,11 +238,31 @@ contract NFTXInventoryStakingV3Upgradeable is
         _vaultGlobal.totalVTokenShares -= vTokenShares;
         position.vTokenShareBalance -= vTokenShares;
 
-        // transfer tokens to the user
-        IERC20(nftxVaultFactory.vault(vaultId)).transfer(
-            msg.sender,
-            vTokenOwed
-        );
+        uint256 nftCount = nftIds.length;
+        if (nftCount > 0) {
+            // redeem is only available for positions which were/are under timelock (as redeem fee is avoided here)
+            if (position.timelockedUntil == 0)
+                revert RedeemNotAllowedWithoutTimelock();
+
+            // check if we have sufficient vTokens
+            uint256 requiredVTokens = nftCount * 1 ether;
+            if (vTokenOwed < requiredVTokens) revert InsufficientVTokens();
+
+            address vault = nftxVaultFactory.vault(vaultId);
+            INFTXVault(vault).redeemTo(nftIds, msg.sender);
+
+            // send vToken residue
+            uint256 vTokenResidue = vTokenOwed - requiredVTokens;
+            if (vTokenResidue > 0) {
+                IERC20(vault).transfer(msg.sender, vTokenResidue);
+            }
+        } else {
+            // transfer tokens to the user
+            IERC20(nftxVaultFactory.vault(vaultId)).transfer(
+                msg.sender,
+                vTokenOwed
+            );
+        }
         WETH.transfer(msg.sender, wethOwed);
 
         emit Withdraw(positionId, vTokenShares, vTokenOwed, wethOwed);
