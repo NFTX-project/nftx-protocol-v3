@@ -34,6 +34,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     //                           CONSTANTS
     // =============================================================
 
+    function CRYPTO_PUNKS() external view returns (address);
+
     function nftxVaultFactory() external view returns (INFTXVaultFactory);
 
     function timelockExcludeList() external view returns (ITimelockExcludeList);
@@ -82,6 +84,11 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 indexed positionId,
         uint256 amount
     );
+    event DepositWithNFT(
+        uint256 indexed vaultId,
+        uint256 indexed positionId,
+        uint256 amount
+    );
     event Withdraw(
         uint256 indexed positionId,
         uint256 vTokenShares,
@@ -122,7 +129,14 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 vaultId,
         uint256 amount,
         address recipient
-    ) external returns (uint256 tokenId);
+    ) external returns (uint256 positionId);
+
+    /// @notice This contract must be on the feeExclusion list to avoid mint fees, else revert
+    function depositWithNFT(
+        uint256 vaultId,
+        uint256[] calldata tokenIds,
+        address recipient
+    ) external returns (uint256 positionId);
 
     function withdraw(uint256 positionId, uint256 vTokenShares) external;
 
