@@ -109,6 +109,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     error Timelocked();
     error VaultIdMismatch();
     error ParentChildSame();
+    error RedeemNotAllowedWithoutTimelock();
+    error InsufficientVTokens();
 
     // =============================================================
     //                           INIT
@@ -138,7 +140,12 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         address recipient
     ) external returns (uint256 positionId);
 
-    function withdraw(uint256 positionId, uint256 vTokenShares) external;
+    /// @notice This contract must be on the feeExclusion list to avoid redeem fees, else revert
+    function withdraw(
+        uint256 positionId,
+        uint256 vTokenShares,
+        uint256[] calldata nftIds
+    ) external;
 
     function combinePositions(
         uint256 parentPositionId,
