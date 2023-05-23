@@ -6,6 +6,7 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IUniversalRouter} from "@src/interfaces/IUniversalRouter.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
@@ -28,6 +29,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
     address public constant CRYPTO_PUNKS =
         0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
     IWETH9 public immutable WETH;
+    IPermitAllowanceTransfer public immutable PERMIT2;
     INFTXVaultFactory public immutable nftxFactory;
     address public immutable inventoryStaking;
 
@@ -83,11 +85,13 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
     constructor(
         INFTXVaultFactory nftxFactory_,
         IUniversalRouter universalRouter_,
+        IPermitAllowanceTransfer PERMIT2_,
         address inventoryStaking_,
         IWETH9 WETH_
     ) {
         nftxFactory = nftxFactory_;
         universalRouter = universalRouter_;
+        PERMIT2 = PERMIT2_;
         inventoryStaking = inventoryStaking_;
         WETH = WETH_;
     }
@@ -365,7 +369,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         // Track our balance of the buyToken to determine how much we've bought.
         uint256 boughtAmount = IERC20(buyToken).balanceOf(address(this));
 
-        _approveToken(sellToken, address(universalRouter));
+        _permit2ApproveToken(sellToken, address(universalRouter));
 
         // execute swap
         (bool success, ) = address(universalRouter).call(executeCallData);
@@ -375,13 +379,19 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         return IERC20(buyToken).balanceOf(address(this)) - boughtAmount;
     }
 
-    function _approveToken(address token, address spender) internal {
+    function _permit2ApproveToken(address token, address spender) internal {
+        (uint160 permitAllowance, , ) = PERMIT2.allowance(
+            address(this),
+            token,
+            spender
+        );
         if (
-            IERC20(token).allowance(address(this), spender) >=
-            0xF0000000000000000000000000000000 // sufficiently large value
+            permitAllowance >=
+            uint160(0xf000000000000000000000000000000000000000) // sufficiently large value
         ) return;
 
-        IERC20(token).safeApprove(spender, type(uint256).max);
+        IERC20(token).safeApprove(address(PERMIT2), type(uint256).max);
+        PERMIT2.approve(token, spender, type(uint160).max, type(uint48).max);
     }
 
     function _allWethToETHResidue(
