@@ -15,9 +15,12 @@ import {QuoterV2} from "@uni-periphery/lens/QuoterV2.sol";
 import {TickMath} from "@uni-core/libraries/TickMath.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
+import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 
 import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
+import {MockUniversalRouter} from "@mocks/MockUniversalRouter.sol";
+import {MockPermit2} from "@mocks/MockPermit2.sol";
 
 import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
 import {NFTXVaultFactoryUpgradeable} from "@src/v2/NFTXVaultFactoryUpgradeable.sol";
@@ -26,6 +29,7 @@ import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
 import {TimelockExcludeList} from "@src/v2/other/TimelockExcludeList.sol";
 import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
+import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
 
 contract TestBase is TestExtend, ERC721Holder {
     UniswapV3FactoryUpgradeable factory;
@@ -36,6 +40,8 @@ contract TestBase is TestExtend, ERC721Holder {
     QuoterV2 quoter;
 
     MockNFT nft;
+    MockUniversalRouter universalRouter;
+    MockPermit2 permit2;
 
     INFTXVault vtoken;
     TimelockExcludeList timelockExcludeList;
@@ -44,11 +50,14 @@ contract TestBase is TestExtend, ERC721Holder {
     NFTXVaultFactoryUpgradeable vaultFactory;
     NFTXRouter nftxRouter;
     NFTXInventoryStakingV3Upgradeable inventoryStaking;
+    MarketplaceUniversalRouterZap marketplaceZap;
 
     // TODO: remove this and add tests for different fee tiers
     uint24 constant DEFAULT_FEE_TIER = 10000;
     address immutable TREASURY = makeAddr("TREASURY");
     uint256 constant VAULT_ID = 0;
+
+    uint16 constant REWARD_TIER_CARDINALITY = 102; // considering 20 min interval with 1 block every 12 seconds on ETH Mainnet
 
     function setUp() external {
         // to prevent underflow during calculations involving block.timestamp
@@ -59,7 +68,10 @@ contract TestBase is TestExtend, ERC721Holder {
         UniswapV3PoolUpgradeable poolImpl = new UniswapV3PoolUpgradeable();
 
         factory = new UniswapV3FactoryUpgradeable();
-        factory.__UniswapV3FactoryUpgradeable_init(address(poolImpl));
+        factory.__UniswapV3FactoryUpgradeable_init(
+            address(poolImpl),
+            REWARD_TIER_CARDINALITY
+        );
         descriptor = new NonfungibleTokenPositionDescriptor(
             address(weth),
             bytes32(0)
@@ -82,7 +94,7 @@ contract TestBase is TestExtend, ERC721Holder {
             address(1) // temporary feeDistributor address
         );
         // set premium related values
-        vaultFactory.setTwapInterval(7 days);
+        vaultFactory.setTwapInterval(20 minutes);
         vaultFactory.setPremiumDuration(10 hours);
         vaultFactory.setPremiumMax(5 ether);
 
@@ -121,6 +133,17 @@ contract TestBase is TestExtend, ERC721Holder {
             true
         );
         vtoken = INFTXVault(vaultFactory.vault(vaultId));
+
+        // Zaps
+        permit2 = new MockPermit2();
+        universalRouter = new MockUniversalRouter(permit2, router);
+        marketplaceZap = new MarketplaceUniversalRouterZap(
+            vaultFactory,
+            address(universalRouter),
+            permit2,
+            address(inventoryStaking),
+            IWETH9(address(weth))
+        );
     }
 
     function _mintVToken(
@@ -230,6 +253,22 @@ contract TestBase is TestExtend, ERC721Holder {
         );
 
         ethUsed = preETHBalance - address(this).balance;
+    }
+
+    function _mintPositionWithTwap(uint256 currentNFTPrice) internal {
+        _mintPosition(
+            10,
+            currentNFTPrice,
+            currentNFTPrice - 0.5 ether,
+            currentNFTPrice + 0.5 ether,
+            DEFAULT_FEE_TIER
+        );
+        vm.warp(block.timestamp + vaultFactory.twapInterval());
+    }
+
+    // the actual value can be off by few decimals so accounting for 0.2% error.
+    function _valueWithError(uint256 value) internal pure returns (uint256) {
+        return (value * (10_000 - 20)) / 10_000;
     }
 
     function _sellNFTs(

@@ -28,7 +28,8 @@ contract UniswapV3PoolDeployerUpgradeable is UpgradeableBeacon {
         address token0,
         address token1,
         uint24 fee,
-        int24 tickSpacing
+        int24 tickSpacing,
+        uint16 observationCardinalityNext
     ) internal returns (address pool) {
         pool = Create2Upgradeable.deploy(
             0,
@@ -40,7 +41,8 @@ contract UniswapV3PoolDeployerUpgradeable is UpgradeableBeacon {
             token0,
             token1,
             fee,
-            tickSpacing
+            tickSpacing,
+            observationCardinalityNext
         );
     }
 }

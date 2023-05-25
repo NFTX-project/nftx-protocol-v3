@@ -27,6 +27,7 @@ interface IUniswapV3Pool is
         address token0_,
         address token1_,
         uint24 fee_,
-        int24 tickSpacing_
+        int24 tickSpacing_,
+        uint16 observationCardinalityNext_
     ) external;
 }

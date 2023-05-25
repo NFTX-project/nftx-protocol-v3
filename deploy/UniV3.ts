@@ -22,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "__UniswapV3FactoryUpgradeable_init",
-          args: [poolImpl.address],
+          args: [poolImpl.address, config.REWARD_TIER_CARDINALITY],
         },
       },
     },

@@ -99,7 +99,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         address vToken = nftxVaultFactory.vault(vaultId);
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
 
-        uint256 preVTokenBalance = _vaultGlobal.netVTokenBalance;
+        uint256 preVTokenBalance = _vaultGlobal.netVTokenBalance; // TODO: use balanceOf() instead of netVTokenBalance to account for tokens sent directly, like by MarketplaceZap
         IERC20(vToken).transferFrom(msg.sender, address(this), amount);
         _vaultGlobal.netVTokenBalance = preVTokenBalance + amount;
 
@@ -373,6 +373,7 @@ contract NFTXInventoryStakingV3Upgradeable is
                 _vaultGlobal.totalVTokenShares
             );
         } else {
+            // TODO: if reward is vToken, and we removed netVTokenBalance then the logic below can be removed and the sender can directly transfer vTokens without calling any functions here
             address vToken = nftxVaultFactory.vault(vaultId);
             IERC20(vToken).transferFrom(msg.sender, address(this), amount);
             _vaultGlobal.netVTokenBalance += amount;

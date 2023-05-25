@@ -10,7 +10,7 @@ contract NFTXVaultFactoryTests is TestBase {
     // NFTXVaultFactory#setTwapInterval
 
     function test_setTwapInterval_RevertsForNonOwner() external {
-        uint32 newTwapInterval = 10 days;
+        uint32 newTwapInterval = 60 minutes;
 
         hoax(makeAddr("nonOwner"));
         vm.expectRevert("Ownable: caller is not the owner");
@@ -18,7 +18,7 @@ contract NFTXVaultFactoryTests is TestBase {
     }
 
     function test_setTwapInterval_Success() external {
-        uint32 newTwapInterval = 10 days;
+        uint32 newTwapInterval = 60 minutes;
 
         uint32 preTwapInterval = vaultFactory.twapInterval();
         assertTrue(preTwapInterval != newTwapInterval);

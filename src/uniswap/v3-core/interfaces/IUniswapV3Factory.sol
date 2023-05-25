@@ -62,6 +62,9 @@ interface IUniswapV3Factory {
         uint24 fee
     ) external returns (address pool);
 
+    /// @notice The CardinalityNext value to be set for the RewardFeeTier Pools
+    function rewardTierCardinality() external view returns (uint16);
+
     function setFeeDistributor(address feeDistributor_) external;
 
     /// @notice Enables a fee amount with the given tickSpacing

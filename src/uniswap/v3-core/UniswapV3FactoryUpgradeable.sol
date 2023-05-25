@@ -3,6 +3,7 @@ pragma solidity =0.8.15;
 
 import {IUniswapV3Factory} from "./interfaces/IUniswapV3Factory.sol";
 import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 
 import {UniswapV3PoolDeployerUpgradeable, UpgradeableBeacon} from "./UniswapV3PoolDeployerUpgradeable.sol";
 
@@ -22,10 +23,15 @@ contract UniswapV3FactoryUpgradeable is
         public
         override getPool;
 
+    uint16 public override rewardTierCardinality;
+
     function __UniswapV3FactoryUpgradeable_init(
-        address beaconImplementation_
+        address beaconImplementation_,
+        uint16 rewardTierCardinality_
     ) external initializer {
         __UniswapV3PoolDeployerUpgradeable_init(beaconImplementation_);
+
+        rewardTierCardinality = rewardTierCardinality_;
 
         // TODO: allow different fee tiers
 
@@ -51,7 +57,16 @@ contract UniswapV3FactoryUpgradeable is
         int24 tickSpacing = feeAmountTickSpacing[fee];
         require(tickSpacing != 0);
         require(getPool[token0][token1][fee] == address(0));
-        pool = deploy(address(this), token0, token1, fee, tickSpacing);
+        pool = deploy(
+            address(this),
+            token0,
+            token1,
+            fee,
+            tickSpacing,
+            INFTXFeeDistributorV3(feeDistributor).REWARD_FEE_TIER() == fee
+                ? rewardTierCardinality
+                : 1
+        );
         getPool[token0][token1][fee] = pool;
         // populate mapping in the reverse direction, deliberate choice to avoid the cost of comparing addresses
         getPool[token1][token0][fee] = pool;

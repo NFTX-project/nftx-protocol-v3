@@ -114,7 +114,8 @@ contract UniswapV3PoolUpgradeable is IUniswapV3Pool, Initializable {
         address token0_,
         address token1_,
         uint24 fee_,
-        int24 tickSpacing_
+        int24 tickSpacing_,
+        uint16 observationCardinalityNext_
     ) external override initializer {
         factory = factory_;
         token0 = token0_;
@@ -125,6 +126,18 @@ contract UniswapV3PoolUpgradeable is IUniswapV3Pool, Initializable {
         maxLiquidityPerTick = Tick.tickSpacingToMaxLiquidityPerTick(
             tickSpacing_
         );
+
+        // When this pool is the DEFAULT_FEE_TIER and we require to have TWAP
+        // the cost of initialization is forwarded to the first swappers
+        if (observationCardinalityNext_ > 0) {
+            slot0.observationCardinalityNext = observations.grow(
+                1,
+                observationCardinalityNext_,
+                false
+            );
+        } else {
+            slot0.observationCardinalityNext = 1;
+        }
     }
 
     /// @dev Common checks for valid tick inputs.
@@ -293,7 +306,8 @@ contract UniswapV3PoolUpgradeable is IUniswapV3Pool, Initializable {
         uint16 observationCardinalityNextOld = slot0.observationCardinalityNext; // for the event
         uint16 observationCardinalityNextNew = observations.grow(
             observationCardinalityNextOld,
-            observationCardinalityNext
+            observationCardinalityNext,
+            true
         );
         slot0.observationCardinalityNext = observationCardinalityNextNew;
         if (observationCardinalityNextOld != observationCardinalityNextNew)
@@ -310,16 +324,14 @@ contract UniswapV3PoolUpgradeable is IUniswapV3Pool, Initializable {
 
         int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
 
-        (uint16 cardinality, uint16 cardinalityNext) = observations.initialize(
-            _blockTimestamp()
-        );
+        uint16 cardinality = observations.initialize(_blockTimestamp());
 
         slot0 = Slot0({
             sqrtPriceX96: sqrtPriceX96,
             tick: tick,
             observationIndex: 0,
             observationCardinality: cardinality,
-            observationCardinalityNext: cardinalityNext,
+            observationCardinalityNext: slot0.observationCardinalityNext,
             feeProtocol: 0,
             unlocked: true
         });

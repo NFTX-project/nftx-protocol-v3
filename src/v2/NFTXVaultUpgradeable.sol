@@ -16,6 +16,7 @@ import "./interface/INFTXFeeDistributor.sol";
 import {ExponentialPremium} from "./lib/ExponentialPremium.sol";
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IUniswapV3PoolDerivedState} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
@@ -520,40 +521,70 @@ contract NFTXVaultUpgradeable is
 
         if (ethReceived < ethAmount) revert InsufficientETHSent();
 
-        IWETH9 weth = IWETH9(address(feeDistributor.WETH()));
-        weth.deposit{value: ethAmount}();
-        weth.transfer(address(feeDistributor), ethAmount);
-        feeDistributor.distribute(vaultId);
+        if (ethAmount > 0) {
+            IWETH9 weth = IWETH9(address(feeDistributor.WETH()));
+            weth.deposit{value: ethAmount}();
+            weth.transfer(address(feeDistributor), ethAmount);
+            feeDistributor.distribute(vaultId);
+        }
     }
 
     function _getTwapX96(
         address pool
     ) internal view returns (uint256 priceX96) {
-        // cache
-        uint32 _twapInterval = vaultFactory.twapInterval();
-
-        (, , uint16 observationIndex, , , , ) = IUniswapV3Pool(pool).slot0();
-        (uint32 lastObsTimestamp, , , bool initialized) = IUniswapV3Pool(pool)
-            .observations(observationIndex);
-        if (!initialized) {
-            return 0;
-        }
-
         // secondsAgos[0] (from [before]) -> secondsAgos[1] (to [now])
         uint32[] memory secondsAgos = new uint32[](2);
+        secondsAgos[0] = vaultFactory.twapInterval();
         secondsAgos[1] = 0;
-        if (block.timestamp - _twapInterval < lastObsTimestamp) {
-            secondsAgos[0] = uint32(block.timestamp) - lastObsTimestamp;
-        } else {
-            secondsAgos[0] = _twapInterval;
-        }
-        if (secondsAgos[0] == 0) {
-            return 0;
+
+        // observe might fail for newly created pools that don't have sufficient observations yet
+        (bool success, bytes memory data) = pool.staticcall(
+            abi.encodeWithSelector(
+                IUniswapV3PoolDerivedState.observe.selector,
+                secondsAgos
+            )
+        );
+
+        if (!success) {
+            if (
+                keccak256(data) !=
+                keccak256(abi.encodeWithSignature("Error(string)", "OLD"))
+            ) {
+                return 0;
+            }
+
+            // The oldest available observation in the ring buffer is the index following the current (accounting for wrapping),
+            // since this is the one that will be overwritten next.
+            (, , uint16 index, uint16 cardinality, , , ) = IUniswapV3Pool(pool)
+                .slot0();
+
+            (uint32 oldestAvailableAge, , , bool initialized) = IUniswapV3Pool(
+                pool
+            ).observations((index + 1) % cardinality);
+
+            // If the following observation in a ring buffer of our current cardinality is uninitialized, then all the
+            // observations at higher indices are also uninitialized, so we wrap back to index 0, which we now know
+            // to be the oldest available observation.
+
+            if (!initialized)
+                (oldestAvailableAge, , , ) = IUniswapV3Pool(pool).observations(
+                    0
+                );
+
+            // Call observe() again to get the oldest available
+            secondsAgos[0] = uint32(block.timestamp - oldestAvailableAge);
+            (success, data) = pool.staticcall(
+                abi.encodeWithSelector(
+                    IUniswapV3PoolDerivedState.observe.selector,
+                    secondsAgos
+                )
+            );
+            if (!success) {
+                return 0;
+            }
         }
 
-        (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(
-            secondsAgos
-        );
+        int56[] memory tickCumulatives = abi.decode(data, (int56[])); // don't bother decoding the liquidityCumulatives array
 
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(
             int24(
