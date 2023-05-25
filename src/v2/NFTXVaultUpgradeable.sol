@@ -520,10 +520,12 @@ contract NFTXVaultUpgradeable is
 
         if (ethReceived < ethAmount) revert InsufficientETHSent();
 
-        IWETH9 weth = IWETH9(address(feeDistributor.WETH()));
-        weth.deposit{value: ethAmount}();
-        weth.transfer(address(feeDistributor), ethAmount);
-        feeDistributor.distribute(vaultId);
+        if (ethAmount > 0) {
+            IWETH9 weth = IWETH9(address(feeDistributor.WETH()));
+            weth.deposit{value: ethAmount}();
+            weth.transfer(address(feeDistributor), ethAmount);
+            feeDistributor.distribute(vaultId);
+        }
     }
 
     function _getTwapX96(
@@ -532,6 +534,10 @@ contract NFTXVaultUpgradeable is
         // cache
         uint32 _twapInterval = vaultFactory.twapInterval();
 
+        // FIXME: avoid using obeservationIndex here. TWAP duration is going to be few minutes so fees can be ignored for such small duration.
+        // ... setting cardinalityNext during deployment is quite costly, instead that cost can be shared with swappers until maxCardinalityNext is achieved
+        // ... for 30 mins twapInterval, that's 145 swaps
+        // ... only do this for DEFAULT_FEE_TIER
         (, , uint16 observationIndex, , , , ) = IUniswapV3Pool(pool).slot0();
         (uint32 lastObsTimestamp, , , bool initialized) = IUniswapV3Pool(pool)
             .observations(observationIndex);

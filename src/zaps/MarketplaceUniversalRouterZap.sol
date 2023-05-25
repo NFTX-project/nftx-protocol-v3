@@ -5,7 +5,6 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IUniversalRouter} from "@src/interfaces/IUniversalRouter.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
@@ -37,7 +36,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
     //                            STORAGE
     // =============================================================
 
-    IUniversalRouter public universalRouter;
+    address public universalRouter;
 
     /// @notice Allows zap to be paused
     bool public paused = false;
@@ -84,7 +83,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
 
     constructor(
         INFTXVaultFactory nftxFactory_,
-        IUniversalRouter universalRouter_,
+        address universalRouter_,
         IPermitAllowanceTransfer PERMIT2_,
         address inventoryStaking_,
         IWETH9 WETH_
@@ -117,9 +116,11 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         bytes calldata executeCallData,
         address payable to
     ) external payable onlyOwnerIfPaused {
-        // TODO: ? find a way to pay ETH fees from the vTokens received, instead of getting the ETH from the user
+        // TODO: ? find a way to pay ETH fees from the vTokens received, instead of getting the ETH from the user (though in case of premiums might be required)
+        uint256 initialETHBal = address(this).balance; // includes msg.value
         // Mint vTokens
         address vault = _mint721(vaultId, idsIn, msg.value);
+        uint256 ethSpent = initialETHBal - address(this).balance;
 
         // swap vTokens to WETH
         uint256 wethAmount = _swapTokens(vault, address(WETH), executeCallData);
@@ -128,7 +129,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         _wethToETHResidue(to, wethAmount);
 
         // Emit our sale event
-        emit Sell(idsIn.length, wethAmount, to);
+        emit Sell(idsIn.length, wethAmount - ethSpent, to);
     }
 
     /**
@@ -228,9 +229,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         paused = paused_;
     }
 
-    function setUniversalRouter(
-        IUniversalRouter universalRouter_
-    ) external onlyOwner {
+    function setUniversalRouter(address universalRouter_) external onlyOwner {
         universalRouter = universalRouter_;
     }
 
