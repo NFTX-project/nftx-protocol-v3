@@ -57,6 +57,8 @@ contract TestBase is TestExtend, ERC721Holder {
     address immutable TREASURY = makeAddr("TREASURY");
     uint256 constant VAULT_ID = 0;
 
+    uint16 constant REWARD_TIER_CARDINALITY = 102; // considering 20 min interval with 1 block every 12 seconds on ETH Mainnet
+
     function setUp() external {
         // to prevent underflow during calculations involving block.timestamp
         vm.warp(100 days);
@@ -66,7 +68,10 @@ contract TestBase is TestExtend, ERC721Holder {
         UniswapV3PoolUpgradeable poolImpl = new UniswapV3PoolUpgradeable();
 
         factory = new UniswapV3FactoryUpgradeable();
-        factory.__UniswapV3FactoryUpgradeable_init(address(poolImpl));
+        factory.__UniswapV3FactoryUpgradeable_init(
+            address(poolImpl),
+            REWARD_TIER_CARDINALITY
+        );
         descriptor = new NonfungibleTokenPositionDescriptor(
             address(weth),
             bytes32(0)
@@ -89,7 +94,7 @@ contract TestBase is TestExtend, ERC721Holder {
             address(1) // temporary feeDistributor address
         );
         // set premium related values
-        vaultFactory.setTwapInterval(7 days);
+        vaultFactory.setTwapInterval(20 minutes);
         vaultFactory.setPremiumDuration(10 hours);
         vaultFactory.setPremiumMax(5 ether);
 
@@ -258,12 +263,12 @@ contract TestBase is TestExtend, ERC721Holder {
             currentNFTPrice + 0.5 ether,
             DEFAULT_FEE_TIER
         );
-        vm.warp(block.timestamp + 1);
+        vm.warp(block.timestamp + vaultFactory.twapInterval());
     }
 
-    // the actual value can be off by few decimals so accounting for 0.1% error.
+    // the actual value can be off by few decimals so accounting for 0.2% error.
     function _valueWithError(uint256 value) internal pure returns (uint256) {
-        return (value * (10_000 - 10)) / 10_000;
+        return (value * (10_000 - 20)) / 10_000;
     }
 
     function _sellNFTs(

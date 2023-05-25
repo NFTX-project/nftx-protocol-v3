@@ -138,7 +138,6 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         );
     }
 
-    // FIXME: test failing due to cardinality of observations being 1, so old observations get overwritten
     function test_buyNFTs_721_Success() external {
         _mintPositionWithTwap(currentNFTPrice);
 
@@ -169,10 +168,6 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
 
         uint256 prevETHBal = address(this).balance;
 
-        UniswapV3PoolUpgradeable pool = UniswapV3PoolUpgradeable(
-            nftxRouter.getPool(address(vtoken), DEFAULT_FEE_TIER)
-        );
-
         nft.setApprovalForAll(address(marketplaceZap), true);
         // double ETH value here to check if refund working as well
         marketplaceZap.buyNFTs{value: expectedETHFees * 2 + wethRequired}(
@@ -184,7 +179,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         assertGt(ethPaid, expectedETHFees + wethRequired);
-        assertLe(ethPaid, expectedETHFees + wethRequired);
+        assertLe(ethPaid, exactETHFees + wethRequired);
 
         for (uint i; i < qty; i++) {
             assertEq(nft.ownerOf(idsOut[i]), address(this));

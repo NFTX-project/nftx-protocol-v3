@@ -9,13 +9,18 @@ import {UniswapV3FactoryUpgradeable, IUniswapV3Factory} from "@uni-core/UniswapV
 import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolUpgradeable.sol";
 
 contract UniswapV3FactoryUpgradeableTests is TestExtend {
+    uint16 constant REWARD_TIER_CARDINALITY = 102;
+
     UniswapV3FactoryUpgradeable factory;
     UniswapV3PoolUpgradeable poolImpl;
 
     function setUp() external {
         poolImpl = new UniswapV3PoolUpgradeable();
         factory = new UniswapV3FactoryUpgradeable();
-        factory.__UniswapV3FactoryUpgradeable_init(address(poolImpl));
+        factory.__UniswapV3FactoryUpgradeable_init(
+            address(poolImpl),
+            REWARD_TIER_CARDINALITY
+        );
     }
 
     // UniswapV3FactoryUpgradeable#init
@@ -23,11 +28,15 @@ contract UniswapV3FactoryUpgradeableTests is TestExtend {
     function test_init_Success() external {
         assertEq(factory.owner(), address(this));
         assertEq(factory.implementation(), address(poolImpl));
+        assertEq(factory.rewardTierCardinality(), REWARD_TIER_CARDINALITY);
     }
 
     function test_init_RevertsOnReInitialize() external {
         vm.expectRevert("Initializable: contract is already initialized");
-        factory.__UniswapV3FactoryUpgradeable_init(address(poolImpl));
+        factory.__UniswapV3FactoryUpgradeable_init(
+            address(poolImpl),
+            REWARD_TIER_CARDINALITY
+        );
     }
 
     // UpgradeableBeacon#upgradeBeaconTo
