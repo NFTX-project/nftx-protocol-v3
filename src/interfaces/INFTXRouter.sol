@@ -116,7 +116,7 @@ interface INFTXRouter {
      */
     function quoteBuyNFTs(
         address vtoken,
-        uint256[] memory nftIds,
+        uint256 nftsCount,
         uint24 fee,
         uint160 sqrtPriceLimitX96
     ) external returns (uint256 ethRequired);

@@ -99,7 +99,7 @@ contract NFTXRouterTests is TestBase {
         // fetch price to pay for those NFTs
         uint256 ethRequired = nftxRouter.quoteBuyNFTs({
             vtoken: address(vtoken),
-            nftIds: nftIds,
+            nftsCount: nftIds.length,
             fee: DEFAULT_FEE_TIER,
             sqrtPriceLimitX96: 0
         });

@@ -321,11 +321,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
      */
     function quoteBuyNFTs(
         address vtoken,
-        uint256[] memory nftIds,
+        uint256 nftsCount,
         uint24 fee,
         uint160 sqrtPriceLimitX96
     ) external override returns (uint256 ethRequired) {
-        uint256 vTokenAmt = nftIds.length * 1 ether;
+        uint256 vTokenAmt = nftsCount * 1 ether;
 
         (ethRequired, , , ) = quoter.quoteExactOutputSingle(
             IQuoterV2.QuoteExactOutputSingleParams({
