@@ -225,7 +225,6 @@ contract NFTXFeeDistributorV3Tests is TestBase {
                 positionId: positionId,
                 vtoken: address(vtoken),
                 nftIds: nftIds,
-                receiveVTokens: false,
                 liquidity: liquidity,
                 amount0Min: 0,
                 amount1Min: 0,

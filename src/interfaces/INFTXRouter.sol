@@ -58,7 +58,6 @@ interface INFTXRouter {
         uint256 positionId;
         address vtoken;
         uint256[] nftIds;
-        bool receiveVTokens; // directly receive vTokens, instead of redeeming for NFTs
         uint128 liquidity;
         uint256 amount0Min;
         uint256 amount1Min;

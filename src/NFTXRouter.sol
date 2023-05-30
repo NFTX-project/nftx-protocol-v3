@@ -196,7 +196,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             ? (amount0, amount1)
             : (amount1, amount0);
 
-        if (params.receiveVTokens) {
+        // No NFTs to redeem, directly withdraw vTokens
+        if (params.nftIds.length == 0) {
             INFTXVault(params.vtoken).transfer(msg.sender, vTokenAmt);
         } else {
             // burn vTokens to provided tokenIds array
