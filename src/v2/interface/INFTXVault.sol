@@ -108,33 +108,35 @@ interface INFTXVault is IERC20Upgradeable {
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external payable returns (uint256);
+    ) external payable returns (uint256 nftCount);
 
     function mintTo(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         address to
-    ) external payable returns (uint256);
+    ) external payable returns (uint256 nftCount);
 
-    function redeem(uint256[] calldata specificIds) external payable;
+    function redeem(
+        uint256[] calldata specificIds
+    ) external payable returns (uint256 ethFees);
 
     function redeemTo(
         uint256[] calldata specificIds,
         address to
-    ) external payable;
+    ) external payable returns (uint256 ethFees);
 
     function swap(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds
-    ) external payable;
+    ) external payable returns (uint256 ethFees);
 
     function swapTo(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds,
         address to
-    ) external payable;
+    ) external payable returns (uint256 ethFees);
 
     function allValidNFTs(
         uint256[] calldata tokenIds
