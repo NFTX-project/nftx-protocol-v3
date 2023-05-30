@@ -199,42 +199,15 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         if (params.receiveVTokens) {
             INFTXVault(params.vtoken).transfer(msg.sender, vTokenAmt);
         } else {
-            // swap decimal part of vTokens to WETH
-            uint256 fractionalVTokenAmt = vTokenAmt % 1 ether;
-            if (fractionalVTokenAmt > 0) {
-                INFTXVault(params.vtoken).approve(
-                    address(router),
-                    fractionalVTokenAmt
-                );
-                uint256 fractionalWethAmt = router.exactInputSingle(
-                    ISwapRouter.ExactInputSingleParams({
-                        tokenIn: address(params.vtoken),
-                        tokenOut: WETH,
-                        fee: params.swapPoolFee,
-                        recipient: address(this),
-                        deadline: block.timestamp,
-                        amountIn: fractionalVTokenAmt,
-                        amountOutMinimum: 0,
-                        sqrtPriceLimitX96: 0
-                    })
-                );
-                wethAmt += fractionalWethAmt;
+            // burn vTokens to provided tokenIds array
+            INFTXVault(params.vtoken).redeemTo(params.nftIds, msg.sender);
+            uint256 vTokenBurned = params.nftIds.length * 1 ether;
 
-                // burn vTokens to provided tokenIds array
-                INFTXVault(params.vtoken).redeemTo(params.nftIds, msg.sender);
-                uint256 vTokenBurned = params.nftIds.length * 1 ether;
+            // if more vTokens collected than burned
+            uint256 vTokenResidue = vTokenAmt - vTokenBurned;
 
-                // if more vTokens collected than burned
-                uint256 vTokenResidue = vTokenAmt -
-                    fractionalVTokenAmt -
-                    vTokenBurned;
-
-                if (vTokenResidue > 0) {
-                    INFTXVault(params.vtoken).transfer(
-                        msg.sender,
-                        vTokenResidue
-                    );
-                }
+            if (vTokenResidue > 0) {
+                INFTXVault(params.vtoken).transfer(msg.sender, vTokenResidue);
             }
         }
         // send all ETH to sender

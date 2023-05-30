@@ -60,7 +60,6 @@ interface INFTXRouter {
         uint256[] nftIds;
         bool receiveVTokens; // directly receive vTokens, instead of redeeming for NFTs
         uint128 liquidity;
-        uint24 swapPoolFee; // the pool through which the fractional vToken to ETH swap should go through
         uint256 amount0Min;
         uint256 amount1Min;
         uint256 deadline;

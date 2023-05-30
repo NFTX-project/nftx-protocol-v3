@@ -139,7 +139,7 @@ contract NFTXRouterTests is TestBase {
     // Remove Liquidity
     // ================================
 
-    function test_removeLiquidity_ToNFTs_NoResidue() external {
+    function test_removeLiquidity_ToNFTs_Success() external {
         uint256 nftQty = 10;
         (
             uint256[] memory allTokenIds,
@@ -149,15 +149,11 @@ contract NFTXRouterTests is TestBase {
 
         ) = _mintPosition(nftQty);
 
-        // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
-        _mintPosition(nftQty);
-
-        // selling NFTs to accumulate fractional vTokens as fees
-        // Because of swap, individual Position's vToken balance increases by 2 ether
         uint256 nftsSold = 5;
         uint256[] memory soldTokenIds = _sellNFTs(nftsSold);
 
-        uint256 expectedNFTQty = nftQty + nftsSold / 2;
+        uint256 nftResidue = 1;
+        uint256 expectedNFTQty = nftQty + nftsSold - nftResidue;
         uint256[] memory nftIds = new uint256[](expectedNFTQty);
         nftIds[0] = allTokenIds[0];
         nftIds[1] = allTokenIds[1];
@@ -171,6 +167,9 @@ contract NFTXRouterTests is TestBase {
         nftIds[9] = allTokenIds[9];
         nftIds[10] = soldTokenIds[0];
         nftIds[11] = soldTokenIds[1];
+        nftIds[12] = soldTokenIds[2];
+        nftIds[13] = soldTokenIds[3];
+        // nftIds[14] = soldTokenIds[4]; // redeeming less NFT(s) than the vTokens withdrawn from liquidity position
 
         uint128 liquidity = _getLiquidity(positionId);
 
@@ -186,84 +185,6 @@ contract NFTXRouterTests is TestBase {
                 nftIds: nftIds,
                 receiveVTokens: false,
                 liquidity: liquidity,
-                swapPoolFee: DEFAULT_FEE_TIER,
-                amount0Min: 0,
-                amount1Min: 0,
-                deadline: block.timestamp
-            })
-        );
-
-        uint256 postNFTBalance = nft.balanceOf(address(this));
-        uint256 postVTokenBalance = vtoken.balanceOf(address(this));
-        uint256 postETHBalance = address(this).balance;
-
-        assertEq(
-            postNFTBalance - preNFTBalance,
-            expectedNFTQty,
-            "Incorrect NFT balance change"
-        );
-        assertEq(
-            postVTokenBalance,
-            preVTokenBalance,
-            "vToken residue received"
-        );
-        assertGt(postETHBalance, preETHBalance, "ETH balance didn't change");
-        assertEq(
-            positionManager.ownerOf(positionId),
-            address(this),
-            "User is no longer the owner of PositionId"
-        );
-
-        console.log("ETH removed: ", postETHBalance - preETHBalance);
-    }
-
-    function test_removeLiquidity_ToNFTs_HandleResidue() external {
-        uint256 nftQty = 10;
-        (
-            uint256[] memory allTokenIds,
-            uint256 positionId,
-            ,
-            ,
-
-        ) = _mintPosition(nftQty);
-
-        // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
-        _mintPosition(nftQty);
-
-        uint256 nftsSold = 5;
-        uint256[] memory soldTokenIds = _sellNFTs(nftsSold);
-
-        uint256 nftResidue = 1;
-        uint256 expectedNFTQty = nftQty + nftsSold / 2 - nftResidue;
-        uint256[] memory nftIds = new uint256[](expectedNFTQty);
-        nftIds[0] = allTokenIds[0];
-        nftIds[1] = allTokenIds[1];
-        nftIds[2] = allTokenIds[2];
-        nftIds[3] = allTokenIds[3];
-        nftIds[4] = allTokenIds[4];
-        nftIds[5] = allTokenIds[5];
-        nftIds[6] = allTokenIds[6];
-        nftIds[7] = allTokenIds[7];
-        nftIds[8] = allTokenIds[8];
-        nftIds[9] = allTokenIds[9];
-        nftIds[10] = soldTokenIds[0];
-        // nftIds[11] = soldTokenIds[1]; // redeeming less NFT(s) than the vTokens withdrawn from liquidity position
-
-        uint128 liquidity = _getLiquidity(positionId);
-
-        uint256 preNFTBalance = nft.balanceOf(address(this));
-        uint256 preVTokenBalance = vtoken.balanceOf(address(this));
-        uint256 preETHBalance = address(this).balance;
-
-        positionManager.setApprovalForAll(address(nftxRouter), true);
-        nftxRouter.removeLiquidity(
-            INFTXRouter.RemoveLiquidityParams({
-                positionId: positionId,
-                vtoken: address(vtoken),
-                nftIds: nftIds,
-                receiveVTokens: false,
-                liquidity: liquidity,
-                swapPoolFee: DEFAULT_FEE_TIER,
                 amount0Min: 0,
                 amount1Min: 0,
                 deadline: block.timestamp
@@ -281,7 +202,7 @@ contract NFTXRouterTests is TestBase {
         );
         assertEq(
             postVTokenBalance - preVTokenBalance,
-            nftResidue * 1 ether,
+            nftResidue * 1 ether - 2, // 2 wei round down during txn
             "vToken balance didn't change"
         );
         assertGt(postETHBalance, preETHBalance, "ETH balance didn't change");
@@ -313,7 +234,6 @@ contract NFTXRouterTests is TestBase {
                 nftIds: new uint256[](0),
                 receiveVTokens: true,
                 liquidity: liquidity,
-                swapPoolFee: DEFAULT_FEE_TIER,
                 amount0Min: 0,
                 amount1Min: 0,
                 deadline: block.timestamp
