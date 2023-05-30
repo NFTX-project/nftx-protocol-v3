@@ -715,7 +715,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         INFTXVault newVtoken = INFTXVault(vaultFactory.vault(newVaultId));
         newNFT.setApprovalForAll(address(newVtoken), true);
         uint256[] memory amounts = new uint256[](0);
-        uint256 mintedVTokens = newVtoken.mint(tokenIds, amounts) * 1 ether;
+        newVtoken.mint(tokenIds, amounts);
+        uint256 mintedVTokens = tokenIds.length * 1 ether;
         vaultFactory.setFeeExclusion(address(this), false); // setting this back
 
         newVtoken.approve(address(inventoryStaking), type(uint256).max);

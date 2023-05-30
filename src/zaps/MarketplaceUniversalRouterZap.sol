@@ -117,13 +117,15 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         address payable to
     ) external payable onlyOwnerIfPaused {
         // TODO: ? find a way to pay ETH fees from the vTokens received, instead of getting the ETH from the user (though in case of premiums might be required)
-        uint256 initialETHBal = address(this).balance; // includes msg.value
         // Mint vTokens
-        address vault = _mint721(vaultId, idsIn, msg.value);
-        uint256 ethSpent = initialETHBal - address(this).balance;
+        (address vault, uint256 ethSpent) = _mint721(vaultId, idsIn, msg.value);
 
         // swap vTokens to WETH
-        uint256 wethAmount = _swapTokens(vault, address(WETH), executeCallData);
+        (uint256 wethAmount, ) = _swapTokens(
+            vault,
+            address(WETH),
+            executeCallData
+        );
 
         // convert WETH to ETH and send remaining ETH to `to`
         _wethToETHResidue(to, wethAmount);
@@ -142,16 +144,17 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         uint256[] calldata idsOut,
         address payable to
     ) external payable onlyOwnerIfPaused {
-        uint256 initialETHBal = address(this).balance; // includes msg.value
-
         // Transfer tokens from the message sender to the vault
         address vault = _transferSender721ToVault(vaultId, idsIn);
 
         // Swap our tokens
         uint256[] memory emptyIds;
-        INFTXVault(vault).swapTo{value: msg.value}(idsIn, emptyIds, idsOut, to);
-
-        uint256 ethSpent = initialETHBal - address(this).balance;
+        uint256 ethSpent = INFTXVault(vault).swapTo{value: msg.value}(
+            idsIn,
+            emptyIds,
+            idsOut,
+            to
+        );
 
         // send back remaining ETH
         _sendETHResidue(to);
@@ -162,37 +165,88 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
     /**
      * @notice Buy idsOut with ETH
      *
-     * @dev ETH --{-sell-> [UniversalRouter] -> vTokens --redeem-> [vault] --}-> idsOut
+     * @dev ETH --{-sell-> [UniversalRouter] -> vTokens + ETH --redeem-> [vault] --}-> idsOut
      *
      * @param vaultId The ID of the NFTX vault
      * @param idsOut An array of any token IDs to be redeemed
      * @param executeCallData Encoded calldata for Universal Router's `execute` function
      * @param to The recipient of the token IDs from the tx
      */
-    function buyNFTs(
+    function buyNFTsWithETH(
         uint256 vaultId,
         uint256[] calldata idsOut,
         bytes calldata executeCallData,
         address payable to
     ) external payable onlyOwnerIfPaused {
-        uint256 initialETHBal = address(this).balance; // includes msg.value
-
         // Wrap ETH into WETH for our contract
         WETH.deposit{value: msg.value}();
 
-        address vault = nftxFactory.vault(vaultId);
-
         // swap WETH to vTokens
+        address vault = nftxFactory.vault(vaultId);
         _swapTokens(address(WETH), vault, executeCallData);
 
-        uint256 wethRemaining = WETH.balanceOf(address(this));
         // unwrap all WETH to ETH
+        uint256 wethRemaining = WETH.balanceOf(address(this));
         WETH.withdraw(wethRemaining);
 
         // redeem NFTs
-        INFTXVault(vault).redeemTo{value: wethRemaining}(idsOut, to);
+        uint256 ethSpent = INFTXVault(vault).redeemTo{value: wethRemaining}(
+            idsOut,
+            to
+        );
 
-        uint256 ethSpent = initialETHBal - address(this).balance;
+        // transfer vToken dust and remaining ETH balance
+        _transferDust(vault, true);
+
+        emit Buy(idsOut.length, ethSpent, to);
+    }
+
+    /**
+     * @notice Buy idsOut with ERC20
+     *
+     * @dev ERC20 --{-sell-> [UniversalRouter] -> ETH -> [UniversalRouter] -> vTokens + ETH --redeem-> [vault] --}-> idsOut
+     *
+     * @param tokenIn Input ERC20 token
+     * @param amountIn Input ERC20 amount
+     * @param vaultId The ID of the NFTX vault
+     * @param idsOut An array of any token IDs to be redeemed
+     * @param executeToWETHCallData Encoded calldata for "ERC20 to WETH swap" for Universal Router's `execute` function
+     * @param executeToVTokenCallData Encoded calldata for "WETH to vToken swap" for Universal Router's `execute` function
+     * @param to The recipient of the token IDs from the tx
+     */
+    function buyNFTsWithERC20(
+        IERC20 tokenIn,
+        uint256 amountIn,
+        uint256 vaultId,
+        uint256[] calldata idsOut,
+        bytes calldata executeToWETHCallData,
+        bytes calldata executeToVTokenCallData,
+        address payable to
+    ) external onlyOwnerIfPaused {
+        tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
+
+        // swap tokenIn to WETH
+        (uint256 wethReceived, uint256 finalWethBalance) = _swapTokens(
+            address(tokenIn),
+            address(WETH),
+            executeToWETHCallData
+        );
+        // swap some WETH to vTokens
+        address vault = nftxFactory.vault(vaultId);
+        _swapTokens(address(WETH), vault, executeToVTokenCallData);
+
+        uint256 wethRemaining = WETH.balanceOf(address(this)) +
+            wethReceived -
+            finalWethBalance; // if underflow, then revert desired
+
+        // unwrap all remaining WETH to ETH
+        WETH.withdraw(wethRemaining);
+
+        // redeem NFTs
+        uint256 ethSpent = INFTXVault(vault).redeemTo{value: wethRemaining}(
+            idsOut,
+            to
+        );
 
         // transfer vToken dust and remaining ETH balance
         _transferDust(vault, true);
@@ -249,15 +303,16 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         uint256 vaultId,
         uint256[] memory ids,
         uint256 ethReceived
-    ) internal returns (address) {
+    ) internal returns (address vault, uint256 ethSpent) {
         // Transfer tokens from the message sender to the vault
-        address vault = _transferSender721ToVault(vaultId, ids);
+        vault = _transferSender721ToVault(vaultId, ids);
 
         // Mint our tokens from the vault to this contract
         uint256[] memory emptyIds;
-        INFTXVault(vault).mint{value: ethReceived}(ids, emptyIds);
-
-        return vault;
+        (, ethSpent) = INFTXVault(vault).mint{value: ethReceived}(
+            ids,
+            emptyIds
+        );
     }
 
     function _transferSender721ToVault(
@@ -359,14 +414,13 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
      *
      * @param executeCallData Encoded calldata for Universal Router's `execute` function
      */
-
     function _swapTokens(
         address sellToken,
         address buyToken,
         bytes calldata executeCallData
-    ) internal returns (uint256) {
+    ) internal returns (uint256 boughtAmount, uint256 finalBuyTokenBalance) {
         // Track our balance of the buyToken to determine how much we've bought.
-        uint256 boughtAmount = IERC20(buyToken).balanceOf(address(this));
+        uint256 iniBuyTokenBalance = IERC20(buyToken).balanceOf(address(this));
 
         _permit2ApproveToken(sellToken, address(universalRouter));
 
@@ -375,7 +429,8 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         if (!success) revert SwapFailed();
 
         // Use our current buyToken balance to determine how much we've bought.
-        return IERC20(buyToken).balanceOf(address(this)) - boughtAmount;
+        finalBuyTokenBalance = IERC20(buyToken).balanceOf(address(this));
+        boughtAmount = finalBuyTokenBalance - iniBuyTokenBalance;
     }
 
     function _permit2ApproveToken(address token, address spender) internal {

@@ -155,7 +155,8 @@ contract NFTXInventoryStakingV3Upgradeable is
 
             // mint vTokens
             uint256[] memory emptyIds;
-            amount = INFTXVault(vToken).mint(tokenIds, emptyIds) * 1 ether;
+            (uint256 nftCount, ) = INFTXVault(vToken).mint(tokenIds, emptyIds);
+            amount = nftCount * 1 ether;
         }
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];

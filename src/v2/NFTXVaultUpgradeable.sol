@@ -98,7 +98,13 @@ contract NFTXVaultUpgradeable is
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external payable virtual override returns (uint256) {
+    )
+        external
+        payable
+        virtual
+        override
+        returns (uint256 nftCount, uint256 ethFees)
+    {
         return mintTo(tokenIds, amounts, msg.sender);
     }
 
@@ -106,34 +112,40 @@ contract NFTXVaultUpgradeable is
         uint256[] memory tokenIds,
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         address to
-    ) public payable virtual override nonReentrant returns (uint256) {
+    )
+        public
+        payable
+        virtual
+        override
+        nonReentrant
+        returns (uint256 nftCount, uint256 ethFees)
+    {
         onlyOwnerIfPaused(1);
         require(enableMint, "Minting not enabled");
         // Take the NFTs.
-        uint256 count = _receiveNFTs(tokenIds, amounts);
+        nftCount = _receiveNFTs(tokenIds, amounts);
 
         // Mint to the user.
-        _mint(to, base * count);
+        _mint(to, base * nftCount);
 
-        uint256 totalVTokenFee = mintFee() * count;
-        uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
+        uint256 totalVTokenFee = mintFee() * nftCount;
+        ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
 
         _refundETH(msg.value, ethFees);
 
         emit Minted(tokenIds, amounts, to);
-        return count;
     }
 
     function redeem(
         uint256[] calldata specificIds
-    ) external payable virtual override {
+    ) external payable virtual override returns (uint256 ethFees) {
         return redeemTo(specificIds, msg.sender);
     }
 
     function redeemTo(
         uint256[] memory specificIds,
         address to
-    ) public payable virtual override nonReentrant {
+    ) public payable virtual override nonReentrant returns (uint256 ethFees) {
         onlyOwnerIfPaused(2);
         uint256 count = specificIds.length;
 
@@ -146,7 +158,7 @@ contract NFTXVaultUpgradeable is
         // Withdraw from vault.
         uint256 vTokenPremium = _withdrawNFTsTo(specificIds, to);
 
-        uint256 ethFees = _chargeAndDistributeFees(
+        ethFees = _chargeAndDistributeFees(
             totalVTokenFee + vTokenPremium,
             msg.value
         );
@@ -160,7 +172,7 @@ contract NFTXVaultUpgradeable is
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds
-    ) external payable virtual override {
+    ) external payable virtual override returns (uint256 ethFees) {
         return swapTo(tokenIds, amounts, specificIds, msg.sender);
     }
 
@@ -169,7 +181,7 @@ contract NFTXVaultUpgradeable is
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         uint256[] memory specificIds,
         address to
-    ) public payable virtual override nonReentrant {
+    ) public payable virtual override nonReentrant returns (uint256 ethFees) {
         onlyOwnerIfPaused(3);
         uint256 count;
         if (is1155) {
@@ -190,7 +202,7 @@ contract NFTXVaultUpgradeable is
         // Give the NFTs first, so the user wont get the same thing back, just to be nice.
         uint256 vTokenPremium = _withdrawNFTsTo(specificIds, to);
 
-        uint256 ethFees = _chargeAndDistributeFees(
+        ethFees = _chargeAndDistributeFees(
             totalVTokenFee + vTokenPremium,
             msg.value
         );

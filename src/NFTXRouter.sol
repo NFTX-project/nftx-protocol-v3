@@ -102,9 +102,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             }
 
             uint256[] memory emptyIds;
-            vTokensAmount +=
-                INFTXVault(params.vtoken).mint(params.nftIds, emptyIds) *
-                1 ether;
+            (uint256 nftCount, ) = INFTXVault(params.vtoken).mint(
+                params.nftIds,
+                emptyIds
+            );
+            vTokensAmount += nftCount * 1 ether;
         }
 
         INFTXVault(params.vtoken).approve(
@@ -270,10 +272,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
 
         // mint vToken
         uint256[] memory emptyIds;
-        uint256 vTokensAmount = INFTXVault(params.vtoken).mint(
+        (uint256 nftCount, ) = INFTXVault(params.vtoken).mint(
             params.nftIds,
             emptyIds
-        ) * 1 ether;
+        );
+        uint256 vTokensAmount = nftCount * 1 ether;
 
         INFTXVault(params.vtoken).approve(address(router), vTokensAmount);
 
