@@ -108,13 +108,13 @@ interface INFTXVault is IERC20Upgradeable {
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external payable returns (uint256 nftCount, uint256 ethFees);
+    ) external payable returns (uint256 nftCount);
 
     function mintTo(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         address to
-    ) external payable returns (uint256 nftCount, uint256 ethFees);
+    ) external payable returns (uint256 nftCount);
 
     function redeem(
         uint256[] calldata specificIds

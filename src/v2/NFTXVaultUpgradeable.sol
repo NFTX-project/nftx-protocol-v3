@@ -98,13 +98,7 @@ contract NFTXVaultUpgradeable is
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
-    )
-        external
-        payable
-        virtual
-        override
-        returns (uint256 nftCount, uint256 ethFees)
-    {
+    ) external payable virtual override returns (uint256 nftCount) {
         return mintTo(tokenIds, amounts, msg.sender);
     }
 
@@ -112,14 +106,7 @@ contract NFTXVaultUpgradeable is
         uint256[] memory tokenIds,
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         address to
-    )
-        public
-        payable
-        virtual
-        override
-        nonReentrant
-        returns (uint256 nftCount, uint256 ethFees)
-    {
+    ) public payable virtual override nonReentrant returns (uint256 nftCount) {
         onlyOwnerIfPaused(1);
         require(enableMint, "Minting not enabled");
         // Take the NFTs.
@@ -129,7 +116,7 @@ contract NFTXVaultUpgradeable is
         _mint(to, base * nftCount);
 
         uint256 totalVTokenFee = mintFee() * nftCount;
-        ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
+        uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
 
         _refundETH(msg.value, ethFees);
 

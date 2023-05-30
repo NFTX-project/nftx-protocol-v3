@@ -155,8 +155,7 @@ contract TestBase is TestExtend, ERC721Holder {
 
         nft.setApprovalForAll(address(vtoken), true);
         uint256[] memory amounts = new uint256[](0);
-        vtoken.mint(tokenIds, amounts);
-        mintedVTokens = tokenIds.length * 1 ether;
+        mintedVTokens = vtoken.mint(tokenIds, amounts) * 1 ether;
 
         vaultFactory.setFeeExclusion(address(this), false); // setting this back
     }

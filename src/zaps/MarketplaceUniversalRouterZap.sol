@@ -309,10 +309,9 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
 
         // Mint our tokens from the vault to this contract
         uint256[] memory emptyIds;
-        (, ethSpent) = INFTXVault(vault).mint{value: ethReceived}(
-            ids,
-            emptyIds
-        );
+        uint256 iniETHBalance = address(this).balance;
+        INFTXVault(vault).mint{value: ethReceived}(ids, emptyIds);
+        ethSpent = iniETHBalance - address(this).balance;
     }
 
     function _transferSender721ToVault(
