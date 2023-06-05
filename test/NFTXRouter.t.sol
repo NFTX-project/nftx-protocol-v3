@@ -8,10 +8,14 @@ import {INFTXRouter} from "@src/NFTXRouter.sol";
 import {TestBase} from "./TestBase.sol";
 
 contract NFTXRouterTests is TestBase {
+    uint256 currentNFTPrice = 5 ether;
+
     // TODO: addLiquidity test with just vTokens and a combo of both
 
     // TODO: all testcases with ETH vault fees enabled
     function testAddLiquidity() external {
+        _mintPositionWithTwap(currentNFTPrice);
+
         uint256 prePositionNFTBalance = positionManager.balanceOf(
             address(this)
         );
@@ -69,6 +73,7 @@ contract NFTXRouterTests is TestBase {
     }
 
     function testSellNFTs() external {
+        _mintPositionWithTwap(currentNFTPrice);
         _mintPosition(5);
 
         uint256 nftQty = 5;
@@ -87,6 +92,7 @@ contract NFTXRouterTests is TestBase {
     }
 
     function testBuyNFTs() external {
+        _mintPositionWithTwap(currentNFTPrice);
         (uint256[] memory allTokenIds, , , , ) = _mintPosition(100);
 
         uint256 nftQty = 2;
@@ -97,12 +103,16 @@ contract NFTXRouterTests is TestBase {
         nftIds[1] = allTokenIds[1];
 
         // fetch price to pay for those NFTs
+        uint256 vTokenPremium = vtoken.targetRedeemFee() * nftIds.length;
+        for (uint256 i; i < nftIds.length; i++) {
+            vTokenPremium += vtoken.getVTokenPremium(nftIds[i]);
+        }
         uint256 ethRequired = nftxRouter.quoteBuyNFTs({
             vtoken: address(vtoken),
             nftsCount: nftIds.length,
             fee: DEFAULT_FEE_TIER,
             sqrtPriceLimitX96: 0
-        });
+        }) + vtoken.vTokenToETH(vTokenPremium);
 
         uint256 preNFTBalance = nft.balanceOf(address(this));
         uint256 preETHBalance = address(this).balance;
@@ -140,6 +150,22 @@ contract NFTXRouterTests is TestBase {
     // ================================
 
     function test_removeLiquidity_ToNFTs_Success() external {
+        uint256 _positionId = _mintPositionWithTwap(currentNFTPrice);
+        uint256[] memory _nftIds;
+        positionManager.setApprovalForAll(address(nftxRouter), true);
+        // removing liquidity so the `nftsSold` only shared with one position
+        nftxRouter.removeLiquidity(
+            INFTXRouter.RemoveLiquidityParams({
+                positionId: _positionId,
+                vaultId: VAULT_ID,
+                nftIds: _nftIds,
+                liquidity: _getLiquidity(_positionId),
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            })
+        );
+
         uint256 nftQty = 10;
         (
             uint256[] memory allTokenIds,
@@ -177,8 +203,8 @@ contract NFTXRouterTests is TestBase {
         uint256 preVTokenBalance = vtoken.balanceOf(address(this));
         uint256 preETHBalance = address(this).balance;
 
-        positionManager.setApprovalForAll(address(nftxRouter), true);
-        nftxRouter.removeLiquidity(
+        // sending ETH as vault fees more than withdrawn amount
+        nftxRouter.removeLiquidity{value: 300 ether}(
             INFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
                 vaultId: VAULT_ID,
@@ -204,17 +230,18 @@ contract NFTXRouterTests is TestBase {
             nftResidue * 1 ether - 2, // 2 wei round down during txn
             "vToken balance didn't change"
         );
-        assertGt(postETHBalance, preETHBalance, "ETH balance didn't change");
+        // Because in this case ETH fees > withdrawn amount. so preBal > postBal
+        // though for most cases post > pre
+        assertGt(preETHBalance, postETHBalance, "ETH balance didn't change");
         assertEq(
             positionManager.ownerOf(positionId),
             address(this),
             "User is no longer the owner of PositionId"
         );
-
-        console.log("ETH removed: ", postETHBalance - preETHBalance);
     }
 
     function test_removeLiquidity_ToVTokens_Success() external {
+        _mintPositionWithTwap(currentNFTPrice);
         uint256 nftQty = 10;
         (, uint256 positionId, , , ) = _mintPosition(nftQty);
 

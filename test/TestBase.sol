@@ -254,8 +254,10 @@ contract TestBase is TestExtend, ERC721Holder {
         ethUsed = preETHBalance - address(this).balance;
     }
 
-    function _mintPositionWithTwap(uint256 currentNFTPrice) internal {
-        _mintPosition(
+    function _mintPositionWithTwap(
+        uint256 currentNFTPrice
+    ) internal returns (uint256 positionId) {
+        (, positionId, , , ) = _mintPosition(
             10,
             currentNFTPrice,
             currentNFTPrice - 0.5 ether,
