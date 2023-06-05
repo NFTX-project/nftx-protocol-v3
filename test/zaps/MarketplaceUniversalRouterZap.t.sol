@@ -190,7 +190,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
 
     function test_buyNFTsWithERC20_721_Success() external {
         _mintPositionWithTwap(currentNFTPrice);
-        MockERC20 token = _mintPositionERC20();
+        INFTXVault token = _mintPositionERC20();
 
         uint256 qty = 5;
         (, uint256[] memory idsOut) = _mintVToken(qty);
@@ -234,7 +234,12 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         );
 
         // get tokenIn
-        token.mint(tokenInRequiredForETHFees);
+        uint256[] memory tokenIds = nft.mint(
+            tokenInRequiredForETHFees / 1 ether + 1
+        );
+        nft.setApprovalForAll(address(token), true);
+        uint256[] memory amounts = new uint256[](0);
+        token.mint(tokenIds, amounts) * 1 ether;
 
         token.approve(address(marketplaceZap), tokenInRequiredForETHFees);
         marketplaceZap.buyNFTsWithERC20(
@@ -252,21 +257,35 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         }
     }
 
-    function _mintPositionERC20() internal returns (MockERC20 token) {
+    function _mintPositionERC20() internal returns (INFTXVault token) {
         int24 tickLower;
         int24 tickUpper;
-        uint256 amount = 150 ether;
+        uint256 qty = 150;
 
-        token = new MockERC20(amount);
+        uint256 vaultId2 = vaultFactory.createVault(
+            "TEST2",
+            "TST2",
+            address(nft),
+            false,
+            true
+        );
+        token = INFTXVault(vaultFactory.vault(vaultId2));
+        uint256 amount;
+        {
+            uint256[] memory tokenIds = nft.mint(qty);
+            nft.setApprovalForAll(address(token), true);
+            uint256[] memory amounts = new uint256[](0);
+            amount = token.mint(tokenIds, amounts) * 1 ether;
+        }
 
-        uint256 currentTokenPrice = 2 ether;
-        uint256 lowerTokenPrice = 1 ether;
-        uint256 upperTokenPrice = 3 ether;
+        uint256 currentTokenPrice = 3 ether;
+        uint256 lowerTokenPrice = 2 ether;
+        uint256 upperTokenPrice = 4 ether;
 
         uint160 currentSqrtP;
         uint256 tickDistance = _getTickDistance(DEFAULT_FEE_TIER);
 
-        if (nftxRouter.isVToken0(address(vtoken))) {
+        if (nftxRouter.isVToken0(address(token))) {
             currentSqrtP = Helpers.encodeSqrtRatioX96(
                 currentTokenPrice,
                 1 ether
@@ -303,7 +322,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         uint256[] memory nftIds;
         nftxRouter.addLiquidity{value: (amount * 100 ether) / 1 ether}(
             INFTXRouter.AddLiquidityParams({
-                vtoken: address(token),
+                vaultId: vaultId2,
                 vTokensAmount: amount,
                 nftIds: nftIds,
                 tickLower: tickLower,

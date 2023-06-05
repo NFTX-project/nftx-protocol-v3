@@ -104,7 +104,6 @@ contract TestBase is TestExtend, ERC721Holder {
             quoter,
             vaultFactory
         );
-        // V2 currently deducts fees in vTokens which messes up with our calculations atm
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
 
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable();
@@ -241,7 +240,7 @@ contract TestBase is TestExtend, ERC721Holder {
 
         positionId = nftxRouter.addLiquidity{value: qty * 100 ether}(
             INFTXRouter.AddLiquidityParams({
-                vtoken: address(vtoken),
+                vaultId: VAULT_ID,
                 vTokensAmount: 0,
                 nftIds: tokenIds,
                 tickLower: tickLower,
@@ -281,7 +280,7 @@ contract TestBase is TestExtend, ERC721Holder {
 
         nftxRouter.sellNFTs(
             INFTXRouter.SellNFTsParams({
-                vtoken: address(vtoken),
+                vaultId: VAULT_ID,
                 nftIds: tokenIds,
                 deadline: block.timestamp,
                 fee: DEFAULT_FEE_TIER,

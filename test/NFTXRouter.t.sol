@@ -110,7 +110,7 @@ contract NFTXRouterTests is TestBase {
         // execute swap
         nftxRouter.buyNFTs{value: ethRequired}(
             INFTXRouter.BuyNFTsParams({
-                vtoken: address(vtoken),
+                vaultId: VAULT_ID,
                 nftIds: nftIds,
                 deadline: block.timestamp,
                 fee: DEFAULT_FEE_TIER,
@@ -181,7 +181,7 @@ contract NFTXRouterTests is TestBase {
         nftxRouter.removeLiquidity(
             INFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
-                vtoken: address(vtoken),
+                vaultId: VAULT_ID,
                 nftIds: nftIds,
                 liquidity: liquidity,
                 amount0Min: 0,
@@ -229,7 +229,7 @@ contract NFTXRouterTests is TestBase {
         nftxRouter.removeLiquidity(
             INFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
-                vtoken: address(vtoken),
+                vaultId: VAULT_ID,
                 nftIds: new uint256[](0),
                 liquidity: liquidity,
                 amount0Min: 0,
