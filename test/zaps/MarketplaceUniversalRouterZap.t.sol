@@ -27,7 +27,13 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
 
         hoax(makeAddr("nonOwner"));
         vm.expectRevert(MarketplaceUniversalRouterZap.ZapPaused.selector);
-        marketplaceZap.sell721(VAULT_ID, idsIn, executeCallData, payable(this));
+        marketplaceZap.sell721(
+            VAULT_ID,
+            idsIn,
+            executeCallData,
+            payable(this),
+            true
+        );
     }
 
     function test_sell721_Success() external {
@@ -44,7 +50,13 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         );
 
         nft.setApprovalForAll(address(marketplaceZap), true);
-        marketplaceZap.sell721(VAULT_ID, idsIn, executeCallData, payable(this));
+        marketplaceZap.sell721(
+            VAULT_ID,
+            idsIn,
+            executeCallData,
+            payable(this),
+            true
+        );
 
         for (uint i; i < qty; i++) {
             assertEq(nft.ownerOf(idsIn[i]), address(vtoken));
@@ -112,7 +124,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
             VAULT_ID,
             idsOut,
             executeCallData,
-            payable(this)
+            payable(this),
+            true
         );
     }
 
@@ -149,7 +162,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         // double ETH value here to check if refund working as well
         marketplaceZap.buyNFTsWithETH{
             value: expectedETHFees * 2 + wethRequired
-        }(VAULT_ID, idsOut, executeCallData, payable(this));
+        }(VAULT_ID, idsOut, executeCallData, payable(this), true);
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         assertGt(ethPaid, expectedETHFees + wethRequired);
@@ -223,7 +236,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
             idsOut,
             executeToWETHCallData,
             executeToVTokenCallData,
-            payable(this)
+            payable(this),
+            true
         );
 
         for (uint i; i < qty; i++) {
