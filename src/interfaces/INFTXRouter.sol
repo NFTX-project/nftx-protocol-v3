@@ -79,7 +79,7 @@ interface INFTXRouter {
 
     function sellNFTs(
         SellNFTsParams calldata params
-    ) external returns (uint256 wethReceived);
+    ) external payable returns (uint256 wethReceived);
 
     /**
      * @param sqrtPriceLimitX96 the price limit, if reached, stop swapping

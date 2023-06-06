@@ -242,7 +242,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
      */
     function sellNFTs(
         SellNFTsParams calldata params
-    ) external override returns (uint256 wethReceived) {
+    ) external payable override returns (uint256 wethReceived) {
         INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
         address assetAddress = INFTXVault(address(vToken)).assetAddress();
 
@@ -287,10 +287,15 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             })
         );
 
+        // if received WETH is insufficient to pay for vault fees, user sends ETH (can be excess, as refunded back) along with the transaction
+        if (msg.value > 0) {
+            IWETH9(WETH).deposit{value: msg.value}();
+            wethReceived += msg.value;
+        }
         // distributing vault fees with the wethReceived
         uint256 wethFees = _ethMintFees(vToken, params.nftIds);
         _distributeVaultFees(params.vaultId, wethFees, true);
-        uint256 wethRemaining = wethReceived - wethFees;
+        uint256 wethRemaining = wethReceived - wethFees; // if underflow, then revert desired
 
         // convert remaining WETH to ETH & send to user
         IWETH9(WETH).withdraw(wethRemaining);
