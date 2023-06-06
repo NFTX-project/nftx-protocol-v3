@@ -231,7 +231,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
                 vToken.transfer(msg.sender, vTokenResidue);
             }
         }
-        // convert WETH to ETH & send to user
+        // convert remaining WETH to ETH & send to user
         IWETH9(WETH).withdraw(wethAmt);
         (bool success, ) = msg.sender.call{value: wethAmt}("");
         if (!success) revert UnableToSendETH();
@@ -271,6 +271,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         uint256[] memory emptyIds;
         uint256 vTokensAmount = vToken.mint(params.nftIds, emptyIds) * 1 ether;
 
+        // TODO: infinite approve
         vToken.approve(address(router), vTokensAmount);
 
         wethReceived = router.exactInputSingle(
@@ -291,7 +292,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         _distributeVaultFees(params.vaultId, wethFees, true);
         uint256 wethRemaining = wethReceived - wethFees;
 
-        // convert WETH to ETH & send to user
+        // convert remaining WETH to ETH & send to user
         IWETH9(WETH).withdraw(wethRemaining);
         (bool success, ) = msg.sender.call{value: wethRemaining}("");
         if (!success) revert UnableToSendETH();
