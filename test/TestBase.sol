@@ -143,6 +143,7 @@ contract TestBase is TestExtend, ERC721Holder {
             address(inventoryStaking),
             IWETH9(address(weth))
         );
+        vaultFactory.setFeeExclusion(address(marketplaceZap), true);
     }
 
     function _mintVToken(

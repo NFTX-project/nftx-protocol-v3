@@ -35,10 +35,6 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
 
         uint256 qty = 5;
 
-        uint256 exactETHPaid = (vtoken.mintFee() * qty * currentNFTPrice) /
-            1 ether;
-        uint256 expectedETHPaid = _valueWithError(exactETHPaid);
-
         uint256[] memory idsIn = nft.mint(qty);
         bytes memory executeCallData = abi.encodeWithSelector(
             MockUniversalRouter.execute.selector,
@@ -46,31 +42,9 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
             qty * 1 ether,
             address(weth)
         );
-        (uint256 expectedWethAmount, , , ) = quoter.quoteExactInputSingle(
-            IQuoterV2.QuoteExactInputSingleParams({
-                tokenIn: address(vtoken),
-                tokenOut: address(weth),
-                amountIn: qty * 1 ether,
-                fee: DEFAULT_FEE_TIER,
-                sqrtPriceLimitX96: 0
-            })
-        );
-
-        uint256 prevETHBal = address(this).balance;
 
         nft.setApprovalForAll(address(marketplaceZap), true);
-        // double ETH value here to check if refund working as well
-        marketplaceZap.sell721{value: expectedETHPaid * 2}(
-            VAULT_ID,
-            idsIn,
-            executeCallData,
-            payable(this)
-        );
-
-        uint256 ethReceived = address(this).balance - prevETHBal; // ethReceived = wethAmount - ethPaid
-        uint256 ethPaid = expectedWethAmount - ethReceived;
-        assertGt(ethPaid, expectedETHPaid);
-        assertLe(ethPaid, exactETHPaid);
+        marketplaceZap.sell721(VAULT_ID, idsIn, executeCallData, payable(this));
 
         for (uint i; i < qty; i++) {
             assertEq(nft.ownerOf(idsIn[i]), address(vtoken));

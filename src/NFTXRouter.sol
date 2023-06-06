@@ -114,7 +114,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             vTokensAmount += vToken.mint(params.nftIds, emptyIds) * 1 ether;
 
             // distributing vault fees
-            uint256 ethFees = _ethMintFees(vToken, params.nftIds);
+            uint256 ethFees = _ethMintFees(vToken, params.nftIds.length);
             _distributeVaultFees(params.vaultId, ethFees, false);
 
             // use remaining ETH for providing liquidity into the pool
@@ -293,7 +293,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             wethReceived += msg.value;
         }
         // distributing vault fees with the wethReceived
-        uint256 wethFees = _ethMintFees(vToken, params.nftIds);
+        uint256 wethFees = _ethMintFees(vToken, params.nftIds.length);
         _distributeVaultFees(params.vaultId, wethFees, true);
         uint256 wethRemaining = wethReceived - wethFees; // if underflow, then revert desired
 
@@ -538,9 +538,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
 
     function _ethMintFees(
         INFTXVault vToken,
-        uint256[] memory nftIds
+        uint256 nftCount
     ) internal view returns (uint256) {
-        return vToken.vTokenToETH(vToken.mintFee() * nftIds.length);
+        return vToken.vTokenToETH(vToken.mintFee() * nftCount);
     }
 
     function _ethRedeemFees(

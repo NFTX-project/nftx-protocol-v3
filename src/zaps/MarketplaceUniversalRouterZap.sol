@@ -8,6 +8,7 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
+import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 
 /**
@@ -15,6 +16,7 @@ import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
  * @author @apoorvlathey
  *
  * @notice Marketplace Zap that utilizes Universal Router to facilitate the require token swaps
+ * @dev This Zap must be excluded from the vault fees, as vault fees handled via custom logic here.
  */
 
 contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
@@ -29,7 +31,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
     IWETH9 public immutable WETH;
     IPermitAllowanceTransfer public immutable PERMIT2;
-    INFTXVaultFactory public immutable nftxFactory;
+    INFTXVaultFactory public immutable nftxVaultFactory;
     address public immutable inventoryStaking;
 
     // =============================================================
@@ -82,13 +84,13 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
     // =============================================================
 
     constructor(
-        INFTXVaultFactory nftxFactory_,
+        INFTXVaultFactory nftxVaultFactory_,
         address universalRouter_,
         IPermitAllowanceTransfer PERMIT2_,
         address inventoryStaking_,
         IWETH9 WETH_
     ) {
-        nftxFactory = nftxFactory_;
+        nftxVaultFactory = nftxVaultFactory_;
         universalRouter = universalRouter_;
         PERMIT2 = PERMIT2_;
         inventoryStaking = inventoryStaking_;
@@ -101,7 +103,6 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
 
     /**
      * @notice Sell idsIn to ETH
-     * Send ETH along as well (via msg.value) to account for mint fees
      *
      * @dev idsIn --{--mint-> [vault] -> vTokens --sell-> [UniversalRouter] --}-> ETH
      *
@@ -115,10 +116,9 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         uint256[] calldata idsIn,
         bytes calldata executeCallData,
         address payable to
-    ) external payable onlyOwnerIfPaused {
-        // TODO: ? find a way to pay ETH fees from the vTokens received, instead of getting the ETH from the user (though in case of premiums might be required)
+    ) external onlyOwnerIfPaused {
         // Mint vTokens
-        (address vault, uint256 ethSpent) = _mint721(vaultId, idsIn, msg.value);
+        address vault = _mint721(vaultId, idsIn);
 
         // swap vTokens to WETH
         (uint256 wethAmount, ) = _swapTokens(
@@ -127,11 +127,16 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
             executeCallData
         );
 
+        // distributing vault fees with the weth received
+        uint256 wethFees = _ethMintFees(INFTXVault(vault), idsIn.length);
+        _distributeVaultFees(vaultId, wethFees, true);
+        wethAmount -= wethFees; // if underflow, then revert desired
+
         // convert WETH to ETH and send remaining ETH to `to`
         _wethToETHResidue(to, wethAmount);
 
         // Emit our sale event
-        emit Sell(idsIn.length, wethAmount - ethSpent, to);
+        emit Sell(idsIn.length, wethAmount, to);
     }
 
     /**
@@ -149,17 +154,15 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
 
         // Swap our tokens
         uint256[] memory emptyIds;
-        uint256 ethSpent = INFTXVault(vault).swapTo{value: msg.value}(
-            idsIn,
-            emptyIds,
-            idsOut,
-            to
-        );
+        INFTXVault(vault).swapTo(idsIn, emptyIds, idsOut, to);
+
+        uint256 ethFees = _ethSwapFees(INFTXVault(vault), idsOut);
+        _distributeVaultFees(vaultId, ethFees, false);
 
         // send back remaining ETH
         _sendETHResidue(to);
 
-        emit Swap(idsOut.length, ethSpent, to);
+        emit Swap(idsOut.length, ethFees, to);
     }
 
     /**
@@ -182,23 +185,20 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         WETH.deposit{value: msg.value}();
 
         // swap WETH to vTokens
-        address vault = nftxFactory.vault(vaultId);
+        address vault = nftxVaultFactory.vault(vaultId);
         _swapTokens(address(WETH), vault, executeCallData);
 
-        // unwrap all WETH to ETH
-        uint256 wethRemaining = WETH.balanceOf(address(this));
-        WETH.withdraw(wethRemaining);
-
         // redeem NFTs
-        uint256 ethSpent = INFTXVault(vault).redeemTo{value: wethRemaining}(
-            idsOut,
-            to
-        );
+        INFTXVault(vault).redeemTo(idsOut, to);
 
-        // transfer vToken dust and remaining ETH balance
+        // distribute vault fees with remaining weth
+        uint256 wethFees = _ethRedeemFees(INFTXVault(vault), idsOut);
+        _distributeVaultFees(vaultId, wethFees, true);
+
+        // transfer vToken dust and remaining WETH balance
         _transferDust(vault, true);
 
-        emit Buy(idsOut.length, ethSpent, to);
+        emit Buy(idsOut.length, wethFees, to);
     }
 
     /**
@@ -226,32 +226,23 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
 
         // swap tokenIn to WETH
-        (uint256 wethReceived, uint256 finalWethBalance) = _swapTokens(
-            address(tokenIn),
-            address(WETH),
-            executeToWETHCallData
-        );
+        _swapTokens(address(tokenIn), address(WETH), executeToWETHCallData);
+
         // swap some WETH to vTokens
-        address vault = nftxFactory.vault(vaultId);
+        address vault = nftxVaultFactory.vault(vaultId);
         _swapTokens(address(WETH), vault, executeToVTokenCallData);
 
-        uint256 wethRemaining = WETH.balanceOf(address(this)) +
-            wethReceived -
-            finalWethBalance; // if underflow, then revert desired
-
-        // unwrap all remaining WETH to ETH
-        WETH.withdraw(wethRemaining);
-
         // redeem NFTs
-        uint256 ethSpent = INFTXVault(vault).redeemTo{value: wethRemaining}(
-            idsOut,
-            to
-        );
+        INFTXVault(vault).redeemTo(idsOut, to);
 
-        // transfer vToken dust and remaining ETH balance
+        // distribute vault fees with remaining weth
+        uint256 wethFees = _ethRedeemFees(INFTXVault(vault), idsOut);
+        _distributeVaultFees(vaultId, wethFees, true);
+
+        // transfer vToken dust and remaining WETH balance
         _transferDust(vault, true);
 
-        emit Buy(idsOut.length, ethSpent, to);
+        emit Buy(idsOut.length, wethFees, to);
     }
 
     // TODO: add sell1155
@@ -301,17 +292,14 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
      */
     function _mint721(
         uint256 vaultId,
-        uint256[] memory ids,
-        uint256 ethReceived
-    ) internal returns (address vault, uint256 ethSpent) {
+        uint256[] memory ids
+    ) internal returns (address vault) {
         // Transfer tokens from the message sender to the vault
         vault = _transferSender721ToVault(vaultId, ids);
 
         // Mint our tokens from the vault to this contract
         uint256[] memory emptyIds;
-        uint256 iniETHBalance = address(this).balance;
-        INFTXVault(vault).mint{value: ethReceived}(ids, emptyIds);
-        ethSpent = iniETHBalance - address(this).balance;
+        INFTXVault(vault).mint(ids, emptyIds);
     }
 
     function _transferSender721ToVault(
@@ -319,7 +307,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         uint256[] memory ids
     ) internal returns (address vault) {
         // Get our vault address information
-        vault = nftxFactory.vault(vaultId);
+        vault = nftxVaultFactory.vault(vaultId);
 
         // Transfer tokens from the message sender to the vault
         address assetAddress = INFTXVault(vault).assetAddress();
@@ -445,6 +433,65 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
 
         IERC20(token).safeApprove(address(PERMIT2), type(uint256).max);
         PERMIT2.approve(token, spender, type(uint160).max, type(uint48).max);
+    }
+
+    function _ethMintFees(
+        INFTXVault vToken,
+        uint256 nftCount
+    ) internal view returns (uint256) {
+        return vToken.vTokenToETH(vToken.mintFee() * nftCount);
+    }
+
+    function _ethSwapFees(
+        INFTXVault vToken,
+        uint256[] memory nftIds
+    ) internal view returns (uint256) {
+        return
+            vToken.vTokenToETH(
+                (vToken.targetSwapFee() * nftIds.length) +
+                    _getVTokenPremium(vToken, nftIds)
+            );
+    }
+
+    function _ethRedeemFees(
+        INFTXVault vToken,
+        uint256[] memory nftIds
+    ) internal view returns (uint256) {
+        return
+            vToken.vTokenToETH(
+                (vToken.targetRedeemFee() * nftIds.length) +
+                    _getVTokenPremium(vToken, nftIds)
+            );
+    }
+
+    function _getVTokenPremium(
+        INFTXVault vToken,
+        uint256[] memory nftIds
+    ) internal view returns (uint256 vTokenPremium) {
+        for (uint256 i; i < nftIds.length; ) {
+            vTokenPremium += vToken.getVTokenPremium(nftIds[i]);
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    function _distributeVaultFees(
+        uint256 vaultId,
+        uint256 ethAmount,
+        bool isWeth
+    ) internal {
+        if (ethAmount > 0) {
+            INFTXFeeDistributorV3 feeDistributor = INFTXFeeDistributorV3(
+                nftxVaultFactory.feeDistributor()
+            );
+            if (!isWeth) {
+                WETH.deposit{value: ethAmount}();
+            }
+            WETH.transfer(address(feeDistributor), ethAmount);
+            feeDistributor.distribute(vaultId);
+        }
     }
 
     function _allWethToETHResidue(
