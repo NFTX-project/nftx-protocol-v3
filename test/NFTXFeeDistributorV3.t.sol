@@ -223,11 +223,9 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         nftxRouter.removeLiquidity(
             INFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
-                vtoken: address(vtoken),
+                vaultId: VAULT_ID,
                 nftIds: nftIds,
-                receiveVTokens: false,
                 liquidity: liquidity,
-                swapPoolFee: 10000,
                 amount0Min: 0,
                 amount1Min: 0,
                 deadline: block.timestamp

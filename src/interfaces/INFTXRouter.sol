@@ -37,7 +37,7 @@ interface INFTXRouter {
     // =============================================================
 
     struct AddLiquidityParams {
-        address vtoken;
+        uint256 vaultId;
         uint256 vTokensAmount; // user can provide just vTokens or NFTs or both
         uint256[] nftIds;
         int24 tickLower;
@@ -47,32 +47,29 @@ interface INFTXRouter {
         uint256 deadline;
     }
 
-    /**
-     * @notice User should have given NFT approval to vtoken contract, else revert
-     */
     function addLiquidity(
         AddLiquidityParams calldata params
     ) external payable returns (uint256 positionId);
 
     struct RemoveLiquidityParams {
         uint256 positionId;
-        address vtoken;
+        uint256 vaultId;
         uint256[] nftIds;
-        bool receiveVTokens; // directly receive vTokens, instead of redeeming for NFTs
         uint128 liquidity;
-        uint24 swapPoolFee; // the pool through which the fractional vToken to ETH swap should go through
         uint256 amount0Min;
         uint256 amount1Min;
         uint256 deadline;
     }
 
-    function removeLiquidity(RemoveLiquidityParams calldata params) external;
+    function removeLiquidity(
+        RemoveLiquidityParams calldata params
+    ) external payable;
 
     /**
      * @param sqrtPriceLimitX96 the price limit, if reached, stop swapping
      */
     struct SellNFTsParams {
-        address vtoken;
+        uint256 vaultId;
         uint256[] nftIds;
         uint256 deadline;
         uint24 fee;
@@ -80,18 +77,15 @@ interface INFTXRouter {
         uint160 sqrtPriceLimitX96;
     }
 
-    /**
-     * @notice User should have given NFT approval to vtoken contract, else revert
-     */
     function sellNFTs(
         SellNFTsParams calldata params
-    ) external returns (uint256 wethReceived);
+    ) external payable returns (uint256 wethReceived);
 
     /**
      * @param sqrtPriceLimitX96 the price limit, if reached, stop swapping
      */
     struct BuyNFTsParams {
-        address vtoken;
+        uint256 vaultId;
         uint256[] nftIds;
         uint256 deadline;
         uint24 fee;
@@ -118,7 +112,7 @@ interface INFTXRouter {
      */
     function quoteBuyNFTs(
         address vtoken,
-        uint256[] memory nftIds,
+        uint256 nftsCount,
         uint24 fee,
         uint160 sqrtPriceLimitX96
     ) external returns (uint256 ethRequired);
