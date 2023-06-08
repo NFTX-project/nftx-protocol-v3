@@ -13,13 +13,14 @@ import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
 import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
 import {INFTXFeeDistributorV3} from "./interfaces/INFTXFeeDistributorV3.sol";
 import {INFTXInventoryStakingV3} from "./interfaces/INFTXInventoryStakingV3.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 /**
  * @title NFTX Inventory Staking V3
  * @author @apoorvlathey
  *
  * @dev lockId's:
- * 0: deposit
+ * 0: deposit & depositWithPermit2
  * 1: depositWithNFT
  * 2: withdraw
  * 3: collectWethFees
@@ -38,10 +39,11 @@ contract NFTXInventoryStakingV3Upgradeable is
 
     address public constant override CRYPTO_PUNKS =
         0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
+    IERC20 public immutable override WETH;
+    IPermitAllowanceTransfer public immutable override PERMIT2;
 
     INFTXVaultFactory public override nftxVaultFactory;
     ITimelockExcludeList public override timelockExcludeList;
-    IERC20 public override WETH;
 
     // =============================================================
     //                            STORAGE
@@ -65,6 +67,11 @@ contract NFTXInventoryStakingV3Upgradeable is
     //                           INIT
     // =============================================================
 
+    constructor(IERC20 WETH_, IPermitAllowanceTransfer PERMIT2_) {
+        WETH = WETH_;
+        PERMIT2 = PERMIT2_;
+    }
+
     function __NFTXInventoryStaking_init(
         INFTXVaultFactory nftxVaultFactory_,
         uint256 timelock_,
@@ -75,7 +82,6 @@ contract NFTXInventoryStakingV3Upgradeable is
         __Pausable_init();
 
         nftxVaultFactory = nftxVaultFactory_;
-        WETH = INFTXFeeDistributorV3(nftxVaultFactory_.feeDistributor()).WETH();
 
         if (timelock_ > 14 days) revert TimelockTooLong();
         if (earlyWithdrawPenaltyInWei_ > 1 ether)
@@ -94,38 +100,61 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 amount,
         address recipient
     ) external override returns (uint256 positionId) {
-        onlyOwnerIfPaused(0);
-
         address vToken = nftxVaultFactory.vault(vaultId);
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
 
         uint256 preVTokenBalance = _vaultGlobal.netVTokenBalance; // TODO: use balanceOf() instead of netVTokenBalance to account for tokens sent directly, like by MarketplaceZap
         IERC20(vToken).transferFrom(msg.sender, address(this), amount);
-        _vaultGlobal.netVTokenBalance = preVTokenBalance + amount;
 
-        _mint(recipient, (positionId = _nextId++));
+        return
+            _deposit(
+                vaultId,
+                amount,
+                recipient,
+                _vaultGlobal,
+                preVTokenBalance
+            );
+    }
 
-        uint256 vTokenShares;
-        if (_vaultGlobal.totalVTokenShares == 0) {
-            vTokenShares = amount;
-        } else {
-            vTokenShares =
-                (amount * _vaultGlobal.totalVTokenShares) /
-                preVTokenBalance;
+    function depositWithPermit2(
+        uint256 vaultId,
+        uint256 amount,
+        address recipient,
+        bytes calldata encodedPermit2
+    ) external override returns (uint256 positionId) {
+        address vToken = nftxVaultFactory.vault(vaultId);
+        VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
+
+        uint256 preVTokenBalance = _vaultGlobal.netVTokenBalance; // TODO: use balanceOf() instead of netVTokenBalance to account for tokens sent directly, like by MarketplaceZap
+
+        if (encodedPermit2.length > 0) {
+            (
+                address owner,
+                IPermitAllowanceTransfer.PermitSingle memory permitSingle,
+                bytes memory signature
+            ) = abi.decode(
+                    encodedPermit2,
+                    (address, IPermitAllowanceTransfer.PermitSingle, bytes)
+                );
+
+            PERMIT2.permit(owner, permitSingle, signature);
         }
-        _vaultGlobal.totalVTokenShares += vTokenShares;
 
-        positions[positionId] = Position({
-            nonce: 0,
-            vaultId: vaultId,
-            timelockedUntil: 0,
-            vTokenShareBalance: vTokenShares,
-            wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
-                .globalWethFeesPerVTokenShareX128,
-            wethOwed: 0
-        });
+        PERMIT2.transferFrom(
+            msg.sender,
+            address(this),
+            uint160(amount),
+            address(vToken)
+        );
 
-        emit Deposit(vaultId, positionId, amount);
+        return
+            _deposit(
+                vaultId,
+                amount,
+                recipient,
+                _vaultGlobal,
+                preVTokenBalance
+            );
     }
 
     function depositWithNFT(
@@ -419,6 +448,42 @@ contract NFTXInventoryStakingV3Upgradeable is
     // =============================================================
     //                        INTERNAL HELPERS
     // =============================================================
+
+    function _deposit(
+        uint256 vaultId,
+        uint256 amount,
+        address recipient,
+        VaultGlobal storage _vaultGlobal,
+        uint256 preVTokenBalance
+    ) internal returns (uint256 positionId) {
+        onlyOwnerIfPaused(0);
+
+        _vaultGlobal.netVTokenBalance = preVTokenBalance + amount;
+
+        _mint(recipient, (positionId = _nextId++));
+
+        uint256 vTokenShares;
+        if (_vaultGlobal.totalVTokenShares == 0) {
+            vTokenShares = amount;
+        } else {
+            vTokenShares =
+                (amount * _vaultGlobal.totalVTokenShares) /
+                preVTokenBalance;
+        }
+        _vaultGlobal.totalVTokenShares += vTokenShares;
+
+        positions[positionId] = Position({
+            nonce: 0,
+            vaultId: vaultId,
+            timelockedUntil: 0,
+            vTokenShareBalance: vTokenShares,
+            wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
+                .globalWethFeesPerVTokenShareX128,
+            wethOwed: 0
+        });
+
+        emit Deposit(vaultId, positionId, amount);
+    }
 
     function _calcWethOwed(
         uint256 globalWethFeesPerVTokenShareX128,

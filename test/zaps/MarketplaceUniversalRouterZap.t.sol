@@ -12,7 +12,6 @@ import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolU
 import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
 import {MockERC20} from "@mocks/MockERC20.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
-import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 import {TestBase} from "../TestBase.sol";
 

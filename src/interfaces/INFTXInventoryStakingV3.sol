@@ -6,6 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     // details about the staking position
@@ -41,6 +42,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     function timelockExcludeList() external view returns (ITimelockExcludeList);
 
     function WETH() external view returns (IERC20);
+
+    function PERMIT2() external returns (IPermitAllowanceTransfer);
 
     // =============================================================
     //                            STORAGE
@@ -131,6 +134,13 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 vaultId,
         uint256 amount,
         address recipient
+    ) external returns (uint256 positionId);
+
+    function depositWithPermit2(
+        uint256 vaultId,
+        uint256 amount,
+        address recipient,
+        bytes calldata encodedPermit2
     ) external returns (uint256 positionId);
 
     /// @notice This contract must be on the feeExclusion list to avoid mint fees, else revert
