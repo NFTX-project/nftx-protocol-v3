@@ -12,6 +12,7 @@ import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolU
 import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
 import {MockERC20} from "@mocks/MockERC20.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 import {TestBase} from "../TestBase.sol";
 
@@ -230,18 +231,100 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
 
         token.approve(address(marketplaceZap), tokenInRequiredForETHFees);
         marketplaceZap.buyNFTsWithERC20(
-            IERC20(address(token)),
-            tokenInRequiredForETHFees,
-            VAULT_ID,
-            idsOut,
-            executeToWETHCallData,
-            executeToVTokenCallData,
-            payable(this),
-            true
+            MarketplaceUniversalRouterZap.BuyNFTsWithERC20Params({
+                tokenIn: IERC20(address(token)),
+                amountIn: tokenInRequiredForETHFees,
+                vaultId: VAULT_ID,
+                idsOut: idsOut,
+                executeToWETHCallData: executeToWETHCallData,
+                executeToVTokenCallData: executeToVTokenCallData,
+                to: payable(this),
+                deductRoyalty: true
+            })
         );
 
         for (uint i; i < qty; i++) {
             assertEq(nft.ownerOf(idsOut[i]), address(this));
+        }
+    }
+
+    function test_buyNFTsWithERC20WithPermit2_721_Success() external {
+        _mintPositionWithTwap(currentNFTPrice);
+        INFTXVault token = _mintPositionERC20();
+
+        uint256 qty = 5;
+        (, uint256[] memory idsOut) = _mintVToken(qty);
+
+        uint256 exactETHFees = ((vtoken.targetRedeemFee() +
+            vaultFactory.premiumMax()) *
+            qty *
+            currentNFTPrice) / 1 ether;
+        // uint256 expectedETHFees = _valueWithError(exactETHFees);
+
+        (uint256 wethRequiredForVTokens, , , ) = quoter.quoteExactOutputSingle(
+            IQuoterV2.QuoteExactOutputSingleParams({
+                tokenIn: address(weth),
+                tokenOut: address(vtoken),
+                amount: qty * 1 ether,
+                fee: DEFAULT_FEE_TIER,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        (uint256 tokenInRequiredForETHFees, , , ) = quoter
+            .quoteExactOutputSingle(
+                IQuoterV2.QuoteExactOutputSingleParams({
+                    tokenIn: address(token),
+                    tokenOut: address(weth),
+                    amount: (wethRequiredForVTokens + exactETHFees),
+                    fee: DEFAULT_FEE_TIER,
+                    sqrtPriceLimitX96: 0
+                })
+            );
+        bytes memory executeToWETHCallData = abi.encodeWithSelector(
+            MockUniversalRouter.execute.selector,
+            address(token),
+            tokenInRequiredForETHFees,
+            address(weth)
+        );
+        bytes memory executeToVTokenCallData = abi.encodeWithSelector(
+            MockUniversalRouter.execute.selector,
+            address(weth),
+            wethRequiredForVTokens,
+            address(vtoken)
+        );
+
+        startHoax(from);
+
+        // get tokenIn
+        uint256[] memory tokenIds = nft.mint(
+            tokenInRequiredForETHFees / 1 ether + 1
+        );
+        nft.setApprovalForAll(address(token), true);
+        uint256[] memory amounts = new uint256[](0);
+        token.mint(tokenIds, amounts) * 1 ether;
+
+        bytes memory encodedPermit2 = _getEncodedPermit2(
+            address(token),
+            tokenInRequiredForETHFees,
+            address(marketplaceZap)
+        );
+
+        marketplaceZap.buyNFTsWithERC20WithPermit2(
+            MarketplaceUniversalRouterZap.BuyNFTsWithERC20Params({
+                tokenIn: IERC20(address(token)),
+                amountIn: tokenInRequiredForETHFees,
+                vaultId: VAULT_ID,
+                idsOut: idsOut,
+                executeToWETHCallData: executeToWETHCallData,
+                executeToVTokenCallData: executeToVTokenCallData,
+                to: payable(from),
+                deductRoyalty: true
+            }),
+            encodedPermit2
+        );
+
+        for (uint i; i < qty; i++) {
+            assertEq(nft.ownerOf(idsOut[i]), address(from));
         }
     }
 

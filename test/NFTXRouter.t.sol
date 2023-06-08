@@ -11,8 +11,6 @@ import {TestBase} from "./TestBase.sol";
 
 contract NFTXRouterTests is TestBase {
     uint256 currentNFTPrice = 5 ether;
-    uint256 fromPrivateKey = 0x12341234;
-    address from = vm.addr(fromPrivateKey);
 
     // addLiquidity
 
@@ -258,27 +256,10 @@ contract NFTXRouterTests is TestBase {
 
             uint256[] memory tokenIds;
 
-            vtoken.approve(address(permit2), type(uint256).max);
-
-            IPermitAllowanceTransfer.PermitSingle
-                memory permitSingle = IPermitAllowanceTransfer.PermitSingle({
-                    details: IPermitAllowanceTransfer.PermitDetails({
-                        token: address(vtoken),
-                        amount: uint160(mintedVTokens),
-                        expiration: uint48(block.timestamp + 100),
-                        nonce: 0
-                    }),
-                    spender: address(nftxRouter),
-                    sigDeadline: block.timestamp + 100
-                });
-            bytes memory signature = _getPermitSignature(
-                permitSingle,
-                fromPrivateKey
-            );
-            bytes memory encodedPermit2 = abi.encode(
-                from, // owner
-                permitSingle,
-                signature
+            bytes memory encodedPermit2 = _getEncodedPermit2(
+                address(vtoken),
+                mintedVTokens,
+                address(nftxRouter)
             );
 
             positionId = nftxRouter.addLiquidityWithPermit2{

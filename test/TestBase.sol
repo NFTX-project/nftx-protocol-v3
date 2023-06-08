@@ -5,6 +5,7 @@ import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 import {TestExtend} from "./lib/TestExtend.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {UniswapV3FactoryUpgradeable} from "@uni-core/UniswapV3FactoryUpgradeable.sol";
 import {UniswapV3PoolUpgradeable} from "@uni-core/UniswapV3PoolUpgradeable.sol";
@@ -59,6 +60,9 @@ contract TestBase is TestExtend, ERC721Holder {
     uint256 constant VAULT_ID = 0;
 
     uint16 constant REWARD_TIER_CARDINALITY = 102; // considering 20 min interval with 1 block every 12 seconds on ETH Mainnet
+
+    uint256 fromPrivateKey = 0x12341234;
+    address from = vm.addr(fromPrivateKey);
 
     function setUp() external {
         // to prevent underflow during calculations involving block.timestamp
@@ -386,6 +390,34 @@ contract TestBase is TestExtend, ERC721Holder {
         );
 
         (v, r, s) = vm.sign(privateKey, msgHash);
+    }
+
+    function _getEncodedPermit2(
+        address token,
+        uint256 amount,
+        address spender
+    ) internal returns (bytes memory encodedPermit2) {
+        IERC20(token).approve(address(permit2), type(uint256).max);
+        IPermitAllowanceTransfer.PermitSingle
+            memory permitSingle = IPermitAllowanceTransfer.PermitSingle({
+                details: IPermitAllowanceTransfer.PermitDetails({
+                    token: token,
+                    amount: uint160(amount),
+                    expiration: uint48(block.timestamp + 100),
+                    nonce: 0
+                }),
+                spender: spender,
+                sigDeadline: block.timestamp + 100
+            });
+        bytes memory signature = _getPermitSignature(
+            permitSingle,
+            fromPrivateKey
+        );
+        encodedPermit2 = abi.encode(
+            from, // owner
+            permitSingle,
+            signature
+        );
     }
 
     // to receive the refunded ETH
