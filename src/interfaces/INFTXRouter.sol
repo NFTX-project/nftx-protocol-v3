@@ -6,6 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 import {SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 
@@ -15,6 +16,8 @@ interface INFTXRouter {
     // =============================================================
 
     function WETH() external returns (address);
+
+    function PERMIT2() external returns (IPermitAllowanceTransfer);
 
     function CRYPTO_PUNKS() external returns (address);
 
@@ -49,6 +52,11 @@ interface INFTXRouter {
 
     function addLiquidity(
         AddLiquidityParams calldata params
+    ) external payable returns (uint256 positionId);
+
+    function addLiquidityWithPermit2(
+        AddLiquidityParams calldata params,
+        bytes calldata encodedPermit2
     ) external payable returns (uint256 positionId);
 
     struct RemoveLiquidityParams {

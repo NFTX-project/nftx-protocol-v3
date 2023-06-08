@@ -11,6 +11,7 @@ import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 import {NFTXInventoryStakingV3Upgradeable, INFTXInventoryStakingV3} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 import {TestBase} from "./TestBase.sol";
 
@@ -41,7 +42,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 timelock = 15 days;
         uint256 earlyWithdrawPenaltyInWei = 0.05 ether;
 
-        inventoryStaking = new NFTXInventoryStakingV3Upgradeable();
+        inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
+            weth,
+            IPermitAllowanceTransfer(address(permit2))
+        );
         vm.expectRevert(INFTXInventoryStakingV3.TimelockTooLong.selector);
         inventoryStaking.__NFTXInventoryStaking_init(
             vaultFactory,
@@ -55,7 +59,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 timelock = 2 days;
         uint256 earlyWithdrawPenaltyInWei = 2 ether;
 
-        inventoryStaking = new NFTXInventoryStakingV3Upgradeable();
+        inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
+            weth,
+            IPermitAllowanceTransfer(address(permit2))
+        );
         vm.expectRevert(
             INFTXInventoryStakingV3.InvalidEarlyWithdrawPenalty.selector
         );
@@ -71,7 +78,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 timelock = 2 days;
         uint256 earlyWithdrawPenaltyInWei = 0.05 ether;
 
-        inventoryStaking = new NFTXInventoryStakingV3Upgradeable();
+        inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
+            weth,
+            IPermitAllowanceTransfer(address(permit2))
+        );
         inventoryStaking.__NFTXInventoryStaking_init(
             vaultFactory,
             timelock,
@@ -216,6 +226,62 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             postTotalVTokenShares,
             preTotalVTokenShares + vTokenShareBalance
         );
+    }
+
+    function test_depositWithPermit2_Success_WhenPreTotalSharesZero() external {
+        (
+            ,
+            uint256 preTotalVTokenShares,
+            uint256 globalWethFeesPerVTokenShareX128
+        ) = inventoryStaking.vaultGlobal(VAULT_ID);
+        assertEq(preTotalVTokenShares, 0);
+
+        (uint256 mintedVTokens, ) = _mintVToken(3);
+        vtoken.transfer(from, mintedVTokens);
+        startHoax(from);
+
+        bytes memory encodedPermit2 = _getEncodedPermit2(
+            address(vtoken),
+            mintedVTokens,
+            address(inventoryStaking)
+        );
+        address recipient = makeAddr("recipient");
+        vm.expectEmit(true, true, false, true);
+        emit Deposit(VAULT_ID, 1, mintedVTokens);
+        uint256 positionId = inventoryStaking.depositWithPermit2(
+            VAULT_ID,
+            mintedVTokens,
+            recipient,
+            encodedPermit2
+        );
+
+        assertEq(positionId, 1);
+        // mints position nft to the recipient
+        assertEq(inventoryStaking.ownerOf(positionId), recipient);
+
+        (
+            uint256 nonce,
+            uint256 vaultId,
+            uint256 timelockedUntil,
+            uint256 vTokenShareBalance,
+            uint256 wethFeesPerVTokenShareSnapshotX128,
+            uint256 wethOwed
+        ) = inventoryStaking.positions(positionId);
+        assertEq(nonce, 0);
+        assertEq(vaultId, VAULT_ID);
+        assertEq(timelockedUntil, 0);
+        assertEq(vTokenShareBalance, mintedVTokens);
+        assertEq(
+            wethFeesPerVTokenShareSnapshotX128,
+            globalWethFeesPerVTokenShareX128
+        );
+        assertEq(wethOwed, 0);
+
+        // should update total vToken shares
+        (, uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+            VAULT_ID
+        );
+        assertEq(postTotalVTokenShares, vTokenShareBalance);
     }
 
     // InventoryStaking#depositWithNFT

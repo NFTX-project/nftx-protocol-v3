@@ -5,6 +5,7 @@ import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 import {TestExtend} from "./lib/TestExtend.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {UniswapV3FactoryUpgradeable} from "@uni-core/UniswapV3FactoryUpgradeable.sol";
 import {UniswapV3PoolUpgradeable} from "@uni-core/UniswapV3PoolUpgradeable.sol";
@@ -20,7 +21,7 @@ import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
 import {MockUniversalRouter} from "@mocks/MockUniversalRouter.sol";
-import {MockPermit2} from "@mocks/MockPermit2.sol";
+import {MockPermit2} from "@mocks/permit2/MockPermit2.sol";
 
 import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
 import {NFTXVaultFactoryUpgradeable} from "@src/v2/NFTXVaultFactoryUpgradeable.sol";
@@ -30,6 +31,7 @@ import {TimelockExcludeList} from "@src/v2/other/TimelockExcludeList.sol";
 import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 contract TestBase is TestExtend, ERC721Holder {
     UniswapV3FactoryUpgradeable factory;
@@ -58,6 +60,9 @@ contract TestBase is TestExtend, ERC721Holder {
     uint256 constant VAULT_ID = 0;
 
     uint16 constant REWARD_TIER_CARDINALITY = 102; // considering 20 min interval with 1 block every 12 seconds on ETH Mainnet
+
+    uint256 fromPrivateKey = 0x12341234;
+    address from = vm.addr(fromPrivateKey);
 
     function setUp() external {
         // to prevent underflow during calculations involving block.timestamp
@@ -98,15 +103,21 @@ contract TestBase is TestExtend, ERC721Holder {
         vaultFactory.setPremiumDuration(10 hours);
         vaultFactory.setPremiumMax(5 ether);
 
+        permit2 = new MockPermit2();
+
         nftxRouter = new NFTXRouter(
             positionManager,
             router,
             quoter,
-            vaultFactory
+            vaultFactory,
+            IPermitAllowanceTransfer(address(permit2))
         );
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
 
-        inventoryStaking = new NFTXInventoryStakingV3Upgradeable();
+        inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
+            weth,
+            IPermitAllowanceTransfer(address(permit2))
+        );
         feeDistributor = new NFTXFeeDistributorV3(
             vaultFactory,
             inventoryStaking,
@@ -134,12 +145,14 @@ contract TestBase is TestExtend, ERC721Holder {
         vtoken = INFTXVault(vaultFactory.vault(vaultId));
 
         // Zaps
-        permit2 = new MockPermit2();
-        universalRouter = new MockUniversalRouter(permit2, router);
+        universalRouter = new MockUniversalRouter(
+            IPermitAllowanceTransfer(address(permit2)),
+            router
+        );
         marketplaceZap = new MarketplaceUniversalRouterZap(
             vaultFactory,
             address(universalRouter),
-            permit2,
+            IPermitAllowanceTransfer(address(permit2)),
             address(inventoryStaking),
             IWETH9(address(weth))
         );
@@ -332,6 +345,82 @@ contract TestBase is TestExtend, ERC721Holder {
         (vTokenFees, wethFees) = nftxRouter.isVToken0(address(vtoken))
             ? (amount0, amount1)
             : (amount1, amount0);
+    }
+
+    function _getPermitSignature(
+        IPermitAllowanceTransfer.PermitSingle memory permit,
+        uint256 privateKey
+    ) internal view returns (bytes memory sig) {
+        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignatureRaw(
+            permit,
+            privateKey,
+            permit2.DOMAIN_SEPARATOR()
+        );
+        return bytes.concat(r, s, bytes1(v));
+    }
+
+    bytes32 public constant _PERMIT_DETAILS_TYPEHASH =
+        keccak256(
+            "PermitDetails(address token,uint160 amount,uint48 expiration,uint48 nonce)"
+        );
+    bytes32 public constant _PERMIT_SINGLE_TYPEHASH =
+        keccak256(
+            "PermitSingle(PermitDetails details,address spender,uint256 sigDeadline)PermitDetails(address token,uint160 amount,uint48 expiration,uint48 nonce)"
+        );
+
+    function _getPermitSignatureRaw(
+        IPermitAllowanceTransfer.PermitSingle memory permit,
+        uint256 privateKey,
+        bytes32 domainSeparator
+    ) internal pure returns (uint8 v, bytes32 r, bytes32 s) {
+        bytes32 permitHash = keccak256(
+            abi.encode(_PERMIT_DETAILS_TYPEHASH, permit.details)
+        );
+
+        bytes32 msgHash = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                domainSeparator,
+                keccak256(
+                    abi.encode(
+                        _PERMIT_SINGLE_TYPEHASH,
+                        permitHash,
+                        permit.spender,
+                        permit.sigDeadline
+                    )
+                )
+            )
+        );
+
+        (v, r, s) = vm.sign(privateKey, msgHash);
+    }
+
+    function _getEncodedPermit2(
+        address token,
+        uint256 amount,
+        address spender
+    ) internal returns (bytes memory encodedPermit2) {
+        IERC20(token).approve(address(permit2), type(uint256).max);
+        IPermitAllowanceTransfer.PermitSingle
+            memory permitSingle = IPermitAllowanceTransfer.PermitSingle({
+                details: IPermitAllowanceTransfer.PermitDetails({
+                    token: token,
+                    amount: uint160(amount),
+                    expiration: uint48(block.timestamp + 100),
+                    nonce: 0
+                }),
+                spender: spender,
+                sigDeadline: block.timestamp + 100
+            });
+        bytes memory signature = _getPermitSignature(
+            permitSingle,
+            fromPrivateKey
+        );
+        encodedPermit2 = abi.encode(
+            from, // owner
+            permitSingle,
+            signature
+        );
     }
 
     // to receive the refunded ETH
