@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
-import {MockPermit2} from "./MockPermit2.sol";
 import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 /// @notice A Router contract that uses Permit2 for allowance, and swaps between 2 tokens via UniV3 Pool
 contract MockUniversalRouter {
@@ -11,10 +11,10 @@ contract MockUniversalRouter {
 
     uint24 constant DEFAULT_FEE_TIER = 10000;
 
-    MockPermit2 immutable permit2;
+    IPermitAllowanceTransfer immutable permit2;
     SwapRouter public immutable router;
 
-    constructor(MockPermit2 permit2_, SwapRouter router_) {
+    constructor(IPermitAllowanceTransfer permit2_, SwapRouter router_) {
         permit2 = permit2_;
         router = router_;
     }

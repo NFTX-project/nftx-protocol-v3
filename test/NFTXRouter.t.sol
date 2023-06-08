@@ -5,11 +5,14 @@ import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 
 import {INFTXRouter} from "@src/NFTXRouter.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 import {TestBase} from "./TestBase.sol";
 
 contract NFTXRouterTests is TestBase {
     uint256 currentNFTPrice = 5 ether;
+    uint256 fromPrivateKey = 0x12341234;
+    address from = vm.addr(fromPrivateKey);
 
     // addLiquidity
 
@@ -193,6 +196,217 @@ contract NFTXRouterTests is TestBase {
         uint256 postPositionNFTBalance = positionManager.balanceOf(
             address(this)
         );
+        (
+            ,
+            ,
+            address token0,
+            address token1,
+            uint24 fee,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity,
+            ,
+            ,
+            ,
+
+        ) = positionManager.positions(positionId);
+
+        assertEq(
+            postPositionNFTBalance - prePositionNFTBalance,
+            1,
+            "Position Balance didn't change"
+        );
+        assertGt(liquidity, 0, "Liquidity didn't increase");
+        assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
+        assertEqInt24(tickUpper, _tickUpper, "Incorrect tickUpper");
+        assertEqUint24(fee, DEFAULT_FEE_TIER, "Incorrect fee");
+        assertEq(
+            token0,
+            nftxRouter.isVToken0(address(vtoken))
+                ? address(vtoken)
+                : nftxRouter.WETH(),
+            "Incorrect token0"
+        );
+        assertEq(
+            token1,
+            !nftxRouter.isVToken0(address(vtoken))
+                ? address(vtoken)
+                : nftxRouter.WETH(),
+            "Incorrect token1"
+        );
+    }
+
+    // addLiquidityWithPermit2
+
+    function testAddLiquidityWithPermit2_withVTokens() external {
+        _mintPositionWithTwap(currentNFTPrice);
+
+        uint256 prePositionNFTBalance = positionManager.balanceOf(from);
+        uint256 qty = 5;
+        (
+            int24 _tickLower,
+            int24 _tickUpper,
+            uint160 _currentSqrtP
+        ) = _getTicks();
+        uint256 positionId;
+        {
+            (uint256 mintedVTokens, ) = _mintVToken(qty);
+            vtoken.transfer(from, mintedVTokens);
+            startHoax(from);
+
+            uint256 preETHBalance = from.balance;
+
+            uint256[] memory tokenIds;
+
+            vtoken.approve(address(permit2), type(uint256).max);
+
+            IPermitAllowanceTransfer.PermitSingle
+                memory permitSingle = IPermitAllowanceTransfer.PermitSingle({
+                    details: IPermitAllowanceTransfer.PermitDetails({
+                        token: address(vtoken),
+                        amount: uint160(mintedVTokens),
+                        expiration: uint48(block.timestamp + 100),
+                        nonce: 0
+                    }),
+                    spender: address(nftxRouter),
+                    sigDeadline: block.timestamp + 100
+                });
+            bytes memory signature = _getPermitSignature(
+                permitSingle,
+                fromPrivateKey
+            );
+            bytes memory encodedPermit2 = abi.encode(
+                from, // owner
+                permitSingle,
+                signature
+            );
+
+            positionId = nftxRouter.addLiquidityWithPermit2{
+                value: qty * 100 ether
+            }(
+                INFTXRouter.AddLiquidityParams({
+                    vaultId: VAULT_ID,
+                    vTokensAmount: mintedVTokens,
+                    nftIds: tokenIds,
+                    tickLower: _tickLower,
+                    tickUpper: _tickUpper,
+                    fee: DEFAULT_FEE_TIER,
+                    sqrtPriceX96: _currentSqrtP,
+                    deadline: block.timestamp
+                }),
+                encodedPermit2
+            );
+
+            uint256 ethUsed = preETHBalance - from.balance;
+            console.log("ETH Used: ", ethUsed);
+        }
+
+        uint256 postPositionNFTBalance = positionManager.balanceOf(from);
+        (
+            ,
+            ,
+            address token0,
+            address token1,
+            uint24 fee,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity,
+            ,
+            ,
+            ,
+
+        ) = positionManager.positions(positionId);
+
+        assertEq(
+            postPositionNFTBalance - prePositionNFTBalance,
+            1,
+            "Position Balance didn't change"
+        );
+        assertGt(liquidity, 0, "Liquidity didn't increase");
+        assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
+        assertEqInt24(tickUpper, _tickUpper, "Incorrect tickUpper");
+        assertEqUint24(fee, DEFAULT_FEE_TIER, "Incorrect fee");
+        assertEq(
+            token0,
+            nftxRouter.isVToken0(address(vtoken))
+                ? address(vtoken)
+                : nftxRouter.WETH(),
+            "Incorrect token0"
+        );
+        assertEq(
+            token1,
+            !nftxRouter.isVToken0(address(vtoken))
+                ? address(vtoken)
+                : nftxRouter.WETH(),
+            "Incorrect token1"
+        );
+    }
+
+    function testAddLiquidityWithPermit2_withNFTs_and_VTokens() external {
+        _mintPositionWithTwap(currentNFTPrice);
+
+        uint256 prePositionNFTBalance = positionManager.balanceOf(from);
+        uint256 qty = 5;
+        (
+            int24 _tickLower,
+            int24 _tickUpper,
+            uint160 _currentSqrtP
+        ) = _getTicks();
+        uint256 positionId;
+        {
+            (uint256 mintedVTokens, ) = _mintVToken(qty);
+            vtoken.transfer(from, mintedVTokens);
+
+            startHoax(from);
+            uint256[] memory tokenIds = nft.mint(qty);
+
+            uint256 preETHBalance = from.balance;
+
+            vtoken.approve(address(permit2), type(uint256).max);
+
+            IPermitAllowanceTransfer.PermitSingle
+                memory permitSingle = IPermitAllowanceTransfer.PermitSingle({
+                    details: IPermitAllowanceTransfer.PermitDetails({
+                        token: address(vtoken),
+                        amount: uint160(mintedVTokens),
+                        expiration: uint48(block.timestamp + 100),
+                        nonce: 0
+                    }),
+                    spender: address(nftxRouter),
+                    sigDeadline: block.timestamp + 100
+                });
+            bytes memory signature = _getPermitSignature(
+                permitSingle,
+                fromPrivateKey
+            );
+            bytes memory encodedPermit2 = abi.encode(
+                from, // owner
+                permitSingle,
+                signature
+            );
+
+            nft.setApprovalForAll(address(nftxRouter), true);
+            positionId = nftxRouter.addLiquidityWithPermit2{
+                value: qty * 100 ether
+            }(
+                INFTXRouter.AddLiquidityParams({
+                    vaultId: VAULT_ID,
+                    vTokensAmount: mintedVTokens,
+                    nftIds: tokenIds,
+                    tickLower: _tickLower,
+                    tickUpper: _tickUpper,
+                    fee: DEFAULT_FEE_TIER,
+                    sqrtPriceX96: _currentSqrtP,
+                    deadline: block.timestamp
+                }),
+                encodedPermit2
+            );
+
+            uint256 ethUsed = preETHBalance - from.balance;
+            console.log("ETH Used: ", ethUsed);
+        }
+
+        uint256 postPositionNFTBalance = positionManager.balanceOf(from);
         (
             ,
             ,

@@ -12,6 +12,7 @@ import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {PoolAddress} from "@uni-periphery/libraries/PoolAddress.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
@@ -34,6 +35,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
     // =============================================================
 
     address public immutable override WETH;
+    IPermitAllowanceTransfer public immutable override PERMIT2;
 
     // Set a constant address for specific contracts that need special logic
     address public constant override CRYPTO_PUNKS =
@@ -50,12 +52,14 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         INonfungiblePositionManager positionManager_,
         SwapRouter router_,
         IQuoterV2 quoter_,
-        INFTXVaultFactory nftxVaultFactory_
+        INFTXVaultFactory nftxVaultFactory_,
+        IPermitAllowanceTransfer PERMIT2_
     ) {
         positionManager = positionManager_;
         router = router_;
         quoter = quoter_;
         nftxVaultFactory = nftxVaultFactory_;
+        PERMIT2 = PERMIT2_;
 
         WETH = positionManager_.WETH9();
     }
@@ -64,14 +68,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
-    // to avoid stack too deep
-    struct TempAdd {
-        uint256 amount0Desired;
-        uint256 amount1Desired;
-        uint256 amount0Min;
-        uint256 amount1Min;
-    }
-
     /**
      * @inheritdoc INFTXRouter
      */
@@ -79,99 +75,47 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         AddLiquidityParams calldata params
     ) external payable override returns (uint256 positionId) {
         INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
-        uint256 vTokensAmount = params.vTokensAmount;
-        if (vTokensAmount > 0) {
-            vToken.transferFrom(msg.sender, address(this), vTokensAmount);
+
+        if (params.vTokensAmount > 0) {
+            vToken.transferFrom(
+                msg.sender,
+                address(this),
+                params.vTokensAmount
+            );
         }
 
-        uint256 ethForLiquidity = msg.value;
-        if (params.nftIds.length > 0) {
-            address assetAddress = vToken.assetAddress();
+        return _addLiquidity(params, vToken);
+    }
 
-            // tranfer NFTs from user to the vault
-            for (uint256 i; i < params.nftIds.length; ) {
-                _transferFromERC721(
-                    assetAddress,
-                    params.nftIds[i],
-                    address(vToken)
+    function addLiquidityWithPermit2(
+        AddLiquidityParams calldata params,
+        bytes calldata encodedPermit2
+    ) external payable override returns (uint256 positionId) {
+        INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
+
+        if (encodedPermit2.length > 0) {
+            (
+                address owner,
+                IPermitAllowanceTransfer.PermitSingle memory permitSingle,
+                bytes memory signature
+            ) = abi.decode(
+                    encodedPermit2,
+                    (address, IPermitAllowanceTransfer.PermitSingle, bytes)
                 );
 
-                if (assetAddress == CRYPTO_PUNKS) {
-                    _approveCryptoPunkERC721(
-                        assetAddress,
-                        params.nftIds[i],
-                        address(vToken)
-                    );
-                }
-
-                unchecked {
-                    ++i;
-                }
-            }
-
-            uint256[] memory emptyIds;
-            // vault won't charge mintFees here as this contract is on exclude list
-            vTokensAmount += vToken.mint(params.nftIds, emptyIds) * 1 ether;
-
-            // distributing vault fees
-            uint256 ethFees = _ethMintFees(vToken, params.nftIds.length);
-            _distributeVaultFees(params.vaultId, ethFees, false);
-
-            // use remaining ETH for providing liquidity into the pool
-            ethForLiquidity -= ethFees; // if underflow, then revert desired
+            PERMIT2.permit(owner, permitSingle, signature);
         }
 
-        vToken.approve(address(positionManager), vTokensAmount);
-
-        bool _isVToken0 = isVToken0(address(vToken));
-        (address token0, address token1) = _isVToken0
-            ? (address(vToken), WETH)
-            : (WETH, address(vToken));
-
-        positionManager.createAndInitializePoolIfNecessary(
-            token0,
-            token1,
-            params.fee,
-            params.sqrtPriceX96
-        );
-
-        // mint position with vtoken and ETH
-        TempAdd memory ta;
-        if (_isVToken0) {
-            ta.amount0Desired = vTokensAmount;
-            // have a 5000 wei buffer to account for any dust amounts
-            ta.amount0Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
-            ta.amount1Desired = ethForLiquidity;
-        } else {
-            ta.amount0Desired = ethForLiquidity;
-            ta.amount1Desired = vTokensAmount;
-            // have a 5000 wei buffer to account for any dust amounts
-            ta.amount1Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
+        if (params.vTokensAmount > 0) {
+            PERMIT2.transferFrom(
+                msg.sender,
+                address(this),
+                uint160(params.vTokensAmount),
+                address(vToken)
+            );
         }
 
-        (positionId, , , ) = positionManager.mint{value: ethForLiquidity}(
-            INonfungiblePositionManager.MintParams({
-                token0: token0,
-                token1: token1,
-                fee: params.fee,
-                tickLower: params.tickLower,
-                tickUpper: params.tickUpper,
-                amount0Desired: ta.amount0Desired,
-                amount1Desired: ta.amount1Desired,
-                amount0Min: ta.amount0Min,
-                amount1Min: ta.amount1Min,
-                recipient: msg.sender,
-                deadline: params.deadline
-            })
-        );
-
-        // refund extra ETH
-        positionManager.refundETH(msg.sender);
-        // refund vTokens dust (if any left)
-        uint256 vTokenBalance = vToken.balanceOf(address(this));
-        if (vTokenBalance > 0) {
-            vToken.transfer(msg.sender, vTokenBalance);
-        }
+        return _addLiquidity(params, vToken);
     }
 
     function removeLiquidity(
@@ -437,6 +381,110 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
     // =============================================================
     //                      INTERNAL / PRIVATE
     // =============================================================
+
+    // to avoid stack too deep
+    struct TempAdd {
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        uint256 amount0Min;
+        uint256 amount1Min;
+    }
+
+    function _addLiquidity(
+        AddLiquidityParams calldata params,
+        INFTXVault vToken
+    ) internal returns (uint256 positionId) {
+        uint256 vTokensAmount = params.vTokensAmount;
+
+        uint256 ethForLiquidity = msg.value;
+        if (params.nftIds.length > 0) {
+            address assetAddress = vToken.assetAddress();
+
+            // tranfer NFTs from user to the vault
+            for (uint256 i; i < params.nftIds.length; ) {
+                _transferFromERC721(
+                    assetAddress,
+                    params.nftIds[i],
+                    address(vToken)
+                );
+
+                if (assetAddress == CRYPTO_PUNKS) {
+                    _approveCryptoPunkERC721(
+                        assetAddress,
+                        params.nftIds[i],
+                        address(vToken)
+                    );
+                }
+
+                unchecked {
+                    ++i;
+                }
+            }
+
+            uint256[] memory emptyIds;
+            // vault won't charge mintFees here as this contract is on exclude list
+            vTokensAmount += vToken.mint(params.nftIds, emptyIds) * 1 ether;
+
+            // distributing vault fees
+            uint256 ethFees = _ethMintFees(vToken, params.nftIds.length);
+            _distributeVaultFees(params.vaultId, ethFees, false);
+
+            // use remaining ETH for providing liquidity into the pool
+            ethForLiquidity -= ethFees; // if underflow, then revert desired
+        }
+
+        vToken.approve(address(positionManager), vTokensAmount);
+
+        bool _isVToken0 = isVToken0(address(vToken));
+        (address token0, address token1) = _isVToken0
+            ? (address(vToken), WETH)
+            : (WETH, address(vToken));
+
+        positionManager.createAndInitializePoolIfNecessary(
+            token0,
+            token1,
+            params.fee,
+            params.sqrtPriceX96
+        );
+
+        // mint position with vtoken and ETH
+        TempAdd memory ta;
+        if (_isVToken0) {
+            ta.amount0Desired = vTokensAmount;
+            // have a 5000 wei buffer to account for any dust amounts
+            ta.amount0Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
+            ta.amount1Desired = ethForLiquidity;
+        } else {
+            ta.amount0Desired = ethForLiquidity;
+            ta.amount1Desired = vTokensAmount;
+            // have a 5000 wei buffer to account for any dust amounts
+            ta.amount1Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
+        }
+
+        (positionId, , , ) = positionManager.mint{value: ethForLiquidity}(
+            INonfungiblePositionManager.MintParams({
+                token0: token0,
+                token1: token1,
+                fee: params.fee,
+                tickLower: params.tickLower,
+                tickUpper: params.tickUpper,
+                amount0Desired: ta.amount0Desired,
+                amount1Desired: ta.amount1Desired,
+                amount0Min: ta.amount0Min,
+                amount1Min: ta.amount1Min,
+                recipient: msg.sender,
+                deadline: params.deadline
+            })
+        );
+
+        // refund extra ETH
+        positionManager.refundETH(msg.sender);
+        // refund vTokens dust (if any left)
+        uint256 vTokenBalance = vToken.balanceOf(address(this));
+        if (vTokenBalance > 0) {
+            vToken.transfer(msg.sender, vTokenBalance);
+        }
+    }
 
     /**
      * @notice Transfers sender's ERC721 tokens to a specified recipient.
