@@ -44,11 +44,11 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
             weth,
-            IPermitAllowanceTransfer(address(permit2))
+            IPermitAllowanceTransfer(address(permit2)),
+            vaultFactory
         );
         vm.expectRevert(INFTXInventoryStakingV3.TimelockTooLong.selector);
         inventoryStaking.__NFTXInventoryStaking_init(
-            vaultFactory,
             timelock,
             earlyWithdrawPenaltyInWei,
             ITimelockExcludeList(address(timelockExcludeList))
@@ -61,13 +61,13 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
             weth,
-            IPermitAllowanceTransfer(address(permit2))
+            IPermitAllowanceTransfer(address(permit2)),
+            vaultFactory
         );
         vm.expectRevert(
             INFTXInventoryStakingV3.InvalidEarlyWithdrawPenalty.selector
         );
         inventoryStaking.__NFTXInventoryStaking_init(
-            vaultFactory,
             timelock,
             earlyWithdrawPenaltyInWei,
             ITimelockExcludeList(address(timelockExcludeList))
@@ -80,10 +80,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
             weth,
-            IPermitAllowanceTransfer(address(permit2))
+            IPermitAllowanceTransfer(address(permit2)),
+            vaultFactory
         );
         inventoryStaking.__NFTXInventoryStaking_init(
-            vaultFactory,
             timelock,
             earlyWithdrawPenaltyInWei,
             ITimelockExcludeList(address(timelockExcludeList))

@@ -79,7 +79,7 @@ contract TestBase is TestExtend, ERC721Holder {
         );
         descriptor = new NonfungibleTokenPositionDescriptor(
             address(weth),
-            bytes32(0)
+            0x5745544800000000000000000000000000000000000000000000000000000000 // "WETH"
         );
 
         positionManager = new NonfungiblePositionManager(
@@ -94,10 +94,7 @@ contract TestBase is TestExtend, ERC721Holder {
 
         vaultImpl = new NFTXVaultUpgradeable();
         vaultFactory = new NFTXVaultFactoryUpgradeable();
-        vaultFactory.__NFTXVaultFactory_init(
-            address(vaultImpl),
-            address(1) // temporary feeDistributor address
-        );
+        vaultFactory.__NFTXVaultFactory_init(address(vaultImpl));
         // set premium related values
         vaultFactory.setTwapInterval(20 minutes);
         vaultFactory.setPremiumDuration(10 hours);
@@ -114,10 +111,19 @@ contract TestBase is TestExtend, ERC721Holder {
         );
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
 
+        timelockExcludeList = new TimelockExcludeList();
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
             weth,
-            IPermitAllowanceTransfer(address(permit2))
+            IPermitAllowanceTransfer(address(permit2)),
+            vaultFactory
         );
+        inventoryStaking.__NFTXInventoryStaking_init(
+            2 days, // timelock
+            0.05 ether, // 5% penalty
+            ITimelockExcludeList(address(timelockExcludeList))
+        );
+        inventoryStaking.setIsGuardian(address(this), true);
+
         feeDistributor = new NFTXFeeDistributorV3(
             vaultFactory,
             inventoryStaking,
@@ -126,14 +132,6 @@ contract TestBase is TestExtend, ERC721Holder {
         );
         factory.setFeeDistributor(address(feeDistributor));
         vaultFactory.setFeeDistributor(address(feeDistributor));
-        timelockExcludeList = new TimelockExcludeList();
-        inventoryStaking.__NFTXInventoryStaking_init(
-            vaultFactory,
-            2 days, // timelock
-            0.05 ether, // 5% penalty
-            ITimelockExcludeList(address(timelockExcludeList))
-        );
-        inventoryStaking.setIsGuardian(address(this), true);
 
         uint256 vaultId = vaultFactory.createVault(
             "TEST",

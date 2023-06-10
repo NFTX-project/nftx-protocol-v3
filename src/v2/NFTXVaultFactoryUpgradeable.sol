@@ -9,7 +9,7 @@ import "./interface/INFTXVaultFactory.sol";
 import "./interface/INFTXFeeDistributor.sol";
 import "./NFTXVaultUpgradeable.sol";
 
-// Authors: @0xKiwi_ and @alexgausman.
+// Authors: @0xKiwi_, @alexgausman and @apoorvlathey
 
 contract NFTXVaultFactoryUpgradeable is
     PausableUpgradeable,
@@ -55,13 +55,11 @@ contract NFTXVaultFactoryUpgradeable is
     uint256 public override premiumMax;
 
     function __NFTXVaultFactory_init(
-        address _vaultImpl,
-        address _feeDistributor
+        address _vaultImpl
     ) public override initializer {
         __Pausable_init();
         // We use a beacon proxy so that every child contract follows the same implementation code.
         __UpgradeableBeacon__init(_vaultImpl);
-        setFeeDistributor(_feeDistributor);
         setFactoryFees(0.1 ether, 0.1 ether, 0.1 ether);
     }
 

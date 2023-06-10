@@ -7,11 +7,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const weth = await deploy("MockWETH", {
-    from: deployer,
-    log: true,
-  });
-
   const nft = await deploy("MockNFT", {
     from: deployer,
     log: true,

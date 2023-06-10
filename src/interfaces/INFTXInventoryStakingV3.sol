@@ -120,7 +120,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     // =============================================================
 
     function __NFTXInventoryStaking_init(
-        INFTXVaultFactory nftxVaultFactory_,
         uint256 timelock_,
         uint256 earlyWithdrawPenaltyInWei_,
         ITimelockExcludeList timelockExcludeList_

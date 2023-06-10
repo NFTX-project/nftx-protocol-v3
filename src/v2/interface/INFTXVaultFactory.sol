@@ -68,10 +68,7 @@ interface INFTXVaultFactory is IBeacon {
     );
 
     // Write functions.
-    function __NFTXVaultFactory_init(
-        address _vaultImpl,
-        address _feeDistributor
-    ) external;
+    function __NFTXVaultFactory_init(address _vaultImpl) external;
 
     function createVault(
         string calldata name,

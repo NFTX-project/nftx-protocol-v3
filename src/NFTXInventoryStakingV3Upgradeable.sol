@@ -41,8 +41,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
     IERC20 public immutable override WETH;
     IPermitAllowanceTransfer public immutable override PERMIT2;
+    INFTXVaultFactory public immutable override nftxVaultFactory;
 
-    INFTXVaultFactory public override nftxVaultFactory;
     ITimelockExcludeList public override timelockExcludeList;
 
     // =============================================================
@@ -67,21 +67,23 @@ contract NFTXInventoryStakingV3Upgradeable is
     //                           INIT
     // =============================================================
 
-    constructor(IERC20 WETH_, IPermitAllowanceTransfer PERMIT2_) {
+    constructor(
+        IERC20 WETH_,
+        IPermitAllowanceTransfer PERMIT2_,
+        INFTXVaultFactory nftxVaultFactory_
+    ) {
         WETH = WETH_;
         PERMIT2 = PERMIT2_;
+        nftxVaultFactory = nftxVaultFactory_;
     }
 
     function __NFTXInventoryStaking_init(
-        INFTXVaultFactory nftxVaultFactory_,
         uint256 timelock_,
         uint256 earlyWithdrawPenaltyInWei_,
         ITimelockExcludeList timelockExcludeList_
     ) external override initializer {
         __ERC721_init("NFTX Inventory Staking", "xNFT");
         __Pausable_init();
-
-        nftxVaultFactory = nftxVaultFactory_;
 
         if (timelock_ > 14 days) revert TimelockTooLong();
         if (earlyWithdrawPenaltyInWei_ > 1 ether)
