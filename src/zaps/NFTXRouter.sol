@@ -198,8 +198,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         uint256[] memory emptyIds;
         uint256 vTokensAmount = vToken.mint(params.nftIds, emptyIds) * 1 ether;
 
-        // TODO: infinite approve
-        vToken.approve(address(router), vTokensAmount);
+        TransferLib.maxApprove(address(vToken), address(router), vTokensAmount);
 
         wethReceived = router.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -402,7 +401,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             ethForLiquidity -= ethFees; // if underflow, then revert desired
         }
 
-        vToken.approve(address(positionManager), vTokensAmount);
+        TransferLib.maxApprove(
+            address(vToken),
+            address(positionManager),
+            vTokensAmount
+        );
 
         bool _isVToken0 = isVToken0(address(vToken));
         (address token0, address token1) = _isVToken0
