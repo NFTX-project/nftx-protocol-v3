@@ -8,46 +8,43 @@ import "./INFTXEligibility.sol";
 import "../token/IERC721Upgradeable.sol";
 import "../token/IERC1155Upgradeable.sol";
 
-// TODO: organize using comment blocks
 interface INFTXVault is IERC20Upgradeable {
-    function manager() external view returns (address);
+    // =============================================================
+    //                           CONSTANTS
+    // =============================================================
 
     function assetAddress() external view returns (address);
 
     function vaultFactory() external view returns (INFTXVaultFactory);
 
-    function eligibilityStorage() external view returns (INFTXEligibility);
-
     function is1155() external view returns (bool);
+
+    // =============================================================
+    //                           STORAGE
+    // =============================================================
+
+    function vaultId() external view returns (uint256);
+
+    function manager() external view returns (address);
+
+    function eligibilityStorage() external view returns (INFTXEligibility);
 
     function allowAllItems() external view returns (bool);
 
     function enableMint() external view returns (bool);
 
-    function vaultId() external view returns (uint256);
-
-    function nftIdAt(uint256 holdingsIndex) external view returns (uint256);
-
-    function allHoldings() external view returns (uint256[] memory);
-
-    function totalHoldings() external view returns (uint256);
-
-    function mintFee() external view returns (uint256);
-
-    function targetRedeemFee() external view returns (uint256);
-
-    function targetSwapFee() external view returns (uint256);
-
-    function vaultFees() external view returns (uint256, uint256, uint256);
+    struct TokenDepositInfo {
+        uint48 timestamp;
+        address depositor;
+    }
 
     function tokenDepositInfo(
         uint256 tokenId
     ) external view returns (uint48 timestamp, address depositor);
 
-    struct TokenDepositInfo {
-        uint48 timestamp;
-        address depositor;
-    }
+    // =============================================================
+    //                            EVENTS
+    // =============================================================
 
     event VaultInit(
         uint256 indexed vaultId,
@@ -73,8 +70,16 @@ interface INFTXVault is IERC20Upgradeable {
         address to
     );
 
+    // =============================================================
+    //                            ERRORS
+    // =============================================================
+
     error InsufficientETHSent();
     error UnableToRefundETH();
+
+    // =============================================================
+    //                           INIT
+    // =============================================================
 
     function __NFTXVault_init(
         string calldata _name,
@@ -83,6 +88,10 @@ interface INFTXVault is IERC20Upgradeable {
         bool _is1155,
         bool _allowAllItems
     ) external;
+
+    // =============================================================
+    //                     ONLY PRIVILEGED WRITE
+    // =============================================================
 
     function finalizeVault() external;
 
@@ -115,6 +124,23 @@ interface INFTXVault is IERC20Upgradeable {
 
     // The manager has control over options like fees and features
     function setManager(address _manager) external;
+
+    function rescueTokens(IERC20Upgradeable token) external;
+
+    function rescueERC721(
+        IERC721Upgradeable nft,
+        uint256[] calldata ids
+    ) external;
+
+    function rescueERC1155(
+        IERC1155Upgradeable nft,
+        uint256[] calldata ids,
+        uint256[] calldata amounts
+    ) external;
+
+    // =============================================================
+    //                     PUBLIC / EXTERNAL WRITE
+    // =============================================================
 
     function mint(
         uint256[] calldata tokenIds,
@@ -149,6 +175,24 @@ interface INFTXVault is IERC20Upgradeable {
         address to
     ) external payable returns (uint256 ethFees);
 
+    // =============================================================
+    //                     PUBLIC / EXTERNAL VIEW
+    // =============================================================
+
+    function nftIdAt(uint256 holdingsIndex) external view returns (uint256);
+
+    function allHoldings() external view returns (uint256[] memory);
+
+    function totalHoldings() external view returns (uint256);
+
+    function mintFee() external view returns (uint256);
+
+    function targetRedeemFee() external view returns (uint256);
+
+    function targetSwapFee() external view returns (uint256);
+
+    function vaultFees() external view returns (uint256, uint256, uint256);
+
     function allValidNFTs(
         uint256[] calldata tokenIds
     ) external view returns (bool);
@@ -159,17 +203,4 @@ interface INFTXVault is IERC20Upgradeable {
 
     // Calculate ETH amount corresponding to the vToken amount, calculated via TWAP from the AMM
     function vTokenToETH(uint256 vTokenAmount) external view returns (uint256);
-
-    function rescueTokens(IERC20Upgradeable token) external;
-
-    function rescueERC721(
-        IERC721Upgradeable nft,
-        uint256[] calldata ids
-    ) external;
-
-    function rescueERC1155(
-        IERC1155Upgradeable nft,
-        uint256[] calldata ids,
-        uint256[] calldata amounts
-    ) external;
 }
