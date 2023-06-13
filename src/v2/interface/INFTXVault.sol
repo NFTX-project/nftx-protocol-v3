@@ -38,6 +38,15 @@ interface INFTXVault is IERC20Upgradeable {
 
     function vaultFees() external view returns (uint256, uint256, uint256);
 
+    function tokenDepositInfo(
+        uint256 tokenId
+    ) external view returns (uint48 timestamp, address depositor);
+
+    struct TokenDepositInfo {
+        uint48 timestamp;
+        address depositor;
+    }
+
     event VaultInit(
         uint256 indexed vaultId,
         address assetAddress,
@@ -142,7 +151,9 @@ interface INFTXVault is IERC20Upgradeable {
         uint256[] calldata tokenIds
     ) external view returns (bool);
 
-    function getVTokenPremium(uint256 tokenId) external view returns (uint256);
+    function getVTokenPremium(
+        uint256 tokenId
+    ) external view returns (uint256 premium, address depositor);
 
     // Calculate ETH amount corresponding to the vToken amount, calculated via TWAP from the AMM
     function vTokenToETH(uint256 vTokenAmount) external view returns (uint256);

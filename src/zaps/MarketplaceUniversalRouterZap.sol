@@ -542,7 +542,9 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         uint256[] memory nftIds
     ) internal view returns (uint256 vTokenPremium) {
         for (uint256 i; i < nftIds.length; ) {
-            vTokenPremium += vToken.getVTokenPremium(nftIds[i]);
+            uint256 _vTokenPremium;
+            (_vTokenPremium, ) = vToken.getVTokenPremium(nftIds[i]);
+            vTokenPremium += _vTokenPremium;
 
             unchecked {
                 ++i;
