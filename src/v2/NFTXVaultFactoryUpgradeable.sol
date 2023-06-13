@@ -53,6 +53,8 @@ contract NFTXVaultFactoryUpgradeable is
     uint256 public override premiumDuration;
     // max premium value in vTokens when NFT just deposited
     uint256 public override premiumMax;
+    // fraction in wei, what portion of the premium to send to the NFT depositor
+    uint256 public override depositorPremiumShare;
 
     function __NFTXVaultFactory_init(
         address _vaultImpl
@@ -188,6 +190,12 @@ contract NFTXVaultFactoryUpgradeable is
         uint256 premiumMax_
     ) external virtual override onlyOwner {
         premiumMax = premiumMax_;
+    }
+
+    function setDepositorPremiumShare(
+        uint256 depositorPremiumShare_
+    ) external virtual override onlyOwner {
+        depositorPremiumShare = depositorPremiumShare_;
     }
 
     function vaultFees(

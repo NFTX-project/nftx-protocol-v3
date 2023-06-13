@@ -96,9 +96,11 @@ contract TestBase is TestExtend, ERC721Holder {
         vaultFactory = new NFTXVaultFactoryUpgradeable();
         vaultFactory.__NFTXVaultFactory_init(address(vaultImpl));
         // set premium related values
+        // TODO: move setting these values into the initializer
         vaultFactory.setTwapInterval(20 minutes);
         vaultFactory.setPremiumDuration(10 hours);
         vaultFactory.setPremiumMax(5 ether);
+        vaultFactory.setDepositorPremiumShare(0.30 ether);
 
         permit2 = new MockPermit2();
 
@@ -160,15 +162,13 @@ contract TestBase is TestExtend, ERC721Holder {
     function _mintVToken(
         uint256 qty
     ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
-        vaultFactory.setFeeExclusion(address(this), true); // setting fee exclusion to ease calulations below
-
         tokenIds = nft.mint(qty);
 
         nft.setApprovalForAll(address(vtoken), true);
         uint256[] memory amounts = new uint256[](0);
-        mintedVTokens = vtoken.mint(tokenIds, amounts) * 1 ether;
-
-        vaultFactory.setFeeExclusion(address(this), false); // setting this back
+        mintedVTokens =
+            vtoken.mint{value: 100 ether * qty}(tokenIds, amounts) *
+            1 ether;
     }
 
     function _mintPosition(
@@ -279,9 +279,9 @@ contract TestBase is TestExtend, ERC721Holder {
         vm.warp(block.timestamp + vaultFactory.twapInterval());
     }
 
-    // the actual value can be off by few decimals so accounting for 0.2% error.
+    // the actual value can be off by few decimals so accounting for 0.3% error.
     function _valueWithError(uint256 value) internal pure returns (uint256) {
-        return (value * (10_000 - 20)) / 10_000;
+        return (value * (10_000 - 30)) / 10_000;
     }
 
     function _sellNFTs(
