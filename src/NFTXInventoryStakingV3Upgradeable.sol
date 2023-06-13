@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
-import {ERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721PermitUpgradeable} from "@src/util/ERC721PermitUpgradeable.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
@@ -31,7 +31,7 @@ import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer
 
 contract NFTXInventoryStakingV3Upgradeable is
     INFTXInventoryStakingV3,
-    ERC721Upgradeable,
+    ERC721PermitUpgradeable,
     PausableUpgradeable
 {
     // =============================================================
@@ -81,7 +81,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 earlyWithdrawPenaltyInWei_,
         ITimelockExcludeList timelockExcludeList_
     ) external override initializer {
-        __ERC721_init("NFTX Inventory Staking", "xNFT");
+        __ERC721PermitUpgradeable_init("NFTX Inventory Staking", "xNFT", "1");
         __Pausable_init();
 
         if (timelock_ > 14 days) revert TimelockTooLong();
@@ -491,5 +491,11 @@ contract NFTXInventoryStakingV3Upgradeable is
             positionVTokenShareBalance,
             FixedPoint128.Q128
         );
+    }
+
+    function _getAndIncrementNonce(
+        uint256 tokenId
+    ) internal override returns (uint256) {
+        return uint256(positions[tokenId].nonce++);
     }
 }

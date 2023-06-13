@@ -12,7 +12,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     // details about the staking position
     struct Position {
         // the nonce for permits
-        uint256 nonce; // TODO: add permit logic
+        uint256 nonce;
         // vaultId corresponding to the vTokens staked in this position
         uint256 vaultId;
         // timestamp at which the timelock expires
