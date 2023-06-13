@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "./util/OwnableUpgradeable.sol";
 import "./util/ReentrancyGuardUpgradeable.sol";
 import "./util/EnumerableSetUpgradeable.sol";
+import "./util/SafeERC20Upgradeable.sol";
 import "./token/ERC20FlashMintUpgradeable.sol";
 import "./token/ERC721SafeHolderUpgradeable.sol";
 import "./token/ERC1155SafeHolderUpgradeable.sol";
@@ -35,6 +36,7 @@ contract NFTXVaultUpgradeable is
     INFTXVault
 {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     uint256 constant base = 10 ** 18;
 
@@ -320,6 +322,35 @@ contract NFTXVaultUpgradeable is
         onlyPrivileged();
         manager = _manager;
         emit ManagerSet(_manager);
+    }
+
+    function rescueTokens(IERC20Upgradeable token) external override {
+        onlyPrivileged();
+        uint256 balance = token.balanceOf(address(this));
+        token.safeTransfer(msg.sender, balance);
+    }
+
+    function rescueERC721(
+        IERC721Upgradeable nft,
+        uint256[] calldata ids
+    ) external override {
+        onlyPrivileged();
+        require(address(nft) != assetAddress);
+
+        for (uint256 i; i < ids.length; ++i) {
+            nft.safeTransferFrom(address(this), msg.sender, ids[i]);
+        }
+    }
+
+    function rescueERC1155(
+        IERC1155Upgradeable nft,
+        uint256[] calldata ids,
+        uint256[] calldata amounts
+    ) external override {
+        onlyPrivileged();
+        require(address(nft) != assetAddress);
+
+        nft.safeBatchTransferFrom(address(this), msg.sender, ids, amounts, "");
     }
 
     // =============================================================

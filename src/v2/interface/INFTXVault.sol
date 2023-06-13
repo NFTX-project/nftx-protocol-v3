@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 import "../token/IERC20Upgradeable.sol";
 import "./INFTXVaultFactory.sol";
 import "./INFTXEligibility.sol";
+import "../token/IERC721Upgradeable.sol";
+import "../token/IERC1155Upgradeable.sol";
 
 // TODO: organize using comment blocks
 interface INFTXVault is IERC20Upgradeable {
@@ -157,4 +159,17 @@ interface INFTXVault is IERC20Upgradeable {
 
     // Calculate ETH amount corresponding to the vToken amount, calculated via TWAP from the AMM
     function vTokenToETH(uint256 vTokenAmount) external view returns (uint256);
+
+    function rescueTokens(IERC20Upgradeable token) external;
+
+    function rescueERC721(
+        IERC721Upgradeable nft,
+        uint256[] calldata ids
+    ) external;
+
+    function rescueERC1155(
+        IERC1155Upgradeable nft,
+        uint256[] calldata ids,
+        uint256[] calldata amounts
+    ) external;
 }
