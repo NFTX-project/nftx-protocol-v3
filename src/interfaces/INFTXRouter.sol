@@ -28,6 +28,28 @@ interface INFTXRouter {
     function nftxVaultFactory() external returns (INFTXVaultFactory);
 
     // =============================================================
+    //                            EVENTS
+    // =============================================================
+
+    event AddLiquidity(
+        uint256 vaultId,
+        uint256 vTokensAmount,
+        uint256 nftCount,
+        uint256 positionId
+    );
+
+    event RemoveLiquidity(
+        uint256 positionId,
+        uint256 vaultId,
+        uint256 vTokenAmt,
+        uint256 wethAmt
+    );
+
+    event SellNFTs(uint256 nftCount, uint256 ethReceived);
+
+    event BuyNFTs(uint256 nftCount, uint256 ethSpent);
+
+    // =============================================================
     //                            ERRORS
     // =============================================================
 

@@ -43,8 +43,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
     IQuoterV2 public immutable override quoter;
     INFTXVaultFactory public immutable override nftxVaultFactory;
 
-    // TODO: add events for each operation
-
     constructor(
         INonfungiblePositionManager positionManager_,
         SwapRouter router_,
@@ -176,6 +174,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         IWETH9(WETH).withdraw(wethAmt);
         (bool success, ) = msg.sender.call{value: wethAmt}("");
         if (!success) revert UnableToSendETH();
+
+        emit RemoveLiquidity(
+            params.positionId,
+            params.vaultId,
+            vTokenAmt,
+            wethAmt
+        );
     }
 
     /**
@@ -227,6 +232,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         IWETH9(WETH).withdraw(wethRemaining);
         (bool success, ) = msg.sender.call{value: wethRemaining}("");
         if (!success) revert UnableToSendETH();
+
+        emit SellNFTs(params.nftIds.length, wethRemaining);
     }
 
     function buyNFTs(BuyNFTsParams calldata params) external payable override {
@@ -239,7 +246,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
 
         // swap remaining ETH to required vTokens amount
         uint256 ethRemaining = msg.value - ethFees; // if underflow, then revert desired
-        router.exactOutputSingle{value: ethRemaining}(
+        uint256 ethSpent = router.exactOutputSingle{value: ethRemaining}(
             ISwapRouter.ExactOutputSingleParams({
                 tokenIn: WETH,
                 tokenOut: address(vToken),
@@ -257,6 +264,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
 
         // refund ETH
         router.refundETH(msg.sender);
+
+        emit BuyNFTs(params.nftIds.length, ethSpent);
     }
 
     // =============================================================
@@ -456,6 +465,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         if (vTokenBalance > 0) {
             vToken.transfer(msg.sender, vTokenBalance);
         }
+
+        emit AddLiquidity(
+            params.vaultId,
+            params.vTokensAmount,
+            params.nftIds.length,
+            positionId
+        );
     }
 
     function _distributeVaultFees(
