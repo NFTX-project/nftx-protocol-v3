@@ -19,8 +19,6 @@ interface INFTXRouter {
 
     function PERMIT2() external returns (IPermitAllowanceTransfer);
 
-    function CRYPTO_PUNKS() external returns (address);
-
     function positionManager() external returns (INonfungiblePositionManager);
 
     function router() external returns (SwapRouter);

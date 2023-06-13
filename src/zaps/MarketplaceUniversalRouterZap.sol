@@ -5,6 +5,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import {TransferLib} from "@src/lib/TransferLib.sol";
 
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
@@ -27,9 +28,6 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
     //                           CONSTANTS
     // =============================================================
 
-    // Set a constant address for specific contracts that need special logic
-    address public constant CRYPTO_PUNKS =
-        0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
     IWETH9 public immutable WETH;
     IPermitAllowanceTransfer public immutable PERMIT2;
     INFTXVaultFactory public immutable nftxVaultFactory;
@@ -382,91 +380,10 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         // Get our vault address information
         vault = nftxVaultFactory.vault(vaultId);
 
-        // Transfer tokens from the message sender to the vault
         assetAddress = INFTXVault(vault).assetAddress();
-        uint256 length = ids.length;
 
-        for (uint256 i; i < length; ) {
-            _transferFromERC721(assetAddress, ids[i], vault);
-
-            if (assetAddress == CRYPTO_PUNKS) {
-                _approveERC721(assetAddress, ids[i], vault);
-            }
-
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    /**
-     * @notice Transfers our ERC721 tokens to a specified recipient.
-     *
-     * @param assetAddr Address of the asset being transferred
-     * @param tokenId The ID of the token being transferred
-     * @param to The address the token is being transferred to
-     */
-    function _transferFromERC721(
-        address assetAddr,
-        uint256 tokenId,
-        address to
-    ) internal {
-        bytes memory data;
-
-        if (assetAddr == CRYPTO_PUNKS) {
-            // Fix here for frontrun attack.
-            bytes memory punkIndexToAddress = abi.encodeWithSignature(
-                "punkIndexToAddress(uint256)",
-                tokenId
-            );
-            (bool checkSuccess, bytes memory result) = address(assetAddr)
-                .staticcall(punkIndexToAddress);
-            address nftOwner = abi.decode(result, (address));
-            require(
-                checkSuccess && nftOwner == msg.sender,
-                "Not the NFT owner"
-            );
-            data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
-        } else {
-            // We push to the vault to avoid an unneeded transfer.
-            data = abi.encodeWithSignature(
-                "safeTransferFrom(address,address,uint256)",
-                msg.sender,
-                to,
-                tokenId
-            );
-        }
-
-        (bool success, bytes memory resultData) = address(assetAddr).call(data);
-        require(success, string(resultData));
-    }
-
-    /**
-     * @notice Approves our ERC721 tokens to be transferred.
-     *
-     * @dev This is only required to provide special logic for Cryptopunks.
-     *
-     * @param assetAddr Address of the asset being transferred
-     * @param tokenId The ID of the token being transferred
-     * @param to The address the token is being transferred to
-     */
-    function _approveERC721(
-        address assetAddr,
-        uint256 tokenId,
-        address to
-    ) internal virtual {
-        if (assetAddr != CRYPTO_PUNKS) {
-            return;
-        }
-
-        bytes memory data = abi.encodeWithSignature(
-            "offerPunkForSaleToAddress(uint256,uint256,address)",
-            tokenId,
-            0,
-            to
-        );
-        (bool success, bytes memory resultData) = address(assetAddr).call(data);
-        require(success, string(resultData));
+        // Transfer tokens from the message sender to the vault
+        TransferLib.transferFromERC721(assetAddress, address(vault), ids);
     }
 
     /**

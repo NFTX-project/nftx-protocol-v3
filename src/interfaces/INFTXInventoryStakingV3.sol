@@ -35,8 +35,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     //                           CONSTANTS
     // =============================================================
 
-    function CRYPTO_PUNKS() external view returns (address);
-
     function nftxVaultFactory() external view returns (INFTXVaultFactory);
 
     function timelockExcludeList() external view returns (ITimelockExcludeList);

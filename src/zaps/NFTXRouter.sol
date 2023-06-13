@@ -5,6 +5,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {TransferLib} from "@src/lib/TransferLib.sol";
 
 import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
@@ -36,10 +37,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
 
     address public immutable override WETH;
     IPermitAllowanceTransfer public immutable override PERMIT2;
-
-    // Set a constant address for specific contracts that need special logic
-    address public constant override CRYPTO_PUNKS =
-        0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
 
     INonfungiblePositionManager public immutable override positionManager;
     SwapRouter public immutable override router;
@@ -191,25 +188,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         address assetAddress = INFTXVault(address(vToken)).assetAddress();
 
         // tranfer NFTs from user to the vault
-        for (uint256 i; i < params.nftIds.length; ) {
-            _transferFromERC721(
-                assetAddress,
-                params.nftIds[i],
-                address(vToken)
-            );
-
-            if (assetAddress == CRYPTO_PUNKS) {
-                _approveCryptoPunkERC721(
-                    assetAddress,
-                    params.nftIds[i],
-                    address(vToken)
-                );
-            }
-
-            unchecked {
-                ++i;
-            }
-        }
+        TransferLib.transferFromERC721(
+            assetAddress,
+            address(vToken),
+            params.nftIds
+        );
 
         // mint vToken
         uint256[] memory emptyIds;
@@ -401,25 +384,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             address assetAddress = vToken.assetAddress();
 
             // tranfer NFTs from user to the vault
-            for (uint256 i; i < params.nftIds.length; ) {
-                _transferFromERC721(
-                    assetAddress,
-                    params.nftIds[i],
-                    address(vToken)
-                );
-
-                if (assetAddress == CRYPTO_PUNKS) {
-                    _approveCryptoPunkERC721(
-                        assetAddress,
-                        params.nftIds[i],
-                        address(vToken)
-                    );
-                }
-
-                unchecked {
-                    ++i;
-                }
-            }
+            TransferLib.transferFromERC721(
+                assetAddress,
+                address(vToken),
+                params.nftIds
+            );
 
             uint256[] memory emptyIds;
             // vault won't charge mintFees here as this contract is on exclude list
@@ -484,74 +453,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         if (vTokenBalance > 0) {
             vToken.transfer(msg.sender, vTokenBalance);
         }
-    }
-
-    /**
-     * @notice Transfers sender's ERC721 tokens to a specified recipient.
-     *
-     * @param assetAddr Address of the asset being transferred
-     * @param tokenId The ID of the token being transferred
-     * @param to The address the token is being transferred to
-     */
-
-    function _transferFromERC721(
-        address assetAddr,
-        uint256 tokenId,
-        address to
-    ) internal virtual {
-        bytes memory data;
-
-        if (assetAddr != CRYPTO_PUNKS) {
-            // We push to the vault to avoid an unneeded transfer.
-            data = abi.encodeWithSignature(
-                "safeTransferFrom(address,address,uint256)",
-                msg.sender,
-                to,
-                tokenId
-            );
-        } else {
-            // Fix here for frontrun attack.
-            bytes memory punkIndexToAddress = abi.encodeWithSignature(
-                "punkIndexToAddress(uint256)",
-                tokenId
-            );
-            (bool checkSuccess, bytes memory result) = address(assetAddr)
-                .staticcall(punkIndexToAddress);
-            address nftOwner = abi.decode(result, (address));
-            require(
-                checkSuccess && nftOwner == msg.sender,
-                "Not the NFT owner"
-            );
-            data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
-        }
-
-        (bool success, bytes memory resultData) = address(assetAddr).call(data);
-        require(success, string(resultData));
-    }
-
-    /**
-     * @notice Approves our Cryptopunk ERC721 tokens to be transferred.
-     *
-     * @dev This is only required to provide special logic for Cryptopunks.
-     *
-     * @param assetAddr Address of the asset being transferred
-     * @param tokenId The ID of the token being transferred
-     * @param to The address the token is being transferred to
-     */
-
-    function _approveCryptoPunkERC721(
-        address assetAddr,
-        uint256 tokenId,
-        address to
-    ) internal virtual {
-        bytes memory data = abi.encodeWithSignature(
-            "offerPunkForSaleToAddress(uint256,uint256,address)",
-            tokenId,
-            0,
-            to
-        );
-        (bool success, bytes memory resultData) = address(assetAddr).call(data);
-        require(success, string(resultData));
     }
 
     function _distributeVaultFees(
