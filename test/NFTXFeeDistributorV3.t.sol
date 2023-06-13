@@ -5,7 +5,7 @@ import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 
 import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolUpgradeable.sol";
-import {INFTXRouter} from "@src/NFTXRouter.sol";
+import {INFTXRouter} from "@src/zaps/NFTXRouter.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 
 import {TestBase} from "./TestBase.sol";

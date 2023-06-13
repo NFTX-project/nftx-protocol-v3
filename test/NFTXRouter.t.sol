@@ -4,7 +4,7 @@ pragma solidity =0.8.15;
 import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 
-import {INFTXRouter} from "@src/NFTXRouter.sol";
+import {INFTXRouter} from "@src/zaps/NFTXRouter.sol";
 
 import {TestBase} from "./TestBase.sol";
 

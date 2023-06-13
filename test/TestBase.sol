@@ -29,7 +29,7 @@ import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgr
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
 import {TimelockExcludeList} from "@src/v2/other/TimelockExcludeList.sol";
 import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
-import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
+import {NFTXRouter, INFTXRouter} from "@src/zaps/NFTXRouter.sol";
 import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 

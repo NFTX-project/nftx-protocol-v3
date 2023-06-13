@@ -18,7 +18,7 @@ import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 
-import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
+import {INFTXRouter} from "../interfaces/INFTXRouter.sol";
 
 /**
  * @title NFTX Router
