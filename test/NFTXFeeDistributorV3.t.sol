@@ -161,7 +161,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
             vtoken.approve(address(inventoryStaking), type(uint256).max);
             inventoryStaking.deposit(0, mintedVTokens, address(this));
 
-            (, uint256 totalVTokenShares, ) = inventoryStaking.vaultGlobal(0);
+            (uint256 totalVTokenShares, ) = inventoryStaking.vaultGlobal(0);
             console.log("totalVTokenShares", totalVTokenShares);
         }
 

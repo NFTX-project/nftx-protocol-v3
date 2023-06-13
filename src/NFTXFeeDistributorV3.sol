@@ -211,12 +211,10 @@ contract NFTXFeeDistributorV3 is
                 wethAmountToSend
             );
 
-            // TODO: update this comment for Inventory Staking V3
-            // Inventory Staking might not pull tokens in case where vaultGlobal[vaultId].totalVTokenShares is zero
-            bool pulledTokens = inventoryStaking.receiveRewards(
+            // Inventory Staking might not pull tokens in case where `vaultGlobal[vaultId].totalVTokenShares` is zero
+            bool pulledTokens = inventoryStaking.receiveWethRewards(
                 vaultId,
-                wethAmountToSend,
-                true
+                wethAmountToSend
             );
 
             tokenSent = pulledTokens;

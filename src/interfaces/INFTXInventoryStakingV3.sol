@@ -26,7 +26,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     }
 
     struct VaultGlobal {
-        uint256 netVTokenBalance; // vToken liquidity + earned fees
         uint256 totalVTokenShares;
         uint256 globalWethFeesPerVTokenShareX128;
     }
@@ -71,7 +70,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         external
         view
         returns (
-            uint256 netVTokenBalance,
             uint256 totalVTokenShares,
             uint256 globalWethFeesPerVTokenShareX128
         );
@@ -161,10 +159,9 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
 
     function collectWethFees(uint256 positionId) external;
 
-    function receiveRewards(
+    function receiveWethRewards(
         uint256 vaultId,
-        uint256 amount,
-        bool isRewardWeth
+        uint256 wethAmount
     ) external returns (bool);
 
     // =============================================================
