@@ -448,7 +448,7 @@ contract NFTXRouterTests is TestBase {
         uint256 vTokenPremium = vtoken.targetRedeemFee() * nftIds.length;
         for (uint256 i; i < nftIds.length; i++) {
             uint256 _vTokenPremium;
-            (_vTokenPremium, ) = vtoken.getVTokenPremium(nftIds[i]);
+            (_vTokenPremium, ) = vtoken.getVTokenPremium721(nftIds[i]);
             vTokenPremium += _vTokenPremium;
         }
         uint256 ethRequired = nftxRouter.quoteBuyNFTs({

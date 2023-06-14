@@ -491,13 +491,15 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         }
     }
 
+    // TODO: premium for 1155
+    // TODO: distribute premium share with the original depositor
     function _getVTokenPremium(
         INFTXVault vToken,
         uint256[] memory nftIds
     ) internal view returns (uint256 vTokenPremium) {
         for (uint256 i; i < nftIds.length; ) {
             uint256 _vTokenPremium;
-            (_vTokenPremium, ) = vToken.getVTokenPremium(nftIds[i]);
+            (_vTokenPremium, ) = vToken.getVTokenPremium721(nftIds[i]);
             vTokenPremium += _vTokenPremium;
 
             unchecked {
