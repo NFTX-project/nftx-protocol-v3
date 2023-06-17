@@ -69,6 +69,61 @@ contract NFTXVaultTests is TestBase {
         }
     }
 
+    // 1155
+
+    function test_mint_Succcess_1155() external {
+        _mintPositionWithTwap1155(currentNFTPrice);
+        uint256 qty = 5;
+
+        uint256 exactETHPaid = (vtoken1155.mintFee() * qty * currentNFTPrice) /
+            1 ether;
+        uint256 expectedETHPaid = _valueWithError(exactETHPaid);
+
+        uint256 prevETHBal = address(this).balance;
+
+        uint256[] memory tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        nft.setApprovalForAll(address(vtoken1155), true);
+
+        uint256 preDepositLength = vtoken1155.depositInfo1155Length(
+            tokenIds[0]
+        );
+        uint256 prevNFTBal = nft1155.balanceOf(
+            address(vtoken1155),
+            tokenIds[0]
+        );
+
+        // double ETH value here to check if refund working as well
+        vtoken1155.mint{value: expectedETHPaid * 2}(tokenIds, amounts);
+
+        uint256 ethPaid = prevETHBal - address(this).balance;
+        assertGt(ethPaid, expectedETHPaid);
+        assertLe(ethPaid, exactETHPaid);
+
+        assertEq(
+            nft1155.balanceOf(address(vtoken1155), tokenIds[0]) - prevNFTBal,
+            amounts[0]
+        );
+
+        assertEq(
+            vtoken1155.depositInfo1155Length(tokenIds[0]),
+            preDepositLength + 1
+        );
+
+        (uint256 _qty, address depositor, uint48 timestamp) = vtoken1155
+            .depositInfo1155(
+                tokenIds[0],
+                vtoken1155.pointerIndex1155(tokenIds[0])
+            );
+        assertEq(_qty, qty);
+        assertEq(depositor, address(this));
+        assertEq(timestamp, block.timestamp);
+    }
+
     // NFTXVault#redeem
 
     function test_redeem_NoPremium_Success() external {
@@ -166,6 +221,110 @@ contract NFTXVaultTests is TestBase {
         for (uint i; i < qty; i++) {
             assertEq(nft.ownerOf(tokenIds[i]), address(this));
         }
+    }
+
+    // 1155
+
+    function test_redeem_NoPremium_Success_1155_pointerIndexUpdates() external {
+        _mintPositionWithTwap1155(currentNFTPrice);
+        uint256 qty = 5;
+        (, uint256[] memory tokenIds) = _mintVTokenFor1155(qty);
+
+        // jump to time such that no premium applicable
+        vm.warp(block.timestamp + vaultFactory.premiumDuration() + 1);
+
+        uint256 exactETHPaid = (vtoken1155.targetRedeemFee() *
+            qty *
+            currentNFTPrice) / 1 ether;
+        uint256 expectedETHPaid = _valueWithError(exactETHPaid);
+
+        uint256 prevETHBal = address(this).balance;
+        uint256 prevNFTBal = nft1155.balanceOf(
+            address(vtoken1155),
+            tokenIds[0]
+        );
+        uint256 prevPointerIndex = vtoken1155.pointerIndex1155(tokenIds[0]);
+
+        // double ETH value here to check if refund working as well
+        vtoken1155.redeem{value: expectedETHPaid * 2}(tokenIds);
+
+        uint256 ethPaid = prevETHBal - address(this).balance;
+        console.log("ethPaid with No Premium", ethPaid);
+        assertGt(ethPaid, expectedETHPaid);
+        assertLe(ethPaid, exactETHPaid);
+
+        assertEq(
+            prevNFTBal - nft1155.balanceOf(address(vtoken1155), tokenIds[0]),
+            qty
+        );
+        assertEq(
+            vtoken1155.pointerIndex1155(tokenIds[0]) - prevPointerIndex,
+            1
+        );
+    }
+
+    function test_redeem_WithPremium_Success_1155_samePointerIndex() external {
+        _mintPositionWithTwap1155(currentNFTPrice);
+        uint256 qty = 5;
+
+        // have a separate depositor address that receives share of premium
+        address depositor = makeAddr("depositor");
+        startHoax(depositor);
+        (
+            uint256 mintedVTokens,
+            uint256[] memory _tokenIds
+        ) = _mintVTokenFor1155(qty);
+
+        vtoken1155.transfer(address(this), mintedVTokens);
+        vm.stopPrank();
+
+        // decreasing tokenIds length for withdrawal so that same pointerIndex remains
+        qty -= 1;
+        uint256[] memory tokenIds = new uint256[](qty);
+        for (uint256 i; i < qty; i++) {
+            tokenIds[i] = _tokenIds[i];
+        }
+
+        uint256 exactETHPaid = ((vtoken1155.targetRedeemFee() +
+            vaultFactory.premiumMax()) *
+            qty *
+            currentNFTPrice) / 1 ether;
+        uint256 expectedETHPaid = _valueWithError(exactETHPaid);
+        uint256 expectedDepositorShare = (exactETHPaid *
+            vaultFactory.depositorPremiumShare()) / 1 ether;
+
+        uint256 prevETHBal = address(this).balance;
+        uint256 prevDepositorBal = weth.balanceOf(depositor);
+        uint256 prevNFTBal = nft1155.balanceOf(
+            address(vtoken1155),
+            tokenIds[0]
+        );
+        uint256 prevPointerIndex = vtoken1155.pointerIndex1155(tokenIds[0]);
+
+        // double ETH value here to check if refund working as well
+        vtoken1155.redeem{value: expectedETHPaid * 2}(tokenIds);
+
+        uint256 ethPaid = prevETHBal - address(this).balance;
+        uint256 ethDepositorReceived = weth.balanceOf(depositor) -
+            prevDepositorBal;
+        console.log("ethPaid with Premium", ethPaid);
+        console.log(
+            "ethPremium share received by depositor",
+            ethDepositorReceived
+        );
+        assertGt(ethPaid, expectedETHPaid);
+        assertLe(ethPaid, exactETHPaid);
+        assertGt(
+            ethDepositorReceived,
+            (_valueWithError(expectedDepositorShare) * 980) / 1000 // TODO: verify why higher precision loss here
+        );
+        assertLe(ethDepositorReceived, expectedDepositorShare);
+
+        assertEq(
+            prevNFTBal - nft1155.balanceOf(address(vtoken1155), tokenIds[0]),
+            qty
+        );
+        assertEq(vtoken1155.pointerIndex1155(tokenIds[0]), prevPointerIndex);
     }
 
     // NFTXVault#swap
@@ -277,5 +436,43 @@ contract NFTXVaultTests is TestBase {
             assertEq(nft.ownerOf(tokenIds[i]), address(vtoken));
             assertEq(nft.ownerOf(specificIds[i]), address(this));
         }
+    }
+
+    // 1155
+
+    function test_swap_NoPremium_Success_1155() external {
+        _mintPositionWithTwap1155(currentNFTPrice);
+        uint256 qty = 5;
+        (, uint256[] memory specificIds) = _mintVTokenFor1155(qty);
+        // jump to time such that no premium applicable
+        vm.warp(block.timestamp + vaultFactory.premiumDuration() + 1);
+
+        uint256[] memory tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        uint256 exactETHPaid = (vtoken1155.targetSwapFee() *
+            qty *
+            currentNFTPrice) / 1 ether;
+        uint256 expectedETHPaid = _valueWithError(exactETHPaid);
+
+        uint256 prevETHBal = address(this).balance;
+
+        // double ETH value here to check if refund working as well
+        vtoken1155.swap{value: expectedETHPaid * 2}(
+            tokenIds,
+            amounts,
+            specificIds
+        );
+
+        uint256 ethPaid = prevETHBal - address(this).balance;
+        console.log("ethPaid with No Premium", ethPaid);
+        assertGt(ethPaid, expectedETHPaid);
+        assertLe(ethPaid, exactETHPaid);
+
+        assertEq(nft1155.balanceOf(address(vtoken1155), tokenIds[0]), qty);
+        assertEq(nft1155.balanceOf(address(this), specificIds[0]), qty);
     }
 }

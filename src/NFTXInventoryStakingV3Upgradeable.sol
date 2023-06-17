@@ -196,6 +196,8 @@ contract NFTXInventoryStakingV3Upgradeable is
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
+        // TODO: add check that vTokenShares is non-zero
+        // TODO: add front running protection for initial staker
         _vaultGlobal.totalVTokenShares += vTokenShares;
 
         positions[positionId] = Position({
@@ -457,6 +459,8 @@ contract NFTXInventoryStakingV3Upgradeable is
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
+        // TODO: add check that vTokenShares is non-zero
+        // TODO: add front running protection for initial staker
         _vaultGlobal.totalVTokenShares += vTokenShares;
 
         positions[positionId] = Position({

@@ -5,6 +5,7 @@ import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 import {TestExtend} from "./lib/TestExtend.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {UniswapV3FactoryUpgradeable} from "@uni-core/UniswapV3FactoryUpgradeable.sol";
@@ -20,6 +21,7 @@ import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 
 import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
+import {Mock1155} from "@mocks/Mock1155.sol";
 import {MockUniversalRouter} from "@mocks/MockUniversalRouter.sol";
 import {MockPermit2} from "@mocks/permit2/MockPermit2.sol";
 
@@ -33,7 +35,7 @@ import {NFTXRouter, INFTXRouter} from "@src/zaps/NFTXRouter.sol";
 import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
-contract TestBase is TestExtend, ERC721Holder {
+contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     UniswapV3FactoryUpgradeable factory;
     NonfungibleTokenPositionDescriptor descriptor;
     MockWETH weth;
@@ -42,10 +44,12 @@ contract TestBase is TestExtend, ERC721Holder {
     QuoterV2 quoter;
 
     MockNFT nft;
+    Mock1155 nft1155;
     MockUniversalRouter universalRouter;
     MockPermit2 permit2;
 
     INFTXVault vtoken;
+    INFTXVault vtoken1155;
     TimelockExcludeList timelockExcludeList;
     NFTXFeeDistributorV3 feeDistributor;
     NFTXVaultUpgradeable vaultImpl;
@@ -58,6 +62,7 @@ contract TestBase is TestExtend, ERC721Holder {
     uint24 constant DEFAULT_FEE_TIER = 10000;
     address immutable TREASURY = makeAddr("TREASURY");
     uint256 constant VAULT_ID = 0;
+    uint256 constant VAULT_ID_1155 = 1;
 
     uint16 constant REWARD_TIER_CARDINALITY = 102; // considering 20 min interval with 1 block every 12 seconds on ETH Mainnet
 
@@ -91,6 +96,7 @@ contract TestBase is TestExtend, ERC721Holder {
         quoter = new QuoterV2(address(factory), address(weth));
 
         nft = new MockNFT();
+        nft1155 = new Mock1155();
 
         vaultImpl = new NFTXVaultUpgradeable();
         vaultFactory = new NFTXVaultFactoryUpgradeable();
@@ -139,10 +145,18 @@ contract TestBase is TestExtend, ERC721Holder {
             "TEST",
             "TST",
             address(nft),
-            false,
-            true
+            false, // is1155
+            true // allowAllItems
         );
         vtoken = INFTXVault(vaultFactory.vault(vaultId));
+        vaultFactory.createVault(
+            "TEST1155",
+            "TST1155",
+            address(nft1155),
+            true, // is1155
+            true // allowAllItems
+        );
+        vtoken1155 = INFTXVault(vaultFactory.vault(vaultId + 1));
 
         // Zaps
         universalRouter = new MockUniversalRouter(
@@ -169,6 +183,27 @@ contract TestBase is TestExtend, ERC721Holder {
         mintedVTokens =
             vtoken.mint{value: 100 ether * qty}(tokenIds, amounts) *
             1 ether;
+    }
+
+    function _mintVTokenFor1155(
+        uint256 qty
+    ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
+        uint256[] memory _tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        _tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        nft1155.setApprovalForAll(address(vtoken1155), true);
+
+        mintedVTokens =
+            vtoken1155.mint{value: 100 ether * qty}(_tokenIds, amounts) *
+            1 ether;
+
+        tokenIds = new uint256[](qty);
+        for (uint256 i; i < qty; i++) {
+            tokenIds[i] = _tokenIds[0];
+        }
     }
 
     function _mintPosition(
@@ -270,6 +305,87 @@ contract TestBase is TestExtend, ERC721Holder {
         uint256 currentNFTPrice
     ) internal returns (uint256 positionId) {
         (, positionId, , , ) = _mintPosition(
+            10,
+            currentNFTPrice,
+            currentNFTPrice - 0.5 ether,
+            currentNFTPrice + 0.5 ether,
+            DEFAULT_FEE_TIER
+        );
+        vm.warp(block.timestamp + vaultFactory.twapInterval());
+    }
+
+    uint256[] emptyIds;
+
+    function _mintPosition1155(
+        uint256 qty,
+        uint256 currentNFTPrice,
+        uint256 lowerNFTPrice,
+        uint256 upperNFTPrice,
+        uint24 fee
+    )
+        internal
+        returns (
+            uint256[] memory tokenIds,
+            uint256 positionId,
+            int24 tickLower,
+            int24 tickUpper,
+            uint256 ethUsed
+        )
+    {
+        (uint256 mintedVTokens, ) = _mintVTokenFor1155(qty);
+        vtoken1155.approve(address(nftxRouter), mintedVTokens);
+
+        uint160 currentSqrtP;
+        uint256 tickDistance = _getTickDistance(fee);
+        if (nftxRouter.isVToken0(address(vtoken1155))) {
+            currentSqrtP = Helpers.encodeSqrtRatioX96(currentNFTPrice, 1 ether);
+            // price = amount1 / amount0 = 1.0001^tick => tick ∝ price
+            tickLower = Helpers.getTickForAmounts(
+                lowerNFTPrice,
+                1 ether,
+                tickDistance
+            );
+            tickUpper = Helpers.getTickForAmounts(
+                upperNFTPrice,
+                1 ether,
+                tickDistance
+            );
+        } else {
+            currentSqrtP = Helpers.encodeSqrtRatioX96(1 ether, currentNFTPrice);
+            tickLower = Helpers.getTickForAmounts(
+                1 ether,
+                upperNFTPrice,
+                tickDistance
+            );
+            tickUpper = Helpers.getTickForAmounts(
+                1 ether,
+                lowerNFTPrice,
+                tickDistance
+            );
+        }
+
+        uint256 preETHBalance = address(this).balance;
+
+        positionId = nftxRouter.addLiquidity{value: qty * 100 ether}(
+            INFTXRouter.AddLiquidityParams({
+                vaultId: VAULT_ID_1155,
+                vTokensAmount: mintedVTokens,
+                nftIds: emptyIds,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                fee: fee,
+                sqrtPriceX96: currentSqrtP,
+                deadline: block.timestamp
+            })
+        );
+
+        ethUsed = preETHBalance - address(this).balance;
+    }
+
+    function _mintPositionWithTwap1155(
+        uint256 currentNFTPrice
+    ) internal returns (uint256 positionId) {
+        (, positionId, , , ) = _mintPosition1155(
             10,
             currentNFTPrice,
             currentNFTPrice - 0.5 ether,

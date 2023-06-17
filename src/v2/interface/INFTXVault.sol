@@ -228,4 +228,8 @@ interface INFTXVault is IERC20Upgradeable {
 
     // Calculate ETH amount corresponding to the vToken amount, calculated via TWAP from the AMM
     function vTokenToETH(uint256 vTokenAmount) external view returns (uint256);
+
+    function depositInfo1155Length(
+        uint256 tokenId
+    ) external view returns (uint256);
 }

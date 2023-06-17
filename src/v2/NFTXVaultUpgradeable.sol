@@ -524,6 +524,12 @@ contract NFTXVaultUpgradeable is
         (ethAmount, ) = _vTokenToETH(vaultFactory, vTokenAmount);
     }
 
+    function depositInfo1155Length(
+        uint256 tokenId
+    ) external view override returns (uint256) {
+        return depositInfo1155[tokenId].length;
+    }
+
     // =============================================================
     //                        INTERNAL HELPERS
     // =============================================================
