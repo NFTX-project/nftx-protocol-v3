@@ -327,6 +327,117 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         }
     }
 
+    // MarketplaceZap#sell1155
+    function test_sell1155_RevertsForNonOwnerIfPaused() external {
+        marketplaceZap.pause(true);
+
+        uint256[] memory idsIn;
+        uint256[] memory amounts;
+        bytes memory executeCallData;
+
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert(MarketplaceUniversalRouterZap.ZapPaused.selector);
+        marketplaceZap.sell1155(
+            VAULT_ID_1155,
+            idsIn,
+            amounts,
+            executeCallData,
+            payable(this),
+            true
+        );
+    }
+
+    function test_sell1155_Success() external {
+        _mintPositionWithTwap1155(currentNFTPrice);
+
+        uint256 qty = 5;
+
+        uint256[] memory idsIn = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        idsIn[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        bytes memory executeCallData = abi.encodeWithSelector(
+            MockUniversalRouter.execute.selector,
+            address(vtoken1155),
+            qty * 1 ether,
+            address(weth)
+        );
+
+        nft1155.setApprovalForAll(address(marketplaceZap), true);
+        marketplaceZap.sell1155(
+            VAULT_ID_1155,
+            idsIn,
+            amounts,
+            executeCallData,
+            payable(this),
+            true
+        );
+
+        assertEq(nft1155.balanceOf(address(vtoken1155), idsIn[0]), amounts[0]);
+    }
+
+    // MarketplaceZap#swap1155
+    function test_swap1155_RevertsForNonOwnerIfPaused() external {
+        marketplaceZap.pause(true);
+
+        uint256[] memory idsIn;
+        uint256[] memory amounts;
+        uint256[] memory idsOut;
+
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert(MarketplaceUniversalRouterZap.ZapPaused.selector);
+        marketplaceZap.swap1155(
+            VAULT_ID_1155,
+            idsIn,
+            amounts,
+            idsOut,
+            payable(this)
+        );
+    }
+
+    function test_swap1155_Success() external {
+        _mintPositionWithTwap1155(currentNFTPrice);
+
+        uint256 qty = 5;
+        (, uint256[] memory idsOut) = _mintVTokenFor1155(qty);
+
+        uint256[] memory idsIn = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        idsIn[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        // accounting for premium
+        uint256 exactETHPaid = ((vtoken1155.targetSwapFee() +
+            vaultFactory.premiumMax()) *
+            qty *
+            currentNFTPrice) / 1 ether;
+        uint256 expectedETHPaid = _valueWithError(exactETHPaid);
+
+        uint256 prevETHBal = address(this).balance;
+
+        nft1155.setApprovalForAll(address(marketplaceZap), true);
+        // double ETH value here to check if refund working as well
+        marketplaceZap.swap1155{value: expectedETHPaid * 2}(
+            VAULT_ID_1155,
+            idsIn,
+            amounts,
+            idsOut,
+            payable(this)
+        );
+
+        uint256 ethPaid = prevETHBal - address(this).balance;
+        assertGt(ethPaid, expectedETHPaid);
+        assertLe(ethPaid, exactETHPaid);
+
+        assertEq(nft1155.balanceOf(address(vtoken1155), idsIn[0]), amounts[0]);
+        assertEq(nft1155.balanceOf(address(this), idsOut[0]), amounts[0]);
+    }
+
+    // internal
+
     function _mintPositionERC20() internal returns (INFTXVault token) {
         int24 tickLower;
         int24 tickUpper;
