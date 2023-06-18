@@ -162,7 +162,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
 
         // Swap our tokens
         uint256[] memory emptyIds;
-        INFTXVault(vault).swapTo(idsIn, emptyIds, idsOut, to);
+        INFTXVault(vault).swapTo(idsIn, emptyIds, idsOut, to, false);
 
         uint256 ethFees = _ethSwapFees(INFTXVault(vault), idsOut);
         _distributeVaultFees(vaultId, ethFees, false);
@@ -200,7 +200,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         uint256 wethSpent = iniWETHBal - WETH.balanceOf(address(this));
 
         // redeem NFTs
-        INFTXVault(vault).redeemTo(idsOut, to);
+        INFTXVault(vault).redeemTo(idsOut, to, false);
 
         // distribute vault fees with remaining weth
         uint256 wethFees = _ethRedeemFees(INFTXVault(vault), idsOut);
@@ -331,7 +331,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         uint256 wethSpent = iniWETHBal - WETH.balanceOf(address(this));
 
         // redeem NFTs
-        INFTXVault(vault).redeemTo(params.idsOut, params.to);
+        INFTXVault(vault).redeemTo(params.idsOut, params.to, false);
 
         // distribute vault fees with remaining weth
         uint256 wethFees = _ethRedeemFees(INFTXVault(vault), params.idsOut);

@@ -160,7 +160,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             wethAmt -= wethFees; // if underflow, then revert desired
 
             // burn vTokens to provided tokenIds array
-            vToken.redeemTo(params.nftIds, msg.sender);
+            vToken.redeemTo(params.nftIds, msg.sender, false);
             uint256 vTokenBurned = params.nftIds.length * 1 ether;
 
             // if more vTokens collected than burned
@@ -260,7 +260,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
         );
 
         // unwrap vTokens to tokenIds specified, and send to sender
-        vToken.redeemTo(params.nftIds, msg.sender);
+        vToken.redeemTo(params.nftIds, msg.sender, false);
 
         // refund ETH
         router.refundETH(msg.sender);

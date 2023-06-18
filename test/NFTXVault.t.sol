@@ -141,7 +141,7 @@ contract NFTXVaultTests is TestBase {
         uint256 prevETHBal = address(this).balance;
 
         // double ETH value here to check if refund working as well
-        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds);
+        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds, false);
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with No Premium", ethPaid);
@@ -176,7 +176,7 @@ contract NFTXVaultTests is TestBase {
         uint256 prevDepositorBal = weth.balanceOf(depositor);
 
         // double ETH value here to check if refund working as well
-        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds);
+        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds, false);
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         uint256 ethDepositorReceived = weth.balanceOf(depositor) -
@@ -212,7 +212,7 @@ contract NFTXVaultTests is TestBase {
         uint256 prevETHBal = address(this).balance;
 
         // double ETH value here to check if refund working as well
-        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds);
+        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds, false);
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with Premium", ethPaid);
@@ -246,7 +246,7 @@ contract NFTXVaultTests is TestBase {
         uint256 prevPointerIndex = vtoken1155.pointerIndex1155(tokenIds[0]);
 
         // double ETH value here to check if refund working as well
-        vtoken1155.redeem{value: expectedETHPaid * 2}(tokenIds);
+        vtoken1155.redeem{value: expectedETHPaid * 2}(tokenIds, false);
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with No Premium", ethPaid);
@@ -302,7 +302,7 @@ contract NFTXVaultTests is TestBase {
         uint256 prevPointerIndex = vtoken1155.pointerIndex1155(tokenIds[0]);
 
         // double ETH value here to check if refund working as well
-        vtoken1155.redeem{value: expectedETHPaid * 2}(tokenIds);
+        vtoken1155.redeem{value: expectedETHPaid * 2}(tokenIds, false);
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         uint256 ethDepositorReceived = weth.balanceOf(depositor) -
@@ -347,7 +347,12 @@ contract NFTXVaultTests is TestBase {
         uint256 prevETHBal = address(this).balance;
 
         // double ETH value here to check if refund working as well
-        vtoken.swap{value: expectedETHPaid * 2}(tokenIds, amounts, specificIds);
+        vtoken.swap{value: expectedETHPaid * 2}(
+            tokenIds,
+            amounts,
+            specificIds,
+            false
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with No Premium", ethPaid);
@@ -386,7 +391,12 @@ contract NFTXVaultTests is TestBase {
 
         nft.setApprovalForAll(address(vtoken), true);
         // double ETH value here to check if refund working as well
-        vtoken.swap{value: expectedETHPaid * 2}(tokenIds, amounts, specificIds);
+        vtoken.swap{value: expectedETHPaid * 2}(
+            tokenIds,
+            amounts,
+            specificIds,
+            false
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         uint256 ethDepositorReceived = weth.balanceOf(depositor) -
@@ -426,7 +436,12 @@ contract NFTXVaultTests is TestBase {
         uint256 prevETHBal = address(this).balance;
 
         // double ETH value here to check if refund working as well
-        vtoken.swap{value: expectedETHPaid * 2}(tokenIds, amounts, specificIds);
+        vtoken.swap{value: expectedETHPaid * 2}(
+            tokenIds,
+            amounts,
+            specificIds,
+            false
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with No Premium", ethPaid);
@@ -464,7 +479,8 @@ contract NFTXVaultTests is TestBase {
         vtoken1155.swap{value: expectedETHPaid * 2}(
             tokenIds,
             amounts,
-            specificIds
+            specificIds,
+            false
         );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
