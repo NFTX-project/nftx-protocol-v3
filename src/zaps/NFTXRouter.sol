@@ -146,23 +146,27 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             ? (amount0, amount1)
             : (amount1, amount0);
 
+        uint256 ethAmt;
+
         // No NFTs to redeem, directly withdraw vTokens
         if (params.nftIds.length == 0) {
             vToken.transfer(msg.sender, vTokenAmt);
         } else {
-            // distributing vault fees
+            ethAmt = wethAmt + msg.value;
 
-            // if withdrawn WETH is insufficient to pay for vault fees, user sends ETH (can be excess, as refunded back) along with the transaction
-            if (msg.value > 0) {
-                IWETH9(WETH).deposit{value: msg.value}();
-                wethAmt += msg.value;
+            if (wethAmt > 0) {
+                IWETH9(WETH).withdraw(wethAmt);
+                wethAmt = 0;
             }
-            uint256 wethFees = _ethRedeemFees(vToken, params.nftIds);
-            _distributeVaultFees(params.vaultId, wethFees, true);
-            wethAmt -= wethFees; // if underflow, then revert desired
 
-            // burn vTokens to provided tokenIds array
-            vToken.redeemTo(params.nftIds, msg.sender, false);
+            // burn vTokens to provided tokenIds array. Forcing to deduct vault fees
+            // if withdrawn WETH is insufficient to pay for vault fees, user sends ETH (can be excess, as refunded back) along with the transaction
+            uint256 ethFees = vToken.redeemTo{value: ethAmt}(
+                params.nftIds,
+                msg.sender,
+                true
+            );
+            ethAmt -= ethFees;
             uint256 vTokenBurned = params.nftIds.length * 1 ether;
 
             // if more vTokens collected than burned
@@ -173,15 +177,20 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
         }
         // convert remaining WETH to ETH & send to user
-        IWETH9(WETH).withdraw(wethAmt);
-        (bool success, ) = msg.sender.call{value: wethAmt}("");
-        if (!success) revert UnableToSendETH();
+        if (wethAmt > 0) {
+            IWETH9(WETH).withdraw(wethAmt);
+            ethAmt += wethAmt;
+        }
+        if (ethAmt > 0) {
+            (bool success, ) = msg.sender.call{value: ethAmt}("");
+            if (!success) revert UnableToSendETH();
+        }
 
         emit RemoveLiquidity(
             params.positionId,
             params.vaultId,
             vTokenAmt,
-            wethAmt
+            ethAmt
         );
     }
 
@@ -194,16 +203,27 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
         address assetAddress = INFTXVault(address(vToken)).assetAddress();
 
-        // tranfer NFTs from user to the vault
-        TransferLib.transferFromERC721(
-            assetAddress,
-            address(vToken),
-            params.nftIds
-        );
+        if (!params.is1155) {
+            // tranfer NFTs from user to the vault
+            TransferLib.transferFromERC721(
+                assetAddress,
+                address(vToken),
+                params.nftIds
+            );
+        } else {
+            IERC1155(assetAddress).safeBatchTransferFrom(
+                msg.sender,
+                address(this),
+                params.nftIds,
+                params.nftAmounts,
+                ""
+            );
+
+            IERC1155(assetAddress).setApprovalForAll(address(vToken), true);
+        }
 
         // mint vToken
-        uint256[] memory emptyIds;
-        uint256 vTokensAmount = vToken.mint(params.nftIds, emptyIds) * 1 ether;
+        uint256 vTokensAmount = vToken.mint(params.nftIds, params.nftAmounts) * 1 ether;
 
         TransferLib.maxApprove(address(vToken), address(router), vTokensAmount);
 

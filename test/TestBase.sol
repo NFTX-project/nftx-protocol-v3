@@ -187,27 +187,6 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             1 ether;
     }
 
-    function _mintVTokenFor1155(
-        uint256 qty
-    ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
-        uint256[] memory _tokenIds = new uint256[](1);
-        uint256[] memory amounts = new uint256[](1);
-
-        _tokenIds[0] = nft1155.mint(qty);
-        amounts[0] = qty;
-
-        nft1155.setApprovalForAll(address(vtoken1155), true);
-
-        mintedVTokens =
-            vtoken1155.mint{value: 100 ether * qty}(_tokenIds, amounts) *
-            1 ether;
-
-        tokenIds = new uint256[](qty);
-        for (uint256 i; i < qty; i++) {
-            tokenIds[i] = _tokenIds[0];
-        }
-    }
-
     function _mintPosition(
         uint256 qty
     )
@@ -316,6 +295,56 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             DEFAULT_FEE_TIER
         );
         vm.warp(block.timestamp + vaultFactory.twapInterval());
+    }
+
+    function _sellNFTs(
+        uint256 qty
+    ) internal returns (uint256[] memory tokenIds) {
+        tokenIds = nft.mint(qty);
+        nft.setApprovalForAll(address(nftxRouter), true);
+
+        uint256 preNFTBalance = nft.balanceOf(address(this));
+
+        nftxRouter.sellNFTs(
+            INFTXRouter.SellNFTsParams({
+                vaultId: VAULT_ID,
+                nftIds: tokenIds,
+                nftAmounts: emptyIds,
+                is1155: false,
+                deadline: block.timestamp,
+                fee: DEFAULT_FEE_TIER,
+                amountOutMinimum: 1,
+                sqrtPriceLimitX96: 0
+            })
+        );
+
+        uint256 postNFTBalance = nft.balanceOf(address(this));
+        assertEq(
+            preNFTBalance - postNFTBalance,
+            qty,
+            "NFT balance didn't decrease"
+        );
+    }
+
+    function _mintVTokenFor1155(
+        uint256 qty
+    ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
+        uint256[] memory _tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        _tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        nft1155.setApprovalForAll(address(vtoken1155), true);
+
+        mintedVTokens =
+            vtoken1155.mint{value: 100 ether * qty}(_tokenIds, amounts) *
+            1 ether;
+
+        tokenIds = new uint256[](qty);
+        for (uint256 i; i < qty; i++) {
+            tokenIds[i] = _tokenIds[0];
+        }
     }
 
     function _mintPosition1155(
@@ -433,25 +462,25 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         vm.warp(block.timestamp + vaultFactory.twapInterval());
     }
 
-    // the actual value can be off by few decimals so accounting for 0.3% error.
-    function _valueWithError(uint256 value) internal pure returns (uint256) {
-        return (value * (10_000 - 30)) / 10_000;
-    }
-
-    function _sellNFTs(
+    function _sellNFTs1155(
         uint256 qty
     ) internal returns (uint256[] memory tokenIds) {
-        tokenIds = nft.mint(qty);
-        nft.setApprovalForAll(address(nftxRouter), true);
+        tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
 
-        uint256 preNFTBalance = nft.balanceOf(address(this));
+        tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;        
+
+        nft1155.setApprovalForAll(address(nftxRouter), true);
+
+        uint256 preNFTBalance = nft1155.balanceOf(address(this), tokenIds[0]);
 
         nftxRouter.sellNFTs(
             INFTXRouter.SellNFTsParams({
-                vaultId: VAULT_ID,
+                vaultId: VAULT_ID_1155,
                 nftIds: tokenIds,
-                nftAmounts: emptyIds,
-                is1155: false,
+                nftAmounts: amounts,
+                is1155: true,
                 deadline: block.timestamp,
                 fee: DEFAULT_FEE_TIER,
                 amountOutMinimum: 1,
@@ -459,12 +488,17 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             })
         );
 
-        uint256 postNFTBalance = nft.balanceOf(address(this));
+        uint256 postNFTBalance = nft1155.balanceOf(address(this), tokenIds[0]);
         assertEq(
             preNFTBalance - postNFTBalance,
             qty,
             "NFT balance didn't decrease"
         );
+    }
+
+    // the actual value can be off by few decimals so accounting for 0.3% error.
+    function _valueWithError(uint256 value) internal pure returns (uint256) {
+        return (value * (10_000 - 30)) / 10_000;
     }
 
     function _getTickDistance(

@@ -500,6 +500,25 @@ contract NFTXRouterTests is TestBase {
         );
     }
 
+    function testSellNFTs_1155() external {
+        _mintPositionWithTwap1155(currentNFTPrice);
+        _mintPosition1155(5);
+
+        uint256 nftQty = 5;
+        uint256 preETHBalance = address(this).balance;
+
+        _sellNFTs1155(nftQty);
+
+        uint256 postETHBalance = address(this).balance;
+        assertGt(postETHBalance, preETHBalance, "ETH balance didn't increase");
+
+        console.log(
+            "ETH received: %s for selling %s NFTs",
+            postETHBalance - preETHBalance,
+            nftQty
+        );
+    }
+
     // buyNFTs
 
     function testBuyNFTs() external {
@@ -558,7 +577,7 @@ contract NFTXRouterTests is TestBase {
         );
     }
 
-    // ================================
+    // ================================ 
     // Remove Liquidity
     // ================================
 
@@ -694,6 +713,99 @@ contract NFTXRouterTests is TestBase {
         );
 
         console.log("ETH removed: ", postETHBalance - preETHBalance);
+    }
+
+    // 1155
+
+    function test_removeLiquidity_ToNFTs_Success_1155() external {
+        uint256 _positionId = _mintPositionWithTwap1155(currentNFTPrice);
+
+        positionManager.setApprovalForAll(address(nftxRouter), true);
+        // removing liquidity as vTokens so the `nftsSold` only shared with one position
+        nftxRouter.removeLiquidity(
+            INFTXRouter.RemoveLiquidityParams({
+                positionId: _positionId,
+                vaultId: VAULT_ID_1155,
+                nftIds: emptyIds,
+                liquidity: _getLiquidity(_positionId),
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            })
+        );
+
+        uint256 nftQty = 10;
+        (
+            uint256[] memory allTokenIds,
+            uint256 positionId,
+            ,
+            ,
+
+        ) = _mintPosition1155(nftQty);
+
+        uint256 nftsSold = 5;
+        uint256[] memory soldTokenIds = _sellNFTs1155(nftsSold);
+
+        uint256 nftResidue = 1;
+        uint256 expectedNFTQty = nftQty + nftsSold - nftResidue;
+        uint256[] memory nftIds = new uint256[](expectedNFTQty);
+        nftIds[0] = allTokenIds[0];
+        nftIds[1] = allTokenIds[0];
+        nftIds[2] = allTokenIds[0];
+        nftIds[3] = allTokenIds[0];
+        nftIds[4] = allTokenIds[0];
+        nftIds[5] = allTokenIds[0];
+        nftIds[6] = allTokenIds[0];
+        nftIds[7] = allTokenIds[0];
+        nftIds[8] = allTokenIds[0];
+        nftIds[9] = allTokenIds[0];
+        nftIds[10] = soldTokenIds[0];
+        nftIds[11] = soldTokenIds[0];
+        nftIds[12] = soldTokenIds[0];
+        nftIds[13] = soldTokenIds[0];
+        // nftIds[14] = soldTokenIds[0]; // redeeming less NFT(s) than the vTokens withdrawn from liquidity position
+
+        uint128 liquidity = _getLiquidity(positionId);
+
+        uint256 preNFTBalance = nft1155.balanceOf(address(this), allTokenIds[0]) + nft1155.balanceOf(address(this), soldTokenIds[0]);
+        uint256 preVTokenBalance = vtoken1155.balanceOf(address(this));
+        uint256 preETHBalance = address(this).balance;
+
+        // sending ETH as vault fees more than withdrawn amount
+        nftxRouter.removeLiquidity{value: 300 ether}(
+            INFTXRouter.RemoveLiquidityParams({
+                positionId: positionId,
+                vaultId: VAULT_ID_1155,
+                nftIds: nftIds,
+                liquidity: liquidity,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            })
+        );
+
+        uint256 postNFTBalance = nft1155.balanceOf(address(this), allTokenIds[0]) + nft1155.balanceOf(address(this), soldTokenIds[0]);
+        uint256 postVTokenBalance = vtoken1155.balanceOf(address(this));
+        uint256 postETHBalance = address(this).balance;
+
+        assertEq(
+            postNFTBalance - preNFTBalance,
+            expectedNFTQty,
+            "Incorrect NFT balance change"
+        );
+        assertEq(
+            postVTokenBalance - preVTokenBalance,
+            nftResidue * 1 ether - 2, // 2 wei round down during txn
+            "vToken balance didn't change"
+        );
+        // Because in this case ETH fees > withdrawn amount. so preBal > postBal
+        // though for most cases post > pre
+        assertGt(preETHBalance, postETHBalance, "ETH balance didn't change");
+        assertEq(
+            positionManager.ownerOf(positionId),
+            address(this),
+            "User is no longer the owner of PositionId"
+        );
     }
 
     // ================================
