@@ -80,6 +80,24 @@ interface INFTXRouter {
         bytes calldata encodedPermit2
     ) external payable returns (uint256 positionId);
 
+    struct IncreaseLiquidityParams {
+        uint256 positionId;
+        uint256 vaultId;
+        uint256 vTokensAmount; // user can provide just vTokens or NFTs or both
+        uint256[] nftIds;
+        uint256[] nftAmounts; // for ERC1155, ignored for ERC721
+        uint256 deadline;
+    }
+
+    function increaseLiquidity(
+        IncreaseLiquidityParams calldata params
+    ) external payable;
+
+    function increaseLiquidityWithPermit2(
+        IncreaseLiquidityParams calldata params,
+        bytes calldata encodedPermit2
+    ) external payable;
+
     struct RemoveLiquidityParams {
         uint256 positionId;
         uint256 vaultId;

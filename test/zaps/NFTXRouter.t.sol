@@ -478,6 +478,260 @@ contract NFTXRouterTests is TestBase {
     }
 
     // ================================
+    // Increase Liquidity
+    // ================================
+
+    function testIncreaseLiquidity_withNFTs() external {
+        uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+
+        uint256 qty = 3;
+        uint256[] memory tokenIds = nft.mint(qty);
+        nft.setApprovalForAll(address(nftxRouter), true);
+
+        uint256 prePositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 preLiquidity = _getLiquidity(positionId);
+
+        positionManager.setApprovalForAll(address(nftxRouter), true);
+        nftxRouter.increaseLiquidity{value: qty * 100 ether}(
+            INFTXRouter.IncreaseLiquidityParams({
+                positionId: positionId,
+                vaultId: VAULT_ID,
+                vTokensAmount: 0,
+                nftIds: tokenIds,
+                nftAmounts: emptyIds,
+                deadline: block.timestamp
+            })
+        );
+
+        uint256 postPositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 postLiquidity = _getLiquidity(positionId);
+
+        assertEq(
+            postPositionNFTBalance,
+            prePositionNFTBalance,
+            "Position Balance changed"
+        );
+        assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+    }
+
+    function testIncreaseLiquidity_withVTokens() external {
+        uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+
+        uint256 prePositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 preLiquidity = _getLiquidity(positionId);
+
+        uint256 qty = 5;
+        (uint256 mintedVTokens, ) = _mintVToken(qty);
+
+        vtoken.approve(address(nftxRouter), mintedVTokens);
+        positionManager.setApprovalForAll(address(nftxRouter), true);
+        nftxRouter.increaseLiquidity{value: qty * 100 ether}(
+            INFTXRouter.IncreaseLiquidityParams({
+                positionId: positionId,
+                vaultId: VAULT_ID,
+                vTokensAmount: mintedVTokens,
+                nftIds: emptyIds,
+                nftAmounts: emptyIds,
+                deadline: block.timestamp
+            })
+        );
+
+        uint256 postPositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 postLiquidity = _getLiquidity(positionId);
+
+        assertEq(
+            postPositionNFTBalance,
+            prePositionNFTBalance,
+            "Position Balance changed"
+        );
+        assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+    }
+
+    function testIncreaseLiquidity_withNFTs_and_VTokens() external {
+        uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+
+        uint256 prePositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 preLiquidity = _getLiquidity(positionId);
+
+        uint256 qty = 5;
+
+        (uint256 mintedVTokens, ) = _mintVToken(qty);
+        uint256[] memory tokenIds = nft.mint(qty);
+
+        vtoken.approve(address(nftxRouter), mintedVTokens);
+        nft.setApprovalForAll(address(nftxRouter), true);
+        positionManager.setApprovalForAll(address(nftxRouter), true);
+        nftxRouter.increaseLiquidity{value: qty * 100 ether}(
+            INFTXRouter.IncreaseLiquidityParams({
+                positionId: positionId,
+                vaultId: VAULT_ID,
+                vTokensAmount: mintedVTokens,
+                nftIds: tokenIds,
+                nftAmounts: emptyIds,
+                deadline: block.timestamp
+            })
+        );
+
+        uint256 postPositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 postLiquidity = _getLiquidity(positionId);
+
+        assertEq(
+            postPositionNFTBalance,
+            prePositionNFTBalance,
+            "Position Balance changed"
+        );
+        assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+    }
+
+    // 1155
+
+    function testIncreaseLiquidity_withNFTs_1155() external {
+        uint256 positionId = _mintPositionWithTwap1155(currentNFTPrice);
+
+        uint256 qty = 3;
+        uint256[] memory tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        uint256 prePositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 preLiquidity = _getLiquidity(positionId);
+
+        positionManager.setApprovalForAll(address(nftxRouter), true);
+        nftxRouter.increaseLiquidity{value: qty * 100 ether}(
+            INFTXRouter.IncreaseLiquidityParams({
+                positionId: positionId,
+                vaultId: VAULT_ID_1155,
+                vTokensAmount: 0,
+                nftIds: tokenIds,
+                nftAmounts: amounts,
+                deadline: block.timestamp
+            })
+        );
+
+        uint256 postPositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 postLiquidity = _getLiquidity(positionId);
+
+        assertEq(
+            postPositionNFTBalance,
+            prePositionNFTBalance,
+            "Position Balance changed"
+        );
+        assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+    }
+
+    // increaseLiquidityWithPermit2
+
+    function testIncreaseLiquidityWithPermit2_withVTokens() external {
+        uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+
+        uint256 prePositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 preLiquidity = _getLiquidity(positionId);
+
+        uint256 qty = 5;
+        (uint256 mintedVTokens, ) = _mintVToken(qty);
+        vtoken.transfer(from, mintedVTokens);
+        startHoax(from);
+
+        bytes memory encodedPermit2 = _getEncodedPermit2(
+            address(vtoken),
+            mintedVTokens,
+            address(nftxRouter)
+        );
+
+        nftxRouter.increaseLiquidityWithPermit2{value: qty * 100 ether}(
+            INFTXRouter.IncreaseLiquidityParams({
+                positionId: positionId,
+                vaultId: VAULT_ID,
+                vTokensAmount: mintedVTokens,
+                nftIds: emptyIds,
+                nftAmounts: emptyIds,
+                deadline: block.timestamp
+            }),
+            encodedPermit2
+        );
+
+        uint256 postPositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 postLiquidity = _getLiquidity(positionId);
+
+        assertEq(
+            postPositionNFTBalance,
+            prePositionNFTBalance,
+            "Position Balance changed"
+        );
+        assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+    }
+
+    function testIncreaseLiquidityWithPermit2_withNFTs_and_VTokens() external {
+        uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+
+        uint256 prePositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 preLiquidity = _getLiquidity(positionId);
+
+        uint256 qty = 5;
+
+        (uint256 mintedVTokens, ) = _mintVToken(qty);
+        vtoken.transfer(from, mintedVTokens);
+
+        startHoax(from);
+        uint256[] memory tokenIds = nft.mint(qty);
+
+        bytes memory encodedPermit2 = _getEncodedPermit2(
+            address(vtoken),
+            mintedVTokens,
+            address(nftxRouter)
+        );
+
+        nft.setApprovalForAll(address(nftxRouter), true);
+        nftxRouter.increaseLiquidityWithPermit2{value: qty * 100 ether}(
+            INFTXRouter.IncreaseLiquidityParams({
+                positionId: positionId,
+                vaultId: VAULT_ID,
+                vTokensAmount: mintedVTokens,
+                nftIds: tokenIds,
+                nftAmounts: emptyIds,
+                deadline: block.timestamp
+            }),
+            encodedPermit2
+        );
+
+        uint256 postPositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        uint256 postLiquidity = _getLiquidity(positionId);
+
+        assertEq(
+            postPositionNFTBalance,
+            prePositionNFTBalance,
+            "Position Balance changed"
+        );
+        assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+    }
+
+    // ================================
     // Sell NFTs
     // ================================
 

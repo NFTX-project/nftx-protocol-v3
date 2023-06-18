@@ -115,6 +115,53 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         return _addLiquidity(params, vToken);
     }
 
+    function increaseLiquidity(
+        IncreaseLiquidityParams calldata params
+    ) external payable override {
+        INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
+
+        if (params.vTokensAmount > 0) {
+            vToken.transferFrom(
+                msg.sender,
+                address(this),
+                params.vTokensAmount
+            );
+        }
+
+        return _increaseLiquidity(params, vToken);
+    }
+
+    function increaseLiquidityWithPermit2(
+        IncreaseLiquidityParams calldata params,
+        bytes calldata encodedPermit2
+    ) external payable override {
+        INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
+
+        if (encodedPermit2.length > 0) {
+            (
+                address owner,
+                IPermitAllowanceTransfer.PermitSingle memory permitSingle,
+                bytes memory signature
+            ) = abi.decode(
+                    encodedPermit2,
+                    (address, IPermitAllowanceTransfer.PermitSingle, bytes)
+                );
+
+            PERMIT2.permit(owner, permitSingle, signature);
+        }
+
+        if (params.vTokensAmount > 0) {
+            PERMIT2.transferFrom(
+                msg.sender,
+                address(this),
+                uint160(params.vTokensAmount),
+                address(vToken)
+            );
+        }
+
+        return _increaseLiquidity(params, vToken);
+    }
+
     function removeLiquidity(
         RemoveLiquidityParams calldata params
     ) external payable override {
@@ -505,6 +552,86 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.nftIds.length,
             positionId
         );
+    }
+
+    function _increaseLiquidity(
+        IncreaseLiquidityParams calldata params,
+        INFTXVault vToken
+    ) internal {
+        uint256 vTokensAmount = params.vTokensAmount;
+
+        if (params.nftIds.length > 0) {
+            address assetAddress = vToken.assetAddress();
+
+            if (params.nftAmounts.length == 0) {
+                // tranfer NFTs from user to the vault
+                TransferLib.transferFromERC721(
+                    assetAddress,
+                    address(vToken),
+                    params.nftIds
+                );
+            } else {
+                IERC1155(assetAddress).safeBatchTransferFrom(
+                    msg.sender,
+                    address(this),
+                    params.nftIds,
+                    params.nftAmounts,
+                    ""
+                );
+
+                IERC1155(assetAddress).setApprovalForAll(address(vToken), true);
+            }
+
+            // vault won't charge mintFees here as this contract is on exclude list
+            vTokensAmount +=
+                vToken.mint(params.nftIds, params.nftAmounts) *
+                1 ether;
+
+            // TODO: don't charge vault fees, instead update timelock of the position NFT
+        }
+
+        TransferLib.maxApprove(
+            address(vToken),
+            address(positionManager),
+            vTokensAmount
+        );
+
+        bool _isVToken0 = isVToken0(address(vToken));
+
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        if (_isVToken0) {
+            amount0Desired = vTokensAmount;
+            // have a 5000 wei buffer to account for any dust amounts
+            amount0Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
+            amount1Desired = msg.value;
+        } else {
+            amount0Desired = msg.value;
+            amount1Desired = vTokensAmount;
+            // have a 5000 wei buffer to account for any dust amounts
+            amount1Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
+        }
+
+        positionManager.increaseLiquidity{value: msg.value}(
+            INonfungiblePositionManager.IncreaseLiquidityParams({
+                tokenId: params.positionId,
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
+                amount0Min: amount0Min,
+                amount1Min: amount1Min,
+                deadline: params.deadline
+            })
+        );
+        // refund extra ETH
+        positionManager.refundETH(msg.sender);
+
+        // refund vTokens dust (if any left)
+        uint256 vTokenBalance = vToken.balanceOf(address(this));
+        if (vTokenBalance > 0) {
+            vToken.transfer(msg.sender, vTokenBalance);
+        }
     }
 
     function _distributeVaultFees(
