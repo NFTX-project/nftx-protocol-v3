@@ -262,13 +262,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
         uint256 vTokenAmt = params.nftIds.length * 1 ether;
 
-        // distributing vault fees
-        uint256 ethFees = _ethRedeemFees(vToken, params.nftIds);
-        _distributeVaultFees(params.vaultId, ethFees, false);
-
-        // swap remaining ETH to required vTokens amount
-        uint256 ethRemaining = msg.value - ethFees; // if underflow, then revert desired
-        uint256 ethSpent = router.exactOutputSingle{value: ethRemaining}(
+        uint256 ethSpent = router.exactOutputSingle{value: msg.value}(
             ISwapRouter.ExactOutputSingleParams({
                 tokenIn: WETH,
                 tokenOut: address(vToken),
@@ -276,18 +270,20 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 recipient: address(this),
                 deadline: params.deadline,
                 amountOut: vTokenAmt,
-                amountInMaximum: ethRemaining,
+                amountInMaximum: msg.value,
                 sqrtPriceLimitX96: params.sqrtPriceLimitX96
             })
         );
+        // refund extra ETH
+        router.refundETH();
 
-        // unwrap vTokens to tokenIds specified, and send to sender
-        vToken.redeemTo(params.nftIds, msg.sender, false);
+        // unwrap vTokens to tokenIds specified, and send to sender. Forcing to deduct vault fees
+        uint256 ethFees = vToken.redeemTo{value: msg.value - ethSpent}(params.nftIds, msg.sender, true);
 
         // refund ETH
         router.refundETH(msg.sender);
 
-        emit BuyNFTs(params.nftIds.length, ethSpent);
+        emit BuyNFTs(params.nftIds.length, ethSpent + ethFees);
     }
 
     // =============================================================
@@ -486,9 +482,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 deadline: params.deadline
             })
         );
-
         // refund extra ETH
         positionManager.refundETH(msg.sender);
+
         // refund vTokens dust (if any left)
         uint256 vTokenBalance = vToken.balanceOf(address(this));
         if (vTokenBalance > 0) {
@@ -520,39 +516,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         }
     }
 
-    // TODO: premium for 1155
-    // TODO: distribute premium share with the original depositor
-    function _getVTokenPremium(
-        INFTXVault vToken,
-        uint256[] memory nftIds
-    ) internal view returns (uint256 vTokenPremium) {
-        for (uint256 i; i < nftIds.length; ) {
-            uint256 _vTokenPremium;
-            (_vTokenPremium, ) = vToken.getVTokenPremium721(nftIds[i]);
-            vTokenPremium += _vTokenPremium;
-
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
     function _ethMintFees(
         INFTXVault vToken,
         uint256 nftCount
     ) internal view returns (uint256) {
         return vToken.vTokenToETH(vToken.mintFee() * nftCount);
-    }
-
-    function _ethRedeemFees(
-        INFTXVault vToken,
-        uint256[] memory nftIds
-    ) internal view returns (uint256) {
-        return
-            vToken.vTokenToETH(
-                (vToken.targetRedeemFee() * nftIds.length) +
-                    _getVTokenPremium(vToken, nftIds)
-            );
     }
 
     receive() external payable {}

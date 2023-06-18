@@ -11,7 +11,9 @@ import {TestBase} from "./TestBase.sol";
 contract NFTXRouterTests is TestBase {
     uint256 currentNFTPrice = 5 ether;
 
-    // addLiquidity
+    // ================================
+    // Add Liquidity
+    // ================================
 
     function testAddLiquidity_withNFTs() external {
         _mintPositionWithTwap(currentNFTPrice);
@@ -479,7 +481,9 @@ contract NFTXRouterTests is TestBase {
         );
     }
 
-    // sellNFTs
+    // ================================
+    // Sell NFTs
+    // ================================
 
     function testSellNFTs() external {
         _mintPositionWithTwap(currentNFTPrice);
@@ -519,11 +523,13 @@ contract NFTXRouterTests is TestBase {
         );
     }
 
-    // buyNFTs
+    // ================================
+    // Buy NFTs
+    // ================================
 
     function testBuyNFTs() external {
         _mintPositionWithTwap(currentNFTPrice);
-        (uint256[] memory allTokenIds, , , , ) = _mintPosition(100);
+        (uint256[] memory allTokenIds, , , , ) = _mintPosition(5);
 
         uint256 nftQty = 2;
 
@@ -577,7 +583,73 @@ contract NFTXRouterTests is TestBase {
         );
     }
 
-    // ================================ 
+    // 1155
+
+    function testBuyNFTs_1155() external {
+        _mintPositionWithTwap1155(currentNFTPrice);
+        (uint256[] memory allTokenIds, , , , ) = _mintPosition1155(5);
+
+        uint256 nftQty = 2;
+
+        // buy first 2 NFTs from this position/pool
+        uint256[] memory nftIds = new uint256[](nftQty);
+        nftIds[0] = allTokenIds[0];
+        nftIds[1] = allTokenIds[0];
+
+        // fetch price to pay for those NFTs
+        (uint256 vTokenPremium, , ) = vtoken1155.getVTokenPremium1155(
+            nftIds[0],
+            nftQty
+        );
+        uint256 vTokenFee = vtoken1155.targetRedeemFee() *
+            nftIds.length +
+            vTokenPremium;
+
+        uint256 ethRequired = nftxRouter.quoteBuyNFTs({
+            vtoken: address(vtoken1155),
+            nftsCount: nftIds.length,
+            fee: DEFAULT_FEE_TIER,
+            sqrtPriceLimitX96: 0
+        }) + vtoken1155.vTokenToETH(vTokenFee);
+
+        uint256 preNFTBalance = nft1155.balanceOf(
+            address(this),
+            allTokenIds[0]
+        );
+        uint256 preETHBalance = address(this).balance;
+
+        // execute swap
+        nftxRouter.buyNFTs{value: ethRequired}(
+            INFTXRouter.BuyNFTsParams({
+                vaultId: VAULT_ID_1155,
+                nftIds: nftIds,
+                deadline: block.timestamp,
+                fee: DEFAULT_FEE_TIER,
+                sqrtPriceLimitX96: 0
+            })
+        );
+
+        uint256 postNFTBalance = nft1155.balanceOf(
+            address(this),
+            allTokenIds[0]
+        );
+        uint256 postETHBalance = address(this).balance;
+
+        assertEq(
+            postNFTBalance - preNFTBalance,
+            nftQty,
+            "NFT balance didn't increase"
+        );
+        assertLt(postETHBalance, preETHBalance, "ETH balance didn't decrease");
+
+        console.log(
+            "ETH spent: %s for buying %s NFTs",
+            preETHBalance - postETHBalance,
+            nftQty
+        );
+    }
+
+    // ================================
     // Remove Liquidity
     // ================================
 
@@ -767,7 +839,10 @@ contract NFTXRouterTests is TestBase {
 
         uint128 liquidity = _getLiquidity(positionId);
 
-        uint256 preNFTBalance = nft1155.balanceOf(address(this), allTokenIds[0]) + nft1155.balanceOf(address(this), soldTokenIds[0]);
+        uint256 preNFTBalance = nft1155.balanceOf(
+            address(this),
+            allTokenIds[0]
+        ) + nft1155.balanceOf(address(this), soldTokenIds[0]);
         uint256 preVTokenBalance = vtoken1155.balanceOf(address(this));
         uint256 preETHBalance = address(this).balance;
 
@@ -784,7 +859,10 @@ contract NFTXRouterTests is TestBase {
             })
         );
 
-        uint256 postNFTBalance = nft1155.balanceOf(address(this), allTokenIds[0]) + nft1155.balanceOf(address(this), soldTokenIds[0]);
+        uint256 postNFTBalance = nft1155.balanceOf(
+            address(this),
+            allTokenIds[0]
+        ) + nft1155.balanceOf(address(this), soldTokenIds[0]);
         uint256 postVTokenBalance = vtoken1155.balanceOf(address(this));
         uint256 postETHBalance = address(this).balance;
 
