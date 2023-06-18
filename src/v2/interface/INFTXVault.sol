@@ -166,14 +166,17 @@ interface INFTXVault is IERC20Upgradeable {
         address to
     ) external payable returns (uint256 nftCount);
 
+    // TODO: add wethAmount option to other functions as well?
     function redeem(
         uint256[] calldata specificIds,
+        uint256 wethAmount, // if vault fees should be deducted in WETH instead of ETH (msg.value should be 0 here)
         bool forceFees // deduct fees even if on the exclude list
     ) external payable returns (uint256 ethFees);
 
     function redeemTo(
         uint256[] calldata specificIds,
         address to,
+        uint256 wethAmount, // if vault fees should be deducted in WETH instead of ETH (msg.value should be 0 here)
         bool forceFees // deduct fees even if on the exclude list
     ) external payable returns (uint256 ethFees);
 

@@ -287,7 +287,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             if (vTokenOwed < requiredVTokens) revert InsufficientVTokens();
 
             address vault = nftxVaultFactory.vault(vaultId);
-            INFTXVault(vault).redeemTo(nftIds, msg.sender, false);
+            INFTXVault(vault).redeemTo(nftIds, msg.sender, 0, false);
 
             // send vToken residue
             uint256 vTokenResidue = vTokenOwed - requiredVTokens;

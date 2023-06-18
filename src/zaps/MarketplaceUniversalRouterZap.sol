@@ -160,12 +160,15 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         // Transfer tokens from the message sender to the vault
         (address vault, ) = _transferSender721ToVault(vaultId, idsIn);
 
-        // Swap our tokens
+        // Swap our tokens. Forcing to deduct vault fees
         uint256[] memory emptyIds;
-        INFTXVault(vault).swapTo(idsIn, emptyIds, idsOut, to, false);
-
-        uint256 ethFees = _ethSwapFees(INFTXVault(vault), idsOut);
-        _distributeVaultFees(vaultId, ethFees, false);
+        uint256 ethFees = INFTXVault(vault).swapTo{value: msg.value}(
+            idsIn,
+            emptyIds,
+            idsOut,
+            to,
+            true
+        );
 
         // send back remaining ETH
         _sendETHResidue(to);
@@ -199,12 +202,16 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         _swapTokens(address(WETH), vault, executeCallData);
         uint256 wethSpent = iniWETHBal - WETH.balanceOf(address(this));
 
-        // redeem NFTs
-        INFTXVault(vault).redeemTo(idsOut, to, false);
+        uint256 wethLeft = msg.value - wethSpent;
 
-        // distribute vault fees with remaining weth
-        uint256 wethFees = _ethRedeemFees(INFTXVault(vault), idsOut);
-        _distributeVaultFees(vaultId, wethFees, true);
+        // redeem NFTs
+        TransferLib.maxApprove(address(WETH), vault, wethLeft);
+        uint256 wethFees = INFTXVault(vault).redeemTo(
+            idsOut,
+            to,
+            wethLeft,
+            true
+        );
 
         uint256 netRoyaltyAmount;
         if (deductRoyalty) {
@@ -327,15 +334,20 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         // swap some WETH to vTokens
         uint256 iniWETHBal = WETH.balanceOf(address(this));
         address vault = nftxVaultFactory.vault(params.vaultId);
+
         _swapTokens(address(WETH), vault, params.executeToVTokenCallData);
-        uint256 wethSpent = iniWETHBal - WETH.balanceOf(address(this));
+
+        uint256 wethLeft = WETH.balanceOf(address(this));
+        uint256 wethSpent = iniWETHBal - wethLeft;
 
         // redeem NFTs
-        INFTXVault(vault).redeemTo(params.idsOut, params.to, false);
-
-        // distribute vault fees with remaining weth
-        uint256 wethFees = _ethRedeemFees(INFTXVault(vault), params.idsOut);
-        _distributeVaultFees(params.vaultId, wethFees, true);
+        TransferLib.maxApprove(address(WETH), vault, wethLeft);
+        uint256 wethFees = INFTXVault(vault).redeemTo(
+            params.idsOut,
+            params.to,
+            wethLeft,
+            true
+        );
 
         uint256 netRoyaltyAmount;
         if (params.deductRoyalty) {

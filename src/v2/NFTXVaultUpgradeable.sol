@@ -144,17 +144,29 @@ contract NFTXVaultUpgradeable is
 
     function redeem(
         uint256[] calldata specificIds,
+        uint256 wethAmount,
         bool forceFees
     ) external payable virtual override returns (uint256 ethFees) {
-        return redeemTo(specificIds, msg.sender, forceFees);
+        return redeemTo(specificIds, msg.sender, wethAmount, forceFees);
     }
 
     function redeemTo(
         uint256[] memory specificIds,
         address to,
+        uint256 wethAmount,
         bool forceFees
     ) public payable virtual override nonReentrant returns (uint256 ethFees) {
         onlyOwnerIfPaused(2);
+
+        uint256 ethOrWethAmt;
+        if (wethAmount > 0) {
+            require(msg.value == 0);
+
+            ethOrWethAmt = wethAmount;
+        } else {
+            ethOrWethAmt = msg.value;
+        }
+
         uint256 count = specificIds.length;
 
         // We burn all from sender and mint to fee receiver to reduce costs.
@@ -171,7 +183,8 @@ contract NFTXVaultUpgradeable is
         ) = _withdrawNFTsTo(specificIds, to, forceFees);
 
         ethFees = _chargeAndDistributeFees(
-            msg.value,
+            ethOrWethAmt,
+            msg.value > 0,
             totalVaultFee,
             netVTokenPremium,
             vTokenPremiums,
@@ -179,7 +192,9 @@ contract NFTXVaultUpgradeable is
             forceFees
         );
 
-        _refundETH(msg.value, ethFees);
+        if (msg.value > 0) {
+            _refundETH(msg.value, ethFees);
+        }
 
         emit Redeemed(specificIds, to);
     }
@@ -226,6 +241,7 @@ contract NFTXVaultUpgradeable is
 
         ethFees = _chargeAndDistributeFees(
             msg.value,
+            true,
             totalVaultFee,
             netVTokenPremium,
             vTokenPremiums,
@@ -714,7 +730,8 @@ contract NFTXVaultUpgradeable is
     }
 
     function _chargeAndDistributeFees(
-        uint256 ethReceived,
+        uint256 ethOrWethReceived,
+        bool isETH,
         uint256 totalVaultFees,
         uint256 netVTokenPremium,
         uint256[] memory vTokenPremiums,
@@ -748,11 +765,16 @@ contract NFTXVaultUpgradeable is
             }
             ethAmount = vaultETHFees + netETHPremium;
 
-            if (ethReceived < ethAmount) revert InsufficientETHSent();
+            if (ethOrWethReceived < ethAmount) revert InsufficientETHSent();
 
             // TODO: save WETH as constant during deployment
             IWETH9 weth = IWETH9(address(feeDistributor.WETH()));
-            weth.deposit{value: ethAmount}();
+            if (isETH) {
+                weth.deposit{value: ethAmount}();
+            } else {
+                // pull only required weth from sender
+                weth.transferFrom(msg.sender, address(this), ethAmount);
+            }
 
             weth.transfer(
                 address(feeDistributor),
@@ -892,7 +914,7 @@ contract NFTXVaultUpgradeable is
         return
             ExponentialPremium.getPremium(
                 timestamp,
-                vaultFactory.premiumMax(),
+                vaultFactory.premiumMax(), // TODO: optimize this by only reading these values from storage once.
                 vaultFactory.premiumDuration()
             );
     }

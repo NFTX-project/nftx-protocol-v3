@@ -118,7 +118,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function removeLiquidity(
         RemoveLiquidityParams calldata params
     ) external payable override {
-        // remove liquidity to get vTokens and ETH
+        // remove liquidity to get vTokens and WETH
         positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
                 tokenId: params.positionId,
@@ -146,27 +146,26 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             ? (amount0, amount1)
             : (amount1, amount0);
 
-        uint256 ethAmt;
-
         // No NFTs to redeem, directly withdraw vTokens
         if (params.nftIds.length == 0) {
             vToken.transfer(msg.sender, vTokenAmt);
         } else {
-            ethAmt = wethAmt + msg.value;
-
-            if (wethAmt > 0) {
-                IWETH9(WETH).withdraw(wethAmt);
-                wethAmt = 0;
+            // if withdrawn WETH is insufficient to pay for vault fees, user sends ETH (can be excess, as refunded back) along with the transaction
+            if (msg.value > 0) {
+                IWETH9(WETH).deposit{value: msg.value}();
+                wethAmt += msg.value;
             }
 
             // burn vTokens to provided tokenIds array. Forcing to deduct vault fees
-            // if withdrawn WETH is insufficient to pay for vault fees, user sends ETH (can be excess, as refunded back) along with the transaction
-            uint256 ethFees = vToken.redeemTo{value: ethAmt}(
+            TransferLib.maxApprove(WETH, address(vToken), wethAmt);
+            uint256 wethFees = vToken.redeemTo(
                 params.nftIds,
                 msg.sender,
+                wethAmt,
                 true
             );
-            ethAmt -= ethFees;
+            wethAmt -= wethFees;
+
             uint256 vTokenBurned = params.nftIds.length * 1 ether;
 
             // if more vTokens collected than burned
@@ -177,20 +176,15 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
         }
         // convert remaining WETH to ETH & send to user
-        if (wethAmt > 0) {
-            IWETH9(WETH).withdraw(wethAmt);
-            ethAmt += wethAmt;
-        }
-        if (ethAmt > 0) {
-            (bool success, ) = msg.sender.call{value: ethAmt}("");
-            if (!success) revert UnableToSendETH();
-        }
+        IWETH9(WETH).withdraw(wethAmt);
+        (bool success, ) = msg.sender.call{value: wethAmt}("");
+        if (!success) revert UnableToSendETH();
 
         emit RemoveLiquidity(
             params.positionId,
             params.vaultId,
             vTokenAmt,
-            ethAmt
+            wethAmt
         );
     }
 
@@ -263,7 +257,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
         uint256 vTokenAmt = params.nftIds.length * 1 ether;
 
-        uint256 ethSpent = router.exactOutputSingle{value: msg.value}(
+        IWETH9(WETH).deposit{value: msg.value}();
+        TransferLib.maxApprove(WETH, address(router), msg.value);
+        uint256 wethSpent = router.exactOutputSingle(
             ISwapRouter.ExactOutputSingleParams({
                 tokenIn: WETH,
                 tokenOut: address(vToken),
@@ -275,20 +271,27 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 sqrtPriceLimitX96: params.sqrtPriceLimitX96
             })
         );
-        // refund extra ETH
-        router.refundETH();
 
         // unwrap vTokens to tokenIds specified, and send to sender. Forcing to deduct vault fees
-        uint256 ethFees = vToken.redeemTo{value: msg.value - ethSpent}(
+        uint256 wethLeft = msg.value - wethSpent;
+        TransferLib.maxApprove(WETH, address(vToken), wethLeft);
+        uint256 wethFees = vToken.redeemTo(
             params.nftIds,
             msg.sender,
+            wethLeft,
             true
         );
 
-        // refund ETH
-        router.refundETH(msg.sender);
+        wethLeft -= wethFees;
+        // refund extra ETH
+        if (wethLeft > 0) {
+            IWETH9(WETH).withdraw(wethLeft);
 
-        emit BuyNFTs(params.nftIds.length, ethSpent + ethFees);
+            (bool success, ) = msg.sender.call{value: wethLeft}("");
+            if (!success) revert UnableToSendETH();
+        }
+
+        emit BuyNFTs(params.nftIds.length, wethSpent + wethFees);
     }
 
     // =============================================================
