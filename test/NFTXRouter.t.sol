@@ -97,6 +97,8 @@ contract NFTXRouterTests is TestBase {
                     vaultId: VAULT_ID,
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
+                    nftAmounts: emptyIds,
+                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
@@ -178,6 +180,8 @@ contract NFTXRouterTests is TestBase {
                     vaultId: VAULT_ID,
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
+                    nftAmounts: emptyIds,
+                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
@@ -268,6 +272,8 @@ contract NFTXRouterTests is TestBase {
                     vaultId: VAULT_ID,
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
+                    nftAmounts: emptyIds,
+                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
@@ -356,6 +362,8 @@ contract NFTXRouterTests is TestBase {
                     vaultId: VAULT_ID,
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
+                    nftAmounts: emptyIds,
+                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
@@ -435,7 +443,7 @@ contract NFTXRouterTests is TestBase {
 
     function testBuyNFTs() external {
         _mintPositionWithTwap(currentNFTPrice);
-        (uint256[] memory allTokenIds, , , , ) = _mintPosition(100);
+        (uint256[] memory allTokenIds, , , , ) = _mintPosition(10);
 
         uint256 nftQty = 2;
 

@@ -167,25 +167,29 @@ interface INFTXVault is IERC20Upgradeable {
     ) external payable returns (uint256 nftCount);
 
     function redeem(
-        uint256[] calldata specificIds
+        uint256[] calldata specificIds,
+        bool forceFees // deduct fees even if on the exclude list
     ) external payable returns (uint256 ethFees);
 
     function redeemTo(
         uint256[] calldata specificIds,
-        address to
+        address to,
+        bool forceFees // deduct fees even if on the exclude list
     ) external payable returns (uint256 ethFees);
 
     function swap(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
-        uint256[] calldata specificIds
+        uint256[] calldata specificIds,
+        bool forceFees // deduct fees even if on the exclude list
     ) external payable returns (uint256 ethFees);
 
     function swapTo(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds,
-        address to
+        address to,
+        bool forceFees // deduct fees even if on the exclude list
     ) external payable returns (uint256 ethFees);
 
     // =============================================================

@@ -143,14 +143,16 @@ contract NFTXVaultUpgradeable is
     }
 
     function redeem(
-        uint256[] calldata specificIds
+        uint256[] calldata specificIds,
+        bool forceFees
     ) external payable virtual override returns (uint256 ethFees) {
-        return redeemTo(specificIds, msg.sender);
+        return redeemTo(specificIds, msg.sender, forceFees);
     }
 
     function redeemTo(
         uint256[] memory specificIds,
-        address to
+        address to,
+        bool forceFees
     ) public payable virtual override nonReentrant returns (uint256 ethFees) {
         onlyOwnerIfPaused(2);
         uint256 count = specificIds.length;
@@ -166,14 +168,15 @@ contract NFTXVaultUpgradeable is
             uint256 netVTokenPremium,
             uint256[] memory vTokenPremiums,
             address[] memory depositors
-        ) = _withdrawNFTsTo(specificIds, to);
+        ) = _withdrawNFTsTo(specificIds, to, forceFees);
 
         ethFees = _chargeAndDistributeFees(
             msg.value,
             totalVaultFee,
             netVTokenPremium,
             vTokenPremiums,
-            depositors
+            depositors,
+            forceFees
         );
 
         _refundETH(msg.value, ethFees);
@@ -184,16 +187,18 @@ contract NFTXVaultUpgradeable is
     function swap(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
-        uint256[] calldata specificIds
+        uint256[] calldata specificIds,
+        bool forceFees // deduct fees even if on the exclude list
     ) external payable virtual override returns (uint256 ethFees) {
-        return swapTo(tokenIds, amounts, specificIds, msg.sender);
+        return swapTo(tokenIds, amounts, specificIds, msg.sender, forceFees);
     }
 
     function swapTo(
         uint256[] memory tokenIds,
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         uint256[] memory specificIds,
-        address to
+        address to,
+        bool forceFees // deduct fees even if on the exclude list
     ) public payable virtual override nonReentrant returns (uint256 ethFees) {
         onlyOwnerIfPaused(3);
         uint256 count;
@@ -217,14 +222,15 @@ contract NFTXVaultUpgradeable is
             uint256 netVTokenPremium,
             uint256[] memory vTokenPremiums,
             address[] memory depositors
-        ) = _withdrawNFTsTo(specificIds, to);
+        ) = _withdrawNFTsTo(specificIds, to, forceFees);
 
         ethFees = _chargeAndDistributeFees(
             msg.value,
             totalVaultFee,
             netVTokenPremium,
             vTokenPremiums,
-            depositors
+            depositors,
+            forceFees
         );
 
         _receiveNFTs(tokenIds, amounts);
@@ -602,7 +608,8 @@ contract NFTXVaultUpgradeable is
 
     function _withdrawNFTsTo(
         uint256[] memory specificIds,
-        address to
+        address to,
+        bool forceFees
     )
         internal
         virtual
@@ -649,7 +656,7 @@ contract NFTXVaultUpgradeable is
                     pointerIndex1155[tokenId] = _pointerIndex1155 + 1;
                 }
 
-                if (!vaultFactory.excludedFromFees(msg.sender)) {
+                if (forceFees || !vaultFactory.excludedFromFees(msg.sender)) {
                     uint256 vTokenPremium = _getVTokenPremium(
                         depositInfo.timestamp
                     );
@@ -659,7 +666,7 @@ contract NFTXVaultUpgradeable is
                     depositors[i] = depositInfo.depositor;
                 }
             } else {
-                if (!vaultFactory.excludedFromFees(msg.sender)) {
+                if (forceFees || !vaultFactory.excludedFromFees(msg.sender)) {
                     uint256 vTokenPremium;
                     address depositor;
                     (vTokenPremium, depositor) = getVTokenPremium721(tokenId);
@@ -711,12 +718,13 @@ contract NFTXVaultUpgradeable is
         uint256 totalVaultFees,
         uint256 netVTokenPremium,
         uint256[] memory vTokenPremiums,
-        address[] memory depositors
+        address[] memory depositors,
+        bool forceFees
     ) internal returns (uint256 ethAmount) {
         // cache
         INFTXVaultFactory _vaultFactory = vaultFactory;
 
-        if (_vaultFactory.excludedFromFees(msg.sender)) {
+        if (!forceFees && _vaultFactory.excludedFromFees(msg.sender)) {
             return 0;
         }
 

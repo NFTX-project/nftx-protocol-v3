@@ -69,6 +69,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     uint256 fromPrivateKey = 0x12341234;
     address from = vm.addr(fromPrivateKey);
 
+    uint256[] emptyIds;
+
     function setUp() external {
         // to prevent underflow during calculations involving block.timestamp
         vm.warp(100 days);
@@ -290,6 +292,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
                 vaultId: VAULT_ID,
                 vTokensAmount: 0,
                 nftIds: tokenIds,
+                nftAmounts: emptyIds,
+                is1155: false,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
                 fee: fee,
@@ -314,8 +318,6 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         vm.warp(block.timestamp + vaultFactory.twapInterval());
     }
 
-    uint256[] emptyIds;
-
     function _mintPosition1155(
         uint256 qty,
         uint256 currentNFTPrice,
@@ -332,8 +334,13 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             uint256 ethUsed
         )
     {
-        (uint256 mintedVTokens, ) = _mintVTokenFor1155(qty);
-        vtoken1155.approve(address(nftxRouter), mintedVTokens);
+        tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        nft1155.setApprovalForAll(address(nftxRouter), true);
 
         uint160 currentSqrtP;
         uint256 tickDistance = _getTickDistance(fee);
@@ -369,8 +376,10 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         positionId = nftxRouter.addLiquidity{value: qty * 100 ether}(
             INFTXRouter.AddLiquidityParams({
                 vaultId: VAULT_ID_1155,
-                vTokensAmount: mintedVTokens,
-                nftIds: emptyIds,
+                vTokensAmount: 0,
+                nftIds: tokenIds,
+                nftAmounts: amounts,
+                is1155: true,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
                 fee: fee,
@@ -412,6 +421,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             INFTXRouter.SellNFTsParams({
                 vaultId: VAULT_ID,
                 nftIds: tokenIds,
+                nftAmounts: emptyIds,
+                is1155: false,
                 deadline: block.timestamp,
                 fee: DEFAULT_FEE_TIER,
                 amountOutMinimum: 1,
