@@ -58,6 +58,7 @@ contract NFTXVaultUpgradeable is
     bool private UNUSED_FEE6;
 
     EnumerableSetUpgradeable.UintSet holdings;
+    // tokenId => qty
     mapping(uint256 => uint256) quantity1155;
 
     bool private UNUSED_FEE7;
@@ -65,6 +66,22 @@ contract NFTXVaultUpgradeable is
 
     // tokenId => info
     mapping(uint256 => TokenDepositInfo) public override tokenDepositInfo;
+
+    /**
+     * For ERC1155 deposits, per TokenId:
+     *
+     *                          pointerIndex1155
+     *                                |
+     *                                V
+     * [{qty: 0, depositor: A}, {qty: 5, depositor: B}, {qty: 10, depositor: C}, ...]
+     *
+     * New deposits are pushed to the end of array, and the oldest remaining deposit is used while withdrawing, hence following FIFO.
+     */
+
+    // tokenId => info[]
+    mapping(uint256 => DepositInfo1155[]) public override depositInfo1155;
+    // tokenId => pointerIndex
+    mapping(uint256 => uint256) public override pointerIndex1155;
 
     // =============================================================
     //                           INIT
@@ -126,16 +143,30 @@ contract NFTXVaultUpgradeable is
     }
 
     function redeem(
-        uint256[] calldata specificIds
+        uint256[] calldata specificIds,
+        uint256 wethAmount,
+        bool forceFees
     ) external payable virtual override returns (uint256 ethFees) {
-        return redeemTo(specificIds, msg.sender);
+        return redeemTo(specificIds, msg.sender, wethAmount, forceFees);
     }
 
     function redeemTo(
         uint256[] memory specificIds,
-        address to
+        address to,
+        uint256 wethAmount,
+        bool forceFees
     ) public payable virtual override nonReentrant returns (uint256 ethFees) {
         onlyOwnerIfPaused(2);
+
+        uint256 ethOrWethAmt;
+        if (wethAmount > 0) {
+            require(msg.value == 0);
+
+            ethOrWethAmt = wethAmount;
+        } else {
+            ethOrWethAmt = msg.value;
+        }
+
         uint256 count = specificIds.length;
 
         // We burn all from sender and mint to fee receiver to reduce costs.
@@ -149,17 +180,21 @@ contract NFTXVaultUpgradeable is
             uint256 netVTokenPremium,
             uint256[] memory vTokenPremiums,
             address[] memory depositors
-        ) = _withdrawNFTsTo(specificIds, to);
+        ) = _withdrawNFTsTo(specificIds, to, forceFees);
 
         ethFees = _chargeAndDistributeFees(
-            msg.value,
+            ethOrWethAmt,
+            msg.value > 0,
             totalVaultFee,
             netVTokenPremium,
             vTokenPremiums,
-            depositors
+            depositors,
+            forceFees
         );
 
-        _refundETH(msg.value, ethFees);
+        if (msg.value > 0) {
+            _refundETH(msg.value, ethFees);
+        }
 
         emit Redeemed(specificIds, to);
     }
@@ -167,16 +202,18 @@ contract NFTXVaultUpgradeable is
     function swap(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
-        uint256[] calldata specificIds
+        uint256[] calldata specificIds,
+        bool forceFees
     ) external payable virtual override returns (uint256 ethFees) {
-        return swapTo(tokenIds, amounts, specificIds, msg.sender);
+        return swapTo(tokenIds, amounts, specificIds, msg.sender, forceFees);
     }
 
     function swapTo(
         uint256[] memory tokenIds,
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         uint256[] memory specificIds,
-        address to
+        address to,
+        bool forceFees
     ) public payable virtual override nonReentrant returns (uint256 ethFees) {
         onlyOwnerIfPaused(3);
         uint256 count;
@@ -200,14 +237,16 @@ contract NFTXVaultUpgradeable is
             uint256 netVTokenPremium,
             uint256[] memory vTokenPremiums,
             address[] memory depositors
-        ) = _withdrawNFTsTo(specificIds, to);
+        ) = _withdrawNFTsTo(specificIds, to, forceFees);
 
         ethFees = _chargeAndDistributeFees(
             msg.value,
+            true,
             totalVaultFee,
             netVTokenPremium,
             vTokenPremiums,
-            depositors
+            depositors,
+            forceFees
         );
 
         _receiveNFTs(tokenIds, amounts);
@@ -428,23 +467,89 @@ contract NFTXVaultUpgradeable is
         return "v1.0.6";
     }
 
-    function getVTokenPremium(
+    function getVTokenPremium721(
         uint256 tokenId
     ) public view override returns (uint256 premium, address depositor) {
         TokenDepositInfo memory depositInfo = tokenDepositInfo[tokenId];
         depositor = depositInfo.depositor;
 
-        premium = ExponentialPremium.getPremium(
-            depositInfo.timestamp,
-            vaultFactory.premiumMax(),
-            vaultFactory.premiumDuration()
-        );
+        premium = _getVTokenPremium(depositInfo.timestamp);
+    }
+
+    function getVTokenPremium1155(
+        uint256 tokenId,
+        uint256 amount
+    )
+        external
+        view
+        override
+        returns (
+            uint256 netPremium,
+            uint256[] memory premiums,
+            address[] memory depositors
+        )
+    {
+        require(amount > 0);
+
+        // max possible array lengths
+        premiums = new uint256[](amount);
+        depositors = new address[](amount);
+
+        uint256 _pointerIndex1155 = pointerIndex1155[tokenId];
+
+        uint256 i = _pointerIndex1155;
+        while (true) {
+            DepositInfo1155 memory depositInfo = depositInfo1155[tokenId][i];
+
+            if (depositInfo.qty > amount) {
+                uint256 vTokenPremium = _getVTokenPremium(
+                    depositInfo.timestamp
+                ) * amount;
+                netPremium += vTokenPremium;
+
+                premiums[i] = vTokenPremium;
+                depositors[i] = depositInfo.depositor;
+
+                // end loop
+                break;
+            } else {
+                amount -= depositInfo.qty;
+
+                uint256 vTokenPremium = _getVTokenPremium(
+                    depositInfo.timestamp
+                ) * depositInfo.qty;
+                netPremium += vTokenPremium;
+
+                premiums[i] = vTokenPremium;
+                depositors[i] = depositInfo.depositor;
+
+                unchecked {
+                    ++i;
+                }
+            }
+        }
+
+        uint256 finalArrayLength = i - _pointerIndex1155 + 1;
+
+        if (finalArrayLength < premiums.length) {
+            // change array length
+            assembly {
+                mstore(premiums, finalArrayLength)
+                mstore(depositors, finalArrayLength)
+            }
+        }
     }
 
     function vTokenToETH(
         uint256 vTokenAmount
     ) external view override returns (uint256 ethAmount) {
         (ethAmount, ) = _vTokenToETH(vaultFactory, vTokenAmount);
+    }
+
+    function depositInfo1155Length(
+        uint256 tokenId
+    ) external view override returns (uint256) {
+        return depositInfo1155[tokenId].length;
     }
 
     // =============================================================
@@ -487,11 +592,13 @@ contract NFTXVaultUpgradeable is
                 quantity1155[tokenId] += amount;
                 count += amount;
 
-                // TODO: calculate premium for ERC1155
-                // tokenDepositInfo[tokenId] = TokenDepositInfo({
-                //     depositor: msg.sender,
-                //     depositedAt: block.timestamp
-                // });
+                depositInfo1155[tokenId].push(
+                    DepositInfo1155({
+                        qty: amount,
+                        depositor: msg.sender,
+                        timestamp: uint48(block.timestamp)
+                    })
+                );
             }
             return count;
         } else {
@@ -517,7 +624,8 @@ contract NFTXVaultUpgradeable is
 
     function _withdrawNFTsTo(
         uint256[] memory specificIds,
-        address to
+        address to,
+        bool forceFees
     )
         internal
         virtual
@@ -550,15 +658,39 @@ contract NFTXVaultUpgradeable is
                     1,
                     ""
                 );
-                // TODO: vTokenPremium for ERC1155
-            } else {
-                uint256 vTokenPremium;
-                address depositor;
-                (vTokenPremium, depositor) = getVTokenPremium(tokenId);
-                netVTokenPremium += vTokenPremium;
 
-                vTokenPremiums[i] = vTokenPremium;
-                depositors[i] = depositor;
+                uint256 _pointerIndex1155 = pointerIndex1155[tokenId];
+                DepositInfo1155 storage depositInfo = depositInfo1155[tokenId][
+                    _pointerIndex1155
+                ];
+                uint256 _qty = depositInfo.qty;
+
+                depositInfo.qty = _qty - 1;
+
+                // if it was the last nft from this deposit
+                if (_qty == 1) {
+                    pointerIndex1155[tokenId] = _pointerIndex1155 + 1;
+                }
+
+                if (forceFees || !vaultFactory.excludedFromFees(msg.sender)) {
+                    uint256 vTokenPremium = _getVTokenPremium(
+                        depositInfo.timestamp
+                    );
+                    netVTokenPremium += vTokenPremium;
+
+                    vTokenPremiums[i] = vTokenPremium;
+                    depositors[i] = depositInfo.depositor;
+                }
+            } else {
+                if (forceFees || !vaultFactory.excludedFromFees(msg.sender)) {
+                    uint256 vTokenPremium;
+                    address depositor;
+                    (vTokenPremium, depositor) = getVTokenPremium721(tokenId);
+                    netVTokenPremium += vTokenPremium;
+
+                    vTokenPremiums[i] = vTokenPremium;
+                    depositors[i] = depositor;
+                }
 
                 holdings.remove(tokenId);
                 transferERC721(_assetAddress, to, tokenId);
@@ -598,16 +730,18 @@ contract NFTXVaultUpgradeable is
     }
 
     function _chargeAndDistributeFees(
-        uint256 ethReceived,
+        uint256 ethOrWethReceived,
+        bool isETH,
         uint256 totalVaultFees,
         uint256 netVTokenPremium,
         uint256[] memory vTokenPremiums,
-        address[] memory depositors
+        address[] memory depositors,
+        bool forceFees
     ) internal returns (uint256 ethAmount) {
         // cache
         INFTXVaultFactory _vaultFactory = vaultFactory;
 
-        if (_vaultFactory.excludedFromFees(msg.sender)) {
+        if (!forceFees && _vaultFactory.excludedFromFees(msg.sender)) {
             return 0;
         }
 
@@ -631,11 +765,16 @@ contract NFTXVaultUpgradeable is
             }
             ethAmount = vaultETHFees + netETHPremium;
 
-            if (ethReceived < ethAmount) revert InsufficientETHSent();
+            if (ethOrWethReceived < ethAmount) revert InsufficientETHSent();
 
             // TODO: save WETH as constant during deployment
             IWETH9 weth = IWETH9(address(feeDistributor.WETH()));
-            weth.deposit{value: ethAmount}();
+            if (isETH) {
+                weth.deposit{value: ethAmount}();
+            } else {
+                // pull only required weth from sender
+                weth.transferFrom(msg.sender, address(this), ethAmount);
+            }
 
             weth.transfer(
                 address(feeDistributor),
@@ -767,6 +906,17 @@ contract NFTXVaultUpgradeable is
                 priceX96
             );
         }
+    }
+
+    function _getVTokenPremium(
+        uint48 timestamp
+    ) internal view returns (uint256) {
+        return
+            ExponentialPremium.getPremium(
+                timestamp,
+                vaultFactory.premiumMax(), // TODO: optimize this by only reading these values from storage once.
+                vaultFactory.premiumDuration()
+            );
     }
 
     /// @dev Must satisfy ethReceived >= ethFees

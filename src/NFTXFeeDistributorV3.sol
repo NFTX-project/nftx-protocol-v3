@@ -4,6 +4,7 @@ pragma solidity =0.8.15;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {TransferLib} from "@src/lib/TransferLib.sol";
 
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
@@ -204,14 +205,16 @@ contract NFTXFeeDistributorV3 is
         INFTXVault vault
     ) internal returns (bool tokenSent) {
         if (feeReceiver.receiverType == ReceiverType.INVENTORY) {
-            _maxWethApprove(feeReceiver.receiver, wethAmountToSend);
+            TransferLib.maxApprove(
+                address(WETH),
+                feeReceiver.receiver,
+                wethAmountToSend
+            );
 
-            // TODO: update this comment for Inventory Staking V3
-            // Inventory Staking might not pull tokens in case where vaultGlobal[vaultId].totalVTokenShares is zero
-            bool pulledTokens = inventoryStaking.receiveRewards(
+            // Inventory Staking might not pull tokens in case where `vaultGlobal[vaultId].totalVTokenShares` is zero
+            bool pulledTokens = inventoryStaking.receiveWethRewards(
                 vaultId,
-                wethAmountToSend,
-                true
+                wethAmountToSend
             );
 
             tokenSent = pulledTokens;
@@ -237,18 +240,6 @@ contract NFTXFeeDistributorV3 is
         } else {
             WETH.transfer(feeReceiver.receiver, wethAmountToSend);
             tokenSent = true;
-        }
-    }
-
-    /**
-     * @dev Setting max allowance to save on gas on subsequent calls.
-     * As this contract doesn't hold funds, so this is safe. Also the spender address is only provided by owner via addReceiver.
-     */
-    function _maxWethApprove(address spender, uint256 amount) internal {
-        uint256 allowance = WETH.allowance(address(this), spender);
-
-        if (amount > allowance) {
-            WETH.approve(spender, type(uint256).max);
         }
     }
 }

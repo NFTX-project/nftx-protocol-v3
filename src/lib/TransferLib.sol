@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 library TransferLib {
+    using SafeERC20 for IERC20;
+
     address internal constant CRYPTO_PUNKS =
         0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
 
@@ -21,6 +24,19 @@ library TransferLib {
             unchecked {
                 ++i;
             }
+        }
+    }
+
+    /// @dev Setting max allowance to save gas on subsequent calls.
+    function maxApprove(
+        address token,
+        address spender,
+        uint256 amount
+    ) internal {
+        uint256 allowance = IERC20(token).allowance(address(this), spender);
+
+        if (amount > allowance) {
+            IERC20(token).safeApprove(spender, type(uint256).max);
         }
     }
 

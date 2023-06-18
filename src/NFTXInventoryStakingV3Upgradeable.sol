@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
-import {ERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721PermitUpgradeable, ERC721Upgradeable} from "@src/util/ERC721PermitUpgradeable.sol";
+import {ERC1155HolderUpgradeable, ERC1155ReceiverUpgradeable, IERC165Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 import {PausableUpgradeable} from "./util/PausableUpgradeable.sol";
@@ -31,7 +33,8 @@ import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer
 
 contract NFTXInventoryStakingV3Upgradeable is
     INFTXInventoryStakingV3,
-    ERC721Upgradeable,
+    ERC721PermitUpgradeable,
+    ERC1155HolderUpgradeable,
     PausableUpgradeable
 {
     // =============================================================
@@ -81,7 +84,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 earlyWithdrawPenaltyInWei_,
         ITimelockExcludeList timelockExcludeList_
     ) external override initializer {
-        __ERC721_init("NFTX Inventory Staking", "xNFT");
+        __ERC721PermitUpgradeable_init("NFTX Inventory Staking", "xNFT", "1");
         __Pausable_init();
 
         if (timelock_ > 14 days) revert TimelockTooLong();
@@ -104,7 +107,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         address vToken = nftxVaultFactory.vault(vaultId);
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
 
-        uint256 preVTokenBalance = _vaultGlobal.netVTokenBalance; // TODO: use balanceOf() instead of netVTokenBalance to account for tokens sent directly, like by MarketplaceZap
+        uint256 preVTokenBalance = IERC20(vToken).balanceOf(address(this));
         IERC20(vToken).transferFrom(msg.sender, address(this), amount);
 
         return
@@ -126,7 +129,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         address vToken = nftxVaultFactory.vault(vaultId);
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
 
-        uint256 preVTokenBalance = _vaultGlobal.netVTokenBalance; // TODO: use balanceOf() instead of netVTokenBalance to account for tokens sent directly, like by MarketplaceZap
+        uint256 preVTokenBalance = IERC20(vToken).balanceOf(address(this));
 
         if (encodedPermit2.length > 0) {
             (
@@ -161,31 +164,42 @@ contract NFTXInventoryStakingV3Upgradeable is
     function depositWithNFT(
         uint256 vaultId,
         uint256[] calldata tokenIds,
+        uint256[] calldata amounts,
         address recipient
     ) external returns (uint256 positionId) {
         onlyOwnerIfPaused(1);
 
         address vToken = nftxVaultFactory.vault(vaultId);
+        uint256 preVTokenBalance = IERC20(vToken).balanceOf(address(this));
+
         uint256 amount;
         {
             address assetAddress = INFTXVault(vToken).assetAddress();
 
-            // transfer tokenIds from user directly to the vault
-            TransferLib.transferFromERC721(
-                assetAddress,
-                address(vToken),
-                tokenIds
-            );
+            if (amounts.length == 0) {
+                // tranfer NFTs from user to the vault
+                TransferLib.transferFromERC721(
+                    assetAddress,
+                    address(vToken),
+                    tokenIds
+                );
+            } else {
+                IERC1155(assetAddress).safeBatchTransferFrom(
+                    msg.sender,
+                    address(this),
+                    tokenIds,
+                    amounts,
+                    ""
+                );
+
+                IERC1155(assetAddress).setApprovalForAll(address(vToken), true);
+            }
 
             // mint vTokens
-            uint256[] memory emptyIds;
-            amount = INFTXVault(vToken).mint(tokenIds, emptyIds) * 1 ether;
+            amount = INFTXVault(vToken).mint(tokenIds, amounts) * 1 ether;
         }
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
-
-        uint256 preVTokenBalance = _vaultGlobal.netVTokenBalance;
-        _vaultGlobal.netVTokenBalance = preVTokenBalance + amount;
 
         _mint(recipient, (positionId = _nextId++));
 
@@ -197,14 +211,14 @@ contract NFTXInventoryStakingV3Upgradeable is
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
+        // TODO: add check that vTokenShares is non-zero
+        // TODO: add front running protection for initial staker
         _vaultGlobal.totalVTokenShares += vTokenShares;
 
         positions[positionId] = Position({
             nonce: 0,
             vaultId: vaultId,
-            timelockedUntil: timelockExcludeList.isExcluded(msg.sender, vaultId)
-                ? 0
-                : block.timestamp + timelock,
+            timelockedUntil: _getTimelockedUntil(vaultId),
             vTokenShareBalance: vTokenShares,
             wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
                 .globalWethFeesPerVTokenShareX128,
@@ -230,9 +244,10 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 vaultId = position.vaultId;
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
+        address vToken = nftxVaultFactory.vault(vaultId);
         // withdraw vTokens corresponding to the vTokenShares requested
-        uint256 vTokenOwed = (_vaultGlobal.netVTokenBalance * vTokenShares) /
-            _vaultGlobal.totalVTokenShares;
+        uint256 vTokenOwed = (IERC20(vToken).balanceOf(address(this)) *
+            vTokenShares) / _vaultGlobal.totalVTokenShares;
         // withdraw all the weth fees accrued
         uint256 wethOwed = _calcWethOwed(
             _vaultGlobal.globalWethFeesPerVTokenShareX128,
@@ -258,7 +273,6 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         // in case of penalty, more shares are burned than the corresponding vToken balance
         // resulting in an increase of `pricePerShareVToken`, hence the penalty collected is distributed amongst other stakers
-        _vaultGlobal.netVTokenBalance -= vTokenOwed;
         _vaultGlobal.totalVTokenShares -= vTokenShares;
         position.vTokenShareBalance -= vTokenShares;
 
@@ -273,7 +287,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             if (vTokenOwed < requiredVTokens) revert InsufficientVTokens();
 
             address vault = nftxVaultFactory.vault(vaultId);
-            INFTXVault(vault).redeemTo(nftIds, msg.sender);
+            INFTXVault(vault).redeemTo(nftIds, msg.sender, 0, false);
 
             // send vToken residue
             uint256 vTokenResidue = vTokenOwed - requiredVTokens;
@@ -376,10 +390,10 @@ contract NFTXInventoryStakingV3Upgradeable is
     }
 
     /// @dev Can only be called by feeDistributor, after it sends the reward tokens to this contract
-    function receiveRewards(
+    /// vToken rewards can be directly transferred to this contract without calling this function
+    function receiveWethRewards(
         uint256 vaultId,
-        uint256 amount,
-        bool isRewardWeth
+        uint256 wethAmount
     ) external override returns (bool rewardsDistributed) {
         require(msg.sender == nftxVaultFactory.feeDistributor());
 
@@ -389,19 +403,12 @@ contract NFTXInventoryStakingV3Upgradeable is
         }
         rewardsDistributed = true;
 
-        if (isRewardWeth) {
-            WETH.transferFrom(msg.sender, address(this), amount);
-            _vaultGlobal.globalWethFeesPerVTokenShareX128 += FullMath.mulDiv(
-                amount,
-                FixedPoint128.Q128,
-                _vaultGlobal.totalVTokenShares
-            );
-        } else {
-            // TODO: if reward is vToken, and we removed netVTokenBalance then the logic below can be removed and the sender can directly transfer vTokens without calling any functions here
-            address vToken = nftxVaultFactory.vault(vaultId);
-            IERC20(vToken).transferFrom(msg.sender, address(this), amount);
-            _vaultGlobal.netVTokenBalance += amount;
-        }
+        WETH.transferFrom(msg.sender, address(this), wethAmount);
+        _vaultGlobal.globalWethFeesPerVTokenShareX128 += FullMath.mulDiv(
+            wethAmount,
+            FixedPoint128.Q128,
+            _vaultGlobal.totalVTokenShares
+        );
     }
 
     // =============================================================
@@ -433,9 +440,28 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vaultId
     ) external view returns (uint256) {
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
+        address vToken = nftxVaultFactory.vault(vaultId);
+
         return
-            (_vaultGlobal.netVTokenBalance * 1 ether) /
+            (IERC20(vToken).balanceOf(address(this)) * 1 ether) /
             _vaultGlobal.totalVTokenShares;
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        pure
+        override(
+            ERC1155ReceiverUpgradeable,
+            ERC721Upgradeable,
+            IERC165Upgradeable
+        )
+        returns (bool)
+    {
+        return
+            interfaceId == type(ERC721PermitUpgradeable).interfaceId ||
+            interfaceId == type(ERC1155ReceiverUpgradeable).interfaceId;
     }
 
     // TODO: add tokenURI for these xNFTs
@@ -453,8 +479,6 @@ contract NFTXInventoryStakingV3Upgradeable is
     ) internal returns (uint256 positionId) {
         onlyOwnerIfPaused(0);
 
-        _vaultGlobal.netVTokenBalance = preVTokenBalance + amount;
-
         _mint(recipient, (positionId = _nextId++));
 
         uint256 vTokenShares;
@@ -465,6 +489,8 @@ contract NFTXInventoryStakingV3Upgradeable is
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
+        // TODO: add check that vTokenShares is non-zero
+        // TODO: add front running protection for initial staker
         _vaultGlobal.totalVTokenShares += vTokenShares;
 
         positions[positionId] = Position({
@@ -480,6 +506,15 @@ contract NFTXInventoryStakingV3Upgradeable is
         emit Deposit(vaultId, positionId, amount);
     }
 
+    function _getTimelockedUntil(
+        uint256 vaultId
+    ) internal view returns (uint256) {
+        return
+            timelockExcludeList.isExcluded(msg.sender, vaultId)
+                ? 0
+                : block.timestamp + timelock;
+    }
+
     function _calcWethOwed(
         uint256 globalWethFeesPerVTokenShareX128,
         uint256 positionWethFeesPerVTokenShareSnapshotX128,
@@ -491,5 +526,11 @@ contract NFTXInventoryStakingV3Upgradeable is
             positionVTokenShareBalance,
             FixedPoint128.Q128
         );
+    }
+
+    function _getAndIncrementNonce(
+        uint256 tokenId
+    ) internal override returns (uint256) {
+        return uint256(positions[tokenId].nonce++);
     }
 }

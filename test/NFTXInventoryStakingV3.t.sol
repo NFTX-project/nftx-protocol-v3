@@ -125,7 +125,6 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
     function test_deposit_Success_WhenPreTotalSharesZero() external {
         (
-            ,
             uint256 preTotalVTokenShares,
             uint256 globalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -166,7 +165,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         assertEq(wethOwed, 0);
 
         // should update total vToken shares
-        (, uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+        (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
             VAULT_ID
         );
         assertEq(postTotalVTokenShares, vTokenShareBalance);
@@ -176,8 +175,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         // initial stake to make totalVTokenShares non zero
         _mintXNFT(1);
 
+        uint256 preNetVTokenBalance = vtoken.balanceOf(
+            address(inventoryStaking)
+        );
         (
-            uint256 preNetVTokenBalance,
             uint256 preTotalVTokenShares,
             uint256 globalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -219,7 +220,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         assertEq(wethOwed, 0);
 
         // should update total vToken shares
-        (, uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+        (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
             VAULT_ID
         );
         assertEq(
@@ -230,7 +231,6 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
     function test_depositWithPermit2_Success_WhenPreTotalSharesZero() external {
         (
-            ,
             uint256 preTotalVTokenShares,
             uint256 globalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -278,7 +278,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         assertEq(wethOwed, 0);
 
         // should update total vToken shares
-        (, uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+        (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
             VAULT_ID
         );
         assertEq(postTotalVTokenShares, vTokenShareBalance);
@@ -292,19 +292,23 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         hoax(makeAddr("nonOwner"));
         vm.expectRevert("Paused");
-        inventoryStaking.depositWithNFT(VAULT_ID, tokenIds, address(this));
+        inventoryStaking.depositWithNFT(
+            VAULT_ID,
+            tokenIds,
+            emptyIds,
+            address(this)
+        );
     }
 
     function test_depositWithNFT_RevertsForInvalidVaultId() external {
         uint256[] memory tokenIds;
 
         vm.expectRevert(stdError.indexOOBError);
-        inventoryStaking.depositWithNFT(999, tokenIds, address(this));
+        inventoryStaking.depositWithNFT(999, tokenIds, emptyIds, address(this));
     }
 
     function test_depositWithNFT_Success_WhenPreTotalSharesZero() external {
         (
-            ,
             uint256 preTotalVTokenShares,
             uint256 globalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -326,6 +330,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             recipient
         );
 
@@ -355,7 +360,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         assertEq(wethOwed, 0);
 
         // should update total vToken shares
-        (, uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+        (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
             VAULT_ID
         );
         assertEq(postTotalVTokenShares, vTokenShareBalance);
@@ -365,8 +370,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         // initial stake to make totalVTokenShares non zero
         _mintXNFT(1);
 
+        uint256 preNetVTokenBalance = vtoken.balanceOf(
+            address(inventoryStaking)
+        );
         (
-            uint256 preNetVTokenBalance,
             uint256 preTotalVTokenShares,
             uint256 globalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -389,6 +396,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             recipient
         );
 
@@ -420,7 +428,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         assertEq(wethOwed, 0);
 
         // should update total vToken shares
-        (, uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+        (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
             VAULT_ID
         );
         assertEq(
@@ -435,8 +443,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         // initial stake to make totalVTokenShares non zero
         _mintXNFT(1);
 
+        uint256 preNetVTokenBalance = vtoken.balanceOf(
+            address(inventoryStaking)
+        );
         (
-            uint256 preNetVTokenBalance,
             uint256 preTotalVTokenShares,
             uint256 globalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -459,6 +469,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             recipient
         );
 
@@ -487,7 +498,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         assertEq(wethOwed, 0);
 
         // should update total vToken shares
-        (, uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+        (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
             VAULT_ID
         );
         assertEq(
@@ -496,17 +507,83 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         );
     }
 
-    // InventoryStaking#receiveRewards
+    // 1155
 
-    function test_receiveRewards_RevertsForNonFeeDistributor() external {
-        hoax(makeAddr("nonFeeDistributor"));
-        vm.expectRevert();
-        inventoryStaking.receiveRewards(VAULT_ID, 1 ether, true);
+    function test_depositWithNFT_Success_WhenPreTotalSharesZero_1155()
+        external
+    {
+        (
+            uint256 preTotalVTokenShares,
+            uint256 globalWethFeesPerVTokenShareX128
+        ) = inventoryStaking.vaultGlobal(VAULT_ID_1155);
+        assertEq(preTotalVTokenShares, 0);
+
+        uint256 mintedVTokens;
+        uint256[] memory tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        {
+            uint256 nftQty = 3;
+            mintedVTokens = nftQty * 1 ether;
+
+            tokenIds[0] = nft1155.mint(nftQty);
+            amounts[0] = nftQty;
+
+            nft1155.setApprovalForAll(address(inventoryStaking), true);
+        }
+
+        address recipient = makeAddr("recipient");
+        vm.expectEmit(true, true, false, true);
+        emit DepositWithNFT(VAULT_ID_1155, 1, mintedVTokens);
+        uint256 positionId = inventoryStaking.depositWithNFT(
+            VAULT_ID_1155,
+            tokenIds,
+            amounts,
+            recipient
+        );
+
+        assertEq(positionId, 1);
+        // mints position nft to the recipient
+        assertEq(inventoryStaking.ownerOf(positionId), recipient);
+
+        (
+            uint256 nonce,
+            uint256 vaultId,
+            uint256 timelockedUntil,
+            uint256 vTokenShareBalance,
+            uint256 wethFeesPerVTokenShareSnapshotX128,
+            uint256 wethOwed
+        ) = inventoryStaking.positions(positionId);
+        assertEq(nonce, 0);
+        assertEq(vaultId, VAULT_ID_1155);
+        assertEq(
+            timelockedUntil,
+            block.timestamp + inventoryStaking.timelock()
+        );
+        assertEq(vTokenShareBalance, mintedVTokens);
+        assertEq(
+            wethFeesPerVTokenShareSnapshotX128,
+            globalWethFeesPerVTokenShareX128
+        );
+        assertEq(wethOwed, 0);
+
+        // should update total vToken shares
+        (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+            VAULT_ID_1155
+        );
+        assertEq(postTotalVTokenShares, vTokenShareBalance);
     }
 
-    function test_receiveRewards_WhenTotalSharesZero() external {
+    // InventoryStaking#receiveRewards
+
+    function test_receiveWethRewards_RevertsForNonFeeDistributor() external {
+        hoax(makeAddr("nonFeeDistributor"));
+        vm.expectRevert();
+        inventoryStaking.receiveWethRewards(VAULT_ID, 1 ether);
+    }
+
+    function test_receiveWethRewards_WhenTotalSharesZero() external {
         (
-            uint256 preNetVTokenBalance,
             uint256 totalVTokenShares,
             uint256 preGlobalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -515,18 +592,14 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 preWethBalance = weth.balanceOf(address(inventoryStaking));
 
         hoax(address(feeDistributor));
-        bool rewardsDistributed = inventoryStaking.receiveRewards(
+        bool rewardsDistributed = inventoryStaking.receiveWethRewards(
             VAULT_ID,
-            1 ether,
-            true
+            1 ether
         );
 
         uint256 postWethBalance = weth.balanceOf(address(inventoryStaking));
-        (
-            uint256 postNetVTokenBalance,
-            ,
-            uint256 postGlobalWethFeesPerVTokenShareX128
-        ) = inventoryStaking.vaultGlobal(VAULT_ID);
+        (, uint256 postGlobalWethFeesPerVTokenShareX128) = inventoryStaking
+            .vaultGlobal(VAULT_ID);
 
         assertEq(rewardsDistributed, false);
         assertEq(
@@ -539,21 +612,18 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             preGlobalWethFeesPerVTokenShareX128,
             "globalWethFeesPerVTokenShare was modified"
         );
-        assertEq(
-            postNetVTokenBalance,
-            preNetVTokenBalance,
-            "netVTokenBalance was modified"
-        );
     }
 
-    function test_receiveRewards_Success_WhenRewardIsWeth() external {
+    function test_receiveWethRewards_Success() external {
         // initial stake to make totalVTokenShares non zero
         _mintXNFT(1);
 
         uint256 wethRewardAmt = 2 ether;
 
+        uint256 preNetVTokenBalance = vtoken.balanceOf(
+            address(inventoryStaking)
+        );
         (
-            uint256 preNetVTokenBalance,
             uint256 totalVTokenShares,
             uint256 preGlobalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -562,11 +632,11 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         bool rewardsDistributed = _distributeWethRewards(wethRewardAmt);
 
         uint256 postWethBalance = weth.balanceOf(address(inventoryStaking));
-        (
-            uint256 postNetVTokenBalance,
-            ,
-            uint256 postGlobalWethFeesPerVTokenShareX128
-        ) = inventoryStaking.vaultGlobal(VAULT_ID);
+        uint256 postNetVTokenBalance = vtoken.balanceOf(
+            address(inventoryStaking)
+        );
+        (, uint256 postGlobalWethFeesPerVTokenShareX128) = inventoryStaking
+            .vaultGlobal(VAULT_ID);
 
         assertEq(rewardsDistributed, true);
         assertEq(
@@ -591,52 +661,26 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         );
     }
 
-    function test_receiveRewards_Success_WhenRewardIsVToken() external {
+    function test_receiveVTokenRewards_Success() external {
         // initial stake to make totalVTokenShares non zero
         _mintXNFT(1);
 
         (uint256 vTokenRewardAmt, ) = _mintVToken(2);
-        vtoken.transfer(address(feeDistributor), vTokenRewardAmt);
 
-        startHoax(address(feeDistributor));
-        vtoken.approve(address(inventoryStaking), type(uint256).max);
-
-        (
-            uint256 preNetVTokenBalance,
-            ,
-            uint256 preGlobalWethFeesPerVTokenShareX128
-        ) = inventoryStaking.vaultGlobal(VAULT_ID);
-        uint256 preVTokenBalance = vtoken.balanceOf(address(inventoryStaking));
-
-        bool rewardsDistributed = inventoryStaking.receiveRewards(
-            VAULT_ID,
-            vTokenRewardAmt,
-            false
+        uint256 prePricePerShareVToken = inventoryStaking.pricePerShareVToken(
+            VAULT_ID
         );
-        vm.stopPrank();
 
-        uint256 postVTokenBalance = vtoken.balanceOf(address(inventoryStaking));
-        (
-            uint256 postNetVTokenBalance,
-            ,
-            uint256 postGlobalWethFeesPerVTokenShareX128
-        ) = inventoryStaking.vaultGlobal(VAULT_ID);
+        vtoken.transfer(address(inventoryStaking), vTokenRewardAmt);
 
-        assertEq(rewardsDistributed, true);
-        assertEq(
-            postVTokenBalance - preVTokenBalance,
-            vTokenRewardAmt,
-            "vToken transferred amount incorrect"
+        uint256 postPricePerShareVToken = inventoryStaking.pricePerShareVToken(
+            VAULT_ID
         );
-        assertEq(
-            postGlobalWethFeesPerVTokenShareX128,
-            preGlobalWethFeesPerVTokenShareX128,
-            "globalWethFeesPerVTokenShare was modified"
-        );
-        assertEq(
-            postNetVTokenBalance - preNetVTokenBalance,
-            vTokenRewardAmt,
-            "netVTokenBalance was modified incorrectly"
+
+        assertGt(
+            postPricePerShareVToken,
+            prePricePerShareVToken,
+            "pricePerShare didn't increase"
         );
     }
 
@@ -672,7 +716,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             uint256 preWethOwed
         ) = inventoryStaking.positions(positionId);
         assertGt(preWethOwed, 0);
-        (, , uint256 globalWethFeesPerVTokenShareX128) = inventoryStaking
+        (, uint256 globalWethFeesPerVTokenShareX128) = inventoryStaking
             .vaultGlobal(VAULT_ID);
 
         uint256 preWethBalance = weth.balanceOf(address(this));
@@ -827,7 +871,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         childPositionIds[0] = _mintXNFTWithWethOwed(1);
         childPositionIds[1] = _mintXNFTWithWethOwed(2);
 
-        (, , uint256 globalWethFeesPerVTokenShareX128) = inventoryStaking
+        (, uint256 globalWethFeesPerVTokenShareX128) = inventoryStaking
             .vaultGlobal(VAULT_ID);
 
         uint256 expectedParentWethOwed;
@@ -984,8 +1028,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         wd.vTokenSharesToWithdraw = wd.preVTokenShareBalance / 2;
 
+        wd.preNetVTokenBalance = vtoken.balanceOf(address(inventoryStaking));
         (
-            wd.preNetVTokenBalance,
             wd.preTotalVTokenShares,
             wd.globalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -1022,6 +1066,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         uint256 postWethBalance = weth.balanceOf(address(this));
         uint256 postVTokenBalance = vtoken.balanceOf(address(this));
+        uint256 postNetVTokenBalance = vtoken.balanceOf(
+            address(inventoryStaking)
+        );
 
         (
             uint256 postVTokenShareBalance,
@@ -1029,11 +1076,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             uint256 postWethOwed
         ) = _getPosition(positionId);
 
-        (
-            uint256 postNetVTokenBalance,
-            uint256 postTotalVTokenShares,
-
-        ) = inventoryStaking.vaultGlobal(VAULT_ID);
+        (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+            VAULT_ID
+        );
 
         assertEq(
             postWethBalance - preWethBalance,
@@ -1092,8 +1137,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         wd.vTokenSharesToWithdraw = wd.preVTokenShareBalance / 2;
 
+        wd.preNetVTokenBalance = vtoken.balanceOf(address(inventoryStaking));
         (
-            wd.preNetVTokenBalance,
             wd.preTotalVTokenShares,
             wd.globalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -1138,6 +1183,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         uint256 postWethBalance = weth.balanceOf(address(this));
         uint256 postVTokenBalance = vtoken.balanceOf(address(this));
+        uint256 postNetVTokenBalance = vtoken.balanceOf(
+            address(inventoryStaking)
+        );
         uint256 postPricePerShareVToken = inventoryStaking.pricePerShareVToken(
             VAULT_ID
         );
@@ -1148,11 +1196,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             uint256 postWethOwed
         ) = _getPosition(positionId);
 
-        (
-            uint256 postNetVTokenBalance,
-            uint256 postTotalVTokenShares,
-
-        ) = inventoryStaking.vaultGlobal(VAULT_ID);
+        (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+            VAULT_ID
+        );
 
         assertEq(
             postWethBalance - preWethBalance,
@@ -1220,6 +1266,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             address(this)
         );
         uint256[] memory nftIds = new uint256[](nftQty + 1);
@@ -1242,6 +1289,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             address(this)
         );
         // timelock expired
@@ -1254,8 +1302,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             wd.preWethFeesPerVTokenShareSnapshotX128,
             wd.preWethOwed
         ) = _getPosition(positionId);
+        wd.preNetVTokenBalance = vtoken.balanceOf(address(inventoryStaking));
         (
-            wd.preNetVTokenBalance,
             wd.preTotalVTokenShares,
             wd.globalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -1299,6 +1347,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             address(this)
         );
         // timelock expired
@@ -1311,8 +1360,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             wd.preWethFeesPerVTokenShareSnapshotX128,
             wd.preWethOwed
         ) = _getPosition(positionId);
+
+        wd.preNetVTokenBalance = vtoken.balanceOf(address(inventoryStaking));
         (
-            wd.preNetVTokenBalance,
             wd.preTotalVTokenShares,
             wd.globalWethFeesPerVTokenShareX128
         ) = inventoryStaking.vaultGlobal(VAULT_ID);
@@ -1453,6 +1503,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             address(this)
         );
     }
@@ -1483,10 +1534,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         startHoax(address(feeDistributor));
         weth.approve(address(inventoryStaking), type(uint256).max);
 
-        rewardsDistributed = inventoryStaking.receiveRewards(
+        rewardsDistributed = inventoryStaking.receiveWethRewards(
             VAULT_ID,
-            wethRewardAmt,
-            true
+            wethRewardAmt
         );
         vm.stopPrank();
     }

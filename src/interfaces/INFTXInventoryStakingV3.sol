@@ -12,7 +12,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     // details about the staking position
     struct Position {
         // the nonce for permits
-        uint256 nonce; // TODO: add permit logic
+        uint256 nonce;
         // vaultId corresponding to the vTokens staked in this position
         uint256 vaultId;
         // timestamp at which the timelock expires
@@ -26,7 +26,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     }
 
     struct VaultGlobal {
-        uint256 netVTokenBalance; // vToken liquidity + earned fees
         uint256 totalVTokenShares;
         uint256 globalWethFeesPerVTokenShareX128;
     }
@@ -71,7 +70,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         external
         view
         returns (
-            uint256 netVTokenBalance,
             uint256 totalVTokenShares,
             uint256 globalWethFeesPerVTokenShareX128
         );
@@ -144,6 +142,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     function depositWithNFT(
         uint256 vaultId,
         uint256[] calldata tokenIds,
+        uint256[] calldata amounts,
         address recipient
     ) external returns (uint256 positionId);
 
@@ -161,10 +160,9 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
 
     function collectWethFees(uint256 positionId) external;
 
-    function receiveRewards(
+    function receiveWethRewards(
         uint256 vaultId,
-        uint256 amount,
-        bool isRewardWeth
+        uint256 wethAmount
     ) external returns (bool);
 
     // =============================================================

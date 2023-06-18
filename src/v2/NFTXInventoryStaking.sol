@@ -102,7 +102,6 @@ contract NFTXInventoryStaking is
         }
     }
 
-    // TODO: create deployXTokenForVault that directly accepts vault address, to avoid 1 storage read
     function deployXTokenForVault(uint256 vaultId) public virtual override {
         address baseToken = nftxVaultFactory.vault(vaultId);
         address deployedXToken = xTokenAddr(address(baseToken));

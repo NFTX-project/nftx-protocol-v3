@@ -28,6 +28,28 @@ interface INFTXRouter {
     function nftxVaultFactory() external returns (INFTXVaultFactory);
 
     // =============================================================
+    //                            EVENTS
+    // =============================================================
+
+    event AddLiquidity(
+        uint256 vaultId,
+        uint256 vTokensAmount,
+        uint256 nftCount,
+        uint256 positionId
+    );
+
+    event RemoveLiquidity(
+        uint256 positionId,
+        uint256 vaultId,
+        uint256 vTokenAmt,
+        uint256 wethAmt
+    );
+
+    event SellNFTs(uint256 nftCount, uint256 ethReceived);
+
+    event BuyNFTs(uint256 nftCount, uint256 ethSpent);
+
+    // =============================================================
     //                            ERRORS
     // =============================================================
 
@@ -41,6 +63,7 @@ interface INFTXRouter {
         uint256 vaultId;
         uint256 vTokensAmount; // user can provide just vTokens or NFTs or both
         uint256[] nftIds;
+        uint256[] nftAmounts; // for ERC1155, ignored for ERC721
         int24 tickLower;
         int24 tickUpper;
         uint24 fee;
@@ -77,6 +100,7 @@ interface INFTXRouter {
     struct SellNFTsParams {
         uint256 vaultId;
         uint256[] nftIds;
+        uint256[] nftAmounts; // for ERC1155, ignored for ERC721
         uint256 deadline;
         uint24 fee;
         uint256 amountOutMinimum;

@@ -8,46 +8,56 @@ import "./INFTXEligibility.sol";
 import "../token/IERC721Upgradeable.sol";
 import "../token/IERC1155Upgradeable.sol";
 
-// TODO: organize using comment blocks
 interface INFTXVault is IERC20Upgradeable {
-    function manager() external view returns (address);
+    // =============================================================
+    //                           CONSTANTS
+    // =============================================================
 
     function assetAddress() external view returns (address);
 
     function vaultFactory() external view returns (INFTXVaultFactory);
 
-    function eligibilityStorage() external view returns (INFTXEligibility);
-
     function is1155() external view returns (bool);
+
+    // =============================================================
+    //                           STORAGE
+    // =============================================================
+
+    function vaultId() external view returns (uint256);
+
+    function manager() external view returns (address);
+
+    function eligibilityStorage() external view returns (INFTXEligibility);
 
     function allowAllItems() external view returns (bool);
 
     function enableMint() external view returns (bool);
 
-    function vaultId() external view returns (uint256);
-
-    function nftIdAt(uint256 holdingsIndex) external view returns (uint256);
-
-    function allHoldings() external view returns (uint256[] memory);
-
-    function totalHoldings() external view returns (uint256);
-
-    function mintFee() external view returns (uint256);
-
-    function targetRedeemFee() external view returns (uint256);
-
-    function targetSwapFee() external view returns (uint256);
-
-    function vaultFees() external view returns (uint256, uint256, uint256);
+    struct TokenDepositInfo {
+        uint48 timestamp;
+        address depositor;
+    }
 
     function tokenDepositInfo(
         uint256 tokenId
     ) external view returns (uint48 timestamp, address depositor);
 
-    struct TokenDepositInfo {
-        uint48 timestamp;
+    struct DepositInfo1155 {
+        uint256 qty;
         address depositor;
+        uint48 timestamp;
     }
+
+    function depositInfo1155(
+        uint256 tokenId,
+        uint256 index
+    ) external view returns (uint256 qty, address depositor, uint48 timestamp);
+
+    function pointerIndex1155(uint256 tokenId) external view returns (uint256);
+
+    // =============================================================
+    //                            EVENTS
+    // =============================================================
 
     event VaultInit(
         uint256 indexed vaultId,
@@ -73,8 +83,16 @@ interface INFTXVault is IERC20Upgradeable {
         address to
     );
 
+    // =============================================================
+    //                            ERRORS
+    // =============================================================
+
     error InsufficientETHSent();
     error UnableToRefundETH();
+
+    // =============================================================
+    //                           INIT
+    // =============================================================
 
     function __NFTXVault_init(
         string calldata _name,
@@ -83,6 +101,10 @@ interface INFTXVault is IERC20Upgradeable {
         bool _is1155,
         bool _allowAllItems
     ) external;
+
+    // =============================================================
+    //                     ONLY PRIVILEGED WRITE
+    // =============================================================
 
     function finalizeVault() external;
 
@@ -116,50 +138,6 @@ interface INFTXVault is IERC20Upgradeable {
     // The manager has control over options like fees and features
     function setManager(address _manager) external;
 
-    function mint(
-        uint256[] calldata tokenIds,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external payable returns (uint256 nftCount);
-
-    function mintTo(
-        uint256[] calldata tokenIds,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */,
-        address to
-    ) external payable returns (uint256 nftCount);
-
-    function redeem(
-        uint256[] calldata specificIds
-    ) external payable returns (uint256 ethFees);
-
-    function redeemTo(
-        uint256[] calldata specificIds,
-        address to
-    ) external payable returns (uint256 ethFees);
-
-    function swap(
-        uint256[] calldata tokenIds,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */,
-        uint256[] calldata specificIds
-    ) external payable returns (uint256 ethFees);
-
-    function swapTo(
-        uint256[] calldata tokenIds,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */,
-        uint256[] calldata specificIds,
-        address to
-    ) external payable returns (uint256 ethFees);
-
-    function allValidNFTs(
-        uint256[] calldata tokenIds
-    ) external view returns (bool);
-
-    function getVTokenPremium(
-        uint256 tokenId
-    ) external view returns (uint256 premium, address depositor);
-
-    // Calculate ETH amount corresponding to the vToken amount, calculated via TWAP from the AMM
-    function vTokenToETH(uint256 vTokenAmount) external view returns (uint256);
-
     function rescueTokens(IERC20Upgradeable token) external;
 
     function rescueERC721(
@@ -172,4 +150,93 @@ interface INFTXVault is IERC20Upgradeable {
         uint256[] calldata ids,
         uint256[] calldata amounts
     ) external;
+
+    // =============================================================
+    //                     PUBLIC / EXTERNAL WRITE
+    // =============================================================
+
+    function mint(
+        uint256[] calldata tokenIds,
+        uint256[] calldata amounts /* ignored for ERC721 vaults */
+    ) external payable returns (uint256 nftCount);
+
+    function mintTo(
+        uint256[] calldata tokenIds,
+        uint256[] calldata amounts /* ignored for ERC721 vaults */,
+        address to
+    ) external payable returns (uint256 nftCount);
+
+    // TODO: add wethAmount option to other functions as well?
+    function redeem(
+        uint256[] calldata specificIds,
+        uint256 wethAmount, // if vault fees should be deducted in WETH instead of ETH (msg.value should be 0 here)
+        bool forceFees // deduct fees even if on the exclude list
+    ) external payable returns (uint256 ethFees);
+
+    function redeemTo(
+        uint256[] calldata specificIds,
+        address to,
+        uint256 wethAmount, // if vault fees should be deducted in WETH instead of ETH (msg.value should be 0 here)
+        bool forceFees // deduct fees even if on the exclude list
+    ) external payable returns (uint256 ethFees);
+
+    function swap(
+        uint256[] calldata tokenIds,
+        uint256[] calldata amounts /* ignored for ERC721 vaults */,
+        uint256[] calldata specificIds,
+        bool forceFees // deduct fees even if on the exclude list
+    ) external payable returns (uint256 ethFees);
+
+    function swapTo(
+        uint256[] calldata tokenIds,
+        uint256[] calldata amounts /* ignored for ERC721 vaults */,
+        uint256[] calldata specificIds,
+        address to,
+        bool forceFees // deduct fees even if on the exclude list
+    ) external payable returns (uint256 ethFees);
+
+    // =============================================================
+    //                     PUBLIC / EXTERNAL VIEW
+    // =============================================================
+
+    function nftIdAt(uint256 holdingsIndex) external view returns (uint256);
+
+    function allHoldings() external view returns (uint256[] memory);
+
+    function totalHoldings() external view returns (uint256);
+
+    function mintFee() external view returns (uint256);
+
+    function targetRedeemFee() external view returns (uint256);
+
+    function targetSwapFee() external view returns (uint256);
+
+    function vaultFees() external view returns (uint256, uint256, uint256);
+
+    function allValidNFTs(
+        uint256[] calldata tokenIds
+    ) external view returns (bool);
+
+    function getVTokenPremium721(
+        uint256 tokenId
+    ) external view returns (uint256 premium, address depositor);
+
+    function getVTokenPremium1155(
+        uint256 tokenId,
+        uint256 amount
+    )
+        external
+        view
+        returns (
+            uint256 netPremium,
+            uint256[] memory premiums,
+            address[] memory depositors
+        );
+
+    // Calculate ETH amount corresponding to the vToken amount, calculated via TWAP from the AMM
+    function vTokenToETH(uint256 vTokenAmount) external view returns (uint256);
+
+    function depositInfo1155Length(
+        uint256 tokenId
+    ) external view returns (uint256);
 }
