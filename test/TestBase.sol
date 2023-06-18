@@ -272,7 +272,6 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
                 vTokensAmount: 0,
                 nftIds: tokenIds,
                 nftAmounts: emptyIds,
-                is1155: false,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
                 fee: fee,
@@ -310,7 +309,6 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
                 vaultId: VAULT_ID,
                 nftIds: tokenIds,
                 nftAmounts: emptyIds,
-                is1155: false,
                 deadline: block.timestamp,
                 fee: DEFAULT_FEE_TIER,
                 amountOutMinimum: 1,
@@ -437,7 +435,6 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
                 vTokensAmount: 0,
                 nftIds: tokenIds,
                 nftAmounts: amounts,
-                is1155: true,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
                 fee: fee,
@@ -469,7 +466,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         uint256[] memory amounts = new uint256[](1);
 
         tokenIds[0] = nft1155.mint(qty);
-        amounts[0] = qty;        
+        amounts[0] = qty;
 
         nft1155.setApprovalForAll(address(nftxRouter), true);
 
@@ -480,7 +477,6 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
                 vaultId: VAULT_ID_1155,
                 nftIds: tokenIds,
                 nftAmounts: amounts,
-                is1155: true,
                 deadline: block.timestamp,
                 fee: DEFAULT_FEE_TIER,
                 amountOutMinimum: 1,

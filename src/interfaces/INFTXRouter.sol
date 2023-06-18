@@ -64,7 +64,6 @@ interface INFTXRouter {
         uint256 vTokensAmount; // user can provide just vTokens or NFTs or both
         uint256[] nftIds;
         uint256[] nftAmounts; // for ERC1155, ignored for ERC721
-        bool is1155;
         int24 tickLower;
         int24 tickUpper;
         uint24 fee;
@@ -102,7 +101,6 @@ interface INFTXRouter {
         uint256 vaultId;
         uint256[] nftIds;
         uint256[] nftAmounts; // for ERC1155, ignored for ERC721
-        bool is1155;
         uint256 deadline;
         uint24 fee;
         uint256 amountOutMinimum;

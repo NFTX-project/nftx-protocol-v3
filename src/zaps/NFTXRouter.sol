@@ -203,7 +203,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
         address assetAddress = INFTXVault(address(vToken)).assetAddress();
 
-        if (!params.is1155) {
+        if (params.nftAmounts.length == 0) {
             // tranfer NFTs from user to the vault
             TransferLib.transferFromERC721(
                 assetAddress,
@@ -223,7 +223,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         }
 
         // mint vToken
-        uint256 vTokensAmount = vToken.mint(params.nftIds, params.nftAmounts) * 1 ether;
+        uint256 vTokensAmount = vToken.mint(params.nftIds, params.nftAmounts) *
+            1 ether;
 
         TransferLib.maxApprove(address(vToken), address(router), vTokensAmount);
 
@@ -278,7 +279,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         router.refundETH();
 
         // unwrap vTokens to tokenIds specified, and send to sender. Forcing to deduct vault fees
-        uint256 ethFees = vToken.redeemTo{value: msg.value - ethSpent}(params.nftIds, msg.sender, true);
+        uint256 ethFees = vToken.redeemTo{value: msg.value - ethSpent}(
+            params.nftIds,
+            msg.sender,
+            true
+        );
 
         // refund ETH
         router.refundETH(msg.sender);
@@ -408,7 +413,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         if (params.nftIds.length > 0) {
             address assetAddress = vToken.assetAddress();
 
-            if (!params.is1155) {
+            if (params.nftAmounts.length == 0) {
                 // tranfer NFTs from user to the vault
                 TransferLib.transferFromERC721(
                     assetAddress,

@@ -2,11 +2,11 @@
 pragma solidity =0.8.15;
 
 import {console} from "forge-std/Test.sol";
-import {Helpers} from "./lib/Helpers.sol";
+import {Helpers} from "../lib/Helpers.sol";
 
 import {INFTXRouter} from "@src/zaps/NFTXRouter.sol";
 
-import {TestBase} from "./TestBase.sol";
+import {TestBase} from "../TestBase.sol";
 
 contract NFTXRouterTests is TestBase {
     uint256 currentNFTPrice = 5 ether;
@@ -100,7 +100,6 @@ contract NFTXRouterTests is TestBase {
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
                     nftAmounts: emptyIds,
-                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
@@ -183,7 +182,6 @@ contract NFTXRouterTests is TestBase {
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
                     nftAmounts: emptyIds,
-                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
@@ -336,7 +334,6 @@ contract NFTXRouterTests is TestBase {
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
                     nftAmounts: emptyIds,
-                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
@@ -426,7 +423,6 @@ contract NFTXRouterTests is TestBase {
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
                     nftAmounts: emptyIds,
-                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,

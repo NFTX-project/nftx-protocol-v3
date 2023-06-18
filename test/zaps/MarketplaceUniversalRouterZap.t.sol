@@ -396,7 +396,6 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
                 vTokensAmount: amount,
                 nftIds: nftIds,
                 nftAmounts: emptyIds,
-                is1155: false,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
                 fee: DEFAULT_FEE_TIER,
