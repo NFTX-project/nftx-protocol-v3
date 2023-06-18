@@ -87,7 +87,7 @@ contract NFTXVaultTests is TestBase {
         tokenIds[0] = nft1155.mint(qty);
         amounts[0] = qty;
 
-        nft.setApprovalForAll(address(vtoken1155), true);
+        nft1155.setApprovalForAll(address(vtoken1155), true);
 
         uint256 preDepositLength = vtoken1155.depositInfo1155Length(
             tokenIds[0]

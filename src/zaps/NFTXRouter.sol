@@ -5,6 +5,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 
 import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
@@ -28,7 +30,7 @@ import {INFTXRouter} from "../interfaces/INFTXRouter.sol";
  * @notice Router to facilitate vault tokens minting/burning + addition/removal of concentrated liquidity
  * @dev This router must be excluded from the vault fees, as vault fees handled via custom logic here.
  */
-contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
+contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     using SafeERC20 for IERC20;
 
     // =============================================================
@@ -387,27 +389,34 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
     ) internal returns (uint256 positionId) {
         uint256 vTokensAmount = params.vTokensAmount;
 
-        uint256 ethForLiquidity = msg.value;
         if (params.nftIds.length > 0) {
             address assetAddress = vToken.assetAddress();
 
-            // tranfer NFTs from user to the vault
-            TransferLib.transferFromERC721(
-                assetAddress,
-                address(vToken),
-                params.nftIds
-            );
+            if (!params.is1155) {
+                // tranfer NFTs from user to the vault
+                TransferLib.transferFromERC721(
+                    assetAddress,
+                    address(vToken),
+                    params.nftIds
+                );
+            } else {
+                IERC1155(assetAddress).safeBatchTransferFrom(
+                    msg.sender,
+                    address(this),
+                    params.nftIds,
+                    params.nftAmounts,
+                    ""
+                );
 
-            uint256[] memory emptyIds;
+                IERC1155(assetAddress).setApprovalForAll(address(vToken), true);
+            }
+
             // vault won't charge mintFees here as this contract is on exclude list
-            vTokensAmount += vToken.mint(params.nftIds, emptyIds) * 1 ether;
+            vTokensAmount +=
+                vToken.mint(params.nftIds, params.nftAmounts) *
+                1 ether;
 
-            // distributing vault fees
-            uint256 ethFees = _ethMintFees(vToken, params.nftIds.length);
-            _distributeVaultFees(params.vaultId, ethFees, false);
-
-            // use remaining ETH for providing liquidity into the pool
-            ethForLiquidity -= ethFees; // if underflow, then revert desired
+            // TODO: don't charge vault fees, instead add timelock to the minted LP NFT
         }
 
         TransferLib.maxApprove(
@@ -434,15 +443,15 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder {
             ta.amount0Desired = vTokensAmount;
             // have a 5000 wei buffer to account for any dust amounts
             ta.amount0Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
-            ta.amount1Desired = ethForLiquidity;
+            ta.amount1Desired = msg.value;
         } else {
-            ta.amount0Desired = ethForLiquidity;
+            ta.amount0Desired = msg.value;
             ta.amount1Desired = vTokensAmount;
             // have a 5000 wei buffer to account for any dust amounts
             ta.amount1Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
         }
 
-        (positionId, , , ) = positionManager.mint{value: ethForLiquidity}(
+        (positionId, , , ) = positionManager.mint{value: msg.value}(
             INonfungiblePositionManager.MintParams({
                 token0: token0,
                 token1: token1,

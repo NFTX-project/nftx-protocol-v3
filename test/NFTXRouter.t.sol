@@ -97,6 +97,8 @@ contract NFTXRouterTests is TestBase {
                     vaultId: VAULT_ID,
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
+                    nftAmounts: emptyIds,
+                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
@@ -178,6 +180,8 @@ contract NFTXRouterTests is TestBase {
                     vaultId: VAULT_ID,
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
+                    nftAmounts: emptyIds,
+                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
@@ -233,6 +237,67 @@ contract NFTXRouterTests is TestBase {
         );
     }
 
+    // 1155
+
+    function testAddLiquidity_withNFTs_1155() external {
+        _mintPositionWithTwap1155(currentNFTPrice);
+
+        uint256 prePositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+
+        (
+            ,
+            uint256 positionId,
+            int24 _tickLower,
+            int24 _tickUpper,
+            uint256 ethUsed
+        ) = _mintPosition1155(5);
+        console.log("ETH Used: ", ethUsed);
+
+        uint256 postPositionNFTBalance = positionManager.balanceOf(
+            address(this)
+        );
+        (
+            ,
+            ,
+            address token0,
+            address token1,
+            uint24 fee,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity,
+            ,
+            ,
+            ,
+
+        ) = positionManager.positions(positionId);
+
+        assertEq(
+            postPositionNFTBalance - prePositionNFTBalance,
+            1,
+            "Position Balance didn't change"
+        );
+        assertGt(liquidity, 0, "Liquidity didn't increase");
+        assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
+        assertEqInt24(tickUpper, _tickUpper, "Incorrect tickUpper");
+        assertEqUint24(fee, DEFAULT_FEE_TIER, "Incorrect fee");
+        assertEq(
+            token0,
+            nftxRouter.isVToken0(address(vtoken1155))
+                ? address(vtoken1155)
+                : nftxRouter.WETH(),
+            "Incorrect token0"
+        );
+        assertEq(
+            token1,
+            !nftxRouter.isVToken0(address(vtoken1155))
+                ? address(vtoken1155)
+                : nftxRouter.WETH(),
+            "Incorrect token1"
+        );
+    }
+
     // addLiquidityWithPermit2
 
     function testAddLiquidityWithPermit2_withVTokens() external {
@@ -268,6 +333,8 @@ contract NFTXRouterTests is TestBase {
                     vaultId: VAULT_ID,
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
+                    nftAmounts: emptyIds,
+                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
@@ -356,6 +423,8 @@ contract NFTXRouterTests is TestBase {
                     vaultId: VAULT_ID,
                     vTokensAmount: mintedVTokens,
                     nftIds: tokenIds,
+                    nftAmounts: emptyIds,
+                    is1155: false,
                     tickLower: _tickLower,
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
