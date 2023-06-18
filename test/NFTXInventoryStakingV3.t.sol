@@ -292,14 +292,19 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         hoax(makeAddr("nonOwner"));
         vm.expectRevert("Paused");
-        inventoryStaking.depositWithNFT(VAULT_ID, tokenIds, address(this));
+        inventoryStaking.depositWithNFT(
+            VAULT_ID,
+            tokenIds,
+            emptyIds,
+            address(this)
+        );
     }
 
     function test_depositWithNFT_RevertsForInvalidVaultId() external {
         uint256[] memory tokenIds;
 
         vm.expectRevert(stdError.indexOOBError);
-        inventoryStaking.depositWithNFT(999, tokenIds, address(this));
+        inventoryStaking.depositWithNFT(999, tokenIds, emptyIds, address(this));
     }
 
     function test_depositWithNFT_Success_WhenPreTotalSharesZero() external {
@@ -325,6 +330,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             recipient
         );
 
@@ -390,6 +396,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             recipient
         );
 
@@ -462,6 +469,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             recipient
         );
 
@@ -497,6 +505,73 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             postTotalVTokenShares,
             preTotalVTokenShares + vTokenShareBalance
         );
+    }
+
+    // 1155
+
+    function test_depositWithNFT_Success_WhenPreTotalSharesZero_1155()
+        external
+    {
+        (
+            uint256 preTotalVTokenShares,
+            uint256 globalWethFeesPerVTokenShareX128
+        ) = inventoryStaking.vaultGlobal(VAULT_ID_1155);
+        assertEq(preTotalVTokenShares, 0);
+
+        uint256 mintedVTokens;
+        uint256[] memory tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        {
+            uint256 nftQty = 3;
+            mintedVTokens = nftQty * 1 ether;
+
+            tokenIds[0] = nft1155.mint(nftQty);
+            amounts[0] = nftQty;
+
+            nft1155.setApprovalForAll(address(inventoryStaking), true);
+        }
+
+        address recipient = makeAddr("recipient");
+        vm.expectEmit(true, true, false, true);
+        emit DepositWithNFT(VAULT_ID_1155, 1, mintedVTokens);
+        uint256 positionId = inventoryStaking.depositWithNFT(
+            VAULT_ID_1155,
+            tokenIds,
+            amounts,
+            recipient
+        );
+
+        assertEq(positionId, 1);
+        // mints position nft to the recipient
+        assertEq(inventoryStaking.ownerOf(positionId), recipient);
+
+        (
+            uint256 nonce,
+            uint256 vaultId,
+            uint256 timelockedUntil,
+            uint256 vTokenShareBalance,
+            uint256 wethFeesPerVTokenShareSnapshotX128,
+            uint256 wethOwed
+        ) = inventoryStaking.positions(positionId);
+        assertEq(nonce, 0);
+        assertEq(vaultId, VAULT_ID_1155);
+        assertEq(
+            timelockedUntil,
+            block.timestamp + inventoryStaking.timelock()
+        );
+        assertEq(vTokenShareBalance, mintedVTokens);
+        assertEq(
+            wethFeesPerVTokenShareSnapshotX128,
+            globalWethFeesPerVTokenShareX128
+        );
+        assertEq(wethOwed, 0);
+
+        // should update total vToken shares
+        (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
+            VAULT_ID_1155
+        );
+        assertEq(postTotalVTokenShares, vTokenShareBalance);
     }
 
     // InventoryStaking#receiveRewards
@@ -1191,6 +1266,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             address(this)
         );
         uint256[] memory nftIds = new uint256[](nftQty + 1);
@@ -1213,6 +1289,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             address(this)
         );
         // timelock expired
@@ -1270,6 +1347,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             address(this)
         );
         // timelock expired
@@ -1425,6 +1503,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
+            emptyIds,
             address(this)
         );
     }

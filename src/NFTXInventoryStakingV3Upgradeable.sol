@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
-import {ERC721PermitUpgradeable} from "@src/util/ERC721PermitUpgradeable.sol";
+import {ERC721PermitUpgradeable, ERC721Upgradeable} from "@src/util/ERC721PermitUpgradeable.sol";
+import {ERC1155HolderUpgradeable, ERC1155ReceiverUpgradeable, IERC165Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 import {PausableUpgradeable} from "./util/PausableUpgradeable.sol";
@@ -32,6 +34,7 @@ import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer
 contract NFTXInventoryStakingV3Upgradeable is
     INFTXInventoryStakingV3,
     ERC721PermitUpgradeable,
+    ERC1155HolderUpgradeable,
     PausableUpgradeable
 {
     // =============================================================
@@ -161,6 +164,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     function depositWithNFT(
         uint256 vaultId,
         uint256[] calldata tokenIds,
+        uint256[] calldata amounts,
         address recipient
     ) external returns (uint256 positionId) {
         onlyOwnerIfPaused(1);
@@ -172,16 +176,27 @@ contract NFTXInventoryStakingV3Upgradeable is
         {
             address assetAddress = INFTXVault(vToken).assetAddress();
 
-            // transfer tokenIds from user directly to the vault
-            TransferLib.transferFromERC721(
-                assetAddress,
-                address(vToken),
-                tokenIds
-            );
+            if (amounts.length == 0) {
+                // tranfer NFTs from user to the vault
+                TransferLib.transferFromERC721(
+                    assetAddress,
+                    address(vToken),
+                    tokenIds
+                );
+            } else {
+                IERC1155(assetAddress).safeBatchTransferFrom(
+                    msg.sender,
+                    address(this),
+                    tokenIds,
+                    amounts,
+                    ""
+                );
+
+                IERC1155(assetAddress).setApprovalForAll(address(vToken), true);
+            }
 
             // mint vTokens
-            uint256[] memory emptyIds;
-            amount = INFTXVault(vToken).mint(tokenIds, emptyIds) * 1 ether;
+            amount = INFTXVault(vToken).mint(tokenIds, amounts) * 1 ether;
         }
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
@@ -203,9 +218,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         positions[positionId] = Position({
             nonce: 0,
             vaultId: vaultId,
-            timelockedUntil: timelockExcludeList.isExcluded(msg.sender, vaultId)
-                ? 0
-                : block.timestamp + timelock,
+            timelockedUntil: _getTimelockedUntil(vaultId),
             vTokenShareBalance: vTokenShares,
             wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
                 .globalWethFeesPerVTokenShareX128,
@@ -434,6 +447,23 @@ contract NFTXInventoryStakingV3Upgradeable is
             _vaultGlobal.totalVTokenShares;
     }
 
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        pure
+        override(
+            ERC1155ReceiverUpgradeable,
+            ERC721Upgradeable,
+            IERC165Upgradeable
+        )
+        returns (bool)
+    {
+        return
+            interfaceId == type(ERC721PermitUpgradeable).interfaceId ||
+            interfaceId == type(ERC1155ReceiverUpgradeable).interfaceId;
+    }
+
     // TODO: add tokenURI for these xNFTs
 
     // =============================================================
@@ -474,6 +504,15 @@ contract NFTXInventoryStakingV3Upgradeable is
         });
 
         emit Deposit(vaultId, positionId, amount);
+    }
+
+    function _getTimelockedUntil(
+        uint256 vaultId
+    ) internal view returns (uint256) {
+        return
+            timelockExcludeList.isExcluded(msg.sender, vaultId)
+                ? 0
+                : block.timestamp + timelock;
     }
 
     function _calcWethOwed(

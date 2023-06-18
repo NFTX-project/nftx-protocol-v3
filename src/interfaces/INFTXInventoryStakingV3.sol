@@ -142,6 +142,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     function depositWithNFT(
         uint256 vaultId,
         uint256[] calldata tokenIds,
+        uint256[] calldata amounts,
         address recipient
     ) external returns (uint256 positionId);
 
