@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+// TODO: import from OZ directly where possible.
 import "./v2/util/OwnableUpgradeable.sol";
 import "./v2/util/ReentrancyGuardUpgradeable.sol";
 import "./v2/util/EnumerableSetUpgradeable.sol";
@@ -38,21 +39,34 @@ contract NFTXVaultUpgradeable is
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    uint256 constant base = 10 ** 18;
+    // =============================================================
+    //                           CONSTANTS
+    // =============================================================
 
-    uint256 public override vaultId;
-    address public override manager;
+    uint256 constant BASE = 10 ** 18;
+    IWETH9 public immutable override WETH;
+
+    // only set during initialization
+
     address public override assetAddress;
     INFTXVaultFactory public override vaultFactory;
+    uint256 public override vaultId;
+    bool public override is1155;
+
+    // =============================================================
+    //                            VARIABLES
+    // =============================================================
+
+    address public override manager;
+
     INFTXEligibility public override eligibilityStorage;
 
-    bool public override is1155;
     bool public override allowAllItems;
     bool public override enableMint;
 
-    EnumerableSetUpgradeable.UintSet holdings;
+    EnumerableSetUpgradeable.UintSet internal _holdings;
     // tokenId => qty
-    mapping(uint256 => uint256) quantity1155;
+    mapping(uint256 => uint256) internal _quantity1155;
 
     // tokenId => info
     mapping(uint256 => TokenDepositInfo) public override tokenDepositInfo;
@@ -77,6 +91,10 @@ contract NFTXVaultUpgradeable is
     //                           INIT
     // =============================================================
 
+    constructor(IWETH9 WETH_) {
+        WETH = WETH_;
+    }
+
     function __NFTXVault_init(
         string memory _name,
         string memory _symbol,
@@ -86,13 +104,17 @@ contract NFTXVaultUpgradeable is
     ) public virtual override initializer {
         __Ownable_init();
         __ERC20_init(_name, _symbol);
+
+        // TODO: custom error
         require(_assetAddress != address(0), "Asset != address(0)");
         assetAddress = _assetAddress;
         vaultFactory = INFTXVaultFactory(msg.sender);
         vaultId = vaultFactory.numVaults();
         is1155 = _is1155;
         allowAllItems = _allowAllItems;
+
         emit VaultInit(vaultId, _assetAddress, _is1155, _allowAllItems);
+
         setVaultFeatures(
             true /*enableMint*/,
             true /*enableTargetRedeem*/,
@@ -104,6 +126,8 @@ contract NFTXVaultUpgradeable is
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
+    // TODO: add NATSPEC
+    // TODO: instead of nftCount return vTokensMinted
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
@@ -111,18 +135,21 @@ contract NFTXVaultUpgradeable is
         return mintTo(tokenIds, amounts, msg.sender);
     }
 
+    // TODO: add NATSPEC
+    // TODO: instead of nftCount return vTokensMinted
     function mintTo(
         uint256[] memory tokenIds,
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         address to
     ) public payable virtual override nonReentrant returns (uint256 nftCount) {
-        onlyOwnerIfPaused(1);
+        _onlyOwnerIfPaused(1);
+        // TODO: custom error
         require(enableMint, "Minting not enabled");
         // Take the NFTs.
         nftCount = _receiveNFTs(tokenIds, amounts);
 
         // Mint to the user.
-        _mint(to, base * nftCount);
+        _mint(to, BASE * nftCount);
 
         uint256 totalVTokenFee = mintFee() * nftCount;
         uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
@@ -132,6 +159,7 @@ contract NFTXVaultUpgradeable is
         emit Minted(tokenIds, amounts, to);
     }
 
+    // TODO: add NATSPEC
     function redeem(
         uint256[] calldata specificIds,
         uint256 wethAmount,
@@ -140,13 +168,14 @@ contract NFTXVaultUpgradeable is
         return redeemTo(specificIds, msg.sender, wethAmount, forceFees);
     }
 
+    // TODO: add NATSPEC
     function redeemTo(
         uint256[] memory specificIds,
         address to,
         uint256 wethAmount,
         bool forceFees
     ) public payable virtual override nonReentrant returns (uint256 ethFees) {
-        onlyOwnerIfPaused(2);
+        _onlyOwnerIfPaused(2);
 
         uint256 ethOrWethAmt;
         if (wethAmount > 0) {
@@ -160,7 +189,7 @@ contract NFTXVaultUpgradeable is
         uint256 count = specificIds.length;
 
         // We burn all from sender and mint to fee receiver to reduce costs.
-        _burn(msg.sender, base * count);
+        _burn(msg.sender, BASE * count);
 
         (, uint256 _targetRedeemFee, ) = vaultFees();
         uint256 totalVaultFee = (_targetRedeemFee * count);
@@ -189,6 +218,7 @@ contract NFTXVaultUpgradeable is
         emit Redeemed(specificIds, to);
     }
 
+    // TODO: add NATSPEC
     function swap(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
@@ -198,6 +228,7 @@ contract NFTXVaultUpgradeable is
         return swapTo(tokenIds, amounts, specificIds, msg.sender, forceFees);
     }
 
+    // TODO: add NATSPEC
     function swapTo(
         uint256[] memory tokenIds,
         uint256[] memory amounts /* ignored for ERC721 vaults */,
@@ -205,11 +236,12 @@ contract NFTXVaultUpgradeable is
         address to,
         bool forceFees
     ) public payable virtual override nonReentrant returns (uint256 ethFees) {
-        onlyOwnerIfPaused(3);
+        _onlyOwnerIfPaused(3);
         uint256 count;
         if (is1155) {
             for (uint256 i; i < tokenIds.length; ++i) {
                 uint256 amount = amounts[i];
+                // TODO: custom error
                 require(amount != 0, "NFTXVault: transferring < 1");
                 count += amount;
             }
@@ -217,6 +249,7 @@ contract NFTXVaultUpgradeable is
             count = tokenIds.length;
         }
 
+        // TODO: custom error
         require(count == specificIds.length, "NFTXVault: Random swap disabled");
 
         (, , uint256 _targetSwapFee) = vaultFees();
@@ -246,13 +279,14 @@ contract NFTXVaultUpgradeable is
         emit Swapped(tokenIds, amounts, specificIds, to);
     }
 
+    // TODO: add NATSPEC
     function flashLoan(
         IERC3156FlashBorrowerUpgradeable receiver,
         address token,
         uint256 amount,
         bytes memory data
     ) public virtual override returns (bool) {
-        onlyOwnerIfPaused(4);
+        _onlyOwnerIfPaused(4);
         return super.flashLoan(receiver, token, amount, data);
     }
 
@@ -260,48 +294,48 @@ contract NFTXVaultUpgradeable is
     //                     ONLY PRIVILEGED WRITE
     // =============================================================
 
+    // TODO: add NATSPEC
     function finalizeVault() external virtual override {
         setManager(address(0));
     }
 
-    // Added in v1.0.3.
     function setVaultMetadata(
         string calldata name_,
         string calldata symbol_
     ) external virtual override {
-        onlyPrivileged();
+        _onlyPrivileged();
         _setMetadata(name_, symbol_);
     }
 
     function setVaultFeatures(
-        bool _enableMint,
-        bool _enableTargetRedeem,
-        bool _enableTargetSwap
+        bool enableMint_,
+        bool enableTargetRedeem_,
+        bool enableTargetSwap_
     ) public virtual override {
-        onlyPrivileged();
-        enableMint = _enableMint;
+        _onlyPrivileged();
+        enableMint = enableMint_;
 
-        emit EnableMintUpdated(_enableMint);
-        emit EnableTargetRedeemUpdated(_enableTargetRedeem);
-        emit EnableTargetSwapUpdated(_enableTargetSwap);
+        emit EnableMintUpdated(enableMint_);
+        emit EnableTargetRedeemUpdated(enableTargetRedeem_);
+        emit EnableTargetSwapUpdated(enableTargetSwap_);
     }
 
     function setFees(
-        uint256 _mintFee,
-        uint256 _targetRedeemFee,
-        uint256 _targetSwapFee
+        uint256 mintFee_,
+        uint256 targetRedeemFee_,
+        uint256 targetSwapFee_
     ) public virtual override {
-        onlyPrivileged();
+        _onlyPrivileged();
         vaultFactory.setVaultFees(
             vaultId,
-            _mintFee,
-            _targetRedeemFee,
-            _targetSwapFee
+            mintFee_,
+            targetRedeemFee_,
+            targetSwapFee_
         );
     }
 
     function disableVaultFees() public virtual override {
-        onlyPrivileged();
+        _onlyPrivileged();
         vaultFactory.disableVaultFees(vaultId);
     }
 
@@ -312,9 +346,11 @@ contract NFTXVaultUpgradeable is
         uint256 moduleIndex,
         bytes calldata initData
     ) external virtual override returns (address) {
-        onlyPrivileged();
+        _onlyPrivileged();
+        // TODO: custom error
         require(
             address(eligibilityStorage) == address(0),
+            // TODO: change to custom error
             "NFTXVault: eligibility already set"
         );
         INFTXEligibilityManager eligManager = INFTXEligibilityManager(
@@ -347,14 +383,15 @@ contract NFTXVaultUpgradeable is
     // }
 
     // The manager has control over options like fees and features
-    function setManager(address _manager) public virtual override {
-        onlyPrivileged();
-        manager = _manager;
-        emit ManagerSet(_manager);
+    function setManager(address manager_) public virtual override {
+        _onlyPrivileged();
+        manager = manager_;
+        emit ManagerSet(manager_);
     }
 
+    // TODO: combine multiple rescue functions into one
     function rescueTokens(IERC20Upgradeable token) external override {
-        onlyPrivileged();
+        _onlyPrivileged();
         uint256 balance = token.balanceOf(address(this));
         token.safeTransfer(msg.sender, balance);
     }
@@ -363,7 +400,7 @@ contract NFTXVaultUpgradeable is
         IERC721Upgradeable nft,
         uint256[] calldata ids
     ) external override {
-        onlyPrivileged();
+        _onlyPrivileged();
         require(address(nft) != assetAddress);
 
         for (uint256 i; i < ids.length; ++i) {
@@ -376,7 +413,7 @@ contract NFTXVaultUpgradeable is
         uint256[] calldata ids,
         uint256[] calldata amounts
     ) external override {
-        onlyPrivileged();
+        _onlyPrivileged();
         require(address(nft) != assetAddress);
 
         nft.safeBatchTransferFrom(address(this), msg.sender, ids, amounts, "");
@@ -386,6 +423,7 @@ contract NFTXVaultUpgradeable is
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
 
+    // TODO: these multiple fee functions can be removed to reduced contract size
     function mintFee() public view virtual override returns (uint256) {
         (uint256 _mintFee, , ) = vaultFactory.vaultFees(vaultId);
         return _mintFee;
@@ -406,7 +444,11 @@ contract NFTXVaultUpgradeable is
         view
         virtual
         override
-        returns (uint256, uint256, uint256)
+        returns (
+            uint256 _mintFee,
+            uint256 _targetRedeemFee,
+            uint256 _targetSwapFee
+        )
     {
         return vaultFactory.vaultFees(vaultId);
     }
@@ -428,10 +470,9 @@ contract NFTXVaultUpgradeable is
     function nftIdAt(
         uint256 holdingsIndex
     ) external view virtual override returns (uint256) {
-        return holdings.at(holdingsIndex);
+        return _holdings.at(holdingsIndex);
     }
 
-    // Added in v1.0.3.
     function allHoldings()
         external
         view
@@ -439,22 +480,20 @@ contract NFTXVaultUpgradeable is
         override
         returns (uint256[] memory)
     {
-        uint256 len = holdings.length();
+        uint256 len = _holdings.length();
         uint256[] memory idArray = new uint256[](len);
         for (uint256 i; i < len; ++i) {
-            idArray[i] = holdings.at(i);
+            idArray[i] = _holdings.at(i);
         }
         return idArray;
     }
 
-    // Added in v1.0.3.
     function totalHoldings() external view virtual override returns (uint256) {
-        return holdings.length();
+        return _holdings.length();
     }
 
-    // Added in v1.0.3.
     function version() external pure returns (string memory) {
-        return "v1.0.6";
+        return "v3.0.0";
     }
 
     function getVTokenPremium721(
@@ -559,6 +598,7 @@ contract NFTXVaultUpgradeable is
         uint256[] memory tokenIds,
         uint256[] memory amounts
     ) internal virtual returns (uint256) {
+        // TODO: custom error
         require(allValidNFTs(tokenIds), "NFTXVault: not eligible");
         uint256 length = tokenIds.length;
         if (is1155) {
@@ -575,11 +615,12 @@ contract NFTXVaultUpgradeable is
             for (uint256 i; i < length; ++i) {
                 uint256 tokenId = tokenIds[i];
                 uint256 amount = amounts[i];
+                // TODO: custom error
                 require(amount != 0, "NFTXVault: transferring < 1");
-                if (quantity1155[tokenId] == 0) {
-                    holdings.add(tokenId);
+                if (_quantity1155[tokenId] == 0) {
+                    _holdings.add(tokenId);
                 }
-                quantity1155[tokenId] += amount;
+                _quantity1155[tokenId] += amount;
                 count += amount;
 
                 depositInfo1155[tokenId].push(
@@ -601,8 +642,8 @@ contract NFTXVaultUpgradeable is
                 //      - If so, we reject. This means the NFT has already been claimed for.
                 //      - If not, it means we have not yet accounted for this NFT, so we continue.
                 //   -If not, we "pull" it from the msg.sender and add to holdings.
-                transferFromERC721(_assetAddress, tokenId);
-                holdings.add(tokenId);
+                _transferFromERC721(_assetAddress, tokenId);
+                _holdings.add(tokenId);
                 tokenDepositInfo[tokenId] = TokenDepositInfo({
                     timestamp: uint48(block.timestamp),
                     depositor: msg.sender
@@ -636,9 +677,9 @@ contract NFTXVaultUpgradeable is
             uint256 tokenId = specificIds[i];
 
             if (_is1155) {
-                quantity1155[tokenId] -= 1;
-                if (quantity1155[tokenId] == 0) {
-                    holdings.remove(tokenId);
+                _quantity1155[tokenId] -= 1;
+                if (_quantity1155[tokenId] == 0) {
+                    _holdings.remove(tokenId);
                 }
 
                 IERC1155Upgradeable(_assetAddress).safeTransferFrom(
@@ -682,8 +723,8 @@ contract NFTXVaultUpgradeable is
                     depositors[i] = depositor;
                 }
 
-                holdings.remove(tokenId);
-                transferERC721(_assetAddress, to, tokenId);
+                _holdings.remove(tokenId);
+                _transferERC721(_assetAddress, to, tokenId);
             }
         }
         _afterRedeemHook(specificIds);
@@ -711,10 +752,8 @@ contract NFTXVaultUpgradeable is
         if (ethAmount > 0) {
             if (ethReceived < ethAmount) revert InsufficientETHSent();
 
-            // TODO: save WETH as constant during deployment
-            IWETH9 weth = IWETH9(address(feeDistributor.WETH()));
-            weth.deposit{value: ethAmount}();
-            weth.transfer(address(feeDistributor), ethAmount);
+            WETH.deposit{value: ethAmount}();
+            WETH.transfer(address(feeDistributor), ethAmount);
             feeDistributor.distribute(vaultId);
         }
     }
@@ -757,16 +796,14 @@ contract NFTXVaultUpgradeable is
 
             if (ethOrWethReceived < ethAmount) revert InsufficientETHSent();
 
-            // TODO: save WETH as constant during deployment
-            IWETH9 weth = IWETH9(address(feeDistributor.WETH()));
             if (isETH) {
-                weth.deposit{value: ethAmount}();
+                WETH.deposit{value: ethAmount}();
             } else {
                 // pull only required weth from sender
-                weth.transferFrom(msg.sender, address(this), ethAmount);
+                WETH.transferFrom(msg.sender, address(this), ethAmount);
             }
 
-            weth.transfer(
+            WETH.transfer(
                 address(feeDistributor),
                 ethAmount - netETHPremiumForDepositors
             );
@@ -774,7 +811,7 @@ contract NFTXVaultUpgradeable is
 
             for (uint256 i; i < vTokenPremiums.length; ) {
                 if (vTokenPremiums[i] > 0) {
-                    weth.transfer(
+                    WETH.transfer(
                         depositors[i],
                         (netETHPremiumForDepositors * vTokenPremiums[i]) /
                             netVTokenPremium
@@ -796,7 +833,6 @@ contract NFTXVaultUpgradeable is
         secondsAgos[0] = vaultFactory.twapInterval();
         secondsAgos[1] = 0;
 
-        // observe might fail for newly created pools that don't have sufficient observations yet
         (bool success, bytes memory data) = pool.staticcall(
             abi.encodeWithSelector(
                 IUniswapV3PoolDerivedState.observe.selector,
@@ -804,6 +840,7 @@ contract NFTXVaultUpgradeable is
             )
         );
 
+        // observe might fail for newly created pools that don't have sufficient observations yet
         if (!success) {
             if (
                 keccak256(data) !=
@@ -812,32 +849,35 @@ contract NFTXVaultUpgradeable is
                 return 0;
             }
 
-            // The oldest available observation in the ring buffer is the index following the current (accounting for wrapping),
-            // since this is the one that will be overwritten next.
+            // observations = [0, 1, 2, ..., index, (index + 1), ..., (cardinality - 1)]
+            // Case 1: if entire array initialized once, then oldest observation at (index + 1) % cardinality
+            // Case 2: array only initialized till index, then oldest obseravtion at index 0
+
+            // Check Case 1
             (, , uint16 index, uint16 cardinality, , , ) = IUniswapV3Pool(pool)
                 .slot0();
 
-            (uint32 oldestAvailableAge, , , bool initialized) = IUniswapV3Pool(
-                pool
-            ).observations((index + 1) % cardinality);
+            (
+                uint32 oldestAvailableTimestamp,
+                ,
+                ,
+                bool initialized
+            ) = IUniswapV3Pool(pool).observations((index + 1) % cardinality);
 
-            // If the following observation in a ring buffer of our current cardinality is uninitialized, then all the
-            // observations at higher indices are also uninitialized, so we wrap back to index 0, which we now know
-            // to be the oldest available observation.
-
+            // Case 2
             if (!initialized)
-                (oldestAvailableAge, , , ) = IUniswapV3Pool(pool).observations(
-                    0
-                );
+                (oldestAvailableTimestamp, , , ) = IUniswapV3Pool(pool)
+                    .observations(0);
 
-            // Call observe() again to get the oldest available
-            secondsAgos[0] = uint32(block.timestamp - oldestAvailableAge);
+            // get corresponding observation
+            secondsAgos[0] = uint32(block.timestamp - oldestAvailableTimestamp);
             (success, data) = pool.staticcall(
                 abi.encodeWithSelector(
                     IUniswapV3PoolDerivedState.observe.selector,
                     secondsAgos
                 )
             );
+            // might revert if oldestAvailableTimestamp == block.timestamp, so we return price as 0
             if (!success) {
                 return 0;
             }
@@ -913,12 +953,13 @@ contract NFTXVaultUpgradeable is
     function _refundETH(uint256 ethReceived, uint256 ethFees) internal {
         uint256 ethRefund = ethReceived - ethFees;
         if (ethRefund > 0) {
+            // TODO: use TransferLib
             (bool success, ) = payable(msg.sender).call{value: ethRefund}("");
             if (!success) revert UnableToRefundETH();
         }
     }
 
-    function transferERC721(
+    function _transferERC721(
         address assetAddr,
         address to,
         uint256 tokenId
@@ -954,7 +995,7 @@ contract NFTXVaultUpgradeable is
         require(success, string(returnData));
     }
 
-    function transferFromERC721(
+    function _transferFromERC721(
         address assetAddr,
         uint256 tokenId
     ) internal virtual {
@@ -981,6 +1022,7 @@ contract NFTXVaultUpgradeable is
             address nftOwner = abi.decode(result, (address));
             require(
                 checkSuccess && nftOwner == msg.sender,
+                // TODO: custom error
                 "Not the NFT owner"
             );
             data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
@@ -993,7 +1035,8 @@ contract NFTXVaultUpgradeable is
                 address(this)
             ) {
                 require(
-                    !holdings.contains(tokenId),
+                    !_holdings.contains(tokenId),
+                    // TODO: custom error
                     "Trying to use an owned NFT"
                 );
                 return;
@@ -1010,17 +1053,20 @@ contract NFTXVaultUpgradeable is
         require(success, string(resultData));
     }
 
-    function onlyPrivileged() internal view {
+    function _onlyPrivileged() internal view {
         if (manager == address(0)) {
+            // TODO: custom error
             require(msg.sender == owner(), "Not owner");
         } else {
+            // TODO: custom error
             require(msg.sender == manager, "Not manager");
         }
     }
 
-    function onlyOwnerIfPaused(uint256 lockId) internal view {
+    function _onlyOwnerIfPaused(uint256 lockId) internal view {
         require(
             !vaultFactory.isLocked(lockId) || msg.sender == owner(),
+            // TODO: custom error
             "Paused"
         );
     }

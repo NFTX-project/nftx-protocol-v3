@@ -101,7 +101,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         nft = new MockNFT();
         nft1155 = new Mock1155();
 
-        vaultImpl = new NFTXVaultUpgradeable();
+        vaultImpl = new NFTXVaultUpgradeable(IWETH9(address(weth)));
         vaultFactory = new NFTXVaultFactoryUpgradeable();
         vaultFactory.__NFTXVaultFactory_init(address(vaultImpl));
         // set premium related values

@@ -7,23 +7,43 @@ import "./INFTXVaultFactory.sol";
 import "./INFTXEligibility.sol";
 import "../token/IERC721Upgradeable.sol";
 import "../token/IERC1155Upgradeable.sol";
+import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 
 interface INFTXVault is IERC20Upgradeable {
     // =============================================================
+    //                            STRUCTS
+    // =============================================================
+
+    struct TokenDepositInfo {
+        uint48 timestamp;
+        address depositor;
+    }
+
+    struct DepositInfo1155 {
+        uint256 qty;
+        address depositor;
+        uint48 timestamp;
+    }
+
+    // =============================================================
     //                           CONSTANTS
     // =============================================================
+
+    function WETH() external view returns (IWETH9);
+
+    // only set during initialization
 
     function assetAddress() external view returns (address);
 
     function vaultFactory() external view returns (INFTXVaultFactory);
 
+    function vaultId() external view returns (uint256);
+
     function is1155() external view returns (bool);
 
     // =============================================================
-    //                           STORAGE
+    //                          VARIABLES
     // =============================================================
-
-    function vaultId() external view returns (uint256);
 
     function manager() external view returns (address);
 
@@ -33,20 +53,9 @@ interface INFTXVault is IERC20Upgradeable {
 
     function enableMint() external view returns (bool);
 
-    struct TokenDepositInfo {
-        uint48 timestamp;
-        address depositor;
-    }
-
     function tokenDepositInfo(
         uint256 tokenId
     ) external view returns (uint48 timestamp, address depositor);
-
-    struct DepositInfo1155 {
-        uint256 qty;
-        address depositor;
-        uint48 timestamp;
-    }
 
     function depositInfo1155(
         uint256 tokenId,
@@ -211,7 +220,14 @@ interface INFTXVault is IERC20Upgradeable {
 
     function targetSwapFee() external view returns (uint256);
 
-    function vaultFees() external view returns (uint256, uint256, uint256);
+    function vaultFees()
+        external
+        view
+        returns (
+            uint256 _mintFee,
+            uint256 _targetRedeemFee,
+            uint256 _targetSwapFee
+        );
 
     function allValidNFTs(
         uint256[] calldata tokenIds
