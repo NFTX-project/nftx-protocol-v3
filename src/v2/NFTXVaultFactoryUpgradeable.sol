@@ -7,7 +7,7 @@ import "./proxy/UpgradeableBeacon.sol";
 import "./proxy/BeaconProxy.sol";
 import "./interface/INFTXVaultFactory.sol";
 import "./interface/INFTXFeeDistributor.sol";
-import "./NFTXVaultUpgradeable.sol";
+import "../NFTXVaultUpgradeable.sol";
 
 // Authors: @0xKiwi_, @alexgausman and @apoorvlathey
 

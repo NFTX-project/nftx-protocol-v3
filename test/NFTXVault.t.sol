@@ -4,7 +4,7 @@ pragma solidity =0.8.15;
 import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 
-import {INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
+import {INFTXVault} from "@src/NFTXVaultUpgradeable.sol";
 
 import {TestBase} from "./TestBase.sol";
 

@@ -6,7 +6,7 @@ import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";
 
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
-import {INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
+import {INFTXVault} from "@src/NFTXVaultUpgradeable.sol";
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 
 contract MockFeeDistributor {

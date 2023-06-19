@@ -2,19 +2,19 @@
 
 pragma solidity ^0.8.0;
 
-import "./util/OwnableUpgradeable.sol";
-import "./util/ReentrancyGuardUpgradeable.sol";
-import "./util/EnumerableSetUpgradeable.sol";
-import "./util/SafeERC20Upgradeable.sol";
-import "./token/ERC20FlashMintUpgradeable.sol";
-import "./token/ERC721SafeHolderUpgradeable.sol";
-import "./token/ERC1155SafeHolderUpgradeable.sol";
-import "./token/IERC1155Upgradeable.sol";
-import "./token/IERC721Upgradeable.sol";
-import "./interface/INFTXVault.sol";
-import "./interface/INFTXEligibilityManager.sol";
-import "./interface/INFTXFeeDistributor.sol";
-import {ExponentialPremium} from "./lib/ExponentialPremium.sol";
+import "./v2/util/OwnableUpgradeable.sol";
+import "./v2/util/ReentrancyGuardUpgradeable.sol";
+import "./v2/util/EnumerableSetUpgradeable.sol";
+import "./v2/util/SafeERC20Upgradeable.sol";
+import "./v2/token/ERC20FlashMintUpgradeable.sol";
+import "./v2/token/ERC721SafeHolderUpgradeable.sol";
+import "./v2/token/ERC1155SafeHolderUpgradeable.sol";
+import "./v2/token/IERC1155Upgradeable.sol";
+import "./v2/token/IERC721Upgradeable.sol";
+import "./v2/interface/INFTXVault.sol";
+import "./v2/interface/INFTXEligibilityManager.sol";
+import "./v2/interface/INFTXFeeDistributor.sol";
+import {ExponentialPremium} from "./v2/lib/ExponentialPremium.sol";
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IUniswapV3PoolDerivedState} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol";
@@ -46,23 +46,13 @@ contract NFTXVaultUpgradeable is
     INFTXVaultFactory public override vaultFactory;
     INFTXEligibility public override eligibilityStorage;
 
-    uint256 UNUSED_FEE4;
-    uint256 private UNUSED_FEE1;
-    uint256 private UNUSED_FEE2;
-    uint256 private UNUSED_FEE3;
-
     bool public override is1155;
     bool public override allowAllItems;
     bool public override enableMint;
-    bool private UNUSED_FEE5;
-    bool private UNUSED_FEE6;
 
     EnumerableSetUpgradeable.UintSet holdings;
     // tokenId => qty
     mapping(uint256 => uint256) quantity1155;
-
-    bool private UNUSED_FEE7;
-    bool private UNUSED_FEE8;
 
     // tokenId => info
     mapping(uint256 => TokenDepositInfo) public override tokenDepositInfo;
@@ -933,6 +923,7 @@ contract NFTXVaultUpgradeable is
         address to,
         uint256 tokenId
     ) internal virtual {
+        // TODO: add these as global constants
         address kitties = 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
         address punks = 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
         bytes memory data;
