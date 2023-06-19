@@ -3,16 +3,17 @@ pragma solidity =0.8.15;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import {TransferLib} from "@src/lib/TransferLib.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
-import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
-import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
+import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
+import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";
-import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
+import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 
-import {INFTXFeeDistributorV3} from "./interfaces/INFTXFeeDistributorV3.sol";
+import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 
 /**
  * @title NFTX Fee Distributor V3
@@ -74,7 +75,7 @@ contract NFTXFeeDistributorV3 is
     // =============================================================
 
     function distribute(uint256 vaultId) external override nonReentrant {
-        INFTXVault vault = INFTXVault(nftxVaultFactory.vault(vaultId));
+        INFTXVaultV3 vault = INFTXVaultV3(nftxVaultFactory.vault(vaultId));
 
         uint256 wethBalance = WETH.balanceOf(address(this));
 
@@ -204,7 +205,7 @@ contract NFTXFeeDistributorV3 is
         FeeReceiver storage feeReceiver,
         uint256 wethAmountToSend,
         uint256 vaultId,
-        INFTXVault vault
+        INFTXVaultV3 vault
     ) internal returns (bool tokenSent) {
         if (feeReceiver.receiverType == ReceiverType.INVENTORY) {
             TransferLib.maxApprove(

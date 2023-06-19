@@ -88,7 +88,7 @@ const config: HardhatUserConfig = {
         LOWEST_OPTIMIZER_COMPILER_SETTINGS,
       "src/uniswap/v3-periphery/libraries/NFTSVG.sol":
         LOWEST_OPTIMIZER_COMPILER_SETTINGS,
-      "src/NFTXVaultUpgradeable.sol": UNICORE_OPTIMIZER_COMPILER_SETTINGS
+      "src/NFTXVaultUpgradeableV3.sol": UNICORE_OPTIMIZER_COMPILER_SETTINGS
     },
   },
   namedAccounts: {

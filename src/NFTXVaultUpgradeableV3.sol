@@ -1,41 +1,43 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
-// TODO: import from OZ directly where possible.
-import "./v2/util/OwnableUpgradeable.sol";
-import "./v2/util/ReentrancyGuardUpgradeable.sol";
-import "./v2/util/EnumerableSetUpgradeable.sol";
-import "./v2/util/SafeERC20Upgradeable.sol";
-import "./v2/token/ERC20FlashMintUpgradeable.sol";
-import "./v2/token/ERC721SafeHolderUpgradeable.sol";
-import "./v2/token/ERC1155SafeHolderUpgradeable.sol";
-import "./v2/token/IERC1155Upgradeable.sol";
-import "./v2/token/IERC721Upgradeable.sol";
-import "./v2/interface/INFTXVault.sol";
-import "./v2/interface/INFTXEligibilityManager.sol";
-import "./v2/interface/INFTXFeeDistributor.sol";
-import {ExponentialPremium} from "./v2/lib/ExponentialPremium.sol";
-import {TransferLib} from "@src/lib/TransferLib.sol";
+import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {ERC721HolderUpgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+import {ERC1155HolderUpgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {ERC20FlashMintUpgradeable, IERC3156FlashBorrowerUpgradeable} from "@src/custom/ERC20FlashMintUpgradeable.sol";
 
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {IUniswapV3PoolDerivedState} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
+import {TransferLib} from "@src/lib/TransferLib.sol";
+import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
+import {ExponentialPremium} from "@src/lib/ExponentialPremium.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {EnumerableSetUpgradeable} from "@openzeppelin-upgradeable/contracts/utils/structs/EnumerableSetUpgradeable.sol";
+
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
-import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {INFTXEligibility} from "@src/v2/interface/INFTXEligibility.sol";
+import {IERC20Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {IERC1155Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
+import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
+import {INFTXEligibilityManager} from "@src/v2/interface/INFTXEligibilityManager.sol";
+import {IUniswapV3PoolDerivedState} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol";
+
+import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 
 // Authors: @0xKiwi_, @alexgausman and @apoorvlathey
 
-contract NFTXVaultUpgradeable is
+contract NFTXVaultUpgradeableV3 is
+    INFTXVaultV3,
     OwnableUpgradeable,
     ERC20FlashMintUpgradeable,
     ReentrancyGuardUpgradeable,
-    ERC721SafeHolderUpgradeable,
-    ERC1155SafeHolderUpgradeable,
-    INFTXVault
+    ERC721HolderUpgradeable,
+    ERC1155HolderUpgradeable
 {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -104,7 +106,7 @@ contract NFTXVaultUpgradeable is
         address _assetAddress,
         bool _is1155,
         bool _allowAllItems
-    ) public virtual override initializer {
+    ) public override initializer {
         __Ownable_init();
         __ERC20_init(_name, _symbol);
 
@@ -132,7 +134,7 @@ contract NFTXVaultUpgradeable is
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external payable virtual override returns (uint256 vTokensMinted) {
+    ) external payable override returns (uint256 vTokensMinted) {
         return mintTo(tokenIds, amounts, msg.sender);
     }
 
@@ -141,14 +143,7 @@ contract NFTXVaultUpgradeable is
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         address to
-    )
-        public
-        payable
-        virtual
-        override
-        nonReentrant
-        returns (uint256 vTokensMinted)
-    {
+    ) public payable override nonReentrant returns (uint256 vTokensMinted) {
         _onlyOwnerIfPaused(1);
         if (!enableMint) revert MintingDisabled();
 
@@ -173,7 +168,7 @@ contract NFTXVaultUpgradeable is
         uint256[] calldata idsOut,
         uint256 wethAmount,
         bool forceFees
-    ) external payable virtual override returns (uint256 ethFees) {
+    ) external payable override returns (uint256 ethFees) {
         return redeemTo(idsOut, msg.sender, wethAmount, forceFees);
     }
 
@@ -183,7 +178,7 @@ contract NFTXVaultUpgradeable is
         address to,
         uint256 wethAmount,
         bool forceFees
-    ) public payable virtual override nonReentrant returns (uint256 ethFees) {
+    ) public payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(2);
 
         uint256 ethOrWethAmt;
@@ -233,7 +228,7 @@ contract NFTXVaultUpgradeable is
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata idsOut,
         bool forceFees
-    ) external payable virtual override returns (uint256 ethFees) {
+    ) external payable override returns (uint256 ethFees) {
         return swapTo(idsIn, amounts, idsOut, msg.sender, forceFees);
     }
 
@@ -244,7 +239,7 @@ contract NFTXVaultUpgradeable is
         uint256[] calldata idsOut,
         address to,
         bool forceFees
-    ) public payable virtual override nonReentrant returns (uint256 ethFees) {
+    ) public payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(3);
         uint256 count;
         if (is1155) {
@@ -292,8 +287,8 @@ contract NFTXVaultUpgradeable is
         IERC3156FlashBorrowerUpgradeable receiver,
         address token,
         uint256 amount,
-        bytes memory data
-    ) public virtual override returns (bool) {
+        bytes calldata data
+    ) public override(ERC20FlashMintUpgradeable, INFTXVaultV3) returns (bool) {
         _onlyOwnerIfPaused(4);
         return super.flashLoan(receiver, token, amount, data);
     }
@@ -303,14 +298,14 @@ contract NFTXVaultUpgradeable is
     // =============================================================
 
     // TODO: add NATSPEC
-    function finalizeVault() external virtual override {
+    function finalizeVault() external override {
         setManager(address(0));
     }
 
     function setVaultMetadata(
         string calldata name_,
         string calldata symbol_
-    ) external virtual override {
+    ) external override {
         _onlyPrivileged();
         _setMetadata(name_, symbol_);
     }
@@ -319,7 +314,7 @@ contract NFTXVaultUpgradeable is
         bool enableMint_,
         bool enableTargetRedeem_,
         bool enableTargetSwap_
-    ) public virtual override {
+    ) public override {
         _onlyPrivileged();
         enableMint = enableMint_;
 
@@ -332,12 +327,12 @@ contract NFTXVaultUpgradeable is
         uint256 mintFee_,
         uint256 redeemFee_,
         uint256 swapFee_
-    ) public virtual override {
+    ) public override {
         _onlyPrivileged();
         vaultFactory.setVaultFees(vaultId, mintFee_, redeemFee_, swapFee_);
     }
 
-    function disableVaultFees() public virtual override {
+    function disableVaultFees() public override {
         _onlyPrivileged();
         vaultFactory.disableVaultFees(vaultId);
     }
@@ -348,7 +343,7 @@ contract NFTXVaultUpgradeable is
     function deployEligibilityStorage(
         uint256 moduleIndex,
         bytes calldata initData
-    ) external virtual override returns (address) {
+    ) external override returns (address) {
         _onlyPrivileged();
         if (address(eligibilityStorage) != address(0))
             revert EligibilityAlreadySet();
@@ -370,7 +365,7 @@ contract NFTXVaultUpgradeable is
     // // This function allows for the manager to set their own arbitrary eligibility contract.
     // // Once eligiblity is set, it cannot be unset or changed.
     // Disabled for launch.
-    // function setEligibilityStorage(address _newEligibility) public virtual {
+    // function setEligibilityStorage(address _newEligibility) public {
     //     onlyPrivileged();
     //     require(
     //         address(eligibilityStorage) == address(0),
@@ -383,7 +378,7 @@ contract NFTXVaultUpgradeable is
     // }
 
     // The manager has control over options like fees and features
-    function setManager(address manager_) public virtual override {
+    function setManager(address manager_) public override {
         _onlyPrivileged();
         manager = manager_;
         emit ManagerSet(manager_);
@@ -425,7 +420,6 @@ contract NFTXVaultUpgradeable is
     function vaultFees()
         public
         view
-        virtual
         override
         returns (uint256 mintFee, uint256 redeemFee, uint256 swapFee)
     {
@@ -434,7 +428,7 @@ contract NFTXVaultUpgradeable is
 
     function allValidNFTs(
         uint256[] memory tokenIds
-    ) public view virtual override returns (bool) {
+    ) public view override returns (bool) {
         if (allowAllItems) {
             return true;
         }
@@ -448,17 +442,11 @@ contract NFTXVaultUpgradeable is
 
     function nftIdAt(
         uint256 holdingsIndex
-    ) external view virtual override returns (uint256) {
+    ) external view override returns (uint256) {
         return _holdings.at(holdingsIndex);
     }
 
-    function allHoldings()
-        external
-        view
-        virtual
-        override
-        returns (uint256[] memory)
-    {
+    function allHoldings() external view override returns (uint256[] memory) {
         uint256 len = _holdings.length();
         uint256[] memory idArray = new uint256[](len);
         for (uint256 i; i < len; ++i) {
@@ -467,7 +455,7 @@ contract NFTXVaultUpgradeable is
         return idArray;
     }
 
-    function totalHoldings() external view virtual override returns (uint256) {
+    function totalHoldings() external view override returns (uint256) {
         return _holdings.length();
     }
 
@@ -579,7 +567,7 @@ contract NFTXVaultUpgradeable is
     // =============================================================
 
     // We set a hook to the eligibility module (if it exists) after redeems in case anything needs to be modified.
-    function _afterRedeemHook(uint256[] memory tokenIds) internal virtual {
+    function _afterRedeemHook(uint256[] memory tokenIds) internal {
         INFTXEligibility _eligibilityStorage = eligibilityStorage;
         if (address(_eligibilityStorage) == address(0)) {
             return;
@@ -590,7 +578,7 @@ contract NFTXVaultUpgradeable is
     function _receiveNFTs(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts
-    ) internal virtual returns (uint256) {
+    ) internal returns (uint256) {
         if (!allValidNFTs(tokenIds)) revert NotEligible();
 
         if (is1155) {
@@ -652,7 +640,6 @@ contract NFTXVaultUpgradeable is
         bool forceFees
     )
         internal
-        virtual
         returns (
             uint256 netVTokenPremium,
             uint256[] memory vTokenPremiums,
@@ -977,7 +964,7 @@ contract NFTXVaultUpgradeable is
         address assetAddr,
         address to,
         uint256 tokenId
-    ) internal virtual {
+    ) internal {
         bytes memory data;
 
         if (assetAddr != CRYPTO_PUNKS && assetAddr != CRYPTO_KITTIES) {
@@ -1006,10 +993,7 @@ contract NFTXVaultUpgradeable is
         require(success, string(returnData));
     }
 
-    function _transferFromERC721(
-        address assetAddr,
-        uint256 tokenId
-    ) internal virtual {
+    function _transferFromERC721(address assetAddr, uint256 tokenId) internal {
         bytes memory data;
 
         if (assetAddr != CRYPTO_PUNKS && assetAddr != CRYPTO_KITTIES) {

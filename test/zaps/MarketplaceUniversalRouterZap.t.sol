@@ -9,7 +9,7 @@ import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRoute
 import {MockUniversalRouter} from "@mocks/MockUniversalRouter.sol";
 import {IQuoterV2} from "@uni-periphery/lens/QuoterV2.sol";
 import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolUpgradeable.sol";
-import {NFTXVaultUpgradeable, INFTXVault} from "@src/NFTXVaultUpgradeable.sol";
+import {NFTXVaultUpgradeableV3, INFTXVaultV3} from "@src/NFTXVaultUpgradeableV3.sol";
 import {MockERC20} from "@mocks/MockERC20.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
@@ -177,7 +177,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
 
     function test_buyNFTsWithERC20_721_Success() external {
         _mintPositionWithTwap(currentNFTPrice);
-        INFTXVault token = _mintPositionERC20();
+        INFTXVaultV3 token = _mintPositionERC20();
 
         uint256 qty = 5;
         (, uint256[] memory idsOut) = _mintVToken(qty);
@@ -249,7 +249,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
 
     function test_buyNFTsWithERC20WithPermit2_721_Success() external {
         _mintPositionWithTwap(currentNFTPrice);
-        INFTXVault token = _mintPositionERC20();
+        INFTXVaultV3 token = _mintPositionERC20();
 
         uint256 qty = 5;
         (, uint256[] memory idsOut) = _mintVToken(qty);
@@ -438,7 +438,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
 
     // internal
 
-    function _mintPositionERC20() internal returns (INFTXVault token) {
+    function _mintPositionERC20() internal returns (INFTXVaultV3 token) {
         int24 tickLower;
         int24 tickUpper;
         uint256 qty = 150;
@@ -450,7 +450,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
             false,
             true
         );
-        token = INFTXVault(vaultFactory.vault(vaultId2));
+        token = INFTXVaultV3(vaultFactory.vault(vaultId2));
         uint256 amount;
         {
             uint256[] memory tokenIds = nft.mint(qty);

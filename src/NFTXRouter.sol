@@ -2,26 +2,26 @@
 pragma solidity =0.8.15;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+
 import {TransferLib} from "@src/lib/TransferLib.sol";
-
-import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
-import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
-import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
-import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
-import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {PoolAddress} from "@uni-periphery/libraries/PoolAddress.sol";
-import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
+import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
+import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
-import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
+import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 
-import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
+import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 
 /**
  * @title NFTX Router
@@ -79,7 +79,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function addLiquidity(
         AddLiquidityParams calldata params
     ) external payable override returns (uint256 positionId) {
-        INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
+        INFTXVaultV3 vToken = INFTXVaultV3(
+            nftxVaultFactory.vault(params.vaultId)
+        );
 
         if (params.vTokensAmount > 0) {
             vToken.transferFrom(
@@ -96,7 +98,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         AddLiquidityParams calldata params,
         bytes calldata encodedPermit2
     ) external payable override returns (uint256 positionId) {
-        INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
+        INFTXVaultV3 vToken = INFTXVaultV3(
+            nftxVaultFactory.vault(params.vaultId)
+        );
 
         if (encodedPermit2.length > 0) {
             (
@@ -126,7 +130,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function increaseLiquidity(
         IncreaseLiquidityParams calldata params
     ) external payable override {
-        INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
+        INFTXVaultV3 vToken = INFTXVaultV3(
+            nftxVaultFactory.vault(params.vaultId)
+        );
 
         if (params.vTokensAmount > 0) {
             vToken.transferFrom(
@@ -143,7 +149,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         IncreaseLiquidityParams calldata params,
         bytes calldata encodedPermit2
     ) external payable override {
-        INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
+        INFTXVaultV3 vToken = INFTXVaultV3(
+            nftxVaultFactory.vault(params.vaultId)
+        );
 
         if (encodedPermit2.length > 0) {
             (
@@ -194,7 +202,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             })
         );
 
-        INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
+        INFTXVaultV3 vToken = INFTXVaultV3(
+            nftxVaultFactory.vault(params.vaultId)
+        );
 
         bool _isVToken0 = isVToken0(address(vToken));
         (uint256 vTokenAmt, uint256 wethAmt) = _isVToken0
@@ -249,8 +259,10 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function sellNFTs(
         SellNFTsParams calldata params
     ) external payable override returns (uint256 wethReceived) {
-        INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
-        address assetAddress = INFTXVault(address(vToken)).assetAddress();
+        INFTXVaultV3 vToken = INFTXVaultV3(
+            nftxVaultFactory.vault(params.vaultId)
+        );
+        address assetAddress = INFTXVaultV3(address(vToken)).assetAddress();
 
         if (params.nftAmounts.length == 0) {
             // tranfer NFTs from user to the vault
@@ -308,7 +320,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     }
 
     function buyNFTs(BuyNFTsParams calldata params) external payable override {
-        INFTXVault vToken = INFTXVault(nftxVaultFactory.vault(params.vaultId));
+        INFTXVaultV3 vToken = INFTXVaultV3(
+            nftxVaultFactory.vault(params.vaultId)
+        );
         uint256 vTokenAmt = params.nftIds.length * 1 ether;
 
         IWETH9(WETH).deposit{value: msg.value}();
@@ -468,7 +482,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
     function _addLiquidity(
         AddLiquidityParams calldata params,
-        INFTXVault vToken
+        INFTXVaultV3 vToken
     ) internal returns (uint256 positionId) {
         uint256 vTokensAmount = params.vTokensAmount;
 
@@ -572,7 +586,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
     function _increaseLiquidity(
         IncreaseLiquidityParams calldata params,
-        INFTXVault vToken
+        INFTXVaultV3 vToken
     ) internal {
         uint256 vTokensAmount = params.vTokensAmount;
 
@@ -671,7 +685,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     }
 
     function _ethMintFees(
-        INFTXVault vToken,
+        INFTXVaultV3 vToken,
         uint256 nftCount
     ) internal view returns (uint256) {
         (uint256 mintFee, , ) = vToken.vaultFees();

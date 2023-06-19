@@ -7,7 +7,7 @@ import "./proxy/UpgradeableBeacon.sol";
 import "./proxy/BeaconProxy.sol";
 import "./interface/INFTXVaultFactory.sol";
 import "./interface/INFTXFeeDistributor.sol";
-import "../NFTXVaultUpgradeable.sol";
+import {NFTXVaultUpgradeableV3} from "@src/NFTXVaultUpgradeableV3.sol";
 
 // Authors: @0xKiwi_, @alexgausman and @apoorvlathey
 
@@ -257,7 +257,7 @@ contract NFTXVaultFactoryUpgradeable is
         bool allowAllItems
     ) internal returns (address) {
         address newBeaconProxy = address(new BeaconProxy(address(this), ""));
-        NFTXVaultUpgradeable(newBeaconProxy).__NFTXVault_init(
+        NFTXVaultUpgradeableV3(newBeaconProxy).__NFTXVault_init(
             name,
             symbol,
             _assetAddress,
@@ -265,9 +265,9 @@ contract NFTXVaultFactoryUpgradeable is
             allowAllItems
         );
         // Manager for configuration.
-        NFTXVaultUpgradeable(newBeaconProxy).setManager(msg.sender);
+        NFTXVaultUpgradeableV3(newBeaconProxy).setManager(msg.sender);
         // Owner for administrative functions.
-        NFTXVaultUpgradeable(newBeaconProxy).transferOwnership(owner());
+        NFTXVaultUpgradeableV3(newBeaconProxy).transferOwnership(owner());
         return newBeaconProxy;
     }
 }

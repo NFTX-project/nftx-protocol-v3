@@ -25,7 +25,7 @@ import {Mock1155} from "@mocks/Mock1155.sol";
 import {MockUniversalRouter} from "@mocks/MockUniversalRouter.sol";
 import {MockPermit2} from "@mocks/permit2/MockPermit2.sol";
 
-import {NFTXVaultUpgradeable, INFTXVault} from "@src/NFTXVaultUpgradeable.sol";
+import {NFTXVaultUpgradeableV3, INFTXVaultV3} from "@src/NFTXVaultUpgradeableV3.sol";
 import {NFTXVaultFactoryUpgradeable} from "@src/v2/NFTXVaultFactoryUpgradeable.sol";
 import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
@@ -48,11 +48,11 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     MockUniversalRouter universalRouter;
     MockPermit2 permit2;
 
-    INFTXVault vtoken;
-    INFTXVault vtoken1155;
+    INFTXVaultV3 vtoken;
+    INFTXVaultV3 vtoken1155;
     TimelockExcludeList timelockExcludeList;
     NFTXFeeDistributorV3 feeDistributor;
-    NFTXVaultUpgradeable vaultImpl;
+    NFTXVaultUpgradeableV3 vaultImpl;
     NFTXVaultFactoryUpgradeable vaultFactory;
     NFTXRouter nftxRouter;
     NFTXInventoryStakingV3Upgradeable inventoryStaking;
@@ -101,7 +101,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         nft = new MockNFT();
         nft1155 = new Mock1155();
 
-        vaultImpl = new NFTXVaultUpgradeable(IWETH9(address(weth)));
+        vaultImpl = new NFTXVaultUpgradeableV3(IWETH9(address(weth)));
         vaultFactory = new NFTXVaultFactoryUpgradeable();
         vaultFactory.__NFTXVaultFactory_init(address(vaultImpl));
         // set premium related values
@@ -152,7 +152,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             false, // is1155
             true // allowAllItems
         );
-        vtoken = INFTXVault(vaultFactory.vault(vaultId));
+        vtoken = INFTXVaultV3(vaultFactory.vault(vaultId));
         vaultFactory.createVault(
             "TEST1155",
             "TST1155",
@@ -160,7 +160,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             true, // is1155
             true // allowAllItems
         );
-        vtoken1155 = INFTXVault(vaultFactory.vault(vaultId + 1));
+        vtoken1155 = INFTXVaultV3(vaultFactory.vault(vaultId + 1));
 
         // Zaps
         universalRouter = new MockUniversalRouter(

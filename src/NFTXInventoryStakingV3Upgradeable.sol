@@ -4,19 +4,20 @@ pragma solidity =0.8.15;
 import {ERC721PermitUpgradeable, ERC721Upgradeable} from "@src/util/ERC721PermitUpgradeable.sol";
 import {ERC1155HolderUpgradeable, ERC1155ReceiverUpgradeable, IERC165Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
+import {TransferLib} from "@src/lib/TransferLib.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 import {PausableUpgradeable} from "./util/PausableUpgradeable.sol";
-import {TransferLib} from "@src/lib/TransferLib.sol";
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
-import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
 import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
-import {INFTXFeeDistributorV3} from "./interfaces/INFTXFeeDistributorV3.sol";
-import {INFTXInventoryStakingV3} from "./interfaces/INFTXInventoryStakingV3.sol";
+import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+
+import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 
 /**
  * @title NFTX Inventory Staking V3
@@ -174,7 +175,7 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 amount;
         {
-            address assetAddress = INFTXVault(vToken).assetAddress();
+            address assetAddress = INFTXVaultV3(vToken).assetAddress();
 
             if (amounts.length == 0) {
                 // tranfer NFTs from user to the vault
@@ -196,7 +197,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             }
 
             // mint vTokens
-            amount = INFTXVault(vToken).mint(tokenIds, amounts);
+            amount = INFTXVaultV3(vToken).mint(tokenIds, amounts);
         }
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
@@ -287,7 +288,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             if (vTokenOwed < requiredVTokens) revert InsufficientVTokens();
 
             address vault = nftxVaultFactory.vault(vaultId);
-            INFTXVault(vault).redeemTo(nftIds, msg.sender, 0, false);
+            INFTXVaultV3(vault).redeemTo(nftIds, msg.sender, 0, false);
 
             // send vToken residue
             uint256 vTokenResidue = vTokenOwed - requiredVTokens;

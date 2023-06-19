@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
-import "../token/IERC20Upgradeable.sol";
-import "./INFTXVaultFactory.sol";
-import "./INFTXEligibility.sol";
-import "../token/IERC721Upgradeable.sol";
-import "../token/IERC1155Upgradeable.sol";
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
+import {INFTXEligibility} from "@src/v2/interface/INFTXEligibility.sol";
+import {IERC20Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {IERC1155Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
+import {IERC3156FlashBorrowerUpgradeable} from "@src/custom/ERC20FlashMintUpgradeable.sol";
 
-interface INFTXVault is IERC20Upgradeable {
+interface INFTXVaultV3 is IERC20Upgradeable {
     // =============================================================
     //                            STRUCTS
     // =============================================================
@@ -213,6 +213,13 @@ interface INFTXVault is IERC20Upgradeable {
         address to,
         bool forceFees // deduct fees even if on the exclude list
     ) external payable returns (uint256 ethFees);
+
+    function flashLoan(
+        IERC3156FlashBorrowerUpgradeable receiver,
+        address token,
+        uint256 amount,
+        bytes calldata data
+    ) external returns (bool);
 
     // =============================================================
     //                     PUBLIC / EXTERNAL VIEW
