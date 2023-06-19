@@ -679,7 +679,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         INFTXVault vToken,
         uint256 nftCount
     ) internal view returns (uint256) {
-        return vToken.vTokenToETH(vToken.mintFee() * nftCount);
+        (uint256 mintFee, , ) = vToken.vaultFees();
+
+        return vToken.vTokenToETH(mintFee * nftCount);
     }
 
     receive() external payable {}

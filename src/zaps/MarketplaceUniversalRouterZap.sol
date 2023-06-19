@@ -572,17 +572,20 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         INFTXVault vToken,
         uint256 nftCount
     ) internal view returns (uint256) {
-        return vToken.vTokenToETH(vToken.mintFee() * nftCount);
+        (uint256 mintFee, , ) = vToken.vaultFees();
+
+        return vToken.vTokenToETH(mintFee * nftCount);
     }
 
     function _ethSwapFees(
         INFTXVault vToken,
         uint256[] memory nftIds
     ) internal view returns (uint256) {
+        (, , uint256 swapFee) = vToken.vaultFees();
+
         return
             vToken.vTokenToETH(
-                (vToken.targetSwapFee() * nftIds.length) +
-                    _getVTokenPremium(vToken, nftIds)
+                (swapFee * nftIds.length) + _getVTokenPremium(vToken, nftIds)
             );
     }
 
@@ -590,10 +593,11 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         INFTXVault vToken,
         uint256[] memory nftIds
     ) internal view returns (uint256) {
+        (, uint256 redeemFee, ) = vToken.vaultFees();
+
         return
             vToken.vTokenToETH(
-                (vToken.targetRedeemFee() * nftIds.length) +
-                    _getVTokenPremium(vToken, nftIds)
+                (redeemFee * nftIds.length) + _getVTokenPremium(vToken, nftIds)
             );
     }
 

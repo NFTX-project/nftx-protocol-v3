@@ -153,7 +153,8 @@ contract NFTXVaultUpgradeable is
         // Mint to the user.
         _mint(to, BASE * nftCount);
 
-        uint256 totalVTokenFee = mintFee() * nftCount;
+        (uint256 mintFee, , ) = vaultFees();
+        uint256 totalVTokenFee = mintFee * nftCount;
         uint256 ethFees = _chargeAndDistributeFees(totalVTokenFee, msg.value);
 
         _refundETH(msg.value, ethFees);
@@ -193,8 +194,8 @@ contract NFTXVaultUpgradeable is
         // We burn all from sender and mint to fee receiver to reduce costs.
         _burn(msg.sender, BASE * count);
 
-        (, uint256 _targetRedeemFee, ) = vaultFees();
-        uint256 totalVaultFee = (_targetRedeemFee * count);
+        (, uint256 redeemFee, ) = vaultFees();
+        uint256 totalVaultFee = (redeemFee * count);
 
         // Withdraw from vault.
         (
@@ -253,8 +254,8 @@ contract NFTXVaultUpgradeable is
 
         if (count != idsOut.length) revert TokenLengthMismatch();
 
-        (, , uint256 _targetSwapFee) = vaultFees();
-        uint256 totalVaultFee = (_targetSwapFee * idsOut.length);
+        (, , uint256 swapFee) = vaultFees();
+        uint256 totalVaultFee = (swapFee * idsOut.length);
 
         // Give the NFTs first, so the user wont get the same thing back, just to be nice.
         (
@@ -323,16 +324,11 @@ contract NFTXVaultUpgradeable is
 
     function setFees(
         uint256 mintFee_,
-        uint256 targetRedeemFee_,
-        uint256 targetSwapFee_
+        uint256 redeemFee_,
+        uint256 swapFee_
     ) public virtual override {
         _onlyPrivileged();
-        vaultFactory.setVaultFees(
-            vaultId,
-            mintFee_,
-            targetRedeemFee_,
-            targetSwapFee_
-        );
+        vaultFactory.setVaultFees(vaultId, mintFee_, redeemFee_, swapFee_);
     }
 
     function disableVaultFees() public virtual override {
@@ -387,7 +383,6 @@ contract NFTXVaultUpgradeable is
         emit ManagerSet(manager_);
     }
 
-    // TODO: combine multiple rescue functions into one
     function rescueTokens(IERC20Upgradeable token) external override {
         _onlyPrivileged();
         uint256 balance = token.balanceOf(address(this));
@@ -421,32 +416,12 @@ contract NFTXVaultUpgradeable is
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
 
-    // TODO: these multiple fee functions can be removed to reduced contract size
-    function mintFee() public view virtual override returns (uint256) {
-        (uint256 _mintFee, , ) = vaultFactory.vaultFees(vaultId);
-        return _mintFee;
-    }
-
-    function targetRedeemFee() public view virtual override returns (uint256) {
-        (, uint256 _targetRedeemFee, ) = vaultFactory.vaultFees(vaultId);
-        return _targetRedeemFee;
-    }
-
-    function targetSwapFee() public view virtual override returns (uint256) {
-        (, , uint256 _targetSwapFee) = vaultFactory.vaultFees(vaultId);
-        return _targetSwapFee;
-    }
-
     function vaultFees()
         public
         view
         virtual
         override
-        returns (
-            uint256 _mintFee,
-            uint256 _targetRedeemFee,
-            uint256 _targetSwapFee
-        )
+        returns (uint256 mintFee, uint256 redeemFee, uint256 swapFee)
     {
         return vaultFactory.vaultFees(vaultId);
     }

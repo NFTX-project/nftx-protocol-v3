@@ -84,8 +84,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         uint256[] memory idsIn = nft.mint(qty);
 
         // accounting for premium
-        uint256 exactETHPaid = ((vtoken.targetSwapFee() +
-            vaultFactory.premiumMax()) *
+        (, , uint256 swapFee) = vtoken.vaultFees();
+        uint256 exactETHPaid = ((swapFee + vaultFactory.premiumMax()) *
             qty *
             currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
@@ -135,8 +135,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         uint256 qty = 5;
         (, uint256[] memory idsOut) = _mintVToken(qty);
 
-        uint256 exactETHFees = ((vtoken.targetRedeemFee() +
-            vaultFactory.premiumMax()) *
+        (, uint256 redeemFee, ) = vtoken.vaultFees();
+        uint256 exactETHFees = ((redeemFee + vaultFactory.premiumMax()) *
             qty *
             currentNFTPrice) / 1 ether;
         uint256 expectedETHFees = _valueWithError(exactETHFees);
@@ -182,8 +182,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         uint256 qty = 5;
         (, uint256[] memory idsOut) = _mintVToken(qty);
 
-        uint256 exactETHFees = ((vtoken.targetRedeemFee() +
-            vaultFactory.premiumMax()) *
+        (, uint256 redeemFee, ) = vtoken.vaultFees();
+        uint256 exactETHFees = ((redeemFee + vaultFactory.premiumMax()) *
             qty *
             currentNFTPrice) / 1 ether;
         // uint256 expectedETHFees = _valueWithError(exactETHFees);
@@ -254,8 +254,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         uint256 qty = 5;
         (, uint256[] memory idsOut) = _mintVToken(qty);
 
-        uint256 exactETHFees = ((vtoken.targetRedeemFee() +
-            vaultFactory.premiumMax()) *
+        (, uint256 redeemFee, ) = vtoken.vaultFees();
+        uint256 exactETHFees = ((redeemFee + vaultFactory.premiumMax()) *
             qty *
             currentNFTPrice) / 1 ether;
         // uint256 expectedETHFees = _valueWithError(exactETHFees);
@@ -410,8 +410,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         amounts[0] = qty;
 
         // accounting for premium
-        uint256 exactETHPaid = ((vtoken1155.targetSwapFee() +
-            vaultFactory.premiumMax()) *
+        (, , uint256 swapFee) = vtoken1155.vaultFees();
+        uint256 exactETHPaid = ((swapFee + vaultFactory.premiumMax()) *
             qty *
             currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);

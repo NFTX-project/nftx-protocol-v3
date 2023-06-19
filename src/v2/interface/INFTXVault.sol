@@ -224,20 +224,10 @@ interface INFTXVault is IERC20Upgradeable {
 
     function totalHoldings() external view returns (uint256);
 
-    function mintFee() external view returns (uint256);
-
-    function targetRedeemFee() external view returns (uint256);
-
-    function targetSwapFee() external view returns (uint256);
-
     function vaultFees()
         external
         view
-        returns (
-            uint256 _mintFee,
-            uint256 _targetRedeemFee,
-            uint256 _targetSwapFee
-        );
+        returns (uint256 mintFee, uint256 redeemFee, uint256 swapFee);
 
     function allValidNFTs(
         uint256[] calldata tokenIds
