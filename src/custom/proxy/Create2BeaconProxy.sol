@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "../util/Address.sol";
-import "./Proxy.sol";
-import "./IBeacon.sol";
+import {Proxy} from "@openzeppelin/contracts/proxy/Proxy.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {IBeacon} from "@src/custom/proxy/IBeacon.sol";
 
 /**
  * @dev This contract implements a proxy that gets the implementation address for each call from a {UpgradeableBeacon}.
@@ -63,7 +63,7 @@ contract Create2BeaconProxy is Proxy {
         override
         returns (address)
     {
-        return IBeacon(_beacon()).childImplementation();
+        return IBeacon(_beacon()).implementation();
     }
 
     /**
@@ -82,7 +82,7 @@ contract Create2BeaconProxy is Proxy {
             "BeaconProxy: beacon is not a contract"
         );
         require(
-            Address.isContract(IBeacon(beacon).childImplementation()),
+            Address.isContract(IBeacon(beacon).implementation()),
             "BeaconProxy: beacon implementation is not a contract"
         );
         bytes32 slot = _BEACON_SLOT;

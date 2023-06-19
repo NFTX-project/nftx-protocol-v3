@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity =0.8.15;
 
-import {UpgradeableBeacon} from "@src/proxy/UpgradeableBeacon.sol";
+import {UpgradeableBeacon} from "@src/custom/proxy/UpgradeableBeacon.sol";
 import {Create2Upgradeable} from "@openzeppelin-upgradeable/contracts/utils/Create2Upgradeable.sol";
-import {Create2BeaconProxy} from "@src/proxy/Create2BeaconProxy.sol";
+import {Create2BeaconProxy} from "@src/custom/proxy/Create2BeaconProxy.sol";
 
 import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "./UniswapV3PoolUpgradeable.sol";
 

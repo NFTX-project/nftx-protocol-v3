@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
-import {ERC721PermitUpgradeable, ERC721Upgradeable} from "@src/util/ERC721PermitUpgradeable.sol";
+import {ERC721PermitUpgradeable, ERC721Upgradeable} from "@src/custom/tokens/ERC721/ERC721PermitUpgradeable.sol";
 import {ERC1155HolderUpgradeable, ERC1155ReceiverUpgradeable, IERC165Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
-import {PausableUpgradeable} from "./util/PausableUpgradeable.sol";
+import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
@@ -44,7 +44,7 @@ contract NFTXInventoryStakingV3Upgradeable is
 
     IERC20 public immutable override WETH;
     IPermitAllowanceTransfer public immutable override PERMIT2;
-    INFTXVaultFactory public immutable override nftxVaultFactory;
+    INFTXVaultFactoryV3 public immutable override nftxVaultFactory;
 
     ITimelockExcludeList public override timelockExcludeList;
 
@@ -73,7 +73,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     constructor(
         IERC20 WETH_,
         IPermitAllowanceTransfer PERMIT2_,
-        INFTXVaultFactory nftxVaultFactory_
+        INFTXVaultFactoryV3 nftxVaultFactory_
     ) {
         WETH = WETH_;
         PERMIT2 = PERMIT2_;

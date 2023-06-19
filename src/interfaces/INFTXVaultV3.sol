@@ -4,10 +4,10 @@ pragma solidity ^0.8.0;
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {INFTXEligibility} from "@src/v2/interface/INFTXEligibility.sol";
 import {IERC20Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {IERC1155Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
-import {IERC3156FlashBorrowerUpgradeable} from "@src/custom/ERC20FlashMintUpgradeable.sol";
+import {IERC3156FlashBorrowerUpgradeable} from "@src/custom/tokens/ERC20/ERC20FlashMintUpgradeable.sol";
 
 interface INFTXVaultV3 is IERC20Upgradeable {
     // =============================================================
@@ -35,7 +35,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
 
     function assetAddress() external view returns (address);
 
-    function vaultFactory() external view returns (INFTXVaultFactory);
+    function vaultFactory() external view returns (INFTXVaultFactoryV3);
 
     function vaultId() external view returns (uint256);
 

@@ -15,7 +15,7 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
@@ -43,7 +43,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     INonfungiblePositionManager public immutable override positionManager;
     SwapRouter public immutable override router;
     IQuoterV2 public immutable override quoter;
-    INFTXVaultFactory public immutable override nftxVaultFactory;
+    INFTXVaultFactoryV3 public immutable override nftxVaultFactory;
 
     // =============================================================
     //                           STORAGE
@@ -55,7 +55,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         INonfungiblePositionManager positionManager_,
         SwapRouter router_,
         IQuoterV2 quoter_,
-        INFTXVaultFactory nftxVaultFactory_,
+        INFTXVaultFactoryV3 nftxVaultFactory_,
         IPermitAllowanceTransfer PERMIT2_,
         uint256 lpTimelock_
     ) {

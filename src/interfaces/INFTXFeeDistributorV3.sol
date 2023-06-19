@@ -2,9 +2,9 @@
 pragma solidity =0.8.15;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
-import {INFTXRouter} from "./INFTXRouter.sol";
 
 interface INFTXFeeDistributorV3 {
     enum ReceiverType {
@@ -23,7 +23,7 @@ interface INFTXFeeDistributorV3 {
     //                           CONSTANTS
     // =============================================================
 
-    function nftxVaultFactory() external view returns (INFTXVaultFactory);
+    function nftxVaultFactory() external view returns (INFTXVaultFactoryV3);
 
     function inventoryStaking() external view returns (INFTXInventoryStakingV3);
 

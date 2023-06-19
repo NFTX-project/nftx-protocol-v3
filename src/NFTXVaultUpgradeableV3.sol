@@ -5,7 +5,7 @@ import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/Own
 import {ERC721HolderUpgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {ERC1155HolderUpgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
-import {ERC20FlashMintUpgradeable, IERC3156FlashBorrowerUpgradeable} from "@src/custom/ERC20FlashMintUpgradeable.sol";
+import {ERC20FlashMintUpgradeable, IERC3156FlashBorrowerUpgradeable} from "@src/custom/tokens/ERC20/ERC20FlashMintUpgradeable.sol";
 
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
@@ -20,8 +20,8 @@ import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {INFTXEligibility} from "@src/v2/interface/INFTXEligibility.sol";
 import {IERC20Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {IERC1155Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {INFTXEligibilityManager} from "@src/v2/interface/INFTXEligibilityManager.sol";
@@ -54,7 +54,7 @@ contract NFTXVaultUpgradeableV3 is
     // only set during initialization
 
     address public override assetAddress;
-    INFTXVaultFactory public override vaultFactory;
+    INFTXVaultFactoryV3 public override vaultFactory;
     uint256 public override vaultId;
     bool public override is1155;
 
@@ -112,7 +112,7 @@ contract NFTXVaultUpgradeableV3 is
 
         if (_assetAddress == address(0)) revert ZeroAddress();
         assetAddress = _assetAddress;
-        vaultFactory = INFTXVaultFactory(msg.sender);
+        vaultFactory = INFTXVaultFactoryV3(msg.sender);
         vaultId = vaultFactory.numVaults();
         is1155 = _is1155;
         allowAllItems = _allowAllItems;
@@ -649,7 +649,7 @@ contract NFTXVaultUpgradeableV3 is
         // cache
         bool _is1155 = is1155;
         address _assetAddress = assetAddress;
-        INFTXVaultFactory _vaultFactory = vaultFactory;
+        INFTXVaultFactoryV3 _vaultFactory = vaultFactory;
 
         bool deductFees = forceFees ||
             !_vaultFactory.excludedFromFees(msg.sender);
@@ -738,7 +738,7 @@ contract NFTXVaultUpgradeableV3 is
         uint256 ethReceived
     ) internal returns (uint256 ethAmount) {
         // cache
-        INFTXVaultFactory _vaultFactory = vaultFactory;
+        INFTXVaultFactoryV3 _vaultFactory = vaultFactory;
 
         if (_vaultFactory.excludedFromFees(msg.sender)) {
             return 0;
@@ -769,7 +769,7 @@ contract NFTXVaultUpgradeableV3 is
         bool forceFees
     ) internal returns (uint256 ethAmount) {
         // cache
-        INFTXVaultFactory _vaultFactory = vaultFactory;
+        INFTXVaultFactoryV3 _vaultFactory = vaultFactory;
 
         if (!forceFees && _vaultFactory.excludedFromFees(msg.sender)) {
             return 0;
@@ -900,7 +900,7 @@ contract NFTXVaultUpgradeableV3 is
     }
 
     function _vTokenToETH(
-        INFTXVaultFactory _vaultFactory,
+        INFTXVaultFactoryV3 _vaultFactory,
         uint256 vTokenAmount
     )
         internal

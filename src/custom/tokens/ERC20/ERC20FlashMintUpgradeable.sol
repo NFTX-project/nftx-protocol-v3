@@ -4,7 +4,7 @@
 pragma solidity ^0.8.0;
 
 import {Initializable} from "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
-import {ERC20Upgradeable} from "@src/custom/ERC20Upgradeable.sol";
+import {ERC20Upgradeable} from "@src/custom/tokens/ERC20/ERC20Upgradeable.sol";
 import {IERC3156FlashLenderUpgradeable} from "@openzeppelin-upgradeable/contracts/interfaces/IERC3156FlashLenderUpgradeable.sol";
 import {IERC3156FlashBorrowerUpgradeable} from "@openzeppelin-upgradeable/contracts/interfaces/IERC3156FlashBorrowerUpgradeable.sol";
 

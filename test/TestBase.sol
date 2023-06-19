@@ -26,7 +26,7 @@ import {MockUniversalRouter} from "@mocks/MockUniversalRouter.sol";
 import {MockPermit2} from "@mocks/permit2/MockPermit2.sol";
 
 import {NFTXVaultUpgradeableV3, INFTXVaultV3} from "@src/NFTXVaultUpgradeableV3.sol";
-import {NFTXVaultFactoryUpgradeable} from "@src/v2/NFTXVaultFactoryUpgradeable.sol";
+import {NFTXVaultFactoryUpgradeableV3} from "@src/NFTXVaultFactoryUpgradeableV3.sol";
 import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
 import {TimelockExcludeList} from "@src/v2/other/TimelockExcludeList.sol";
@@ -53,7 +53,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     TimelockExcludeList timelockExcludeList;
     NFTXFeeDistributorV3 feeDistributor;
     NFTXVaultUpgradeableV3 vaultImpl;
-    NFTXVaultFactoryUpgradeable vaultFactory;
+    NFTXVaultFactoryUpgradeableV3 vaultFactory;
     NFTXRouter nftxRouter;
     NFTXInventoryStakingV3Upgradeable inventoryStaking;
     MarketplaceUniversalRouterZap marketplaceZap;
@@ -102,7 +102,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         nft1155 = new Mock1155();
 
         vaultImpl = new NFTXVaultUpgradeableV3(IWETH9(address(weth)));
-        vaultFactory = new NFTXVaultFactoryUpgradeable();
+        vaultFactory = new NFTXVaultFactoryUpgradeableV3();
         vaultFactory.__NFTXVaultFactory_init(address(vaultImpl));
         // set premium related values
         // TODO: move setting these values into the initializer

@@ -12,7 +12,7 @@ import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
@@ -33,7 +33,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
     IWETH9 public immutable WETH;
     IPermitAllowanceTransfer public immutable PERMIT2;
-    INFTXVaultFactory public immutable nftxVaultFactory;
+    INFTXVaultFactoryV3 public immutable nftxVaultFactory;
     address public immutable inventoryStaking;
 
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
@@ -88,7 +88,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     // =============================================================
 
     constructor(
-        INFTXVaultFactory nftxVaultFactory_,
+        INFTXVaultFactoryV3 nftxVaultFactory_,
         address universalRouter_,
         IPermitAllowanceTransfer PERMIT2_,
         address inventoryStaking_,

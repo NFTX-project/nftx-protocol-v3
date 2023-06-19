@@ -10,7 +10,7 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
@@ -32,7 +32,7 @@ contract NFTXFeeDistributorV3 is
     //                           CONSTANTS
     // =============================================================
 
-    INFTXVaultFactory public immutable override nftxVaultFactory;
+    INFTXVaultFactoryV3 public immutable override nftxVaultFactory;
     INFTXInventoryStakingV3 public immutable override inventoryStaking;
     IERC20 public immutable override WETH;
     uint24 public constant override REWARD_FEE_TIER = 10_000;
@@ -55,7 +55,7 @@ contract NFTXFeeDistributorV3 is
     // =============================================================
 
     constructor(
-        INFTXVaultFactory nftxVaultFactory_,
+        INFTXVaultFactoryV3 nftxVaultFactory_,
         INFTXInventoryStakingV3 inventoryStaking_,
         INFTXRouter nftxRouter_,
         address treasury_

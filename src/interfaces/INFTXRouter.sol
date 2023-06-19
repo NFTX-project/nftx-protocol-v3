@@ -8,7 +8,7 @@ import {SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 
 interface INFTXRouter {
     // =============================================================
@@ -25,7 +25,7 @@ interface INFTXRouter {
 
     function quoter() external returns (IQuoterV2);
 
-    function nftxVaultFactory() external returns (INFTXVaultFactory);
+    function nftxVaultFactory() external returns (INFTXVaultFactoryV3);
 
     // =============================================================
     //                           STORAGE
