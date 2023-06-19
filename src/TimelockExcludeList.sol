@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../util/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract TimelockExcludeList is Ownable {
     mapping(address => bool) public excludeFromAll;
@@ -14,19 +14,17 @@ contract TimelockExcludeList is Ownable {
         return excludeFromAll[addr];
     }
 
-    function isExcludedFromVault(address addr, uint256 vaultId)
-        public
-        view
-        returns (bool)
-    {
+    function isExcludedFromVault(
+        address addr,
+        uint256 vaultId
+    ) public view returns (bool) {
         return excludeFromVault[addr][vaultId];
     }
 
-    function isExcluded(address addr, uint256 vaultId)
-        external
-        view
-        returns (bool)
-    {
+    function isExcluded(
+        address addr,
+        uint256 vaultId
+    ) external view returns (bool) {
         return isExcludedFromAll(addr) || isExcludedFromVault(addr, vaultId);
     }
 

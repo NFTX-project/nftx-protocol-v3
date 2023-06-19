@@ -7,12 +7,9 @@ contract UniqueEligibility {
 
     event UniqueEligibilitiesSet(uint256[] tokenIds, bool isEligible);
 
-    function isUniqueEligible(uint256 tokenId)
-        public
-        view
-        virtual
-        returns (bool)
-    {
+    function isUniqueEligible(
+        uint256 tokenId
+    ) public view virtual returns (bool) {
         uint256 wordIndex = tokenId / 256;
         uint256 bitMap = eligibleBitMap[wordIndex];
         return _getBit(bitMap, tokenId);
@@ -42,11 +39,11 @@ contract UniqueEligibility {
         emit UniqueEligibilitiesSet(tokenIds, _isEligible);
     }
 
-    function _setBit(uint256 bitMap, uint256 index, bool eligible)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _setBit(
+        uint256 bitMap,
+        uint256 index,
+        bool eligible
+    ) internal pure returns (uint256) {
         uint256 claimedBitIndex = index % 256;
         if (eligible) {
             return bitMap | (1 << claimedBitIndex);
@@ -55,11 +52,10 @@ contract UniqueEligibility {
         }
     }
 
-    function _getBit(uint256 bitMap, uint256 index)
-        internal
-        pure
-        returns (bool)
-    {
+    function _getBit(
+        uint256 bitMap,
+        uint256 index
+    ) internal pure returns (bool) {
         uint256 claimedBitIndex = index % 256;
         return uint8((bitMap >> claimedBitIndex) & 1) == 1;
     }

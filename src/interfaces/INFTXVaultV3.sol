@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
-import {INFTXEligibility} from "@src/v2/interface/INFTXEligibility.sol";
+import {INFTXEligibility} from "@src/interfaces/INFTXEligibility.sol";
 import {IERC20Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/IERC721Upgradeable.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";

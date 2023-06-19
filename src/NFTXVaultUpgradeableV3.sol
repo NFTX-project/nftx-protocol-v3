@@ -18,13 +18,13 @@ import {EnumerableSetUpgradeable} from "@openzeppelin-upgradeable/contracts/util
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {INFTXEligibility} from "@src/v2/interface/INFTXEligibility.sol";
+import {INFTXEligibility} from "@src/interfaces/INFTXEligibility.sol";
 import {IERC20Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/IERC721Upgradeable.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {IERC1155Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
-import {INFTXEligibilityManager} from "@src/v2/interface/INFTXEligibilityManager.sol";
+import {INFTXEligibilityManager} from "@src/interfaces/INFTXEligibilityManager.sol";
 import {IUniswapV3PoolDerivedState} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol";
 
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
