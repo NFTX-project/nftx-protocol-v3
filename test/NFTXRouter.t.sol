@@ -843,7 +843,8 @@ contract NFTXRouterTests is TestBase {
         nftIds[1] = allTokenIds[1];
 
         // fetch price to pay for those NFTs
-        uint256 vTokenPremium = vtoken.targetRedeemFee() * nftIds.length;
+        (, uint256 redeemFee, ) = vtoken.vaultFees();
+        uint256 vTokenPremium = redeemFee * nftIds.length;
         for (uint256 i; i < nftIds.length; i++) {
             uint256 _vTokenPremium;
             (_vTokenPremium, ) = vtoken.getVTokenPremium721(nftIds[i]);
@@ -905,9 +906,8 @@ contract NFTXRouterTests is TestBase {
             nftIds[0],
             nftQty
         );
-        uint256 vTokenFee = vtoken1155.targetRedeemFee() *
-            nftIds.length +
-            vTokenPremium;
+        (, uint256 redeemFee, ) = vtoken1155.vaultFees();
+        uint256 vTokenFee = redeemFee * nftIds.length + vTokenPremium;
 
         uint256 ethRequired = nftxRouter.quoteBuyNFTs({
             vtoken: address(vtoken1155),

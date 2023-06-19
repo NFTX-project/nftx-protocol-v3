@@ -4,7 +4,7 @@ pragma solidity =0.8.15;
 import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 
-import {INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
+import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 
 import {TestBase} from "./TestBase.sol";
 
@@ -16,9 +16,9 @@ contract NFTXVaultTests is TestBase {
     function test_mint_Succcess() external {
         _mintPositionWithTwap(currentNFTPrice);
         uint256 qty = 5;
+        (uint256 mintFee, , ) = vtoken.vaultFees();
 
-        uint256 exactETHPaid = (vtoken.mintFee() * qty * currentNFTPrice) /
-            1 ether;
+        uint256 exactETHPaid = (mintFee * qty * currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
 
         uint256 prevETHBal = address(this).balance;
@@ -47,9 +47,8 @@ contract NFTXVaultTests is TestBase {
 
     function test_mint_WhenNoPoolExists_Success() external {
         uint256 qty = 5;
-
-        uint256 exactETHPaid = (vtoken.mintFee() * qty * currentNFTPrice) /
-            1 ether;
+        (uint256 mintFee, , ) = vtoken.vaultFees();
+        uint256 exactETHPaid = (mintFee * qty * currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
 
         uint256 prevETHBal = address(this).balance;
@@ -74,9 +73,8 @@ contract NFTXVaultTests is TestBase {
     function test_mint_Succcess_1155() external {
         _mintPositionWithTwap1155(currentNFTPrice);
         uint256 qty = 5;
-
-        uint256 exactETHPaid = (vtoken1155.mintFee() * qty * currentNFTPrice) /
-            1 ether;
+        (uint256 mintFee, , ) = vtoken.vaultFees();
+        uint256 exactETHPaid = (mintFee * qty * currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
 
         uint256 prevETHBal = address(this).balance;
@@ -133,9 +131,8 @@ contract NFTXVaultTests is TestBase {
         // jump to time such that no premium applicable
         vm.warp(block.timestamp + vaultFactory.premiumDuration() + 1);
 
-        uint256 exactETHPaid = (vtoken.targetRedeemFee() *
-            qty *
-            currentNFTPrice) / 1 ether;
+        (, uint256 redeemFee, ) = vtoken.vaultFees();
+        uint256 exactETHPaid = (redeemFee * qty * currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
 
         uint256 prevETHBal = address(this).balance;
@@ -164,8 +161,8 @@ contract NFTXVaultTests is TestBase {
         vtoken.transfer(address(this), mintedVTokens);
         vm.stopPrank();
 
-        uint256 exactETHPaid = ((vtoken.targetRedeemFee() +
-            vaultFactory.premiumMax()) *
+        (, uint256 redeemFee, ) = vtoken.vaultFees();
+        uint256 exactETHPaid = ((redeemFee + vaultFactory.premiumMax()) *
             qty *
             currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
@@ -203,8 +200,8 @@ contract NFTXVaultTests is TestBase {
         uint256 qty = 5;
         (, uint256[] memory tokenIds) = _mintVToken(qty);
 
-        uint256 exactETHPaid = ((vtoken.targetRedeemFee() +
-            vaultFactory.premiumMax()) *
+        (, uint256 redeemFee, ) = vtoken.vaultFees();
+        uint256 exactETHPaid = ((redeemFee + vaultFactory.premiumMax()) *
             qty *
             currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
@@ -233,9 +230,8 @@ contract NFTXVaultTests is TestBase {
         // jump to time such that no premium applicable
         vm.warp(block.timestamp + vaultFactory.premiumDuration() + 1);
 
-        uint256 exactETHPaid = (vtoken1155.targetRedeemFee() *
-            qty *
-            currentNFTPrice) / 1 ether;
+        (, uint256 redeemFee, ) = vtoken1155.vaultFees();
+        uint256 exactETHPaid = (redeemFee * qty * currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
 
         uint256 prevETHBal = address(this).balance;
@@ -263,49 +259,56 @@ contract NFTXVaultTests is TestBase {
         );
     }
 
+    struct RedeemData {
+        uint256 qty;
+        address depositor;
+        uint256 mintedVTokens;
+        uint256[] _tokenIds;
+        uint256[] tokenIds;
+        uint256 redeemFee;
+    }
+    RedeemData rd;
+
     function test_redeem_WithPremium_Success_1155_samePointerIndex() external {
         _mintPositionWithTwap1155(currentNFTPrice);
-        uint256 qty = 5;
+        rd.qty = 5;
 
         // have a separate depositor address that receives share of premium
-        address depositor = makeAddr("depositor");
-        startHoax(depositor);
-        (
-            uint256 mintedVTokens,
-            uint256[] memory _tokenIds
-        ) = _mintVTokenFor1155(qty);
+        rd.depositor = makeAddr("depositor");
+        startHoax(rd.depositor);
+        (rd.mintedVTokens, rd._tokenIds) = _mintVTokenFor1155(rd.qty);
 
-        vtoken1155.transfer(address(this), mintedVTokens);
+        vtoken1155.transfer(address(this), rd.mintedVTokens);
         vm.stopPrank();
 
         // decreasing tokenIds length for withdrawal so that same pointerIndex remains
-        qty -= 1;
-        uint256[] memory tokenIds = new uint256[](qty);
-        for (uint256 i; i < qty; i++) {
-            tokenIds[i] = _tokenIds[i];
+        rd.qty -= 1;
+        rd.tokenIds = new uint256[](rd.qty);
+        for (uint256 i; i < rd.qty; i++) {
+            rd.tokenIds[i] = rd._tokenIds[i];
         }
 
-        uint256 exactETHPaid = ((vtoken1155.targetRedeemFee() +
-            vaultFactory.premiumMax()) *
-            qty *
+        (, rd.redeemFee, ) = vtoken1155.vaultFees();
+        uint256 exactETHPaid = ((rd.redeemFee + vaultFactory.premiumMax()) *
+            rd.qty *
             currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
         uint256 expectedDepositorShare = (exactETHPaid *
             vaultFactory.depositorPremiumShare()) / 1 ether;
 
         uint256 prevETHBal = address(this).balance;
-        uint256 prevDepositorBal = weth.balanceOf(depositor);
+        uint256 prevDepositorBal = weth.balanceOf(rd.depositor);
         uint256 prevNFTBal = nft1155.balanceOf(
             address(vtoken1155),
-            tokenIds[0]
+            rd.tokenIds[0]
         );
-        uint256 prevPointerIndex = vtoken1155.pointerIndex1155(tokenIds[0]);
+        uint256 prevPointerIndex = vtoken1155.pointerIndex1155(rd.tokenIds[0]);
 
         // double ETH value here to check if refund working as well
-        vtoken1155.redeem{value: expectedETHPaid * 2}(tokenIds, 0, false);
+        vtoken1155.redeem{value: expectedETHPaid * 2}(rd.tokenIds, 0, false);
 
         uint256 ethPaid = prevETHBal - address(this).balance;
-        uint256 ethDepositorReceived = weth.balanceOf(depositor) -
+        uint256 ethDepositorReceived = weth.balanceOf(rd.depositor) -
             prevDepositorBal;
         console.log("ethPaid with Premium", ethPaid);
         console.log(
@@ -321,10 +324,10 @@ contract NFTXVaultTests is TestBase {
         assertLe(ethDepositorReceived, expectedDepositorShare);
 
         assertEq(
-            prevNFTBal - nft1155.balanceOf(address(vtoken1155), tokenIds[0]),
-            qty
+            prevNFTBal - nft1155.balanceOf(address(vtoken1155), rd.tokenIds[0]),
+            rd.qty
         );
-        assertEq(vtoken1155.pointerIndex1155(tokenIds[0]), prevPointerIndex);
+        assertEq(vtoken1155.pointerIndex1155(rd.tokenIds[0]), prevPointerIndex);
     }
 
     // NFTXVault#swap
@@ -339,9 +342,8 @@ contract NFTXVaultTests is TestBase {
         uint256[] memory tokenIds = nft.mint(qty);
         uint256[] memory amounts = new uint256[](0);
 
-        uint256 exactETHPaid = (vtoken.targetSwapFee() *
-            qty *
-            currentNFTPrice) / 1 ether;
+        (, , uint256 swapFee) = vtoken.vaultFees();
+        uint256 exactETHPaid = (swapFee * qty * currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
 
         uint256 prevETHBal = address(this).balance;
@@ -378,8 +380,8 @@ contract NFTXVaultTests is TestBase {
         uint256[] memory tokenIds = nft.mint(qty);
         uint256[] memory amounts = new uint256[](0);
 
-        uint256 exactETHPaid = ((vtoken.targetSwapFee() +
-            vaultFactory.premiumMax()) *
+        (, , uint256 swapFee) = vtoken.vaultFees();
+        uint256 exactETHPaid = ((swapFee + vaultFactory.premiumMax()) *
             qty *
             currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
@@ -427,8 +429,8 @@ contract NFTXVaultTests is TestBase {
         uint256[] memory tokenIds = nft.mint(qty);
         uint256[] memory amounts = new uint256[](0);
 
-        uint256 exactETHPaid = ((vtoken.targetSwapFee() +
-            vaultFactory.premiumMax()) *
+        (, , uint256 swapFee) = vtoken.vaultFees();
+        uint256 exactETHPaid = ((swapFee + vaultFactory.premiumMax()) *
             qty *
             currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
@@ -468,9 +470,8 @@ contract NFTXVaultTests is TestBase {
         tokenIds[0] = nft1155.mint(qty);
         amounts[0] = qty;
 
-        uint256 exactETHPaid = (vtoken1155.targetSwapFee() *
-            qty *
-            currentNFTPrice) / 1 ether;
+        (, , uint256 swapFee) = vtoken.vaultFees();
+        uint256 exactETHPaid = (swapFee * qty * currentNFTPrice) / 1 ether;
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
 
         uint256 prevETHBal = address(this).balance;

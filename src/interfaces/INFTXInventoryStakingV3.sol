@@ -4,8 +4,8 @@ pragma solidity =0.8.15;
 import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
-import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
+import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 interface INFTXInventoryStakingV3 is IERC721Upgradeable {
@@ -34,7 +34,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     //                           CONSTANTS
     // =============================================================
 
-    function nftxVaultFactory() external view returns (INFTXVaultFactory);
+    function nftxVaultFactory() external view returns (INFTXVaultFactoryV3);
 
     function timelockExcludeList() external view returns (ITimelockExcludeList);
 

@@ -3,9 +3,9 @@
 pragma experimental ABIEncoderV2;
 pragma solidity ^0.8.0;
 
-import "./util/OwnableUpgradeable.sol";
-import "./proxy/ClonesUpgradeable.sol";
-import "./interface/INFTXEligibility.sol";
+import {INFTXEligibility} from "@src/interfaces/INFTXEligibility.sol";
+import {ClonesUpgradeable} from "@openzeppelin-upgradeable/contracts/proxy/ClonesUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 contract NFTXEligibilityManager is OwnableUpgradeable {
     struct EligibilityModule {
@@ -49,10 +49,10 @@ contract NFTXEligibilityManager is OwnableUpgradeable {
         );
     }
 
-    function updateModule(uint256 moduleIndex, address implementation)
-        external
-        onlyOwner
-    {
+    function updateModule(
+        uint256 moduleIndex,
+        address implementation
+    ) external onlyOwner {
         require(moduleIndex < modules.length, "Out of bounds");
         require(implementation != address(0), "Impl != address(0)");
         modules[moduleIndex].implementation = implementation;
@@ -60,11 +60,10 @@ contract NFTXEligibilityManager is OwnableUpgradeable {
         emit ModuleUpdated(implementation, elig.name(), elig.finalized());
     }
 
-    function deployEligibility(uint256 moduleIndex, bytes calldata configData)
-        external
-        virtual
-        returns (address)
-    {
+    function deployEligibility(
+        uint256 moduleIndex,
+        bytes calldata configData
+    ) external virtual returns (address) {
         require(moduleIndex < modules.length, "Out of bounds");
         address eligImpl = modules[moduleIndex].implementation;
         address eligibilityClone = ClonesUpgradeable.clone(eligImpl);

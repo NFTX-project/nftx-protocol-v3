@@ -6,15 +6,15 @@ import "./UniqueEligibility.sol";
 import "./NFTXEligibility.sol";
 
 contract NFTXListEligibility is NFTXEligibility, UniqueEligibility {
-    function name() public pure override virtual returns (string memory) {    
+    function name() public pure virtual override returns (string memory) {
         return "List";
     }
 
-    function finalized() public view override virtual returns (bool) {    
+    function finalized() public view virtual override returns (bool) {
         return true;
     }
 
-    function targetAsset() public pure override virtual returns (address) {
+    function targetAsset() public pure virtual override returns (address) {
         return address(0);
     }
 
@@ -26,8 +26,8 @@ contract NFTXListEligibility is NFTXEligibility, UniqueEligibility {
 
     function __NFTXEligibility_init_bytes(
         bytes memory _configData
-    ) public override virtual initializer {
-        (uint256[] memory _ids) = abi.decode(_configData, (uint256[]));
+    ) public virtual override initializer {
+        uint256[] memory _ids = abi.decode(_configData, (uint256[]));
         __NFTXEligibility_init(_ids);
     }
 
@@ -40,7 +40,7 @@ contract NFTXListEligibility is NFTXEligibility, UniqueEligibility {
 
     function _checkIfEligible(
         uint256 _tokenId
-    ) internal view override virtual returns (bool) {
+    ) internal view virtual override returns (bool) {
         return isUniqueEligible(_tokenId);
     }
 }

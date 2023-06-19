@@ -25,12 +25,12 @@ import {Mock1155} from "@mocks/Mock1155.sol";
 import {MockUniversalRouter} from "@mocks/MockUniversalRouter.sol";
 import {MockPermit2} from "@mocks/permit2/MockPermit2.sol";
 
-import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
-import {NFTXVaultFactoryUpgradeable} from "@src/v2/NFTXVaultFactoryUpgradeable.sol";
+import {NFTXVaultUpgradeableV3, INFTXVaultV3} from "@src/NFTXVaultUpgradeableV3.sol";
+import {NFTXVaultFactoryUpgradeableV3} from "@src/NFTXVaultFactoryUpgradeableV3.sol";
 import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
-import {TimelockExcludeList} from "@src/v2/other/TimelockExcludeList.sol";
-import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
+import {TimelockExcludeList} from "@src/TimelockExcludeList.sol";
+import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
@@ -48,12 +48,12 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     MockUniversalRouter universalRouter;
     MockPermit2 permit2;
 
-    INFTXVault vtoken;
-    INFTXVault vtoken1155;
+    INFTXVaultV3 vtoken;
+    INFTXVaultV3 vtoken1155;
     TimelockExcludeList timelockExcludeList;
     NFTXFeeDistributorV3 feeDistributor;
-    NFTXVaultUpgradeable vaultImpl;
-    NFTXVaultFactoryUpgradeable vaultFactory;
+    NFTXVaultUpgradeableV3 vaultImpl;
+    NFTXVaultFactoryUpgradeableV3 vaultFactory;
     NFTXRouter nftxRouter;
     NFTXInventoryStakingV3Upgradeable inventoryStaking;
     MarketplaceUniversalRouterZap marketplaceZap;
@@ -101,8 +101,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         nft = new MockNFT();
         nft1155 = new Mock1155();
 
-        vaultImpl = new NFTXVaultUpgradeable();
-        vaultFactory = new NFTXVaultFactoryUpgradeable();
+        vaultImpl = new NFTXVaultUpgradeableV3(IWETH9(address(weth)));
+        vaultFactory = new NFTXVaultFactoryUpgradeableV3();
         vaultFactory.__NFTXVaultFactory_init(address(vaultImpl));
         // set premium related values
         // TODO: move setting these values into the initializer
@@ -152,7 +152,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             false, // is1155
             true // allowAllItems
         );
-        vtoken = INFTXVault(vaultFactory.vault(vaultId));
+        vtoken = INFTXVaultV3(vaultFactory.vault(vaultId));
         vaultFactory.createVault(
             "TEST1155",
             "TST1155",
@@ -160,7 +160,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             true, // is1155
             true // allowAllItems
         );
-        vtoken1155 = INFTXVault(vaultFactory.vault(vaultId + 1));
+        vtoken1155 = INFTXVaultV3(vaultFactory.vault(vaultId + 1));
 
         // Zaps
         universalRouter = new MockUniversalRouter(
@@ -184,9 +184,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         nft.setApprovalForAll(address(vtoken), true);
         uint256[] memory amounts = new uint256[](0);
-        mintedVTokens =
-            vtoken.mint{value: 100 ether * qty}(tokenIds, amounts) *
-            1 ether;
+        mintedVTokens = vtoken.mint{value: 100 ether * qty}(tokenIds, amounts);
     }
 
     function _mintPosition(
@@ -337,9 +335,10 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         nft1155.setApprovalForAll(address(vtoken1155), true);
 
-        mintedVTokens =
-            vtoken1155.mint{value: 100 ether * qty}(_tokenIds, amounts) *
-            1 ether;
+        mintedVTokens = vtoken1155.mint{value: 100 ether * qty}(
+            _tokenIds,
+            amounts
+        );
 
         tokenIds = new uint256[](qty);
         for (uint256 i; i < qty; i++) {
