@@ -184,9 +184,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         nft.setApprovalForAll(address(vtoken), true);
         uint256[] memory amounts = new uint256[](0);
-        mintedVTokens =
-            vtoken.mint{value: 100 ether * qty}(tokenIds, amounts) *
-            1 ether;
+        mintedVTokens = vtoken.mint{value: 100 ether * qty}(tokenIds, amounts);
     }
 
     function _mintPosition(
@@ -337,9 +335,10 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         nft1155.setApprovalForAll(address(vtoken1155), true);
 
-        mintedVTokens =
-            vtoken1155.mint{value: 100 ether * qty}(_tokenIds, amounts) *
-            1 ether;
+        mintedVTokens = vtoken1155.mint{value: 100 ether * qty}(
+            _tokenIds,
+            amounts
+        );
 
         tokenIds = new uint256[](qty);
         for (uint256 i; i < qty; i++) {

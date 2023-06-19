@@ -272,8 +272,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         }
 
         // mint vToken
-        uint256 vTokensAmount = vToken.mint(params.nftIds, params.nftAmounts) *
-            1 ether;
+        uint256 vTokensAmount = vToken.mint(params.nftIds, params.nftAmounts);
 
         TransferLib.maxApprove(address(vToken), address(router), vTokensAmount);
 
@@ -496,9 +495,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
 
             // vault won't charge mintFees here as this contract is on exclude list
-            vTokensAmount +=
-                vToken.mint(params.nftIds, params.nftAmounts) *
-                1 ether;
+            vTokensAmount += vToken.mint(params.nftIds, params.nftAmounts);
         }
 
         TransferLib.maxApprove(
@@ -602,9 +599,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
 
             // vault won't charge mintFees here as this contract is on exclude list
-            vTokensAmount +=
-                vToken.mint(params.nftIds, params.nftAmounts) *
-                1 ether;
+            vTokensAmount += vToken.mint(params.nftIds, params.nftAmounts);
         }
 
         TransferLib.maxApprove(

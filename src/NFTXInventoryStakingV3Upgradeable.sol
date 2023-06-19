@@ -196,7 +196,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             }
 
             // mint vTokens
-            amount = INFTXVault(vToken).mint(tokenIds, amounts) * 1 ether;
+            amount = INFTXVault(vToken).mint(tokenIds, amounts);
         }
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];

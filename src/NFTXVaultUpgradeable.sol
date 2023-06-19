@@ -129,29 +129,35 @@ contract NFTXVaultUpgradeable is
     // =============================================================
 
     // TODO: add NATSPEC
-    // TODO: instead of nftCount return vTokensMinted
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external payable virtual override returns (uint256 nftCount) {
+    ) external payable virtual override returns (uint256 vTokensMinted) {
         return mintTo(tokenIds, amounts, msg.sender);
     }
 
     // TODO: add NATSPEC
-    // TODO: instead of nftCount return vTokensMinted
     function mintTo(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         address to
-    ) public payable virtual override nonReentrant returns (uint256 nftCount) {
+    )
+        public
+        payable
+        virtual
+        override
+        nonReentrant
+        returns (uint256 vTokensMinted)
+    {
         _onlyOwnerIfPaused(1);
         if (!enableMint) revert MintingDisabled();
 
         // Take the NFTs.
-        nftCount = _receiveNFTs(tokenIds, amounts);
+        uint256 nftCount = _receiveNFTs(tokenIds, amounts);
+        vTokensMinted = BASE * nftCount;
 
         // Mint to the user.
-        _mint(to, BASE * nftCount);
+        _mint(to, vTokensMinted);
 
         (uint256 mintFee, , ) = vaultFees();
         uint256 totalVTokenFee = mintFee * nftCount;
