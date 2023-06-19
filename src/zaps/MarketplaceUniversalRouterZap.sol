@@ -578,47 +578,6 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         return vToken.vTokenToETH(mintFee * nftCount);
     }
 
-    function _ethSwapFees(
-        INFTXVaultV3 vToken,
-        uint256[] memory nftIds
-    ) internal view returns (uint256) {
-        (, , uint256 swapFee) = vToken.vaultFees();
-
-        return
-            vToken.vTokenToETH(
-                (swapFee * nftIds.length) + _getVTokenPremium(vToken, nftIds)
-            );
-    }
-
-    function _ethRedeemFees(
-        INFTXVaultV3 vToken,
-        uint256[] memory nftIds
-    ) internal view returns (uint256) {
-        (, uint256 redeemFee, ) = vToken.vaultFees();
-
-        return
-            vToken.vTokenToETH(
-                (redeemFee * nftIds.length) + _getVTokenPremium(vToken, nftIds)
-            );
-    }
-
-    // TODO: premium for 1155
-    // TODO: distribute premium share with the original depositor
-    function _getVTokenPremium(
-        INFTXVaultV3 vToken,
-        uint256[] memory nftIds
-    ) internal view returns (uint256 vTokenPremium) {
-        for (uint256 i; i < nftIds.length; ) {
-            uint256 _vTokenPremium;
-            (_vTokenPremium, ) = vToken.getVTokenPremium721(nftIds[i]);
-            vTokenPremium += _vTokenPremium;
-
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
     function _distributeVaultFees(
         uint256 vaultId,
         uint256 ethAmount,
