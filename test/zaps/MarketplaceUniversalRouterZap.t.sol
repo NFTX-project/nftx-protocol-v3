@@ -11,7 +11,7 @@ import {IQuoterV2} from "@uni-periphery/lens/QuoterV2.sol";
 import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolUpgradeable.sol";
 import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
 import {MockERC20} from "@mocks/MockERC20.sol";
-import {NFTXRouter, INFTXRouter} from "@src/zaps/NFTXRouter.sol";
+import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
 import {TestBase} from "../TestBase.sol";
 

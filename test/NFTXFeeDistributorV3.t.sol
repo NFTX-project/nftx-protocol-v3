@@ -5,7 +5,7 @@ import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 
 import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolUpgradeable.sol";
-import {INFTXRouter} from "@src/zaps/NFTXRouter.sol";
+import {INFTXRouter} from "@src/NFTXRouter.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 
 import {TestBase} from "./TestBase.sol";
@@ -215,6 +215,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         // nftIds[4] = mintTokenIds[4];
 
         uint128 liquidity = _getLiquidity(positionId);
+        vm.warp(positionManager.lockedUntil(positionId) + 1);
 
         uint256 preNFTBalance = nft.balanceOf(address(this));
         uint256 preETHBalance = address(this).balance;

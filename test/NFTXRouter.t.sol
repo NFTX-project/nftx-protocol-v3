@@ -2,11 +2,11 @@
 pragma solidity =0.8.15;
 
 import {console} from "forge-std/Test.sol";
-import {Helpers} from "../lib/Helpers.sol";
+import {Helpers} from "./lib/Helpers.sol";
 
-import {INFTXRouter} from "@src/zaps/NFTXRouter.sol";
+import {INFTXRouter} from "@src/NFTXRouter.sol";
 
-import {TestBase} from "../TestBase.sol";
+import {TestBase} from "./TestBase.sol";
 
 contract NFTXRouterTests is TestBase {
     uint256 currentNFTPrice = 5 ether;
@@ -53,6 +53,10 @@ contract NFTXRouterTests is TestBase {
             postPositionNFTBalance - prePositionNFTBalance,
             1,
             "Position Balance didn't change"
+        );
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            block.timestamp + LP_TIMELOCK
         );
         assertGt(liquidity, 0, "Liquidity didn't increase");
         assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
@@ -135,6 +139,7 @@ contract NFTXRouterTests is TestBase {
             1,
             "Position Balance didn't change"
         );
+        assertEq(positionManager.lockedUntil(positionId), 0);
         assertGt(liquidity, 0, "Liquidity didn't increase");
         assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
         assertEqInt24(tickUpper, _tickUpper, "Incorrect tickUpper");
@@ -217,6 +222,10 @@ contract NFTXRouterTests is TestBase {
             1,
             "Position Balance didn't change"
         );
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            block.timestamp + LP_TIMELOCK
+        );
         assertGt(liquidity, 0, "Liquidity didn't increase");
         assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
         assertEqInt24(tickUpper, _tickUpper, "Incorrect tickUpper");
@@ -277,6 +286,10 @@ contract NFTXRouterTests is TestBase {
             postPositionNFTBalance - prePositionNFTBalance,
             1,
             "Position Balance didn't change"
+        );
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            block.timestamp + LP_TIMELOCK
         );
         assertGt(liquidity, 0, "Liquidity didn't increase");
         assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
@@ -368,6 +381,7 @@ contract NFTXRouterTests is TestBase {
             1,
             "Position Balance didn't change"
         );
+        assertEq(positionManager.lockedUntil(positionId), 0);
         assertGt(liquidity, 0, "Liquidity didn't increase");
         assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
         assertEqInt24(tickUpper, _tickUpper, "Incorrect tickUpper");
@@ -457,6 +471,10 @@ contract NFTXRouterTests is TestBase {
             1,
             "Position Balance didn't change"
         );
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            block.timestamp + LP_TIMELOCK
+        );
         assertGt(liquidity, 0, "Liquidity didn't increase");
         assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
         assertEqInt24(tickUpper, _tickUpper, "Incorrect tickUpper");
@@ -483,6 +501,8 @@ contract NFTXRouterTests is TestBase {
 
     function testIncreaseLiquidity_withNFTs() external {
         uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+        // after timelock ended
+        vm.warp(positionManager.lockedUntil(positionId) + 1);
 
         uint256 qty = 3;
         uint256[] memory tokenIds = nft.mint(qty);
@@ -516,10 +536,15 @@ contract NFTXRouterTests is TestBase {
             "Position Balance changed"
         );
         assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            block.timestamp + LP_TIMELOCK
+        );
     }
 
     function testIncreaseLiquidity_withVTokens() external {
         uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+        uint256 preTimelock = positionManager.lockedUntil(positionId);
 
         uint256 prePositionNFTBalance = positionManager.balanceOf(
             address(this)
@@ -553,10 +578,17 @@ contract NFTXRouterTests is TestBase {
             "Position Balance changed"
         );
         assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            preTimelock,
+            "Timelock got updated"
+        );
     }
 
     function testIncreaseLiquidity_withNFTs_and_VTokens() external {
         uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+        // after timelock ended
+        vm.warp(positionManager.lockedUntil(positionId) + 1);
 
         uint256 prePositionNFTBalance = positionManager.balanceOf(
             address(this)
@@ -593,12 +625,18 @@ contract NFTXRouterTests is TestBase {
             "Position Balance changed"
         );
         assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            block.timestamp + LP_TIMELOCK
+        );
     }
 
     // 1155
 
     function testIncreaseLiquidity_withNFTs_1155() external {
         uint256 positionId = _mintPositionWithTwap1155(currentNFTPrice);
+        // after timelock ended
+        vm.warp(positionManager.lockedUntil(positionId) + 1);
 
         uint256 qty = 3;
         uint256[] memory tokenIds = new uint256[](1);
@@ -635,12 +673,17 @@ contract NFTXRouterTests is TestBase {
             "Position Balance changed"
         );
         assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            block.timestamp + LP_TIMELOCK
+        );
     }
 
     // increaseLiquidityWithPermit2
 
     function testIncreaseLiquidityWithPermit2_withVTokens() external {
         uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+        uint256 preTimelock = positionManager.lockedUntil(positionId);
 
         uint256 prePositionNFTBalance = positionManager.balanceOf(
             address(this)
@@ -681,10 +724,17 @@ contract NFTXRouterTests is TestBase {
             "Position Balance changed"
         );
         assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            preTimelock,
+            "Timelock got updated"
+        );
     }
 
     function testIncreaseLiquidityWithPermit2_withNFTs_and_VTokens() external {
         uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+        // after timelock ended
+        vm.warp(positionManager.lockedUntil(positionId) + 1);
 
         uint256 prePositionNFTBalance = positionManager.balanceOf(
             address(this)
@@ -729,6 +779,10 @@ contract NFTXRouterTests is TestBase {
             "Position Balance changed"
         );
         assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            block.timestamp + LP_TIMELOCK
+        );
     }
 
     // ================================
@@ -903,8 +957,40 @@ contract NFTXRouterTests is TestBase {
     // Remove Liquidity
     // ================================
 
+    function test_removeLiquidity_RevertsIfTimelocked() external {
+        (, uint256 positionId, , , ) = _mintPosition(
+            10,
+            currentNFTPrice,
+            currentNFTPrice - 0.5 ether,
+            currentNFTPrice + 0.5 ether,
+            DEFAULT_FEE_TIER
+        );
+        assertGt(positionManager.lockedUntil(positionId), block.timestamp);
+
+        positionManager.setApprovalForAll(address(nftxRouter), true);
+
+        // vm.expectRevert() only detects the next top-level call, that's why adding `assertTrue` so the call status returns false
+        (bool status, ) = address(nftxRouter).call(
+            abi.encodeWithSelector(
+                INFTXRouter.removeLiquidity.selector,
+                INFTXRouter.RemoveLiquidityParams({
+                    positionId: positionId,
+                    vaultId: VAULT_ID,
+                    nftIds: emptyIds,
+                    liquidity: _getLiquidity(positionId),
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    deadline: block.timestamp
+                })
+            )
+        );
+        assertTrue(!status, "expectRevert: call did not revert");
+    }
+
     function test_removeLiquidity_ToNFTs_Success() external {
         uint256 _positionId = _mintPositionWithTwap(currentNFTPrice);
+        // after timelock ended
+        vm.warp(positionManager.lockedUntil(_positionId) + 1);
         uint256[] memory _nftIds;
         positionManager.setApprovalForAll(address(nftxRouter), true);
         // removing liquidity so the `nftsSold` only shared with one position
@@ -928,6 +1014,8 @@ contract NFTXRouterTests is TestBase {
             ,
 
         ) = _mintPosition(nftQty);
+        // after timelock ended
+        vm.warp(positionManager.lockedUntil(positionId) + 1);
 
         uint256 nftsSold = 5;
         uint256[] memory soldTokenIds = _sellNFTs(nftsSold);
@@ -998,6 +1086,8 @@ contract NFTXRouterTests is TestBase {
         _mintPositionWithTwap(currentNFTPrice);
         uint256 nftQty = 10;
         (, uint256 positionId, , , ) = _mintPosition(nftQty);
+        // after timelock ended
+        vm.warp(positionManager.lockedUntil(positionId) + 1);
 
         _sellNFTs(5);
 
@@ -1041,6 +1131,7 @@ contract NFTXRouterTests is TestBase {
 
     function test_removeLiquidity_ToNFTs_Success_1155() external {
         uint256 _positionId = _mintPositionWithTwap1155(currentNFTPrice);
+        vm.warp(positionManager.lockedUntil(_positionId) + 1);
 
         positionManager.setApprovalForAll(address(nftxRouter), true);
         // removing liquidity as vTokens so the `nftsSold` only shared with one position
@@ -1064,6 +1155,8 @@ contract NFTXRouterTests is TestBase {
             ,
 
         ) = _mintPosition1155(nftQty);
+        // after timelock ended
+        vm.warp(positionManager.lockedUntil(positionId) + 1);
 
         uint256 nftsSold = 5;
         uint256[] memory soldTokenIds = _sellNFTs1155(nftsSold);

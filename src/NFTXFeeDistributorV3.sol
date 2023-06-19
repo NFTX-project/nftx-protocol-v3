@@ -169,6 +169,8 @@ contract NFTXFeeDistributorV3 is
         emit UpdateTreasuryAddress(treasury_);
     }
 
+    // TODO: add function to change NFTXRouter address
+
     function pauseFeeDistribution(bool pause) external override onlyOwner {
         distributionPaused = pause;
         emit PauseDistribution(pause);

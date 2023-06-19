@@ -28,6 +28,12 @@ interface INFTXRouter {
     function nftxVaultFactory() external returns (INFTXVaultFactory);
 
     // =============================================================
+    //                           STORAGE
+    // =============================================================
+
+    function lpTimelock() external returns (uint256);
+
+    // =============================================================
     //                            EVENTS
     // =============================================================
 
@@ -150,6 +156,8 @@ interface INFTXRouter {
      * @param token ERC20 token address or address(0) in case of ETH
      */
     function rescueTokens(IERC20 token) external;
+
+    function setLpTimelock(uint256 lpTimelock_) external;
 
     // =============================================================
     //                     PUBLIC / EXTERNAL VIEW

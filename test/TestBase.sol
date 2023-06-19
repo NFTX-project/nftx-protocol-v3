@@ -31,7 +31,7 @@ import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgr
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
 import {TimelockExcludeList} from "@src/v2/other/TimelockExcludeList.sol";
 import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
-import {NFTXRouter, INFTXRouter} from "@src/zaps/NFTXRouter.sol";
+import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
@@ -63,6 +63,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     address immutable TREASURY = makeAddr("TREASURY");
     uint256 constant VAULT_ID = 0;
     uint256 constant VAULT_ID_1155 = 1;
+    uint256 constant LP_TIMELOCK = 2 days;
 
     uint16 constant REWARD_TIER_CARDINALITY = 102; // considering 20 min interval with 1 block every 12 seconds on ETH Mainnet
 
@@ -117,7 +118,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             router,
             quoter,
             vaultFactory,
-            IPermitAllowanceTransfer(address(permit2))
+            IPermitAllowanceTransfer(address(permit2)),
+            LP_TIMELOCK
         );
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
 

@@ -21,7 +21,7 @@ import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
 import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 
-import {INFTXRouter} from "../interfaces/INFTXRouter.sol";
+import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
 
 /**
  * @title NFTX Router
@@ -45,18 +45,26 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     IQuoterV2 public immutable override quoter;
     INFTXVaultFactory public immutable override nftxVaultFactory;
 
+    // =============================================================
+    //                           STORAGE
+    // =============================================================
+
+    uint256 public override lpTimelock;
+
     constructor(
         INonfungiblePositionManager positionManager_,
         SwapRouter router_,
         IQuoterV2 quoter_,
         INFTXVaultFactory nftxVaultFactory_,
-        IPermitAllowanceTransfer PERMIT2_
+        IPermitAllowanceTransfer PERMIT2_,
+        uint256 lpTimelock_
     ) {
         positionManager = positionManager_;
         router = router_;
         quoter = quoter_;
         nftxVaultFactory = nftxVaultFactory_;
         PERMIT2 = PERMIT2_;
+        lpTimelock = lpTimelock_;
 
         WETH = positionManager_.WETH9();
     }
@@ -354,9 +362,14 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             token.safeTransfer(msg.sender, balance);
         } else {
             uint256 balance = address(this).balance;
+            // TODO: move ETH transfer logic in the TransferLib
             (bool success, ) = msg.sender.call{value: balance}("");
             if (!success) revert UnableToSendETH();
         }
+    }
+
+    function setLpTimelock(uint256 lpTimelock_) external override onlyOwner {
+        lpTimelock = lpTimelock_;
     }
 
     // =============================================================
@@ -486,8 +499,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount +=
                 vToken.mint(params.nftIds, params.nftAmounts) *
                 1 ether;
-
-            // TODO: don't charge vault fees, instead add timelock to the minted LP NFT
         }
 
         TransferLib.maxApprove(
@@ -537,6 +548,14 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 deadline: params.deadline
             })
         );
+        if (params.nftIds.length > 0) {
+            // vault fees not charged, so instead add timelock to the minted LP NFT
+            positionManager.setLockedUntil(
+                positionId,
+                block.timestamp + lpTimelock
+            );
+        }
+
         // refund extra ETH
         positionManager.refundETH(msg.sender);
 
@@ -586,8 +605,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount +=
                 vToken.mint(params.nftIds, params.nftAmounts) *
                 1 ether;
-
-            // TODO: don't charge vault fees, instead update timelock of the position NFT
         }
 
         TransferLib.maxApprove(
@@ -624,6 +641,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 deadline: params.deadline
             })
         );
+        if (params.nftIds.length > 0) {
+            // vault fees not charged, so instead update timelock of the position NFT
+            positionManager.setLockedUntil(
+                params.positionId,
+                block.timestamp + lpTimelock
+            );
+        }
         // refund extra ETH
         positionManager.refundETH(msg.sender);
 

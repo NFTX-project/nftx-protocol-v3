@@ -3,9 +3,11 @@ pragma solidity =0.8.15;
 pragma abicoder v2;
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@uniswap/v3-core/contracts/libraries/FixedPoint128.sol";
 import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 
+import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import "./interfaces/INonfungiblePositionManager.sol";
 import "./interfaces/INonfungibleTokenPositionDescriptor.sol";
 import "./libraries/PositionKey.sol";
@@ -67,6 +69,9 @@ contract NonfungiblePositionManager is
 
     /// @dev The address of the token descriptor contract, which handles generating token URIs for position tokens
     address private immutable _tokenDescriptor;
+
+    // token ID => timestamp
+    mapping(uint256 => uint256) public override lockedUntil;
 
     constructor(
         address _factory,
@@ -302,6 +307,8 @@ contract NonfungiblePositionManager is
         returns (uint256 amount0, uint256 amount1)
     {
         require(params.liquidity > 0);
+        require(block.timestamp > lockedUntil[params.tokenId]);
+
         Position storage position = _positions[params.tokenId];
 
         uint128 positionLiquidity = position.liquidity;
@@ -475,6 +482,22 @@ contract NonfungiblePositionManager is
         );
         delete _positions[tokenId];
         _burn(tokenId);
+    }
+
+    function setLockedUntil(
+        uint256 tokenId,
+        uint256 timestamp
+    ) external override {
+        require(
+            msg.sender ==
+                address(
+                    INFTXFeeDistributorV3(
+                        IUniswapV3Factory(factory).feeDistributor()
+                    ).nftxRouter()
+                )
+        );
+
+        lockedUntil[tokenId] = timestamp;
     }
 
     function _getAndIncrementNonce(
