@@ -16,6 +16,7 @@ import "./v2/interface/INFTXVault.sol";
 import "./v2/interface/INFTXEligibilityManager.sol";
 import "./v2/interface/INFTXFeeDistributor.sol";
 import {ExponentialPremium} from "./v2/lib/ExponentialPremium.sol";
+import {TransferLib} from "@src/lib/TransferLib.sol";
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IUniswapV3PoolDerivedState} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol";
@@ -45,6 +46,8 @@ contract NFTXVaultUpgradeable is
 
     uint256 constant BASE = 10 ** 18;
     IWETH9 public immutable override WETH;
+    address CRYPTO_PUNKS = 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
+    address CRYPTO_KITTIES = 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
 
     // only set during initialization
 
@@ -137,9 +140,8 @@ contract NFTXVaultUpgradeable is
     // TODO: add NATSPEC
     // TODO: instead of nftCount return vTokensMinted
     function mintTo(
-        // TODO: make these calldata
-        uint256[] memory tokenIds,
-        uint256[] memory amounts /* ignored for ERC721 vaults */,
+        uint256[] calldata tokenIds,
+        uint256[] calldata amounts /* ignored for ERC721 vaults */,
         address to
     ) public payable virtual override nonReentrant returns (uint256 nftCount) {
         _onlyOwnerIfPaused(1);
@@ -161,17 +163,16 @@ contract NFTXVaultUpgradeable is
 
     // TODO: add NATSPEC
     function redeem(
-        uint256[] calldata specificIds, // TODO: rename to idsOut
+        uint256[] calldata idsOut,
         uint256 wethAmount,
         bool forceFees
     ) external payable virtual override returns (uint256 ethFees) {
-        return redeemTo(specificIds, msg.sender, wethAmount, forceFees);
+        return redeemTo(idsOut, msg.sender, wethAmount, forceFees);
     }
 
     // TODO: add NATSPEC
     function redeemTo(
-        // TODO: make these calldata
-        uint256[] memory specificIds, // TODO: rename to idsOut
+        uint256[] calldata idsOut,
         address to,
         uint256 wethAmount,
         bool forceFees
@@ -187,7 +188,7 @@ contract NFTXVaultUpgradeable is
             ethOrWethAmt = msg.value;
         }
 
-        uint256 count = specificIds.length;
+        uint256 count = idsOut.length;
 
         // We burn all from sender and mint to fee receiver to reduce costs.
         _burn(msg.sender, BASE * count);
@@ -200,7 +201,7 @@ contract NFTXVaultUpgradeable is
             uint256 netVTokenPremium,
             uint256[] memory vTokenPremiums,
             address[] memory depositors
-        ) = _withdrawNFTsTo(specificIds, to, forceFees);
+        ) = _withdrawNFTsTo(idsOut, to, forceFees);
 
         ethFees = _chargeAndDistributeFees(
             ethOrWethAmt,
@@ -216,54 +217,51 @@ contract NFTXVaultUpgradeable is
             _refundETH(msg.value, ethFees);
         }
 
-        emit Redeemed(specificIds, to);
+        emit Redeemed(idsOut, to);
     }
 
     // TODO: add NATSPEC
     function swap(
-        // TODO: rename to idsIn and idsOut
-        uint256[] calldata tokenIds,
+        uint256[] calldata idsIn,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
-        uint256[] calldata specificIds,
+        uint256[] calldata idsOut,
         bool forceFees
     ) external payable virtual override returns (uint256 ethFees) {
-        return swapTo(tokenIds, amounts, specificIds, msg.sender, forceFees);
+        return swapTo(idsIn, amounts, idsOut, msg.sender, forceFees);
     }
 
     // TODO: add NATSPEC
     function swapTo(
-        // TODO: make these calldata
-        // TODO: rename to idsIn and idsOut
-        uint256[] memory tokenIds,
-        uint256[] memory amounts /* ignored for ERC721 vaults */,
-        uint256[] memory specificIds,
+        uint256[] calldata idsIn,
+        uint256[] calldata amounts /* ignored for ERC721 vaults */,
+        uint256[] calldata idsOut,
         address to,
         bool forceFees
     ) public payable virtual override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(3);
         uint256 count;
         if (is1155) {
-            for (uint256 i; i < tokenIds.length; ++i) {
+            for (uint256 i; i < idsIn.length; ++i) {
                 uint256 amount = amounts[i];
 
                 if (amount == 0) revert TransferAmountIsZero();
                 count += amount;
             }
         } else {
-            count = tokenIds.length;
+            count = idsIn.length;
         }
 
-        if (count != specificIds.length) revert TokenLengthMismatch();
+        if (count != idsOut.length) revert TokenLengthMismatch();
 
         (, , uint256 _targetSwapFee) = vaultFees();
-        uint256 totalVaultFee = (_targetSwapFee * specificIds.length);
+        uint256 totalVaultFee = (_targetSwapFee * idsOut.length);
 
         // Give the NFTs first, so the user wont get the same thing back, just to be nice.
         (
             uint256 netVTokenPremium,
             uint256[] memory vTokenPremiums,
             address[] memory depositors
-        ) = _withdrawNFTsTo(specificIds, to, forceFees);
+        ) = _withdrawNFTsTo(idsOut, to, forceFees);
 
         ethFees = _chargeAndDistributeFees(
             msg.value,
@@ -275,11 +273,11 @@ contract NFTXVaultUpgradeable is
             forceFees
         );
 
-        _receiveNFTs(tokenIds, amounts);
+        _receiveNFTs(idsIn, amounts);
 
         _refundETH(msg.value, ethFees);
 
-        emit Swapped(tokenIds, amounts, specificIds, to);
+        emit Swapped(idsIn, amounts, idsOut, to);
     }
 
     // TODO: add NATSPEC
@@ -498,11 +496,18 @@ contract NFTXVaultUpgradeable is
 
     function getVTokenPremium721(
         uint256 tokenId
-    ) public view override returns (uint256 premium, address depositor) {
+    ) external view override returns (uint256 premium, address depositor) {
         TokenDepositInfo memory depositInfo = tokenDepositInfo[tokenId];
         depositor = depositInfo.depositor;
 
-        premium = _getVTokenPremium(depositInfo.timestamp);
+        uint256 premiumMax = vaultFactory.premiumMax();
+        uint256 premiumDuration = vaultFactory.premiumDuration();
+
+        premium = _getVTokenPremium(
+            depositInfo.timestamp,
+            premiumMax,
+            premiumDuration
+        );
     }
 
     function getVTokenPremium1155(
@@ -527,12 +532,17 @@ contract NFTXVaultUpgradeable is
         uint256 _pointerIndex1155 = pointerIndex1155[tokenId];
 
         uint256 i = _pointerIndex1155;
+        // cache
+        uint256 premiumMax = vaultFactory.premiumMax();
+        uint256 premiumDuration = vaultFactory.premiumDuration();
         while (true) {
             DepositInfo1155 memory depositInfo = depositInfo1155[tokenId][i];
 
             if (depositInfo.qty > amount) {
                 uint256 vTokenPremium = _getVTokenPremium(
-                    depositInfo.timestamp
+                    depositInfo.timestamp,
+                    premiumMax,
+                    premiumDuration
                 ) * amount;
                 netPremium += vTokenPremium;
 
@@ -545,7 +555,9 @@ contract NFTXVaultUpgradeable is
                 amount -= depositInfo.qty;
 
                 uint256 vTokenPremium = _getVTokenPremium(
-                    depositInfo.timestamp
+                    depositInfo.timestamp,
+                    premiumMax,
+                    premiumDuration
                 ) * depositInfo.qty;
                 netPremium += vTokenPremium;
 
@@ -595,8 +607,8 @@ contract NFTXVaultUpgradeable is
     }
 
     function _receiveNFTs(
-        uint256[] memory tokenIds,
-        uint256[] memory amounts
+        uint256[] calldata tokenIds,
+        uint256[] calldata amounts
     ) internal virtual returns (uint256) {
         if (!allValidNFTs(tokenIds)) revert NotEligible();
 
@@ -654,7 +666,7 @@ contract NFTXVaultUpgradeable is
     }
 
     function _withdrawNFTsTo(
-        uint256[] memory specificIds,
+        uint256[] calldata specificIds,
         address to,
         bool forceFees
     )
@@ -666,11 +678,24 @@ contract NFTXVaultUpgradeable is
             address[] memory depositors
         )
     {
+        // cache
         bool _is1155 = is1155;
         address _assetAddress = assetAddress;
+        INFTXVaultFactory _vaultFactory = vaultFactory;
 
-        vTokenPremiums = new uint256[](specificIds.length);
-        depositors = new address[](specificIds.length);
+        bool deductFees = forceFees ||
+            !_vaultFactory.excludedFromFees(msg.sender);
+
+        uint256 premiumMax;
+        uint256 premiumDuration;
+
+        if (deductFees) {
+            premiumMax = vaultFactory.premiumMax();
+            premiumDuration = vaultFactory.premiumDuration();
+
+            vTokenPremiums = new uint256[](specificIds.length);
+            depositors = new address[](specificIds.length);
+        }
 
         for (uint256 i; i < specificIds.length; ++i) {
             // This will always be fine considering the validations made above.
@@ -703,9 +728,11 @@ contract NFTXVaultUpgradeable is
                     pointerIndex1155[tokenId] = _pointerIndex1155 + 1;
                 }
 
-                if (forceFees || !vaultFactory.excludedFromFees(msg.sender)) {
+                if (deductFees) {
                     uint256 vTokenPremium = _getVTokenPremium(
-                        depositInfo.timestamp
+                        depositInfo.timestamp,
+                        premiumMax,
+                        premiumDuration
                     );
                     netVTokenPremium += vTokenPremium;
 
@@ -713,14 +740,20 @@ contract NFTXVaultUpgradeable is
                     depositors[i] = depositInfo.depositor;
                 }
             } else {
-                if (forceFees || !vaultFactory.excludedFromFees(msg.sender)) {
-                    uint256 vTokenPremium;
-                    address depositor;
-                    (vTokenPremium, depositor) = getVTokenPremium721(tokenId);
+                if (deductFees) {
+                    TokenDepositInfo memory depositInfo = tokenDepositInfo[
+                        tokenId
+                    ];
+
+                    uint256 vTokenPremium = _getVTokenPremium(
+                        depositInfo.timestamp,
+                        premiumMax,
+                        premiumDuration
+                    );
                     netVTokenPremium += vTokenPremium;
 
                     vTokenPremiums[i] = vTokenPremium;
-                    depositors[i] = depositor;
+                    depositors[i] = depositInfo.depositor;
                 }
 
                 _holdings.remove(tokenId);
@@ -939,13 +972,15 @@ contract NFTXVaultUpgradeable is
     }
 
     function _getVTokenPremium(
-        uint48 timestamp
+        uint48 timestamp,
+        uint256 premiumMax,
+        uint256 premiumDuration
     ) internal view returns (uint256) {
         return
             ExponentialPremium.getPremium(
                 timestamp,
-                vaultFactory.premiumMax(), // TODO: optimize this by only reading these values from storage once.
-                vaultFactory.premiumDuration()
+                premiumMax,
+                premiumDuration
             );
     }
 
@@ -953,9 +988,7 @@ contract NFTXVaultUpgradeable is
     function _refundETH(uint256 ethReceived, uint256 ethFees) internal {
         uint256 ethRefund = ethReceived - ethFees;
         if (ethRefund > 0) {
-            // TODO: use TransferLib
-            (bool success, ) = payable(msg.sender).call{value: ethRefund}("");
-            if (!success) revert UnableToRefundETH();
+            TransferLib.transferETH(msg.sender, ethRefund);
         }
     }
 
@@ -964,33 +997,30 @@ contract NFTXVaultUpgradeable is
         address to,
         uint256 tokenId
     ) internal virtual {
-        // TODO: add these as global constants
-        address kitties = 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
-        address punks = 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
         bytes memory data;
-        if (assetAddr == kitties) {
-            // Changed in v1.0.4.
-            data = abi.encodeWithSignature(
-                "transfer(address,uint256)",
-                to,
-                tokenId
-            );
-        } else if (assetAddr == punks) {
-            // CryptoPunks.
-            data = abi.encodeWithSignature(
-                "transferPunk(address,uint256)",
-                to,
-                tokenId
-            );
-        } else {
-            // Default.
+
+        if (assetAddr != CRYPTO_PUNKS && assetAddr != CRYPTO_KITTIES) {
+            // Default
             data = abi.encodeWithSignature(
                 "safeTransferFrom(address,address,uint256)",
                 address(this),
                 to,
                 tokenId
             );
+        } else if (assetAddr == CRYPTO_PUNKS) {
+            data = abi.encodeWithSignature(
+                "transferPunk(address,uint256)",
+                to,
+                tokenId
+            );
+        } else {
+            data = abi.encodeWithSignature(
+                "transfer(address,uint256)",
+                to,
+                tokenId
+            );
         }
+
         (bool success, bytes memory returnData) = address(assetAddr).call(data);
         require(success, string(returnData));
     }
@@ -999,33 +1029,10 @@ contract NFTXVaultUpgradeable is
         address assetAddr,
         uint256 tokenId
     ) internal virtual {
-        address kitties = 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
-        address punks = 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
         bytes memory data;
-        if (assetAddr == kitties) {
-            // Cryptokitties.
-            data = abi.encodeWithSignature(
-                "transferFrom(address,address,uint256)",
-                msg.sender,
-                address(this),
-                tokenId
-            );
-        } else if (assetAddr == punks) {
-            // CryptoPunks.
-            // Fix here for frontrun attack. Added in v1.0.2.
-            bytes memory punkIndexToAddress = abi.encodeWithSignature(
-                "punkIndexToAddress(uint256)",
-                tokenId
-            );
-            (bool checkSuccess, bytes memory result) = address(assetAddr)
-                .staticcall(punkIndexToAddress);
-            address nftOwner = abi.decode(result, (address));
 
-            if (!checkSuccess || nftOwner != msg.sender) revert NotNFTOwner();
-
-            data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
-        } else {
-            // Default.
+        if (assetAddr != CRYPTO_PUNKS && assetAddr != CRYPTO_KITTIES) {
+            // Default
             // Allow other contracts to "push" into the vault, safely.
             // If we already have the token requested, make sure we don't have it in the list to prevent duplicate minting.
             if (
@@ -1043,7 +1050,28 @@ contract NFTXVaultUpgradeable is
                     tokenId
                 );
             }
+        } else if (assetAddr == CRYPTO_PUNKS) {
+            // To prevent frontrun attack
+            bytes memory punkIndexToAddress = abi.encodeWithSignature(
+                "punkIndexToAddress(uint256)",
+                tokenId
+            );
+            (bool checkSuccess, bytes memory result) = address(assetAddr)
+                .staticcall(punkIndexToAddress);
+            address nftOwner = abi.decode(result, (address));
+
+            if (!checkSuccess || nftOwner != msg.sender) revert NotNFTOwner();
+
+            data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
+        } else {
+            data = abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)",
+                msg.sender,
+                address(this),
+                tokenId
+            );
         }
+
         (bool success, bytes memory resultData) = address(assetAddr).call(data);
         require(success, string(resultData));
     }

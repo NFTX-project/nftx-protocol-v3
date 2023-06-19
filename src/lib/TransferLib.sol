@@ -9,6 +9,8 @@ library TransferLib {
     address internal constant CRYPTO_PUNKS =
         0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
 
+    error UnableToSendETH();
+
     function transferFromERC721(
         address assetAddress,
         address to,
@@ -38,6 +40,11 @@ library TransferLib {
         if (amount > allowance) {
             IERC20(token).safeApprove(spender, type(uint256).max);
         }
+    }
+
+    function transferETH(address to, uint256 amount) internal {
+        (bool success, ) = payable(to).call{value: amount}("");
+        if (!success) revert UnableToSendETH();
     }
 
     /**

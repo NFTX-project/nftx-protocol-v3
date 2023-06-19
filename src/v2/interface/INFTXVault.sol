@@ -99,7 +99,6 @@ interface INFTXVault is IERC20Upgradeable {
     error ZeroAddress();
     error MintingDisabled();
     error InsufficientETHSent();
-    error UnableToRefundETH();
     error TransferAmountIsZero();
     error TokenLengthMismatch();
     error EligibilityAlreadySet();
