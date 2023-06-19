@@ -105,8 +105,7 @@ contract NFTXVaultUpgradeable is
         __Ownable_init();
         __ERC20_init(_name, _symbol);
 
-        // TODO: custom error
-        require(_assetAddress != address(0), "Asset != address(0)");
+        if (_assetAddress == address(0)) revert ZeroAddress();
         assetAddress = _assetAddress;
         vaultFactory = INFTXVaultFactory(msg.sender);
         vaultId = vaultFactory.numVaults();
@@ -138,13 +137,14 @@ contract NFTXVaultUpgradeable is
     // TODO: add NATSPEC
     // TODO: instead of nftCount return vTokensMinted
     function mintTo(
+        // TODO: make these calldata
         uint256[] memory tokenIds,
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         address to
     ) public payable virtual override nonReentrant returns (uint256 nftCount) {
         _onlyOwnerIfPaused(1);
-        // TODO: custom error
-        require(enableMint, "Minting not enabled");
+        if (!enableMint) revert MintingDisabled();
+
         // Take the NFTs.
         nftCount = _receiveNFTs(tokenIds, amounts);
 
@@ -161,7 +161,7 @@ contract NFTXVaultUpgradeable is
 
     // TODO: add NATSPEC
     function redeem(
-        uint256[] calldata specificIds,
+        uint256[] calldata specificIds, // TODO: rename to idsOut
         uint256 wethAmount,
         bool forceFees
     ) external payable virtual override returns (uint256 ethFees) {
@@ -170,7 +170,8 @@ contract NFTXVaultUpgradeable is
 
     // TODO: add NATSPEC
     function redeemTo(
-        uint256[] memory specificIds,
+        // TODO: make these calldata
+        uint256[] memory specificIds, // TODO: rename to idsOut
         address to,
         uint256 wethAmount,
         bool forceFees
@@ -220,6 +221,7 @@ contract NFTXVaultUpgradeable is
 
     // TODO: add NATSPEC
     function swap(
+        // TODO: rename to idsIn and idsOut
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds,
@@ -230,6 +232,8 @@ contract NFTXVaultUpgradeable is
 
     // TODO: add NATSPEC
     function swapTo(
+        // TODO: make these calldata
+        // TODO: rename to idsIn and idsOut
         uint256[] memory tokenIds,
         uint256[] memory amounts /* ignored for ERC721 vaults */,
         uint256[] memory specificIds,
@@ -241,16 +245,15 @@ contract NFTXVaultUpgradeable is
         if (is1155) {
             for (uint256 i; i < tokenIds.length; ++i) {
                 uint256 amount = amounts[i];
-                // TODO: custom error
-                require(amount != 0, "NFTXVault: transferring < 1");
+
+                if (amount == 0) revert TransferAmountIsZero();
                 count += amount;
             }
         } else {
             count = tokenIds.length;
         }
 
-        // TODO: custom error
-        require(count == specificIds.length, "NFTXVault: Random swap disabled");
+        if (count != specificIds.length) revert TokenLengthMismatch();
 
         (, , uint256 _targetSwapFee) = vaultFees();
         uint256 totalVaultFee = (_targetSwapFee * specificIds.length);
@@ -347,12 +350,9 @@ contract NFTXVaultUpgradeable is
         bytes calldata initData
     ) external virtual override returns (address) {
         _onlyPrivileged();
-        // TODO: custom error
-        require(
-            address(eligibilityStorage) == address(0),
-            // TODO: change to custom error
-            "NFTXVault: eligibility already set"
-        );
+        if (address(eligibilityStorage) != address(0))
+            revert EligibilityAlreadySet();
+
         INFTXEligibilityManager eligManager = INFTXEligibilityManager(
             vaultFactory.eligibilityManager()
         );
@@ -598,9 +598,8 @@ contract NFTXVaultUpgradeable is
         uint256[] memory tokenIds,
         uint256[] memory amounts
     ) internal virtual returns (uint256) {
-        // TODO: custom error
-        require(allValidNFTs(tokenIds), "NFTXVault: not eligible");
-        uint256 length = tokenIds.length;
+        if (!allValidNFTs(tokenIds)) revert NotEligible();
+
         if (is1155) {
             // This is technically a check, so placing it before the effect.
             IERC1155Upgradeable(assetAddress).safeBatchTransferFrom(
@@ -612,11 +611,12 @@ contract NFTXVaultUpgradeable is
             );
 
             uint256 count;
-            for (uint256 i; i < length; ++i) {
+            for (uint256 i; i < tokenIds.length; ++i) {
                 uint256 tokenId = tokenIds[i];
                 uint256 amount = amounts[i];
-                // TODO: custom error
-                require(amount != 0, "NFTXVault: transferring < 1");
+
+                if (amount == 0) revert TransferAmountIsZero();
+
                 if (_quantity1155[tokenId] == 0) {
                     _holdings.add(tokenId);
                 }
@@ -634,7 +634,7 @@ contract NFTXVaultUpgradeable is
             return count;
         } else {
             address _assetAddress = assetAddress;
-            for (uint256 i; i < length; ++i) {
+            for (uint256 i; i < tokenIds.length; ++i) {
                 uint256 tokenId = tokenIds[i];
                 // We may already own the NFT here so we check in order:
                 // Does the vault own it?
@@ -649,7 +649,7 @@ contract NFTXVaultUpgradeable is
                     depositor: msg.sender
                 });
             }
-            return length;
+            return tokenIds.length;
         }
     }
 
@@ -1020,11 +1020,9 @@ contract NFTXVaultUpgradeable is
             (bool checkSuccess, bytes memory result) = address(assetAddr)
                 .staticcall(punkIndexToAddress);
             address nftOwner = abi.decode(result, (address));
-            require(
-                checkSuccess && nftOwner == msg.sender,
-                // TODO: custom error
-                "Not the NFT owner"
-            );
+
+            if (!checkSuccess || nftOwner != msg.sender) revert NotNFTOwner();
+
             data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
         } else {
             // Default.
@@ -1034,11 +1032,8 @@ contract NFTXVaultUpgradeable is
                 IERC721Upgradeable(assetAddress).ownerOf(tokenId) ==
                 address(this)
             ) {
-                require(
-                    !_holdings.contains(tokenId),
-                    // TODO: custom error
-                    "Trying to use an owned NFT"
-                );
+                if (_holdings.contains(tokenId)) revert NFTAlreadyOwned();
+
                 return;
             } else {
                 data = abi.encodeWithSignature(
@@ -1055,19 +1050,14 @@ contract NFTXVaultUpgradeable is
 
     function _onlyPrivileged() internal view {
         if (manager == address(0)) {
-            // TODO: custom error
-            require(msg.sender == owner(), "Not owner");
+            if (msg.sender != owner()) revert NotOwner();
         } else {
-            // TODO: custom error
-            require(msg.sender == manager, "Not manager");
+            if (msg.sender != manager) revert NotManager();
         }
     }
 
     function _onlyOwnerIfPaused(uint256 lockId) internal view {
-        require(
-            !vaultFactory.isLocked(lockId) || msg.sender == owner(),
-            // TODO: custom error
-            "Paused"
-        );
+        if (vaultFactory.isLocked(lockId) && msg.sender != owner())
+            revert Paused();
     }
 }
