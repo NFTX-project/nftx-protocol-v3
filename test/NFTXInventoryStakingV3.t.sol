@@ -2,7 +2,7 @@
 pragma solidity =0.8.15;
 
 import {console, stdError} from "forge-std/Test.sol";
-import {Helpers} from "./lib/Helpers.sol";
+import {Helpers} from "@test/lib/Helpers.sol";
 
 import {MockNFT} from "@mocks/MockNFT.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
@@ -13,7 +13,7 @@ import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 import {NFTXInventoryStakingV3Upgradeable, INFTXInventoryStakingV3} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
-import {TestBase} from "./TestBase.sol";
+import {TestBase} from "@test/TestBase.sol";
 
 contract NFTXInventoryStakingV3Tests is TestBase {
     event Deposit(
