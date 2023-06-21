@@ -6,8 +6,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 import {SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 
 interface INFTXRouter {
     // =============================================================
@@ -16,7 +17,7 @@ interface INFTXRouter {
 
     function WETH() external returns (address);
 
-    function CRYPTO_PUNKS() external returns (address);
+    function PERMIT2() external returns (IPermitAllowanceTransfer);
 
     function positionManager() external returns (INonfungiblePositionManager);
 
@@ -24,7 +25,35 @@ interface INFTXRouter {
 
     function quoter() external returns (IQuoterV2);
 
-    function nftxVaultFactory() external returns (INFTXVaultFactory);
+    function nftxVaultFactory() external returns (INFTXVaultFactoryV3);
+
+    // =============================================================
+    //                           STORAGE
+    // =============================================================
+
+    function lpTimelock() external returns (uint256);
+
+    // =============================================================
+    //                            EVENTS
+    // =============================================================
+
+    event AddLiquidity(
+        uint256 vaultId,
+        uint256 vTokensAmount,
+        uint256 nftCount,
+        uint256 positionId
+    );
+
+    event RemoveLiquidity(
+        uint256 positionId,
+        uint256 vaultId,
+        uint256 vTokenAmt,
+        uint256 wethAmt
+    );
+
+    event SellNFTs(uint256 nftCount, uint256 ethReceived);
+
+    event BuyNFTs(uint256 nftCount, uint256 ethSpent);
 
     // =============================================================
     //                            ERRORS
@@ -40,6 +69,7 @@ interface INFTXRouter {
         uint256 vaultId;
         uint256 vTokensAmount; // user can provide just vTokens or NFTs or both
         uint256[] nftIds;
+        uint256[] nftAmounts; // for ERC1155, ignored for ERC721
         int24 tickLower;
         int24 tickUpper;
         uint24 fee;
@@ -50,6 +80,29 @@ interface INFTXRouter {
     function addLiquidity(
         AddLiquidityParams calldata params
     ) external payable returns (uint256 positionId);
+
+    function addLiquidityWithPermit2(
+        AddLiquidityParams calldata params,
+        bytes calldata encodedPermit2
+    ) external payable returns (uint256 positionId);
+
+    struct IncreaseLiquidityParams {
+        uint256 positionId;
+        uint256 vaultId;
+        uint256 vTokensAmount; // user can provide just vTokens or NFTs or both
+        uint256[] nftIds;
+        uint256[] nftAmounts; // for ERC1155, ignored for ERC721
+        uint256 deadline;
+    }
+
+    function increaseLiquidity(
+        IncreaseLiquidityParams calldata params
+    ) external payable;
+
+    function increaseLiquidityWithPermit2(
+        IncreaseLiquidityParams calldata params,
+        bytes calldata encodedPermit2
+    ) external payable;
 
     struct RemoveLiquidityParams {
         uint256 positionId;
@@ -71,6 +124,7 @@ interface INFTXRouter {
     struct SellNFTsParams {
         uint256 vaultId;
         uint256[] nftIds;
+        uint256[] nftAmounts; // for ERC1155, ignored for ERC721
         uint256 deadline;
         uint24 fee;
         uint256 amountOutMinimum;
@@ -102,6 +156,8 @@ interface INFTXRouter {
      * @param token ERC20 token address or address(0) in case of ETH
      */
     function rescueTokens(IERC20 token) external;
+
+    function setLpTimelock(uint256 lpTimelock_) external;
 
     // =============================================================
     //                     PUBLIC / EXTERNAL VIEW

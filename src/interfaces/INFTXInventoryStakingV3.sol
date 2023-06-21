@@ -4,14 +4,15 @@ pragma solidity =0.8.15;
 import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
-import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
+import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     // details about the staking position
     struct Position {
         // the nonce for permits
-        uint256 nonce; // TODO: add permit logic
+        uint256 nonce;
         // vaultId corresponding to the vTokens staked in this position
         uint256 vaultId;
         // timestamp at which the timelock expires
@@ -25,7 +26,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     }
 
     struct VaultGlobal {
-        uint256 netVTokenBalance; // vToken liquidity + earned fees
         uint256 totalVTokenShares;
         uint256 globalWethFeesPerVTokenShareX128;
     }
@@ -34,13 +34,13 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     //                           CONSTANTS
     // =============================================================
 
-    function CRYPTO_PUNKS() external view returns (address);
-
-    function nftxVaultFactory() external view returns (INFTXVaultFactory);
+    function nftxVaultFactory() external view returns (INFTXVaultFactoryV3);
 
     function timelockExcludeList() external view returns (ITimelockExcludeList);
 
     function WETH() external view returns (IERC20);
+
+    function PERMIT2() external returns (IPermitAllowanceTransfer);
 
     // =============================================================
     //                            STORAGE
@@ -70,7 +70,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         external
         view
         returns (
-            uint256 netVTokenBalance,
             uint256 totalVTokenShares,
             uint256 globalWethFeesPerVTokenShareX128
         );
@@ -117,7 +116,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     // =============================================================
 
     function __NFTXInventoryStaking_init(
-        INFTXVaultFactory nftxVaultFactory_,
         uint256 timelock_,
         uint256 earlyWithdrawPenaltyInWei_,
         ITimelockExcludeList timelockExcludeList_
@@ -133,10 +131,18 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         address recipient
     ) external returns (uint256 positionId);
 
+    function depositWithPermit2(
+        uint256 vaultId,
+        uint256 amount,
+        address recipient,
+        bytes calldata encodedPermit2
+    ) external returns (uint256 positionId);
+
     /// @notice This contract must be on the feeExclusion list to avoid mint fees, else revert
     function depositWithNFT(
         uint256 vaultId,
         uint256[] calldata tokenIds,
+        uint256[] calldata amounts,
         address recipient
     ) external returns (uint256 positionId);
 
@@ -154,10 +160,9 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
 
     function collectWethFees(uint256 positionId) external;
 
-    function receiveRewards(
+    function receiveWethRewards(
         uint256 vaultId,
-        uint256 amount,
-        bool isRewardWeth
+        uint256 wethAmount
     ) external returns (bool);
 
     // =============================================================

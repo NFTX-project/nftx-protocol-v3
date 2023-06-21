@@ -161,7 +161,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
             vtoken.approve(address(inventoryStaking), type(uint256).max);
             inventoryStaking.deposit(0, mintedVTokens, address(this));
 
-            (, uint256 totalVTokenShares, ) = inventoryStaking.vaultGlobal(0);
+            (uint256 totalVTokenShares, ) = inventoryStaking.vaultGlobal(0);
             console.log("totalVTokenShares", totalVTokenShares);
         }
 
@@ -215,6 +215,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         // nftIds[4] = mintTokenIds[4];
 
         uint128 liquidity = _getLiquidity(positionId);
+        vm.warp(positionManager.lockedUntil(positionId) + 1);
 
         uint256 preNFTBalance = nft.balanceOf(address(this));
         uint256 preETHBalance = address(this).balance;

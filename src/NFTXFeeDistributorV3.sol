@@ -3,15 +3,17 @@ pragma solidity =0.8.15;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+import {TransferLib} from "@src/lib/TransferLib.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
-import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
-import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
+import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
+import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";
-import {INFTXRouter} from "./interfaces/INFTXRouter.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
+import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 
-import {INFTXFeeDistributorV3} from "./interfaces/INFTXFeeDistributorV3.sol";
+import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 
 /**
  * @title NFTX Fee Distributor V3
@@ -30,7 +32,7 @@ contract NFTXFeeDistributorV3 is
     //                           CONSTANTS
     // =============================================================
 
-    INFTXVaultFactory public immutable override nftxVaultFactory;
+    INFTXVaultFactoryV3 public immutable override nftxVaultFactory;
     INFTXInventoryStakingV3 public immutable override inventoryStaking;
     IERC20 public immutable override WETH;
     uint24 public constant override REWARD_FEE_TIER = 10_000;
@@ -53,7 +55,7 @@ contract NFTXFeeDistributorV3 is
     // =============================================================
 
     constructor(
-        INFTXVaultFactory nftxVaultFactory_,
+        INFTXVaultFactoryV3 nftxVaultFactory_,
         INFTXInventoryStakingV3 inventoryStaking_,
         INFTXRouter nftxRouter_,
         address treasury_
@@ -73,7 +75,7 @@ contract NFTXFeeDistributorV3 is
     // =============================================================
 
     function distribute(uint256 vaultId) external override nonReentrant {
-        INFTXVault vault = INFTXVault(nftxVaultFactory.vault(vaultId));
+        INFTXVaultV3 vault = INFTXVaultV3(nftxVaultFactory.vault(vaultId));
 
         uint256 wethBalance = WETH.balanceOf(address(this));
 
@@ -168,6 +170,8 @@ contract NFTXFeeDistributorV3 is
         emit UpdateTreasuryAddress(treasury_);
     }
 
+    // TODO: add function to change NFTXRouter address
+
     function pauseFeeDistribution(bool pause) external override onlyOwner {
         distributionPaused = pause;
         emit PauseDistribution(pause);
@@ -201,17 +205,19 @@ contract NFTXFeeDistributorV3 is
         FeeReceiver storage feeReceiver,
         uint256 wethAmountToSend,
         uint256 vaultId,
-        INFTXVault vault
+        INFTXVaultV3 vault
     ) internal returns (bool tokenSent) {
         if (feeReceiver.receiverType == ReceiverType.INVENTORY) {
-            _maxWethApprove(feeReceiver.receiver, wethAmountToSend);
+            TransferLib.maxApprove(
+                address(WETH),
+                feeReceiver.receiver,
+                wethAmountToSend
+            );
 
-            // TODO: update this comment for Inventory Staking V3
-            // Inventory Staking might not pull tokens in case where vaultGlobal[vaultId].totalVTokenShares is zero
-            bool pulledTokens = inventoryStaking.receiveRewards(
+            // Inventory Staking might not pull tokens in case where `vaultGlobal[vaultId].totalVTokenShares` is zero
+            bool pulledTokens = inventoryStaking.receiveWethRewards(
                 vaultId,
-                wethAmountToSend,
-                true
+                wethAmountToSend
             );
 
             tokenSent = pulledTokens;
@@ -237,18 +243,6 @@ contract NFTXFeeDistributorV3 is
         } else {
             WETH.transfer(feeReceiver.receiver, wethAmountToSend);
             tokenSent = true;
-        }
-    }
-
-    /**
-     * @dev Setting max allowance to save on gas on subsequent calls.
-     * As this contract doesn't hold funds, so this is safe. Also the spender address is only provided by owner via addReceiver.
-     */
-    function _maxWethApprove(address spender, uint256 amount) internal {
-        uint256 allowance = WETH.allowance(address(this), spender);
-
-        if (amount > allowance) {
-            WETH.approve(spender, type(uint256).max);
         }
     }
 }

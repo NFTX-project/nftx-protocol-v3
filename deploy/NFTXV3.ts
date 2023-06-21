@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment, Network } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
+import { utils } from "ethers";
 import deployConfig from "../deployConfig";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -21,14 +22,35 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const vaultFactory = await deploy("NFTXVaultFactoryUpgradeable", {
     from: deployer,
+    proxy: {
+      proxyContract: "OpenZeppelinTransparentProxy",
+      execute: {
+        init: {
+          methodName: "__NFTXVaultFactory_init",
+          args: [vaultImpl.address],
+        },
+      },
+    },
     log: true,
   });
+  // set premium related values
   await execute(
     "NFTXVaultFactoryUpgradeable",
     { from: deployer },
-    "__NFTXVaultFactory_init",
-    vaultImpl.address,
-    "0x0000000000000000000000000000000000000001" // FIXME: temporary feeDistributor address
+    "setTwapInterval",
+    20 * 60 // 20 mins
+  );
+  await execute(
+    "NFTXVaultFactoryUpgradeable",
+    { from: deployer },
+    "setPremiumDuration",
+    10 * 60 * 60 // 10 hrs
+  );
+  await execute(
+    "NFTXVaultFactoryUpgradeable",
+    { from: deployer },
+    "setPremiumMax",
+    utils.parseEther("5") // 5 ether
   );
 
   const nftxRouter = await deploy("NFTXRouter", {
@@ -38,11 +60,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       router.address,
       quoter.address,
       vaultFactory.address,
+      config.permit2,
     ],
     log: true,
   });
 
-  // V2 currently deducts fees in vTokens which messes up with our calculations atm
+  // NFTXRouter has in-built fee handling
   await execute(
     "NFTXVaultFactoryUpgradeable",
     { from: deployer },
@@ -51,15 +74,45 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     true
   );
 
-  const inventoryStaking = await deploy("MockInventoryStakingV3", {
+  const timelockExcludeList = await deploy("TimelockExcludeList", {
     from: deployer,
-    args: [vaultFactory.address, config.WETH],
     log: true,
   });
 
+  const inventoryStaking = await deploy("NFTXInventoryStakingV3Upgradeable", {
+    from: deployer,
+    args: [config.WETH, config.permit2, vaultFactory.address],
+    proxy: {
+      proxyContract: "OpenZeppelinTransparentProxy",
+      execute: {
+        init: {
+          methodName: "__NFTXInventoryStaking_init",
+          args: [
+            2 * 24 * 60 * 60, // 2 days timelock
+            utils.parseEther("0.05"), // 5% penalty
+            timelockExcludeList.address,
+          ],
+        },
+      },
+    },
+    log: true,
+  });
+  await execute(
+    "NFTXInventoryStakingV3Upgradeable",
+    { from: deployer },
+    "setIsGuardian",
+    deployer,
+    true
+  );
+
   const feeDistributor = await deploy("NFTXFeeDistributorV3", {
     from: deployer,
-    args: [inventoryStaking.address, nftxRouter.address, config.treasury],
+    args: [
+      vaultFactory.address,
+      inventoryStaking.address,
+      nftxRouter.address,
+      config.treasury,
+    ],
     log: true,
   });
 
@@ -75,6 +128,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     "setFeeDistributor",
     feeDistributor.address
   );
+
+  const marketplaceZap = await deploy("MarketplaceUniversalRouterZap", {
+    from: deployer,
+    args: [
+      vaultFactory.address,
+      config.nftxUniversalRouter,
+      config.permit2,
+      inventoryStaking.address,
+      config.WETH,
+    ],
+    log: true,
+  });
 
   await execute(
     "NFTXVaultFactoryUpgradeable",

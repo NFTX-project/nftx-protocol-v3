@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "./NFTXEligibility.sol";
 
-
 /**
  * @dev These functions deal with verification of Merkle Tree proofs.
  *
@@ -33,9 +32,11 @@ library MerkleProof {
         bytes32 leaf
     ) internal pure returns (bool) {
         bytes32 computedHash = leaf;
-        for (uint i = 0; i < proof.length;) {
+        for (uint i = 0; i < proof.length; ) {
             computedHash = _hashPair(computedHash, proof[i]);
-            unchecked { i++; }
+            unchecked {
+                i++;
+            }
         }
         return computedHash == root;
     }
@@ -44,7 +45,10 @@ library MerkleProof {
         return a < b ? _efficientHash(a, b) : _efficientHash(b, a);
     }
 
-    function _efficientHash(bytes32 a, bytes32 b) private pure returns (bytes32 value) {
+    function _efficientHash(
+        bytes32 a,
+        bytes32 b
+    ) private pure returns (bytes32 value) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, a)
@@ -54,24 +58,30 @@ library MerkleProof {
     }
 }
 
-
 /**
  * @title NFTX Merkle Eligibility
  * @author Twade
- * 
+ *
  * @notice Allows vaults to be allow eligibility based on a predefined merkle tree.
  */
 
 abstract contract NFTXMerkleEligibility is NFTXEligibility {
-
     /// @notice Emitted when our NFTX Eligibility is deployed
-    event NFTXEligibilityInit(bytes32 merkleRoot, string _merkleReference, string _merkleLeavesURI);
+    event NFTXEligibilityInit(
+        bytes32 merkleRoot,
+        string _merkleReference,
+        string _merkleLeavesURI
+    );
 
     /// @notice Emitted when a project validity check is started
     event PrecursoryCheckStarted(uint tokenId, bytes32 requestId);
 
     /// @notice Emitted when a project validity check has been completed
-    event PrecursoryCheckComplete(uint tokenId, bytes32 requestId, bool isValid);
+    event PrecursoryCheckComplete(
+        uint tokenId,
+        bytes32 requestId,
+        bool isValid
+    );
 
     /// @notice Internal storage of valid and processed tokens
     mapping(bytes32 => bool) public validTokenHashes;
@@ -86,15 +96,13 @@ abstract contract NFTXMerkleEligibility is NFTXEligibility {
     /// @notice URI to JSON list of unencoded token IDs
     string public merkleLeavesURI;
 
-
     /**
      * @notice The name of our Eligibility Module.
      *
      * @return string
      */
 
-    function name() public pure override virtual returns (string memory) {}
-
+    function name() public pure virtual override returns (string memory) {}
 
     /**
      * @notice Confirms that our module has been finalised and won't change.
@@ -102,28 +110,28 @@ abstract contract NFTXMerkleEligibility is NFTXEligibility {
      * @return bool
      */
 
-    function finalized() public view override virtual returns (bool) {    
+    function finalized() public view virtual override returns (bool) {
         return true;
     }
-
 
     /**
      * @notice The address of our token asset contract.
      *
-     * @return address 
+     * @return address
      */
 
-   function targetAsset() public pure override virtual returns (address) {}
-
+    function targetAsset() public pure virtual override returns (address) {}
 
     /**
      * @notice Allow our eligibility module to be initialised with optional
      * config data.
-     * 
+     *
      * @param configData Encoded config data
      */
 
-    function __NFTXEligibility_init_bytes(bytes memory configData) public override virtual initializer {
+    function __NFTXEligibility_init_bytes(
+        bytes memory configData
+    ) public virtual override initializer {
         (
             bytes32 _merkleRoot,
             string memory _merkleReference,
@@ -133,53 +141,65 @@ abstract contract NFTXMerkleEligibility is NFTXEligibility {
         __NFTXEligibility_init(_merkleRoot, _merkleReference, _merkleLeavesURI);
     }
 
-
     /**
      * @notice Parameters here should mirror the config struct.
-     * 
+     *
      * @param _merkleRoot The root of our merkle tree
      */
 
-    function __NFTXEligibility_init(bytes32 _merkleRoot, string memory _merkleReference, string memory _merkleLeavesURI) public initializer {
+    function __NFTXEligibility_init(
+        bytes32 _merkleRoot,
+        string memory _merkleReference,
+        string memory _merkleLeavesURI
+    ) public initializer {
         merkleRoot = _merkleRoot;
         merkleReference = _merkleReference;
         merkleLeavesURI = _merkleLeavesURI;
 
-        emit NFTXEligibilityInit(_merkleRoot, _merkleReference, _merkleLeavesURI);
+        emit NFTXEligibilityInit(
+            _merkleRoot,
+            _merkleReference,
+            _merkleLeavesURI
+        );
     }
-
 
     /**
      * @notice Checks if a supplied token is eligible, which is defined by our merkle
      * tree root assigned at initialisation.
-     * 
+     *
      * @dev This check requires the token to have already been passed to `processToken`.
      *
      * @return bool If the tokenId is eligible
      */
 
-    function _checkIfEligible(uint tokenId) internal view override virtual returns (bool) {
+    function _checkIfEligible(
+        uint tokenId
+    ) internal view virtual override returns (bool) {
         return validTokenHashes[_hashTokenId(tokenId)];
     }
-
 
     /**
      * @notice Checks if the token requires a precursory validation before it can have
      * it's eligibility determined.
-     * 
+     *
      * @dev If this returns `true`, `processToken` should subsequently be run before
      * checking the eligibility of the token.
-     * 
+     *
      * @param tokenId The ENS domain token ID
      *
      * @return bool If the tokenId requires precursory validation
      */
 
-    function requiresProcessing(uint tokenId, bytes32[] calldata merkleProof) public view returns (bool) {
+    function requiresProcessing(
+        uint tokenId,
+        bytes32[] calldata merkleProof
+    ) public view returns (bool) {
         // Check if we have a confirmed processing log
-        return !_processedTokenHashes[_hashTokenId(tokenId)][_hashMerkleProof(merkleProof)];
+        return
+            !_processedTokenHashes[_hashTokenId(tokenId)][
+                _hashMerkleProof(merkleProof)
+            ];
     }
-
 
     /**
      * @notice This will run a number of precursory checks by encoding the token ID,
@@ -191,20 +211,24 @@ abstract contract NFTXMerkleEligibility is NFTXEligibility {
      * @return bool[] If the token at the corresponding index is valid
      */
 
-    function processTokens(uint[] calldata tokenIds, bytes32[][] calldata merkleProofs) public returns (bool[] memory) {
+    function processTokens(
+        uint[] calldata tokenIds,
+        bytes32[][] calldata merkleProofs
+    ) public returns (bool[] memory) {
         // Iterate over our process tokens
         uint numberOfTokens = tokenIds.length;
         bool[] memory isValid = new bool[](numberOfTokens);
 
         // Loop through and process our tokens
-        for (uint i; i < numberOfTokens;) {
+        for (uint i; i < numberOfTokens; ) {
             isValid[i] = processToken(tokenIds[i], merkleProofs[i]);
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         return isValid;
     }
-
 
     /**
      * @notice This will run a precursory check by encoding the token ID, creating the
@@ -216,17 +240,20 @@ abstract contract NFTXMerkleEligibility is NFTXEligibility {
      * @return isValid If the token is valid
      */
 
-    function processToken(uint tokenId, bytes32[] calldata merkleProof) public returns (bool isValid) {
+    function processToken(
+        uint tokenId,
+        bytes32[] calldata merkleProof
+    ) public returns (bool isValid) {
         // If the token has already been processed, just return the validity
         if (!requiresProcessing(tokenId, merkleProof)) {
             return _checkIfEligible(tokenId);
         }
 
-    	// Get the hashed equivalent of our tokenId
-    	bytes32 tokenHash = _hashTokenId(tokenId);
+        // Get the hashed equivalent of our tokenId
+        bytes32 tokenHash = _hashTokenId(tokenId);
 
-    	// Determine if our domain is eligible by traversing our merkle tree
-    	isValid = MerkleProof.verify(merkleProof, merkleRoot, tokenHash);
+        // Determine if our domain is eligible by traversing our merkle tree
+        isValid = MerkleProof.verify(merkleProof, merkleRoot, tokenHash);
 
         // Update our token eligibility _only_ if we have been able to confirm that
         // it is eligible. This prevents incorrect proofs from bricking a token.
@@ -237,7 +264,6 @@ abstract contract NFTXMerkleEligibility is NFTXEligibility {
         // Confirm that this has been processed
         _processedTokenHashes[tokenHash][_hashMerkleProof(merkleProof)] = true;
     }
-
 
     /**
      * @notice Hashes the token ID to convert it into the token hash.
@@ -251,7 +277,6 @@ abstract contract NFTXMerkleEligibility is NFTXEligibility {
         return keccak256(_tokenString(tokenId));
     }
 
-
     /**
      * @notice This will convert a 2d bytes32 array into a bytes32 hash.
      *
@@ -260,16 +285,17 @@ abstract contract NFTXMerkleEligibility is NFTXEligibility {
      * @return bytes32 The hashed merkle proof
      */
 
-    function _hashMerkleProof(bytes32[] memory merkleProofs) private pure returns (bytes32) {
+    function _hashMerkleProof(
+        bytes32[] memory merkleProofs
+    ) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(merkleProofs));
     }
 
-
     /**
      * @notice Converts a `uint256` to its ASCII `string` decimal representation.
-     * 
+     *
      * @param value Integer value
-     * 
+     *
      * @return string String of the integer value
      */
 
@@ -282,7 +308,9 @@ abstract contract NFTXMerkleEligibility is NFTXEligibility {
         uint256 digits;
 
         while (temp != 0) {
-            unchecked { ++digits; }
+            unchecked {
+                ++digits;
+            }
             temp /= 10;
         }
 
@@ -296,5 +324,4 @@ abstract contract NFTXMerkleEligibility is NFTXEligibility {
 
         return buffer;
     }
-
 }

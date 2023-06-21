@@ -5,6 +5,8 @@ import {console} from "forge-std/Test.sol";
 import {Helpers} from "./lib/Helpers.sol";
 import {TestExtend} from "./lib/TestExtend.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {UniswapV3FactoryUpgradeable} from "@uni-core/UniswapV3FactoryUpgradeable.sol";
 import {UniswapV3PoolUpgradeable} from "@uni-core/UniswapV3PoolUpgradeable.sol";
@@ -19,19 +21,21 @@ import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 
 import {MockWETH} from "@mocks/MockWETH.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
+import {Mock1155} from "@mocks/Mock1155.sol";
 import {MockUniversalRouter} from "@mocks/MockUniversalRouter.sol";
-import {MockPermit2} from "@mocks/MockPermit2.sol";
+import {MockPermit2} from "@mocks/permit2/MockPermit2.sol";
 
-import {NFTXVaultUpgradeable, INFTXVault} from "@src/v2/NFTXVaultUpgradeable.sol";
-import {NFTXVaultFactoryUpgradeable} from "@src/v2/NFTXVaultFactoryUpgradeable.sol";
+import {NFTXVaultUpgradeableV3, INFTXVaultV3} from "@src/NFTXVaultUpgradeableV3.sol";
+import {NFTXVaultFactoryUpgradeableV3} from "@src/NFTXVaultFactoryUpgradeableV3.sol";
 import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
-import {TimelockExcludeList} from "@src/v2/other/TimelockExcludeList.sol";
-import {ITimelockExcludeList} from "@src/v2/interface/ITimelockExcludeList.sol";
+import {TimelockExcludeList} from "@src/TimelockExcludeList.sol";
+import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
-contract TestBase is TestExtend, ERC721Holder {
+contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     UniswapV3FactoryUpgradeable factory;
     NonfungibleTokenPositionDescriptor descriptor;
     MockWETH weth;
@@ -40,14 +44,16 @@ contract TestBase is TestExtend, ERC721Holder {
     QuoterV2 quoter;
 
     MockNFT nft;
+    Mock1155 nft1155;
     MockUniversalRouter universalRouter;
     MockPermit2 permit2;
 
-    INFTXVault vtoken;
+    INFTXVaultV3 vtoken;
+    INFTXVaultV3 vtoken1155;
     TimelockExcludeList timelockExcludeList;
     NFTXFeeDistributorV3 feeDistributor;
-    NFTXVaultUpgradeable vaultImpl;
-    NFTXVaultFactoryUpgradeable vaultFactory;
+    NFTXVaultUpgradeableV3 vaultImpl;
+    NFTXVaultFactoryUpgradeableV3 vaultFactory;
     NFTXRouter nftxRouter;
     NFTXInventoryStakingV3Upgradeable inventoryStaking;
     MarketplaceUniversalRouterZap marketplaceZap;
@@ -56,8 +62,15 @@ contract TestBase is TestExtend, ERC721Holder {
     uint24 constant DEFAULT_FEE_TIER = 10000;
     address immutable TREASURY = makeAddr("TREASURY");
     uint256 constant VAULT_ID = 0;
+    uint256 constant VAULT_ID_1155 = 1;
+    uint256 constant LP_TIMELOCK = 2 days;
 
     uint16 constant REWARD_TIER_CARDINALITY = 102; // considering 20 min interval with 1 block every 12 seconds on ETH Mainnet
+
+    uint256 fromPrivateKey = 0x12341234;
+    address from = vm.addr(fromPrivateKey);
+
+    uint256[] emptyIds;
 
     function setUp() external {
         // to prevent underflow during calculations involving block.timestamp
@@ -74,7 +87,7 @@ contract TestBase is TestExtend, ERC721Holder {
         );
         descriptor = new NonfungibleTokenPositionDescriptor(
             address(weth),
-            bytes32(0)
+            0x5745544800000000000000000000000000000000000000000000000000000000 // "WETH"
         );
 
         positionManager = new NonfungiblePositionManager(
@@ -86,27 +99,43 @@ contract TestBase is TestExtend, ERC721Holder {
         quoter = new QuoterV2(address(factory), address(weth));
 
         nft = new MockNFT();
+        nft1155 = new Mock1155();
 
-        vaultImpl = new NFTXVaultUpgradeable();
-        vaultFactory = new NFTXVaultFactoryUpgradeable();
-        vaultFactory.__NFTXVaultFactory_init(
-            address(vaultImpl),
-            address(1) // temporary feeDistributor address
-        );
+        vaultImpl = new NFTXVaultUpgradeableV3(IWETH9(address(weth)));
+        vaultFactory = new NFTXVaultFactoryUpgradeableV3();
+        vaultFactory.__NFTXVaultFactory_init(address(vaultImpl));
         // set premium related values
+        // TODO: move setting these values into the initializer
         vaultFactory.setTwapInterval(20 minutes);
         vaultFactory.setPremiumDuration(10 hours);
         vaultFactory.setPremiumMax(5 ether);
+        vaultFactory.setDepositorPremiumShare(0.30 ether);
+
+        permit2 = new MockPermit2();
 
         nftxRouter = new NFTXRouter(
             positionManager,
             router,
             quoter,
-            vaultFactory
+            vaultFactory,
+            IPermitAllowanceTransfer(address(permit2)),
+            LP_TIMELOCK
         );
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
 
-        inventoryStaking = new NFTXInventoryStakingV3Upgradeable();
+        timelockExcludeList = new TimelockExcludeList();
+        inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
+            weth,
+            IPermitAllowanceTransfer(address(permit2)),
+            vaultFactory
+        );
+        inventoryStaking.__NFTXInventoryStaking_init(
+            2 days, // timelock
+            0.05 ether, // 5% penalty
+            ITimelockExcludeList(address(timelockExcludeList))
+        );
+        inventoryStaking.setIsGuardian(address(this), true);
+
         feeDistributor = new NFTXFeeDistributorV3(
             vaultFactory,
             inventoryStaking,
@@ -115,31 +144,33 @@ contract TestBase is TestExtend, ERC721Holder {
         );
         factory.setFeeDistributor(address(feeDistributor));
         vaultFactory.setFeeDistributor(address(feeDistributor));
-        timelockExcludeList = new TimelockExcludeList();
-        inventoryStaking.__NFTXInventoryStaking_init(
-            vaultFactory,
-            2 days, // timelock
-            0.05 ether, // 5% penalty
-            ITimelockExcludeList(address(timelockExcludeList))
-        );
-        inventoryStaking.setIsGuardian(address(this), true);
 
         uint256 vaultId = vaultFactory.createVault(
             "TEST",
             "TST",
             address(nft),
-            false,
-            true
+            false, // is1155
+            true // allowAllItems
         );
-        vtoken = INFTXVault(vaultFactory.vault(vaultId));
+        vtoken = INFTXVaultV3(vaultFactory.vault(vaultId));
+        vaultFactory.createVault(
+            "TEST1155",
+            "TST1155",
+            address(nft1155),
+            true, // is1155
+            true // allowAllItems
+        );
+        vtoken1155 = INFTXVaultV3(vaultFactory.vault(vaultId + 1));
 
         // Zaps
-        permit2 = new MockPermit2();
-        universalRouter = new MockUniversalRouter(permit2, router);
+        universalRouter = new MockUniversalRouter(
+            IPermitAllowanceTransfer(address(permit2)),
+            router
+        );
         marketplaceZap = new MarketplaceUniversalRouterZap(
             vaultFactory,
             address(universalRouter),
-            permit2,
+            IPermitAllowanceTransfer(address(permit2)),
             address(inventoryStaking),
             IWETH9(address(weth))
         );
@@ -149,15 +180,11 @@ contract TestBase is TestExtend, ERC721Holder {
     function _mintVToken(
         uint256 qty
     ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
-        vaultFactory.setFeeExclusion(address(this), true); // setting fee exclusion to ease calulations below
-
         tokenIds = nft.mint(qty);
 
         nft.setApprovalForAll(address(vtoken), true);
         uint256[] memory amounts = new uint256[](0);
-        mintedVTokens = vtoken.mint(tokenIds, amounts) * 1 ether;
-
-        vaultFactory.setFeeExclusion(address(this), false); // setting this back
+        mintedVTokens = vtoken.mint{value: 100 ether * qty}(tokenIds, amounts);
     }
 
     function _mintPosition(
@@ -244,6 +271,7 @@ contract TestBase is TestExtend, ERC721Holder {
                 vaultId: VAULT_ID,
                 vTokensAmount: 0,
                 nftIds: tokenIds,
+                nftAmounts: emptyIds,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
                 fee: fee,
@@ -268,11 +296,6 @@ contract TestBase is TestExtend, ERC721Holder {
         vm.warp(block.timestamp + vaultFactory.twapInterval());
     }
 
-    // the actual value can be off by few decimals so accounting for 0.2% error.
-    function _valueWithError(uint256 value) internal pure returns (uint256) {
-        return (value * (10_000 - 20)) / 10_000;
-    }
-
     function _sellNFTs(
         uint256 qty
     ) internal returns (uint256[] memory tokenIds) {
@@ -285,6 +308,7 @@ contract TestBase is TestExtend, ERC721Holder {
             INFTXRouter.SellNFTsParams({
                 vaultId: VAULT_ID,
                 nftIds: tokenIds,
+                nftAmounts: emptyIds,
                 deadline: block.timestamp,
                 fee: DEFAULT_FEE_TIER,
                 amountOutMinimum: 1,
@@ -298,6 +322,180 @@ contract TestBase is TestExtend, ERC721Holder {
             qty,
             "NFT balance didn't decrease"
         );
+    }
+
+    function _mintVTokenFor1155(
+        uint256 qty
+    ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
+        uint256[] memory _tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        _tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        nft1155.setApprovalForAll(address(vtoken1155), true);
+
+        mintedVTokens = vtoken1155.mint{value: 100 ether * qty}(
+            _tokenIds,
+            amounts
+        );
+
+        tokenIds = new uint256[](qty);
+        for (uint256 i; i < qty; i++) {
+            tokenIds[i] = _tokenIds[0];
+        }
+    }
+
+    function _mintPosition1155(
+        uint256 qty
+    )
+        internal
+        returns (
+            uint256[] memory tokenIds,
+            uint256 positionId,
+            int24 tickLower,
+            int24 tickUpper,
+            uint256 ethUsed
+        )
+    {
+        // Current Eg: 1 NFT = 5 ETH, and liquidity provided in the range: 3-6 ETH per NFT
+        uint256 currentNFTPrice = 5 ether; // 5 * 10^18 wei for 1*10^18 vTokens
+        uint256 lowerNFTPrice = 3 ether;
+        uint256 upperNFTPrice = 6 ether;
+        // TODO: add tests for different fee tiers
+        uint24 fee = DEFAULT_FEE_TIER;
+
+        return
+            _mintPosition1155(
+                qty,
+                currentNFTPrice,
+                lowerNFTPrice,
+                upperNFTPrice,
+                fee
+            );
+    }
+
+    function _mintPosition1155(
+        uint256 qty,
+        uint256 currentNFTPrice,
+        uint256 lowerNFTPrice,
+        uint256 upperNFTPrice,
+        uint24 fee
+    )
+        internal
+        returns (
+            uint256[] memory tokenIds,
+            uint256 positionId,
+            int24 tickLower,
+            int24 tickUpper,
+            uint256 ethUsed
+        )
+    {
+        tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        nft1155.setApprovalForAll(address(nftxRouter), true);
+
+        uint160 currentSqrtP;
+        uint256 tickDistance = _getTickDistance(fee);
+        if (nftxRouter.isVToken0(address(vtoken1155))) {
+            currentSqrtP = Helpers.encodeSqrtRatioX96(currentNFTPrice, 1 ether);
+            // price = amount1 / amount0 = 1.0001^tick => tick ∝ price
+            tickLower = Helpers.getTickForAmounts(
+                lowerNFTPrice,
+                1 ether,
+                tickDistance
+            );
+            tickUpper = Helpers.getTickForAmounts(
+                upperNFTPrice,
+                1 ether,
+                tickDistance
+            );
+        } else {
+            currentSqrtP = Helpers.encodeSqrtRatioX96(1 ether, currentNFTPrice);
+            tickLower = Helpers.getTickForAmounts(
+                1 ether,
+                upperNFTPrice,
+                tickDistance
+            );
+            tickUpper = Helpers.getTickForAmounts(
+                1 ether,
+                lowerNFTPrice,
+                tickDistance
+            );
+        }
+
+        uint256 preETHBalance = address(this).balance;
+
+        positionId = nftxRouter.addLiquidity{value: qty * 100 ether}(
+            INFTXRouter.AddLiquidityParams({
+                vaultId: VAULT_ID_1155,
+                vTokensAmount: 0,
+                nftIds: tokenIds,
+                nftAmounts: amounts,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                fee: fee,
+                sqrtPriceX96: currentSqrtP,
+                deadline: block.timestamp
+            })
+        );
+
+        ethUsed = preETHBalance - address(this).balance;
+    }
+
+    function _mintPositionWithTwap1155(
+        uint256 currentNFTPrice
+    ) internal returns (uint256 positionId) {
+        (, positionId, , , ) = _mintPosition1155(
+            10,
+            currentNFTPrice,
+            currentNFTPrice - 0.5 ether,
+            currentNFTPrice + 0.5 ether,
+            DEFAULT_FEE_TIER
+        );
+        vm.warp(block.timestamp + vaultFactory.twapInterval());
+    }
+
+    function _sellNFTs1155(
+        uint256 qty
+    ) internal returns (uint256[] memory tokenIds) {
+        tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        nft1155.setApprovalForAll(address(nftxRouter), true);
+
+        uint256 preNFTBalance = nft1155.balanceOf(address(this), tokenIds[0]);
+
+        nftxRouter.sellNFTs(
+            INFTXRouter.SellNFTsParams({
+                vaultId: VAULT_ID_1155,
+                nftIds: tokenIds,
+                nftAmounts: amounts,
+                deadline: block.timestamp,
+                fee: DEFAULT_FEE_TIER,
+                amountOutMinimum: 1,
+                sqrtPriceLimitX96: 0
+            })
+        );
+
+        uint256 postNFTBalance = nft1155.balanceOf(address(this), tokenIds[0]);
+        assertEq(
+            preNFTBalance - postNFTBalance,
+            qty,
+            "NFT balance didn't decrease"
+        );
+    }
+
+    // the actual value can be off by few decimals so accounting for 0.3% error.
+    function _valueWithError(uint256 value) internal pure returns (uint256) {
+        return (value * (10_000 - 30)) / 10_000;
     }
 
     function _getTickDistance(
@@ -332,6 +530,82 @@ contract TestBase is TestExtend, ERC721Holder {
         (vTokenFees, wethFees) = nftxRouter.isVToken0(address(vtoken))
             ? (amount0, amount1)
             : (amount1, amount0);
+    }
+
+    function _getPermitSignature(
+        IPermitAllowanceTransfer.PermitSingle memory permit,
+        uint256 privateKey
+    ) internal view returns (bytes memory sig) {
+        (uint8 v, bytes32 r, bytes32 s) = _getPermitSignatureRaw(
+            permit,
+            privateKey,
+            permit2.DOMAIN_SEPARATOR()
+        );
+        return bytes.concat(r, s, bytes1(v));
+    }
+
+    bytes32 public constant _PERMIT_DETAILS_TYPEHASH =
+        keccak256(
+            "PermitDetails(address token,uint160 amount,uint48 expiration,uint48 nonce)"
+        );
+    bytes32 public constant _PERMIT_SINGLE_TYPEHASH =
+        keccak256(
+            "PermitSingle(PermitDetails details,address spender,uint256 sigDeadline)PermitDetails(address token,uint160 amount,uint48 expiration,uint48 nonce)"
+        );
+
+    function _getPermitSignatureRaw(
+        IPermitAllowanceTransfer.PermitSingle memory permit,
+        uint256 privateKey,
+        bytes32 domainSeparator
+    ) internal pure returns (uint8 v, bytes32 r, bytes32 s) {
+        bytes32 permitHash = keccak256(
+            abi.encode(_PERMIT_DETAILS_TYPEHASH, permit.details)
+        );
+
+        bytes32 msgHash = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                domainSeparator,
+                keccak256(
+                    abi.encode(
+                        _PERMIT_SINGLE_TYPEHASH,
+                        permitHash,
+                        permit.spender,
+                        permit.sigDeadline
+                    )
+                )
+            )
+        );
+
+        (v, r, s) = vm.sign(privateKey, msgHash);
+    }
+
+    function _getEncodedPermit2(
+        address token,
+        uint256 amount,
+        address spender
+    ) internal returns (bytes memory encodedPermit2) {
+        IERC20(token).approve(address(permit2), type(uint256).max);
+        IPermitAllowanceTransfer.PermitSingle
+            memory permitSingle = IPermitAllowanceTransfer.PermitSingle({
+                details: IPermitAllowanceTransfer.PermitDetails({
+                    token: token,
+                    amount: uint160(amount),
+                    expiration: uint48(block.timestamp + 100),
+                    nonce: 0
+                }),
+                spender: spender,
+                sigDeadline: block.timestamp + 100
+            });
+        bytes memory signature = _getPermitSignature(
+            permitSingle,
+            fromPrivateKey
+        );
+        encodedPermit2 = abi.encode(
+            from, // owner
+            permitSingle,
+            signature
+        );
     }
 
     // to receive the refunded ETH

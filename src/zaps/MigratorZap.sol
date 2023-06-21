@@ -2,23 +2,22 @@
 pragma solidity =0.8.15;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
-import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
-import {INFTXInventoryStaking} from "@src/v2/interface/INFTXInventoryStaking.sol";
+import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
+import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+import {INFTXInventoryStakingV2} from "@src/v2/interfaces/INFTXInventoryStakingV2.sol";
 import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
+import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 
 contract MigratorZap {
     INonfungiblePositionManager public immutable positionManager;
     IWETH9 public immutable WETH;
-    INFTXInventoryStaking public immutable v2Inventory;
+    INFTXInventoryStakingV2 public immutable v2Inventory;
     INFTXInventoryStakingV3 public immutable v3Inventory;
 
     constructor(
         INonfungiblePositionManager positionManager_,
-        INFTXInventoryStaking v2Inventory_,
+        INFTXInventoryStakingV2 v2Inventory_,
         INFTXInventoryStakingV3 v3Inventory_
     ) {
         positionManager = positionManager_;

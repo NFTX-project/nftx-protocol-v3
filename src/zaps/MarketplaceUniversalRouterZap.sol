@@ -3,14 +3,18 @@ pragma solidity =0.8.15;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
-import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
-import {INFTXVaultFactory} from "@src/v2/interface/INFTXVaultFactory.sol";
-import {INFTXVault} from "@src/v2/interface/INFTXVault.sol";
-import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
+import {TransferLib} from "@src/lib/TransferLib.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
+import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
+import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 /**
  * @title Marketplace Universal Router Zap
@@ -20,19 +24,16 @@ import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
  * @dev This Zap must be excluded from the vault fees, as vault fees handled via custom logic here.
  */
 
-contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
+contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     using SafeERC20 for IERC20;
 
     // =============================================================
     //                           CONSTANTS
     // =============================================================
 
-    // Set a constant address for specific contracts that need special logic
-    address public constant CRYPTO_PUNKS =
-        0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
     IWETH9 public immutable WETH;
     IPermitAllowanceTransfer public immutable PERMIT2;
-    INFTXVaultFactory public immutable nftxVaultFactory;
+    INFTXVaultFactoryV3 public immutable nftxVaultFactory;
     address public immutable inventoryStaking;
 
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
@@ -87,7 +88,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
     // =============================================================
 
     constructor(
-        INFTXVaultFactory nftxVaultFactory_,
+        INFTXVaultFactoryV3 nftxVaultFactory_,
         address universalRouter_,
         IPermitAllowanceTransfer PERMIT2_,
         address inventoryStaking_,
@@ -132,7 +133,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         );
 
         // distributing vault fees with the weth received
-        uint256 wethFees = _ethMintFees(INFTXVault(vault), idsIn.length);
+        uint256 wethFees = _ethMintFees(INFTXVaultV3(vault), idsIn.length);
         _distributeVaultFees(vaultId, wethFees, true);
 
         uint256 netRoyaltyAmount;
@@ -162,12 +163,15 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         // Transfer tokens from the message sender to the vault
         (address vault, ) = _transferSender721ToVault(vaultId, idsIn);
 
-        // Swap our tokens
+        // Swap our tokens. Forcing to deduct vault fees
         uint256[] memory emptyIds;
-        INFTXVault(vault).swapTo(idsIn, emptyIds, idsOut, to);
-
-        uint256 ethFees = _ethSwapFees(INFTXVault(vault), idsOut);
-        _distributeVaultFees(vaultId, ethFees, false);
+        uint256 ethFees = INFTXVaultV3(vault).swapTo{value: msg.value}(
+            idsIn,
+            emptyIds,
+            idsOut,
+            to,
+            true
+        );
 
         // send back remaining ETH
         _sendETHResidue(to);
@@ -201,16 +205,20 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         _swapTokens(address(WETH), vault, executeCallData);
         uint256 wethSpent = iniWETHBal - WETH.balanceOf(address(this));
 
-        // redeem NFTs
-        INFTXVault(vault).redeemTo(idsOut, to);
+        uint256 wethLeft = msg.value - wethSpent;
 
-        // distribute vault fees with remaining weth
-        uint256 wethFees = _ethRedeemFees(INFTXVault(vault), idsOut);
-        _distributeVaultFees(vaultId, wethFees, true);
+        // redeem NFTs
+        TransferLib.maxApprove(address(WETH), vault, wethLeft);
+        uint256 wethFees = INFTXVaultV3(vault).redeemTo(
+            idsOut,
+            to,
+            wethLeft,
+            true
+        );
 
         uint256 netRoyaltyAmount;
         if (deductRoyalty) {
-            address assetAddress = INFTXVault(vault).assetAddress();
+            address assetAddress = INFTXVaultV3(vault).assetAddress();
             netRoyaltyAmount = _deductRoyalty(assetAddress, idsOut, wethSpent);
         }
 
@@ -218,64 +226,160 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
         _transferDust(vault, true);
 
         emit Buy(idsOut.length, wethSpent + wethFees + netRoyaltyAmount, to);
+    }
+
+    struct BuyNFTsWithERC20Params {
+        IERC20 tokenIn; // Input ERC20 token
+        uint256 amountIn; // Input ERC20 amount
+        uint256 vaultId; // The ID of the NFTX vault
+        uint256[] idsOut; // An array of any token IDs to be redeemed
+        bytes executeToWETHCallData; // Encoded calldata for "ERC20 to WETH swap" for Universal Router's `execute` function
+        bytes executeToVTokenCallData; // Encoded calldata for "WETH to vToken swap" for Universal Router's `execute` function
+        address payable to; // The recipient of the token IDs from the tx
+        bool deductRoyalty;
     }
 
     /**
      * @notice Buy idsOut with ERC20
      *
      * @dev ERC20 --{-sell-> [UniversalRouter] -> ETH -> [UniversalRouter] -> vTokens + ETH --redeem-> [vault] --}-> idsOut
-     *
-     * @param tokenIn Input ERC20 token
-     * @param amountIn Input ERC20 amount
-     * @param vaultId The ID of the NFTX vault
-     * @param idsOut An array of any token IDs to be redeemed
-     * @param executeToWETHCallData Encoded calldata for "ERC20 to WETH swap" for Universal Router's `execute` function
-     * @param executeToVTokenCallData Encoded calldata for "WETH to vToken swap" for Universal Router's `execute` function
-     * @param to The recipient of the token IDs from the tx
      */
     function buyNFTsWithERC20(
-        IERC20 tokenIn,
-        uint256 amountIn,
+        BuyNFTsWithERC20Params calldata params
+    ) external onlyOwnerIfPaused {
+        params.tokenIn.safeTransferFrom(
+            msg.sender,
+            address(this),
+            params.amountIn
+        );
+
+        return _buyNFTsWithERC20(params);
+    }
+
+    function buyNFTsWithERC20WithPermit2(
+        BuyNFTsWithERC20Params calldata params,
+        bytes calldata encodedPermit2
+    ) external onlyOwnerIfPaused {
+        if (encodedPermit2.length > 0) {
+            (
+                address owner,
+                IPermitAllowanceTransfer.PermitSingle memory permitSingle,
+                bytes memory signature
+            ) = abi.decode(
+                    encodedPermit2,
+                    (address, IPermitAllowanceTransfer.PermitSingle, bytes)
+                );
+
+            PERMIT2.permit(owner, permitSingle, signature);
+        }
+
+        PERMIT2.transferFrom(
+            msg.sender,
+            address(this),
+            uint160(params.amountIn),
+            address(params.tokenIn)
+        );
+
+        return _buyNFTsWithERC20(params);
+    }
+
+    /**
+     * @notice Sell idsIn to ETH
+     *
+     * @dev idsIn --{--mint-> [vault] -> vTokens --sell-> [UniversalRouter] --}-> ETH
+     *
+     * @param vaultId The ID of the NFTX vault
+     * @param idsIn An array of token IDs to be deposited
+     * @param executeCallData Encoded calldata for Universal Router's `execute` function
+     * @param to The recipient of ETH from the tx
+     */
+    function sell1155(
         uint256 vaultId,
-        uint256[] calldata idsOut,
-        bytes calldata executeToWETHCallData,
-        bytes calldata executeToVTokenCallData,
+        uint256[] calldata idsIn,
+        uint256[] calldata amounts,
+        bytes calldata executeCallData,
         address payable to,
         bool deductRoyalty
     ) external onlyOwnerIfPaused {
-        tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
+        // Mint
+        (address vault, address assetAddress) = _mint1155(
+            vaultId,
+            idsIn,
+            amounts
+        );
 
-        // swap tokenIn to WETH
-        _swapTokens(address(tokenIn), address(WETH), executeToWETHCallData);
+        uint256 totalAmount = _validate1155Ids(idsIn, amounts);
 
-        // swap some WETH to vTokens
-        uint256 iniWETHBal = WETH.balanceOf(address(this));
-        address vault = nftxVaultFactory.vault(vaultId);
-        _swapTokens(address(WETH), vault, executeToVTokenCallData);
-        uint256 wethSpent = iniWETHBal - WETH.balanceOf(address(this));
+        // swap vTokens to WETH
+        (uint256 wethAmount, ) = _swapTokens(
+            vault,
+            address(WETH),
+            executeCallData
+        );
 
-        // redeem NFTs
-        INFTXVault(vault).redeemTo(idsOut, to);
-
-        // distribute vault fees with remaining weth
-        uint256 wethFees = _ethRedeemFees(INFTXVault(vault), idsOut);
+        // distributing vault fees with the weth received
+        uint256 wethFees = _ethMintFees(INFTXVaultV3(vault), totalAmount);
         _distributeVaultFees(vaultId, wethFees, true);
 
         uint256 netRoyaltyAmount;
         if (deductRoyalty) {
-            address assetAddress = INFTXVault(vault).assetAddress();
-            netRoyaltyAmount = _deductRoyalty(assetAddress, idsOut, wethSpent);
+            netRoyaltyAmount = _deductRoyalty1155(
+                assetAddress,
+                idsIn,
+                amounts,
+                wethAmount
+            );
         }
 
-        // transfer vToken dust and remaining WETH balance
-        _transferDust(vault, true);
+        wethAmount -= (wethFees + netRoyaltyAmount); // if underflow, then revert desired
 
-        emit Buy(idsOut.length, wethSpent + wethFees + netRoyaltyAmount, to);
+        // convert WETH to ETH and send remaining ETH to `to`
+        _wethToETHResidue(to, wethAmount);
+
+        // Emit our sale event
+        emit Sell(totalAmount, wethAmount, to);
     }
 
-    // TODO: add sell1155
+    /**
+     * @notice Swap idsIn to idsOut
+     * Send ETH along as well (via msg.value) to account for swap fees
+     */
+    function swap1155(
+        uint256 vaultId,
+        uint256[] calldata idsIn,
+        uint256[] calldata amounts,
+        uint256[] calldata idsOut,
+        address payable to
+    ) external payable onlyOwnerIfPaused {
+        address vault = nftxVaultFactory.vault(vaultId);
 
-    // TODO: add swap1155
+        address assetAddress = INFTXVaultV3(vault).assetAddress();
+        IERC1155(assetAddress).safeBatchTransferFrom(
+            msg.sender,
+            address(this),
+            idsIn,
+            amounts,
+            ""
+        );
+        // TODO: if already approved then might need to call this?
+        IERC1155(assetAddress).setApprovalForAll(vault, true);
+
+        uint256 totalAmount = _validate1155Ids(idsIn, amounts);
+
+        // Swap our tokens. Forcing to deduct vault fees
+        uint256 ethFees = INFTXVaultV3(vault).swapTo{value: msg.value}(
+            idsIn,
+            amounts,
+            idsOut,
+            to,
+            true
+        );
+
+        // send back remaining ETH
+        _sendETHResidue(to);
+
+        emit Swap(totalAmount, ethFees, to);
+    }
 
     // =============================================================
     //                        ONLY OWNER WRITE
@@ -288,7 +392,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
      */
 
     modifier onlyOwnerIfPaused() {
-        if (paused || msg.sender != owner()) revert ZapPaused();
+        if (paused && msg.sender != owner()) revert ZapPaused();
         _;
     }
 
@@ -314,114 +418,116 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
     //                      INTERNAL / PRIVATE
     // =============================================================
 
+    function _buyNFTsWithERC20(
+        BuyNFTsWithERC20Params calldata params
+    ) internal {
+        // swap tokenIn to WETH
+        _swapTokens(
+            address(params.tokenIn),
+            address(WETH),
+            params.executeToWETHCallData
+        );
+
+        // swap some WETH to vTokens
+        uint256 iniWETHBal = WETH.balanceOf(address(this));
+        address vault = nftxVaultFactory.vault(params.vaultId);
+
+        _swapTokens(address(WETH), vault, params.executeToVTokenCallData);
+
+        uint256 wethLeft = WETH.balanceOf(address(this));
+        uint256 wethSpent = iniWETHBal - wethLeft;
+
+        // redeem NFTs
+        TransferLib.maxApprove(address(WETH), vault, wethLeft);
+        uint256 wethFees = INFTXVaultV3(vault).redeemTo(
+            params.idsOut,
+            params.to,
+            wethLeft,
+            true
+        );
+
+        uint256 netRoyaltyAmount;
+        if (params.deductRoyalty) {
+            address assetAddress = INFTXVaultV3(vault).assetAddress();
+            netRoyaltyAmount = _deductRoyalty(
+                assetAddress,
+                params.idsOut,
+                wethSpent
+            );
+        }
+
+        // transfer vToken dust and remaining WETH balance
+        _transferDust(vault, true);
+
+        emit Buy(
+            params.idsOut.length,
+            wethSpent + wethFees + netRoyaltyAmount,
+            params.to
+        );
+    }
+
     /**
      * @param vaultId The ID of the NFTX vault
      * @param ids An array of token IDs to be minted
      */
     function _mint721(
         uint256 vaultId,
-        uint256[] memory ids
+        uint256[] calldata ids
     ) internal returns (address vault, address assetAddress) {
         // Transfer tokens from the message sender to the vault
         (vault, assetAddress) = _transferSender721ToVault(vaultId, ids);
 
         // Mint our tokens from the vault to this contract
         uint256[] memory emptyIds;
-        INFTXVault(vault).mint(ids, emptyIds);
+        INFTXVaultV3(vault).mint(ids, emptyIds);
     }
 
-    function _transferSender721ToVault(
+    function _mint1155(
         uint256 vaultId,
-        uint256[] memory ids
+        uint256[] calldata ids,
+        uint256[] calldata amounts
     ) internal returns (address vault, address assetAddress) {
-        // Get our vault address information
         vault = nftxVaultFactory.vault(vaultId);
 
-        // Transfer tokens from the message sender to the vault
-        assetAddress = INFTXVault(vault).assetAddress();
-        uint256 length = ids.length;
+        assetAddress = INFTXVaultV3(vault).assetAddress();
+        IERC1155(assetAddress).safeBatchTransferFrom(
+            msg.sender,
+            address(this),
+            ids,
+            amounts,
+            ""
+        );
+        IERC1155(assetAddress).setApprovalForAll(vault, true);
 
-        for (uint256 i; i < length; ) {
-            _transferFromERC721(assetAddress, ids[i], vault);
+        // Mint our tokens from the vault to this contract
+        INFTXVaultV3(vault).mint(ids, amounts);
+    }
 
-            if (assetAddress == CRYPTO_PUNKS) {
-                _approveERC721(assetAddress, ids[i], vault);
-            }
-
+    function _validate1155Ids(
+        uint256[] calldata ids,
+        uint256[] calldata amounts
+    ) internal pure returns (uint256 totalAmount) {
+        // Sum the amounts for our emitted events
+        for (uint i; i < ids.length; ) {
             unchecked {
+                // simultaneously verifies that lengths of `ids` and `amounts` match.
+                totalAmount += amounts[i];
                 ++i;
             }
         }
     }
 
-    /**
-     * @notice Transfers our ERC721 tokens to a specified recipient.
-     *
-     * @param assetAddr Address of the asset being transferred
-     * @param tokenId The ID of the token being transferred
-     * @param to The address the token is being transferred to
-     */
-    function _transferFromERC721(
-        address assetAddr,
-        uint256 tokenId,
-        address to
-    ) internal {
-        bytes memory data;
+    function _transferSender721ToVault(
+        uint256 vaultId,
+        uint256[] calldata ids
+    ) internal returns (address vault, address assetAddress) {
+        // Get our vault address information
+        vault = nftxVaultFactory.vault(vaultId);
 
-        if (assetAddr == CRYPTO_PUNKS) {
-            // Fix here for frontrun attack.
-            bytes memory punkIndexToAddress = abi.encodeWithSignature(
-                "punkIndexToAddress(uint256)",
-                tokenId
-            );
-            (bool checkSuccess, bytes memory result) = address(assetAddr)
-                .staticcall(punkIndexToAddress);
-            address nftOwner = abi.decode(result, (address));
-            require(
-                checkSuccess && nftOwner == msg.sender,
-                "Not the NFT owner"
-            );
-            data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
-        } else {
-            // We push to the vault to avoid an unneeded transfer.
-            data = abi.encodeWithSignature(
-                "safeTransferFrom(address,address,uint256)",
-                msg.sender,
-                to,
-                tokenId
-            );
-        }
+        assetAddress = INFTXVaultV3(vault).assetAddress();
 
-        (bool success, bytes memory resultData) = address(assetAddr).call(data);
-        require(success, string(resultData));
-    }
-
-    /**
-     * @notice Approves our ERC721 tokens to be transferred.
-     *
-     * @dev This is only required to provide special logic for Cryptopunks.
-     *
-     * @param assetAddr Address of the asset being transferred
-     * @param tokenId The ID of the token being transferred
-     * @param to The address the token is being transferred to
-     */
-    function _approveERC721(
-        address assetAddr,
-        uint256 tokenId,
-        address to
-    ) internal virtual {
-        if (assetAddr != CRYPTO_PUNKS) {
-            return;
-        }
-
-        bytes memory data = abi.encodeWithSignature(
-            "offerPunkForSaleToAddress(uint256,uint256,address)",
-            tokenId,
-            0,
-            to
-        );
-        (bool success, bytes memory resultData) = address(assetAddr).call(data);
-        require(success, string(resultData));
+        // Transfer tokens from the message sender to the vault
+        TransferLib.transferFromERC721(assetAddress, address(vault), ids);
     }
 
     /**
@@ -464,45 +570,12 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
     }
 
     function _ethMintFees(
-        INFTXVault vToken,
+        INFTXVaultV3 vToken,
         uint256 nftCount
     ) internal view returns (uint256) {
-        return vToken.vTokenToETH(vToken.mintFee() * nftCount);
-    }
+        (uint256 mintFee, , ) = vToken.vaultFees();
 
-    function _ethSwapFees(
-        INFTXVault vToken,
-        uint256[] memory nftIds
-    ) internal view returns (uint256) {
-        return
-            vToken.vTokenToETH(
-                (vToken.targetSwapFee() * nftIds.length) +
-                    _getVTokenPremium(vToken, nftIds)
-            );
-    }
-
-    function _ethRedeemFees(
-        INFTXVault vToken,
-        uint256[] memory nftIds
-    ) internal view returns (uint256) {
-        return
-            vToken.vTokenToETH(
-                (vToken.targetRedeemFee() * nftIds.length) +
-                    _getVTokenPremium(vToken, nftIds)
-            );
-    }
-
-    function _getVTokenPremium(
-        INFTXVault vToken,
-        uint256[] memory nftIds
-    ) internal view returns (uint256 vTokenPremium) {
-        for (uint256 i; i < nftIds.length; ) {
-            vTokenPremium += vToken.getVTokenPremium(nftIds[i]);
-
-            unchecked {
-                ++i;
-            }
-        }
+        return vToken.vTokenToETH(mintFee * nftCount);
     }
 
     function _distributeVaultFees(
@@ -524,7 +597,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
 
     function _deductRoyalty(
         address nft,
-        uint256[] memory idsIn,
+        uint256[] calldata idsIn,
         uint256 netWethAmount
     ) internal returns (uint256 netRoyaltyAmount) {
         bool success = IERC2981(nft).supportsInterface(_INTERFACE_ID_ERC2981);
@@ -535,6 +608,32 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder {
                 (address receiver, uint256 royaltyAmount) = IERC2981(nft)
                     .royaltyInfo(idsIn[i], salePrice);
                 netRoyaltyAmount += royaltyAmount;
+
+                if (royaltyAmount > 0) {
+                    WETH.transfer(receiver, royaltyAmount);
+                }
+
+                unchecked {
+                    ++i;
+                }
+            }
+        }
+    }
+
+    function _deductRoyalty1155(
+        address nft,
+        uint256[] calldata idsIn,
+        uint256[] calldata amounts,
+        uint256 netWethAmount
+    ) internal returns (uint256 netRoyaltyAmount) {
+        bool success = IERC2981(nft).supportsInterface(_INTERFACE_ID_ERC2981);
+        if (success) {
+            uint256 salePrice = netWethAmount / idsIn.length;
+
+            for (uint256 i; i < idsIn.length; ) {
+                (address receiver, uint256 royaltyAmount) = IERC2981(nft)
+                    .royaltyInfo(idsIn[i], salePrice);
+                netRoyaltyAmount += royaltyAmount * amounts[i];
 
                 if (royaltyAmount > 0) {
                     WETH.transfer(receiver, royaltyAmount);
