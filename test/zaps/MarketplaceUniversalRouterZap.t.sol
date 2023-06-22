@@ -2,7 +2,7 @@
 pragma solidity =0.8.15;
 
 import {console, stdError} from "forge-std/Test.sol";
-import {Helpers} from "../lib/Helpers.sol";
+import {Helpers} from "@test/lib/Helpers.sol";
 
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
@@ -13,7 +13,7 @@ import {NFTXVaultUpgradeableV3, INFTXVaultV3} from "@src/NFTXVaultUpgradeableV3.
 import {MockERC20} from "@mocks/MockERC20.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
-import {TestBase} from "../TestBase.sol";
+import {TestBase} from "@test/TestBase.sol";
 
 contract MarketplaceUniversalRouterZapTests is TestBase {
     uint256 currentNFTPrice = 10 ether;

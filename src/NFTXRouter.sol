@@ -553,6 +553,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 tickUpper: params.tickUpper,
                 amount0Desired: ta.amount0Desired,
                 amount1Desired: ta.amount1Desired,
+                // FIXME: pass amount0Min and amount1Min as params (as the price can fluctuate till this txn is confirmed)
                 amount0Min: ta.amount0Min,
                 amount1Min: ta.amount1Min,
                 recipient: msg.sender,
@@ -645,6 +646,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 tokenId: params.positionId,
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
+                // FIXME: pass amount0Min and amount1Min as params (as the price can fluctuate till this txn is confirmed)
                 amount0Min: amount0Min,
                 amount1Min: amount1Min,
                 deadline: params.deadline

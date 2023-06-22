@@ -2,8 +2,8 @@
 pragma solidity =0.8.15;
 
 import {console} from "forge-std/Test.sol";
-import {Helpers} from "./lib/Helpers.sol";
-import {TestExtend} from "./lib/TestExtend.sol";
+import {Helpers} from "@test/lib/Helpers.sol";
+import {TestExtend} from "@test/lib/TestExtend.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -72,7 +72,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
     uint256[] emptyIds;
 
-    function setUp() external {
+    function setUp() public virtual {
         // to prevent underflow during calculations involving block.timestamp
         vm.warp(100 days);
 

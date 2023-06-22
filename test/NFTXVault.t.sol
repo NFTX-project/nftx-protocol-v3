@@ -2,11 +2,11 @@
 pragma solidity =0.8.15;
 
 import {console} from "forge-std/Test.sol";
-import {Helpers} from "./lib/Helpers.sol";
+import {Helpers} from "@test/lib/Helpers.sol";
 
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 
-import {TestBase} from "./TestBase.sol";
+import {TestBase} from "@test/TestBase.sol";
 
 contract NFTXVaultTests is TestBase {
     uint256 currentNFTPrice = 10 ether;
