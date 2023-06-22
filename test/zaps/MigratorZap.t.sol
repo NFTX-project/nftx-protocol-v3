@@ -158,7 +158,8 @@ contract MigratorZapTests is TestBase {
             shares,
             idsToRedeem,
             false, // is1155
-            vaultIdV3
+            vaultIdV3,
+            0
         );
 
         uint256 finalBalance = IERC20(xMILADY).balanceOf(xMILADY_Holder);
@@ -180,7 +181,8 @@ contract MigratorZapTests is TestBase {
             amount,
             idsToRedeem,
             false, // is1155
-            vaultIdV3
+            vaultIdV3,
+            0
         );
 
         uint256 finalBalance = IERC20(V2_MILADY_VTOKEN).balanceOf(

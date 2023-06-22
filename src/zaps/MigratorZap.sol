@@ -120,7 +120,8 @@ contract MigratorZap {
                 vTokenV2Balance,
                 params.idsToRedeem,
                 params.vaultIdV3,
-                params.is1155
+                params.is1155,
+                0 // passing zero here as `positionManager.mint` takes this into account via `amount0Min` or `amount1Min`
             );
             wethBalance += wethReceived;
         }
@@ -184,7 +185,8 @@ contract MigratorZap {
         uint256 shares,
         uint256[] calldata idsToRedeem,
         bool is1155,
-        uint256 vaultIdV3
+        uint256 vaultIdV3,
+        uint256 minWethToReceive
     ) external returns (uint256 xNFTId) {
         address xToken = v2Inventory.vaultXToken(vaultIdV2);
         IERC20(xToken).transferFrom(msg.sender, address(this), shares);
@@ -201,7 +203,8 @@ contract MigratorZap {
                 vTokenV2Balance,
                 idsToRedeem,
                 vaultIdV3,
-                is1155
+                is1155,
+                minWethToReceive
             );
         if (wethReceived > 0) {
             WETH.transfer(msg.sender, wethReceived);
@@ -220,7 +223,8 @@ contract MigratorZap {
         uint256 vTokenV2Balance,
         uint256[] calldata idsToRedeem,
         bool is1155,
-        uint256 vaultIdV3
+        uint256 vaultIdV3,
+        uint256 minWethToReceive
     ) external returns (uint256 xNFTId) {
         IERC20(vTokenV2).transferFrom(
             msg.sender,
@@ -237,7 +241,8 @@ contract MigratorZap {
                 vTokenV2Balance,
                 idsToRedeem,
                 vaultIdV3,
-                is1155
+                is1155,
+                minWethToReceive
             );
         if (wethReceived > 0) {
             WETH.transfer(msg.sender, wethReceived);
@@ -313,7 +318,8 @@ contract MigratorZap {
         uint256 vTokenV2Balance,
         uint256[] calldata idsToRedeem,
         uint256 vaultIdV3,
-        bool is1155
+        bool is1155,
+        uint256 minWethToReceive
     )
         internal
         returns (
@@ -342,7 +348,7 @@ contract MigratorZap {
             _maxApproveToken(vTokenV2, address(sushiRouter), vTokenV2Balance);
             wethReceived = sushiRouter.swapExactTokensForTokens(
                 vTokenV2Balance,
-                1,
+                minWethToReceive,
                 path,
                 address(this),
                 block.timestamp
