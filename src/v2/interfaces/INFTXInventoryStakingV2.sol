@@ -29,4 +29,9 @@ interface INFTXInventoryStakingV2 {
     function deposit(uint256 vaultId, uint256 _amount) external;
 
     function withdraw(uint256 vaultId, uint256 _share) external;
+
+    function timelockUntil(
+        uint256 vaultId,
+        address who
+    ) external view returns (uint256);
 }

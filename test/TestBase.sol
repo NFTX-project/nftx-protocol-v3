@@ -72,7 +72,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
     uint256[] emptyIds;
 
-    function setUp() external {
+    function setUp() public virtual {
         // to prevent underflow during calculations involving block.timestamp
         vm.warp(100 days);
 

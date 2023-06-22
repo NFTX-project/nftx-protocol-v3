@@ -38,6 +38,7 @@ contract MigratorZap {
         int24 tickLower;
         int24 tickUpper;
         uint24 fee;
+        // this price is used if new pool needs to be initialized
         uint160 sqrtPriceX96;
         uint256 amount0Min;
         uint256 amount1Min;
@@ -69,20 +70,21 @@ contract MigratorZap {
     // =============================================================
 
     constructor(
+        IWETH9 WETH_,
         INFTXInventoryStakingV2 v2Inventory_,
         IUniswapV2Router02 sushiRouter_,
         INonfungiblePositionManager positionManager_,
         INFTXVaultFactoryV3 v3NFTXFactory_,
         INFTXInventoryStakingV3 v3Inventory_
     ) {
+        WETH = WETH_;
         v2Inventory = v2Inventory_;
         sushiRouter = sushiRouter_;
         positionManager = positionManager_;
         v3NFTXFactory = v3NFTXFactory_;
         v3Inventory = v3Inventory_;
-        WETH = IWETH9(positionManager_.WETH9());
 
-        WETH.approve(address(positionManager_), type(uint256).max);
+        WETH_.approve(address(positionManager_), type(uint256).max);
     }
 
     // =============================================================
@@ -95,15 +97,9 @@ contract MigratorZap {
     function sushiToNFTXAMM(
         SushiToNFTXAMMParams calldata params
     ) external returns (uint256 positionId) {
-        // get lp tokens from the user
         if (params.permitSig.length > 0) {
             _permit(params.sushiPair, params.lpAmount, params.permitSig);
         }
-        IUniswapV2Pair(params.sushiPair).transferFrom(
-            msg.sender,
-            address(this),
-            params.lpAmount
-        );
 
         uint256 wethBalance;
         address vTokenV3;
@@ -113,6 +109,7 @@ contract MigratorZap {
             uint256 vTokenV2Balance;
             (vTokenV2Balance, wethBalance) = _withdrawFromSushi(
                 params.sushiPair,
+                params.lpAmount,
                 params.vTokenV2
             );
 
@@ -295,9 +292,11 @@ contract MigratorZap {
 
     function _withdrawFromSushi(
         address sushiPair,
+        uint256 lpAmount,
         address vTokenV2
     ) internal returns (uint256 vTokenV2Balance, uint256 wethBalance) {
         // burn sushi liquidity to this contract
+        IUniswapV2Pair(sushiPair).transferFrom(msg.sender, sushiPair, lpAmount);
         (uint256 amount0, uint256 amount1) = IUniswapV2Pair(sushiPair).burn(
             address(this)
         );
@@ -323,20 +322,24 @@ contract MigratorZap {
             uint256 wethReceived
         )
     {
-        // redeem v2 vTokens
-        uint256[] memory idsRedeemed = INFTXVaultV2(vTokenV2).redeem(
+        vTokenV3 = v3NFTXFactory.vault(vaultIdV3);
+
+        // redeem v2 vTokens. Directly transferring to the v3 vault
+        uint256[] memory idsRedeemed = INFTXVaultV2(vTokenV2).redeemTo(
             vTokenV2Balance / 1 ether,
-            idsToRedeem
+            idsToRedeem,
+            vTokenV3
         );
         // fractional portion of vToken would be left
         vTokenV2Balance = vTokenV2Balance % 1 ether;
 
+        // sell fractional portion for WETH
         if (vTokenV2Balance > 0) {
-            // sell for WETH
             address[] memory path = new address[](2);
             path[0] = vTokenV2;
             path[1] = address(WETH);
 
+            _maxApproveToken(vTokenV2, address(sushiRouter), vTokenV2Balance);
             wethReceived = sushiRouter.swapExactTokensForTokens(
                 vTokenV2Balance,
                 1,
@@ -346,19 +349,7 @@ contract MigratorZap {
             )[path.length - 1];
         }
 
-        vTokenV3 = v3NFTXFactory.vault(vaultIdV3);
         // mint v3 vault tokens with the nfts received
-        // approve NFT
-        (bool success, ) = INFTXVaultV2(vTokenV2).assetAddress().call(
-            // same function sig for both ERC721 and ERC1155 NFTs
-            abi.encodeWithSignature(
-                "setApprovalForAll(address,bool)",
-                vTokenV3,
-                true
-            )
-        );
-        require(success);
-
         uint256[] memory amounts;
         if (is1155) {
             amounts = new uint256[](idsRedeemed.length);
@@ -371,8 +362,6 @@ contract MigratorZap {
                 }
             }
         }
-
-        // mint
         vTokenV3Balance = INFTXVaultV3(vTokenV3).mint(idsRedeemed, amounts);
     }
 }
