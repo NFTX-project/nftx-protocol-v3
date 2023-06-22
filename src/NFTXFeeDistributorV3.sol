@@ -208,7 +208,7 @@ contract NFTXFeeDistributorV3 is
         INFTXVaultV3 vault
     ) internal returns (bool tokenSent) {
         if (feeReceiver.receiverType == ReceiverType.INVENTORY) {
-            TransferLib.maxApprove(
+            TransferLib.unSafeMaxApprove(
                 address(WETH),
                 feeReceiver.receiver,
                 wethAmountToSend

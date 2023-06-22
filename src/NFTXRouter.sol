@@ -222,7 +222,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
 
             // burn vTokens to provided tokenIds array. Forcing to deduct vault fees
-            TransferLib.maxApprove(WETH, address(vToken), wethAmt);
+            TransferLib.unSafeMaxApprove(WETH, address(vToken), wethAmt);
             uint256 wethFees = vToken.redeemTo(
                 params.nftIds,
                 msg.sender,
@@ -286,7 +286,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         // mint vToken
         uint256 vTokensAmount = vToken.mint(params.nftIds, params.nftAmounts);
 
-        TransferLib.maxApprove(address(vToken), address(router), vTokensAmount);
+        TransferLib.unSafeMaxApprove(
+            address(vToken),
+            address(router),
+            vTokensAmount
+        );
 
         wethReceived = router.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -326,7 +330,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         uint256 vTokenAmt = params.nftIds.length * 1 ether;
 
         IWETH9(WETH).deposit{value: msg.value}();
-        TransferLib.maxApprove(WETH, address(router), msg.value);
+        TransferLib.unSafeMaxApprove(WETH, address(router), msg.value);
         uint256 wethSpent = router.exactOutputSingle(
             ISwapRouter.ExactOutputSingleParams({
                 tokenIn: WETH,
@@ -342,7 +346,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
         // unwrap vTokens to tokenIds specified, and send to sender. Forcing to deduct vault fees
         uint256 wethLeft = msg.value - wethSpent;
-        TransferLib.maxApprove(WETH, address(vToken), wethLeft);
+        TransferLib.unSafeMaxApprove(WETH, address(vToken), wethLeft);
         uint256 wethFees = vToken.redeemTo(
             params.nftIds,
             msg.sender,
@@ -512,7 +516,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount += vToken.mint(params.nftIds, params.nftAmounts);
         }
 
-        TransferLib.maxApprove(
+        TransferLib.unSafeMaxApprove(
             address(vToken),
             address(positionManager),
             vTokensAmount
@@ -617,7 +621,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount += vToken.mint(params.nftIds, params.nftAmounts);
         }
 
-        TransferLib.maxApprove(
+        TransferLib.unSafeMaxApprove(
             address(vToken),
             address(positionManager),
             vTokensAmount

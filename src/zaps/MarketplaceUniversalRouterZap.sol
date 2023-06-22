@@ -208,7 +208,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256 wethLeft = msg.value - wethSpent;
 
         // redeem NFTs
-        TransferLib.maxApprove(address(WETH), vault, wethLeft);
+        TransferLib.unSafeMaxApprove(address(WETH), vault, wethLeft);
         uint256 wethFees = INFTXVaultV3(vault).redeemTo(
             idsOut,
             to,
@@ -438,7 +438,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256 wethSpent = iniWETHBal - wethLeft;
 
         // redeem NFTs
-        TransferLib.maxApprove(address(WETH), vault, wethLeft);
+        TransferLib.unSafeMaxApprove(address(WETH), vault, wethLeft);
         uint256 wethFees = INFTXVaultV3(vault).redeemTo(
             params.idsOut,
             params.to,

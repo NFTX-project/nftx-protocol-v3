@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.8.15;
 
-import {console, stdError} from "forge-std/Test.sol";
 import {Helpers} from "@test/lib/Helpers.sol";
+import {console, stdError} from "forge-std/Test.sol";
 
-import {MockNFT} from "@mocks/MockNFT.sol";
-import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
+
+import {MockNFT} from "@mocks/MockNFT.sol";
 import {NFTXInventoryStakingV3Upgradeable, INFTXInventoryStakingV3} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
+
+import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
+import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 import {TestBase} from "@test/TestBase.sol";
@@ -43,7 +46,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 earlyWithdrawPenaltyInWei = 0.05 ether;
 
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
-            weth,
+            IWETH9(address(weth)),
             IPermitAllowanceTransfer(address(permit2)),
             vaultFactory
         );
@@ -60,7 +63,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 earlyWithdrawPenaltyInWei = 2 ether;
 
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
-            weth,
+            IWETH9(address(weth)),
             IPermitAllowanceTransfer(address(permit2)),
             vaultFactory
         );
@@ -79,7 +82,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 earlyWithdrawPenaltyInWei = 0.05 ether;
 
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
-            weth,
+            IWETH9(address(weth)),
             IPermitAllowanceTransfer(address(permit2)),
             vaultFactory
         );
@@ -115,12 +118,12 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         hoax(makeAddr("nonOwner"));
         vm.expectRevert("Paused");
-        inventoryStaking.deposit(VAULT_ID, 0, address(this));
+        inventoryStaking.deposit(VAULT_ID, 0, address(this), false);
     }
 
     function test_deposit_RevertsForInvalidVaultId() external {
         vm.expectRevert(stdError.indexOOBError);
-        inventoryStaking.deposit(999, 0, address(this));
+        inventoryStaking.deposit(999, 0, address(this), false);
     }
 
     function test_deposit_Success_WhenPreTotalSharesZero() external {
@@ -139,7 +142,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.deposit(
             VAULT_ID,
             mintedVTokens,
-            recipient
+            recipient,
+            false
         );
 
         assertEq(positionId, 1);
@@ -192,7 +196,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.deposit(
             VAULT_ID,
             mintedVTokens,
-            recipient
+            recipient,
+            false
         );
 
         // mints position nft to the recipient
@@ -252,7 +257,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             VAULT_ID,
             mintedVTokens,
             recipient,
-            encodedPermit2
+            encodedPermit2,
+            false
         );
 
         assertEq(positionId, 1);
@@ -834,7 +840,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         childPositionIds[0] = inventoryStaking.deposit(
             newVaultId,
             mintedVTokens,
-            address(this)
+            address(this),
+            false
         );
         (, , uint256 childTimelockedUntil, , , ) = inventoryStaking.positions(
             childPositionIds[0]
@@ -1245,7 +1252,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = inventoryStaking.deposit(
             VAULT_ID,
             mintedVTokens,
-            address(this)
+            address(this),
+            false
         );
 
         (uint256 vTokenShareBalance, , ) = _getPosition(positionId);
@@ -1490,7 +1498,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         positionId = inventoryStaking.deposit(
             VAULT_ID,
             mintedVTokens,
-            address(this)
+            address(this),
+            false
         );
     }
 

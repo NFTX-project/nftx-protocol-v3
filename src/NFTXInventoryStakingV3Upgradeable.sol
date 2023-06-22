@@ -9,6 +9,7 @@ import {TransferLib} from "@src/lib/TransferLib.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 
+import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
@@ -42,7 +43,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     //                           CONSTANTS
     // =============================================================
 
-    IERC20 public immutable override WETH;
+    IWETH9 public immutable override WETH;
     IPermitAllowanceTransfer public immutable override PERMIT2;
     INFTXVaultFactoryV3 public immutable override nftxVaultFactory;
 
@@ -71,7 +72,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     // =============================================================
 
     constructor(
-        IERC20 WETH_,
+        IWETH9 WETH_,
         IPermitAllowanceTransfer PERMIT2_,
         INFTXVaultFactoryV3 nftxVaultFactory_
     ) {
@@ -103,7 +104,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     function deposit(
         uint256 vaultId,
         uint256 amount,
-        address recipient
+        address recipient,
+        bool forceTimelock
     ) external override returns (uint256 positionId) {
         address vToken = nftxVaultFactory.vault(vaultId);
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
@@ -117,7 +119,8 @@ contract NFTXInventoryStakingV3Upgradeable is
                 amount,
                 recipient,
                 _vaultGlobal,
-                preVTokenBalance
+                preVTokenBalance,
+                forceTimelock
             );
     }
 
@@ -125,7 +128,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vaultId,
         uint256 amount,
         address recipient,
-        bytes calldata encodedPermit2
+        bytes calldata encodedPermit2,
+        bool forceTimelock
     ) external override returns (uint256 positionId) {
         address vToken = nftxVaultFactory.vault(vaultId);
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
@@ -158,7 +162,8 @@ contract NFTXInventoryStakingV3Upgradeable is
                 amount,
                 recipient,
                 _vaultGlobal,
-                preVTokenBalance
+                preVTokenBalance,
+                forceTimelock
             );
     }
 
@@ -476,7 +481,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 amount,
         address recipient,
         VaultGlobal storage _vaultGlobal,
-        uint256 preVTokenBalance
+        uint256 preVTokenBalance,
+        bool forceTimelock
     ) internal returns (uint256 positionId) {
         onlyOwnerIfPaused(0);
 
@@ -497,7 +503,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         positions[positionId] = Position({
             nonce: 0,
             vaultId: vaultId,
-            timelockedUntil: 0,
+            timelockedUntil: forceTimelock ? block.timestamp + timelock : 0,
             vTokenShareBalance: vTokenShares,
             wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
                 .globalWethFeesPerVTokenShareX128,

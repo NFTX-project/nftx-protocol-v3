@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
-import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
 
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
@@ -38,7 +39,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
 
     function timelockExcludeList() external view returns (ITimelockExcludeList);
 
-    function WETH() external view returns (IERC20);
+    function WETH() external view returns (IWETH9);
 
     function PERMIT2() external returns (IPermitAllowanceTransfer);
 
@@ -128,14 +129,16 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     function deposit(
         uint256 vaultId,
         uint256 amount,
-        address recipient
+        address recipient,
+        bool forceTimelock
     ) external returns (uint256 positionId);
 
     function depositWithPermit2(
         uint256 vaultId,
         uint256 amount,
         address recipient,
-        bytes calldata encodedPermit2
+        bytes calldata encodedPermit2,
+        bool forceTimelock
     ) external returns (uint256 positionId);
 
     /// @notice This contract must be on the feeExclusion list to avoid mint fees, else revert

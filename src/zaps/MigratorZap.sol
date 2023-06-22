@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
+import {TransferLib} from "@src/lib/TransferLib.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {INFTXVaultV2} from "@src/v2/interfaces/INFTXVaultV2.sol";
@@ -145,7 +147,11 @@ contract MigratorZap {
         );
 
         // give vToken approval to positionManager
-        _maxApproveToken(vTokenV3, address(positionManager), vTokenV3Balance);
+        TransferLib.unSafeMaxApprove(
+            vTokenV3,
+            address(positionManager),
+            vTokenV3Balance
+        );
 
         // provide liquidity to NFTX AMM
         uint256 newAmount0;
@@ -210,8 +216,17 @@ contract MigratorZap {
             WETH.transfer(msg.sender, wethReceived);
         }
 
-        _maxApproveToken(vTokenV3, address(v3Inventory), vTokenV3Balance);
-        xNFTId = v3Inventory.deposit(vaultIdV3, vTokenV3Balance, msg.sender);
+        TransferLib.unSafeMaxApprove(
+            vTokenV3,
+            address(v3Inventory),
+            vTokenV3Balance
+        );
+        xNFTId = v3Inventory.deposit(
+            vaultIdV3,
+            vTokenV3Balance,
+            msg.sender,
+            false
+        );
     }
 
     /**
@@ -248,26 +263,22 @@ contract MigratorZap {
             WETH.transfer(msg.sender, wethReceived);
         }
 
-        _maxApproveToken(vTokenV3, address(v3Inventory), vTokenV3Balance);
-        xNFTId = v3Inventory.deposit(vaultIdV3, vTokenV3Balance, msg.sender);
+        TransferLib.unSafeMaxApprove(
+            vTokenV3,
+            address(v3Inventory),
+            vTokenV3Balance
+        );
+        xNFTId = v3Inventory.deposit(
+            vaultIdV3,
+            vTokenV3Balance,
+            msg.sender,
+            false
+        );
     }
 
     // =============================================================
     //                        INTERNAL HELPERS
     // =============================================================
-
-    function _maxApproveToken(
-        address token,
-        address spender,
-        uint256 amount
-    ) internal {
-        uint256 allowance = IERC20(token).allowance(address(this), spender);
-
-        if (amount > allowance) {
-            // SafeERC20 not required here as both vToken and WETH follow the ERC20 standard correctly
-            IERC20(token).approve(spender, type(uint256).max);
-        }
-    }
 
     function _permit(
         address sushiPair,
@@ -345,7 +356,11 @@ contract MigratorZap {
             path[0] = vTokenV2;
             path[1] = address(WETH);
 
-            _maxApproveToken(vTokenV2, address(sushiRouter), vTokenV2Balance);
+            TransferLib.unSafeMaxApprove(
+                vTokenV2,
+                address(sushiRouter),
+                vTokenV2Balance
+            );
             wethReceived = sushiRouter.swapExactTokensForTokens(
                 vTokenV2Balance,
                 minWethToReceive,

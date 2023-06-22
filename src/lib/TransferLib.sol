@@ -42,6 +42,20 @@ library TransferLib {
         }
     }
 
+    /// @dev Setting max allowance to save gas on subsequent calls without using safeApprove. Use it only where the tokens are known.
+    function unSafeMaxApprove(
+        address token,
+        address spender,
+        uint256 amount
+    ) internal {
+        uint256 allowance = IERC20(token).allowance(address(this), spender);
+
+        if (amount > allowance) {
+            // avoids reading allowance again, which is the case with safeApprove
+            IERC20(token).approve(spender, type(uint256).max);
+        }
+    }
+
     function transferETH(address to, uint256 amount) internal {
         (bool success, ) = payable(to).call{value: amount}("");
         if (!success) revert UnableToSendETH();
@@ -80,6 +94,7 @@ library TransferLib {
                 punkIndexToAddress
             );
             address nftOwner = abi.decode(result, (address));
+            // TODO: use custom error
             require(
                 checkSuccess && nftOwner == msg.sender,
                 "Not the NFT owner"

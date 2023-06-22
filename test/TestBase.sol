@@ -125,7 +125,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         timelockExcludeList = new TimelockExcludeList();
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
-            weth,
+            IWETH9(address(weth)),
             IPermitAllowanceTransfer(address(permit2)),
             vaultFactory
         );
