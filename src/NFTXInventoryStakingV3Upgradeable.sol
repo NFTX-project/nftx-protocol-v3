@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity =0.8.15;
 
-import {ERC721PermitUpgradeable, ERC721Upgradeable} from "@src/custom/tokens/ERC721/ERC721PermitUpgradeable.sol";
+import {ERC721PermitUpgradeable, ERC721EnumerableUpgradeable} from "@src/custom/tokens/ERC721/ERC721PermitUpgradeable.sol";
 import {ERC1155HolderUpgradeable, ERC1155ReceiverUpgradeable, IERC165Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
@@ -481,7 +481,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         pure
         override(
             ERC1155ReceiverUpgradeable,
-            ERC721Upgradeable,
+            ERC721EnumerableUpgradeable,
             IERC165Upgradeable
         )
         returns (bool)

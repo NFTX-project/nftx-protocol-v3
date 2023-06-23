@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity =0.8.15;
 
-import {ERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721EnumerableUpgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {AddressUpgradeable} from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 
 import "@uni-periphery/libraries/ChainId.sol";
@@ -14,7 +14,7 @@ import "./IERC721PermitUpgradeable.sol";
 /// @notice Nonfungible tokens that support an approve via signature, i.e. permit
 abstract contract ERC721PermitUpgradeable is
     BlockTimestamp,
-    ERC721Upgradeable,
+    ERC721EnumerableUpgradeable,
     IERC721PermitUpgradeable
 {
     /// @dev Gets the current nonce for a token ID and then increments it, returning the original value
@@ -69,6 +69,7 @@ abstract contract ERC721PermitUpgradeable is
         bytes32 r,
         bytes32 s
     ) external payable override {
+        // TODO: add custom errors
         require(_blockTimestamp() <= deadline, "Permit expired");
 
         bytes32 digest = keccak256(
@@ -87,6 +88,7 @@ abstract contract ERC721PermitUpgradeable is
             )
         );
         address owner = ownerOf(tokenId);
+        // TODO: add custom errors
         require(spender != owner, "ERC721Permit: approval to current owner");
 
         if (AddressUpgradeable.isContract(owner)) {
@@ -99,7 +101,9 @@ abstract contract ERC721PermitUpgradeable is
             );
         } else {
             address recoveredAddress = ecrecover(digest, v, r, s);
+            // TODO: add custom errors
             require(recoveredAddress != address(0), "Invalid signature");
+            // TODO: add custom errors
             require(recoveredAddress == owner, "Unauthorized");
         }
 
