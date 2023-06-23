@@ -58,6 +58,7 @@ abstract contract ERC20FlashMintUpgradeable is
         address token,
         uint256 amount
     ) public view virtual override returns (uint256) {
+        // TODO: custom error
         require(token == address(this), "ERC20FlashMint: wrong token");
         return _flashFee(token, amount);
     }
@@ -113,12 +114,14 @@ abstract contract ERC20FlashMintUpgradeable is
         uint256 amount,
         bytes calldata data
     ) public virtual override returns (bool) {
+        // TODO: custom error
         require(
             amount <= maxFlashLoan(token),
             "ERC20FlashMint: amount exceeds maxFlashLoan"
         );
         uint256 fee = flashFee(token, amount);
         _mint(address(receiver), amount);
+        // TODO: custom error
         require(
             receiver.onFlashLoan(msg.sender, token, amount, fee, data) ==
                 _RETURN_VALUE,

@@ -100,23 +100,23 @@ contract NFTXVaultUpgradeableV3 is
     }
 
     function __NFTXVault_init(
-        string memory _name,
-        string memory _symbol,
-        address _assetAddress,
-        bool _is1155,
-        bool _allowAllItems
+        string calldata name_,
+        string calldata symbol_,
+        address assetAddress_,
+        bool is1155_,
+        bool allowAllItems_
     ) public override initializer {
         __Ownable_init();
-        __ERC20_init(_name, _symbol);
+        __ERC20_init(name_, symbol_);
 
-        if (_assetAddress == address(0)) revert ZeroAddress();
-        assetAddress = _assetAddress;
+        if (assetAddress_ == address(0)) revert ZeroAddress();
+        assetAddress = assetAddress_;
         vaultFactory = INFTXVaultFactoryV3(msg.sender);
         vaultId = vaultFactory.numVaults();
-        is1155 = _is1155;
-        allowAllItems = _allowAllItems;
+        is1155 = is1155_;
+        allowAllItems = allowAllItems_;
 
-        emit VaultInit(vaultId, _assetAddress, _is1155, _allowAllItems);
+        emit VaultInit(vaultId, assetAddress_, is1155_, allowAllItems_);
 
         setVaultFeatures(
             true /*enableMint*/,
@@ -174,7 +174,7 @@ contract NFTXVaultUpgradeableV3 is
 
         uint256 count = idsOut.length;
 
-        // We burn all from sender and mint to fee receiver to reduce costs.
+        // burn from the sender.
         _burn(msg.sender, BASE * count);
 
         (, uint256 redeemFee, ) = vaultFees();
@@ -230,7 +230,7 @@ contract NFTXVaultUpgradeableV3 is
         (, , uint256 swapFee) = vaultFees();
         uint256 totalVaultFee = (swapFee * idsOut.length);
 
-        // Give the NFTs first, so the user wont get the same thing back, just to be nice.
+        // Give the NFTs first, so the user wont get the same thing back.
         (
             uint256 netVTokenPremium,
             uint256[] memory vTokenPremiums,
@@ -822,6 +822,7 @@ contract NFTXVaultUpgradeableV3 is
         uint256 priceX96 = vaultFactory.getTwapX96(pool);
         if (priceX96 == 0) return (0, feeDistributor);
 
+        // TODO: directly calculate VToken0, without calling NFTXRouter
         bool isVToken0 = nftxRouter.isVToken0(address(this));
         if (isVToken0) {
             ethAmount = FullMath.mulDiv(

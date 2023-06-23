@@ -111,7 +111,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     error Timelocked();
     error VaultIdMismatch();
     error ParentChildSame();
-    error RedeemNotAllowedWithoutTimelock();
     error InsufficientVTokens();
 
     // =============================================================
@@ -156,7 +155,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 positionId,
         uint256 vTokenShares,
         uint256[] calldata nftIds
-    ) external;
+    ) external payable;
 
     function combinePositions(
         uint256 parentPositionId,

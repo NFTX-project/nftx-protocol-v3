@@ -77,10 +77,12 @@ contract Create2BeaconProxy is Proxy {
      * - The implementation returned by `beacon` must be a contract.
      */
     function _setBeacon(address beacon, bytes memory data) internal virtual {
+        // TODO: custom error
         require(
             Address.isContract(beacon),
             "BeaconProxy: beacon is not a contract"
         );
+        // TODO: custom error
         require(
             Address.isContract(IBeacon(beacon).implementation()),
             "BeaconProxy: beacon implementation is not a contract"
@@ -92,6 +94,7 @@ contract Create2BeaconProxy is Proxy {
             sstore(slot, beacon)
         }
 
+        // TODO: custom error
         if (data.length > 0) {
             Address.functionDelegateCall(
                 _implementation(),

@@ -114,11 +114,11 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     // =============================================================
 
     function __NFTXVault_init(
-        string calldata _name,
-        string calldata _symbol,
-        address _assetAddress,
-        bool _is1155,
-        bool _allowAllItems
+        string calldata name_,
+        string calldata symbol_,
+        address assetAddress_,
+        bool is1155_,
+        bool allowAllItems_
     ) external;
 
     // =============================================================

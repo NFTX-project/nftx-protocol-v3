@@ -170,7 +170,7 @@ contract NFTXFeeDistributorV3 is
     }
 
     /**
-     * @notice Updating reward fee tier here won't change cardinality for existing UniV3 pools already deployed with new `rewardFeeTier_`. That has to be increased externally for each pool.
+     * @notice Updating reward fee tier here won't change cardinality for existing UniV3 pools already deployed with `rewardFeeTier_`. That has to be increased externally for each pool.
      * If the new rewardFeeTier pool doesn't exist for a vToken, then the corresponding vault fees would immediately become 0, till liquidity is provided in the new pool.
      * @param rewardFeeTier_ New reward fee tier
      */
@@ -258,6 +258,7 @@ contract NFTXFeeDistributorV3 is
                     WETH.transfer(pool, wethAmountToSend);
                     IUniswapV3Pool(pool).distributeRewards(
                         wethAmountToSend,
+                        // TODO: directly calculate VToken0, without calling NFTXRouter
                         !nftxRouter.isVToken0(address(vault))
                     );
 

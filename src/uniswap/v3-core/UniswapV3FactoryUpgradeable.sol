@@ -33,8 +33,6 @@ contract UniswapV3FactoryUpgradeable is
 
         rewardTierCardinality = rewardTierCardinality_;
 
-        // TODO: allow different fee tiers
-
         // feeAmountTickSpacing[500] = 10;
         // emit FeeAmountEnabled(500, 10);
         // feeAmountTickSpacing[3000] = 60;

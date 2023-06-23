@@ -216,9 +216,10 @@ contract NFTXInventoryStakingV3Upgradeable is
         _mint(recipient, (positionId = _nextId++));
 
         uint256 vTokenShares;
+        // TODO: cache totalVTokenShares
         if (_vaultGlobal.totalVTokenShares == 0) {
-            // permanently locked to avoid front-running attack
             vTokenShares = amount - MINIMUM_LIQUIDITY;
+            // permanently locked to avoid front-running attack
             _vaultGlobal.totalVTokenShares = MINIMUM_LIQUIDITY;
         } else {
             vTokenShares =
@@ -245,7 +246,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 positionId,
         uint256 vTokenShares,
         uint256[] calldata nftIds
-    ) external override {
+    ) external payable override {
         onlyOwnerIfPaused(2);
 
         if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
@@ -271,14 +272,16 @@ contract NFTXInventoryStakingV3Upgradeable is
             .globalWethFeesPerVTokenShareX128;
         position.wethOwed = 0;
 
-        if (block.timestamp <= position.timelockedUntil) {
+        // cache
+        uint256 _timelockedUntil = position.timelockedUntil;
+
+        if (block.timestamp <= _timelockedUntil) {
             // Eg: timelock = 10 days, vTokenOwed = 100, penalty% = 5%
             // Case 1: Instant withdraw, with 10 days left
             // penaltyAmt = 100 * 5% = 5
             // Case 2: With 2 days timelock left
             // penaltyAmt = (100 * 5%) * 2 / 10 = 1
-            uint256 vTokenPenalty = ((position.timelockedUntil -
-                block.timestamp) *
+            uint256 vTokenPenalty = ((_timelockedUntil - block.timestamp) *
                 vTokenOwed *
                 earlyWithdrawPenaltyInWei) / (timelock * 1 ether);
             vTokenOwed -= vTokenPenalty;
@@ -291,21 +294,25 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 nftCount = nftIds.length;
         if (nftCount > 0) {
-            // redeem is only available for positions which were/are under timelock (as redeem fee is avoided here)
-            if (position.timelockedUntil == 0)
-                revert RedeemNotAllowedWithoutTimelock();
-
             // check if we have sufficient vTokens
             uint256 requiredVTokens = nftCount * 1 ether;
             if (vTokenOwed < requiredVTokens) revert InsufficientVTokens();
 
-            address vault = nftxVaultFactory.vault(vaultId);
-            INFTXVaultV3(vault).redeem(nftIds, msg.sender, 0, false);
+            {
+                address vault = nftxVaultFactory.vault(vaultId);
 
-            // send vToken residue
-            uint256 vTokenResidue = vTokenOwed - requiredVTokens;
-            if (vTokenResidue > 0) {
-                IERC20(vault).transfer(msg.sender, vTokenResidue);
+                INFTXVaultV3(vault).redeem{value: msg.value}(
+                    nftIds,
+                    msg.sender,
+                    0,
+                    _timelockedUntil == 0 // forcing fees for positons which never were under timelock (or else they can bypass redeem fees as deposit was made in vTokens)
+                );
+
+                // send vToken residue
+                uint256 vTokenResidue = vTokenOwed - requiredVTokens;
+                if (vTokenResidue > 0) {
+                    IERC20(vault).transfer(msg.sender, vTokenResidue);
+                }
             }
         } else {
             // transfer tokens to the user
@@ -315,6 +322,9 @@ contract NFTXInventoryStakingV3Upgradeable is
             );
         }
         WETH.transfer(msg.sender, wethOwed);
+
+        uint256 ethResidue = address(this).balance;
+        TransferLib.transferETH(msg.sender, ethResidue);
 
         emit Withdraw(positionId, vTokenShares, vTokenOwed, wethOwed);
     }
@@ -510,9 +520,10 @@ contract NFTXInventoryStakingV3Upgradeable is
         _mint(recipient, (positionId = _nextId++));
 
         uint256 vTokenShares;
+        // TODO: cache totalVTokenShares
         if (_vaultGlobal.totalVTokenShares == 0) {
-            // permanently locked to avoid front-running attack
             vTokenShares = amount - MINIMUM_LIQUIDITY;
+            // permanently locked to avoid front-running attack
             _vaultGlobal.totalVTokenShares = MINIMUM_LIQUIDITY;
         } else {
             vTokenShares =

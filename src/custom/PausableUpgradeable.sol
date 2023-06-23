@@ -22,6 +22,7 @@ contract PausableUpgradeable is OwnableUpgradeable {
     // 4 : flashloan
 
     function onlyOwnerIfPaused(uint256 lockId) public view virtual {
+        // TODO: custom error
         require(!isPaused[lockId] || msg.sender == owner(), "Paused");
     }
 
@@ -31,6 +32,7 @@ contract PausableUpgradeable is OwnableUpgradeable {
     }
 
     function pause(uint256 lockId) public virtual {
+        // TODO: custom error
         require(isGuardian[msg.sender], "Can't pause");
         isPaused[lockId] = true;
         emit SetPaused(lockId, true);

@@ -1258,26 +1258,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
     // to NFTs
 
-    function test_withdraw_ToNFTs_RevertsForPositionWithoutTimelockValue()
-        external
-    {
-        // mint with vTokens to have 0 timelock
-        (uint256 mintedVTokens, uint256[] memory nftIds) = _mintVToken(1);
-        vtoken.approve(address(inventoryStaking), type(uint256).max);
-        uint256 positionId = inventoryStaking.deposit(
-            VAULT_ID,
-            mintedVTokens,
-            address(this),
-            false
-        );
-
-        (uint256 vTokenShareBalance, , ) = _getPosition(positionId);
-
-        vm.expectRevert(
-            INFTXInventoryStakingV3.RedeemNotAllowedWithoutTimelock.selector
-        );
-        inventoryStaking.withdraw(positionId, vTokenShareBalance, nftIds);
-    }
+    // TODO: add test case for withdraw to NFTs from position with no timelock value
 
     function test_withdraw_ToNFTs_RevertsIfVTokenOwedInsufficientForRedeem()
         external
