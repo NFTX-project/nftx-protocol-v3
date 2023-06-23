@@ -80,8 +80,8 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     // event CustomEligibilityDeployed(address eligibilityAddr);
 
     event EnableMintUpdated(bool enabled);
-    event EnableTargetRedeemUpdated(bool enabled);
-    event EnableTargetSwapUpdated(bool enabled);
+    event EnableRedeemUpdated(bool enabled);
+    event EnableSwapUpdated(bool enabled);
 
     event Minted(uint256[] nftIds, uint256[] amounts, address to);
     event Redeemed(uint256[] specificIds, address to);
@@ -133,15 +133,15 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     ) external;
 
     function setVaultFeatures(
-        bool _enableMint,
-        bool _enableTargetRedeem,
-        bool _enableTargetSwap
+        bool enableMint_,
+        bool enableRedeem_,
+        bool enableSwap_
     ) external;
 
     function setFees(
-        uint256 _mintFee,
-        uint256 _targetRedeemFee,
-        uint256 _targetSwapFee
+        uint256 enableMint_,
+        uint256 enableRedeem_,
+        uint256 enableSwap_
     ) external;
 
     function disableVaultFees() external;

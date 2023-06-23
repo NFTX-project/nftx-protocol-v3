@@ -222,7 +222,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
 
             // burn vTokens to provided tokenIds array. Forcing to deduct vault fees
-            TransferLib.maxApprove(WETH, address(vToken), wethAmt);
+            TransferLib.unSafeMaxApprove(WETH, address(vToken), wethAmt);
             uint256 wethFees = vToken.redeemTo(
                 params.nftIds,
                 msg.sender,
@@ -286,7 +286,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         // mint vToken
         uint256 vTokensAmount = vToken.mint(params.nftIds, params.nftAmounts);
 
-        TransferLib.maxApprove(address(vToken), address(router), vTokensAmount);
+        TransferLib.unSafeMaxApprove(
+            address(vToken),
+            address(router),
+            vTokensAmount
+        );
 
         wethReceived = router.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -326,7 +330,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         uint256 vTokenAmt = params.nftIds.length * 1 ether;
 
         IWETH9(WETH).deposit{value: msg.value}();
-        TransferLib.maxApprove(WETH, address(router), msg.value);
+        TransferLib.unSafeMaxApprove(WETH, address(router), msg.value);
         uint256 wethSpent = router.exactOutputSingle(
             ISwapRouter.ExactOutputSingleParams({
                 tokenIn: WETH,
@@ -342,7 +346,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
         // unwrap vTokens to tokenIds specified, and send to sender. Forcing to deduct vault fees
         uint256 wethLeft = msg.value - wethSpent;
-        TransferLib.maxApprove(WETH, address(vToken), wethLeft);
+        TransferLib.unSafeMaxApprove(WETH, address(vToken), wethLeft);
         uint256 wethFees = vToken.redeemTo(
             params.nftIds,
             msg.sender,
@@ -472,14 +476,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     //                      INTERNAL / PRIVATE
     // =============================================================
 
-    // to avoid stack too deep
-    struct TempAdd {
-        uint256 amount0Desired;
-        uint256 amount1Desired;
-        uint256 amount0Min;
-        uint256 amount1Min;
-    }
-
     function _addLiquidity(
         AddLiquidityParams calldata params,
         INFTXVaultV3 vToken
@@ -512,7 +508,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount += vToken.mint(params.nftIds, params.nftAmounts);
         }
 
-        TransferLib.maxApprove(
+        TransferLib.unSafeMaxApprove(
             address(vToken),
             address(positionManager),
             vTokensAmount
@@ -531,18 +527,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         );
 
         // mint position with vtoken and ETH
-        TempAdd memory ta;
-        if (_isVToken0) {
-            ta.amount0Desired = vTokensAmount;
-            // have a 5000 wei buffer to account for any dust amounts
-            ta.amount0Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
-            ta.amount1Desired = msg.value;
-        } else {
-            ta.amount0Desired = msg.value;
-            ta.amount1Desired = vTokensAmount;
-            // have a 5000 wei buffer to account for any dust amounts
-            ta.amount1Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
-        }
+        (uint256 amount0Desired, uint256 amount1Desired) = _isVToken0
+            ? (vTokensAmount, msg.value)
+            : (msg.value, vTokensAmount);
 
         (positionId, , , ) = positionManager.mint{value: msg.value}(
             INonfungiblePositionManager.MintParams({
@@ -551,11 +538,10 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 fee: params.fee,
                 tickLower: params.tickLower,
                 tickUpper: params.tickUpper,
-                amount0Desired: ta.amount0Desired,
-                amount1Desired: ta.amount1Desired,
-                // FIXME: pass amount0Min and amount1Min as params (as the price can fluctuate till this txn is confirmed)
-                amount0Min: ta.amount0Min,
-                amount1Min: ta.amount1Min,
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
                 recipient: msg.sender,
                 deadline: params.deadline
             })
@@ -617,7 +603,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount += vToken.mint(params.nftIds, params.nftAmounts);
         }
 
-        TransferLib.maxApprove(
+        TransferLib.unSafeMaxApprove(
             address(vToken),
             address(positionManager),
             vTokensAmount
@@ -625,30 +611,17 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
         bool _isVToken0 = isVToken0(address(vToken));
 
-        uint256 amount0Desired;
-        uint256 amount1Desired;
-        uint256 amount0Min;
-        uint256 amount1Min;
-        if (_isVToken0) {
-            amount0Desired = vTokensAmount;
-            // have a 5000 wei buffer to account for any dust amounts
-            amount0Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
-            amount1Desired = msg.value;
-        } else {
-            amount0Desired = msg.value;
-            amount1Desired = vTokensAmount;
-            // have a 5000 wei buffer to account for any dust amounts
-            amount1Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
-        }
+        (uint256 amount0Desired, uint256 amount1Desired) = _isVToken0
+            ? (vTokensAmount, msg.value)
+            : (msg.value, vTokensAmount);
 
         positionManager.increaseLiquidity{value: msg.value}(
             INonfungiblePositionManager.IncreaseLiquidityParams({
                 tokenId: params.positionId,
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
-                // FIXME: pass amount0Min and amount1Min as params (as the price can fluctuate till this txn is confirmed)
-                amount0Min: amount0Min,
-                amount1Min: amount1Min,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
                 deadline: params.deadline
             })
         );

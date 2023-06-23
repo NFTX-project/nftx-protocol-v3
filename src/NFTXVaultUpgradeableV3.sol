@@ -121,8 +121,8 @@ contract NFTXVaultUpgradeableV3 is
 
         setVaultFeatures(
             true /*enableMint*/,
-            true /*enableTargetRedeem*/,
-            true /*enableTargetSwap*/
+            true /*enableRedeem*/,
+            true /*enableSwap*/
         );
     }
 
@@ -312,15 +312,15 @@ contract NFTXVaultUpgradeableV3 is
 
     function setVaultFeatures(
         bool enableMint_,
-        bool enableTargetRedeem_,
-        bool enableTargetSwap_
+        bool enableRedeem_,
+        bool enableSwap_
     ) public override {
         _onlyPrivileged();
         enableMint = enableMint_;
 
         emit EnableMintUpdated(enableMint_);
-        emit EnableTargetRedeemUpdated(enableTargetRedeem_);
-        emit EnableTargetSwapUpdated(enableTargetSwap_);
+        emit EnableRedeemUpdated(enableRedeem_);
+        emit EnableSwapUpdated(enableSwap_);
     }
 
     function setFees(

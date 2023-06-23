@@ -2,7 +2,7 @@
 pragma solidity =0.8.15;
 
 import {console} from "forge-std/Test.sol";
-import {Helpers} from "@test/lib/Helpers.sol";
+import {TickHelpers} from "@src/lib/TickHelpers.sol";
 
 import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolUpgradeable.sol";
 import {INFTXRouter} from "@src/NFTXRouter.sol";
@@ -98,7 +98,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
             address(vtoken) < address(weth) ? address(vtoken) : address(weth),
             address(vtoken) < address(weth) ? address(weth) : address(vtoken),
             feeDistributor.REWARD_FEE_TIER(),
-            Helpers.encodeSqrtRatioX96(5 ether, 1 ether)
+            TickHelpers.encodeSqrtRatioX96(5 ether, 1 ether)
         );
 
         (address pool, bool exists) = nftxRouter.getPoolExists(
@@ -159,7 +159,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
             // stake vTokens so that inventoryStaking has stakers to distribute to
             (uint256 mintedVTokens, ) = _mintVToken(1);
             vtoken.approve(address(inventoryStaking), type(uint256).max);
-            inventoryStaking.deposit(0, mintedVTokens, address(this));
+            inventoryStaking.deposit(0, mintedVTokens, address(this), false);
 
             (uint256 totalVTokenShares, ) = inventoryStaking.vaultGlobal(0);
             console.log("totalVTokenShares", totalVTokenShares);
