@@ -54,12 +54,21 @@ contract NFTXVaultFactoryUpgradeableV3 is
     // =============================================================
 
     function __NFTXVaultFactory_init(
-        address vaultImpl
+        address vaultImpl,
+        uint32 twapInterval_,
+        uint256 premiumDuration_,
+        uint256 premiumMax_,
+        uint256 depositorPremiumShare_
     ) public override initializer {
         __Pausable_init();
         // We use a beacon proxy so that every child contract follows the same implementation code.
         __UpgradeableBeacon__init(vaultImpl);
         setFactoryFees(0.1 ether, 0.1 ether, 0.1 ether);
+
+        twapInterval = twapInterval_;
+        premiumDuration = premiumDuration_;
+        premiumMax = premiumMax_;
+        depositorPremiumShare = depositorPremiumShare_;
     }
 
     // =============================================================

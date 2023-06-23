@@ -153,7 +153,6 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         ) = _mintPosition(mintQty);
         // have another position, so that the pool doesn't have 0 liquidity to facilitate swapping fractional vTokens during removeLiquidity
         _mintPosition(mintQty);
-        // TODO: add console logs for initial values as well, in all test cases
 
         {
             // stake vTokens so that inventoryStaking has stakers to distribute to

@@ -58,7 +58,6 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     NFTXInventoryStakingV3Upgradeable inventoryStaking;
     MarketplaceUniversalRouterZap marketplaceZap;
 
-    // TODO: remove this and add tests for different fee tiers
     uint24 constant DEFAULT_FEE_TIER = 10000;
     address immutable TREASURY = makeAddr("TREASURY");
     uint256 constant VAULT_ID = 0;
@@ -103,13 +102,13 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         vaultImpl = new NFTXVaultUpgradeableV3(IWETH9(address(weth)));
         vaultFactory = new NFTXVaultFactoryUpgradeableV3();
-        vaultFactory.__NFTXVaultFactory_init(address(vaultImpl));
-        // set premium related values
-        // TODO: move setting these values into the initializer
-        vaultFactory.setTwapInterval(20 minutes);
-        vaultFactory.setPremiumDuration(10 hours);
-        vaultFactory.setPremiumMax(5 ether);
-        vaultFactory.setDepositorPremiumShare(0.30 ether);
+        vaultFactory.__NFTXVaultFactory_init(
+            address(vaultImpl),
+            20 minutes, // twapInterval_
+            10 hours, // premiumDuration_
+            5 ether, // premiumMax_
+            0.30 ether // depositorPremiumShare_
+        );
 
         permit2 = new MockPermit2();
 

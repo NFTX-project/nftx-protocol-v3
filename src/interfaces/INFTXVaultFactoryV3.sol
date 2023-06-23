@@ -80,7 +80,13 @@ interface INFTXVaultFactoryV3 is IBeacon {
     //                           INIT
     // =============================================================
 
-    function __NFTXVaultFactory_init(address vaultImpl) external;
+    function __NFTXVaultFactory_init(
+        address vaultImpl,
+        uint32 twapInterval_,
+        uint256 premiumDuration_,
+        uint256 premiumMax_,
+        uint256 depositorPremiumShare_
+    ) external;
 
     // =============================================================
     //                     ONLY PRIVILEGED WRITE
