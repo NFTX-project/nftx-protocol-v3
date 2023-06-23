@@ -2,14 +2,17 @@
 pragma solidity =0.8.15;
 
 import {TransferLib} from "@src/lib/TransferLib.sol";
+import {TickHelpers} from "@src/lib/TickHelpers.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
+import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
+import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 
 /**
  * @title Create Vault Zap
@@ -40,11 +43,11 @@ contract CreateVaultZap is ERC1155Holder {
     }
 
     struct LiquidityParams {
-        int24 tickLower;
-        int24 tickUpper;
+        uint256 lowerNFTPriceInETH;
+        uint256 upperNFTPriceInETH;
         uint24 fee;
         // this price is used if new pool needs to be initialized
-        uint160 sqrtPriceX96;
+        uint256 currentNFTPriceInETH;
         uint256 vTokenMin;
         uint256 wethMin;
         uint256 deadline;
@@ -67,7 +70,9 @@ contract CreateVaultZap is ERC1155Holder {
     IWETH9 public immutable WETH;
     INFTXVaultFactoryV3 public immutable vaultFactory;
     INFTXRouter public immutable nftxRouter;
+    IUniswapV3Factory public immutable ammFactory;
     INFTXInventoryStakingV3 public immutable inventoryStaking;
+    INonfungiblePositionManager internal immutable positionManager;
 
     // =============================================================
     //                            ERRORS
@@ -82,13 +87,16 @@ contract CreateVaultZap is ERC1155Holder {
 
     constructor(
         INFTXRouter nftxRouter_,
+        IUniswapV3Factory ammFactory_,
         INFTXInventoryStakingV3 inventoryStaking_
     ) {
         nftxRouter = nftxRouter_;
+        ammFactory = ammFactory_;
         inventoryStaking = inventoryStaking_;
 
         WETH = inventoryStaking_.WETH();
         vaultFactory = inventoryStaking_.nftxVaultFactory();
+        positionManager = nftxRouter_.positionManager();
     }
 
     // =============================================================
@@ -160,7 +168,30 @@ contract CreateVaultZap is ERC1155Holder {
                     vTokensBalance
                 );
 
-                // TODO: would we be able to determine `isVToken0` off-chain, before executing this txn? because ticks and sqrtPrice depend on the tokens order
+                // calculating ticks corresponding to prices provided
+                bool isVToken0 = address(vault) < address(WETH);
+                (
+                    int24 tickLower,
+                    int24 tickUpper,
+                    uint160 currentSqrtPriceX96
+                ) = _getTicks(
+                        params.liquidityParams.currentNFTPriceInETH,
+                        params.liquidityParams.lowerNFTPriceInETH,
+                        params.liquidityParams.upperNFTPriceInETH,
+                        params.liquidityParams.fee,
+                        isVToken0
+                    );
+
+                (uint256 amount0Min, uint256 amount1Min) = isVToken0
+                    ? (
+                        params.liquidityParams.vTokenMin,
+                        params.liquidityParams.wethMin
+                    )
+                    : (
+                        params.liquidityParams.wethMin,
+                        params.liquidityParams.vTokenMin
+                    );
+
                 uint256[] memory emptyIds;
                 nftxRouter.addLiquidity{value: msg.value}(
                     INFTXRouter.AddLiquidityParams({
@@ -168,10 +199,12 @@ contract CreateVaultZap is ERC1155Holder {
                         vTokensAmount: vTokensBalance,
                         nftIds: emptyIds,
                         nftAmounts: emptyIds,
-                        tickLower: params.liquidityParams.tickLower,
-                        tickUpper: params.liquidityParams.tickUpper,
+                        tickLower: tickLower,
+                        tickUpper: tickUpper,
                         fee: params.liquidityParams.fee,
-                        sqrtPriceX96: params.liquidityParams.sqrtPriceX96,
+                        sqrtPriceX96: currentSqrtPriceX96,
+                        amount0Min: amount0Min,
+                        amount1Min: amount1Min,
                         deadline: params.liquidityParams.deadline
                     })
                 );
@@ -224,6 +257,52 @@ contract CreateVaultZap is ERC1155Holder {
     //                        INTERNAL HELPERS
     // =============================================================
 
+    function _getTicks(
+        uint256 currentNFTPriceInETH,
+        uint256 lowerNFTPriceInETH,
+        uint256 upperNFTPriceInETH,
+        uint24 fee,
+        bool isVToken0
+    )
+        internal
+        view
+        returns (int24 tickLower, int24 tickUpper, uint160 currentSqrtPriceX96)
+    {
+        uint256 tickDistance = uint24(ammFactory.feeAmountTickSpacing(fee));
+        if (isVToken0) {
+            currentSqrtPriceX96 = TickHelpers.encodeSqrtRatioX96(
+                currentNFTPriceInETH,
+                1 ether
+            );
+            // price = amount1 / amount0 = 1.0001^tick => tick ∝ price
+            tickLower = TickHelpers.getTickForAmounts(
+                lowerNFTPriceInETH,
+                1 ether,
+                tickDistance
+            );
+            tickUpper = TickHelpers.getTickForAmounts(
+                upperNFTPriceInETH,
+                1 ether,
+                tickDistance
+            );
+        } else {
+            currentSqrtPriceX96 = TickHelpers.encodeSqrtRatioX96(
+                1 ether,
+                currentNFTPriceInETH
+            );
+            tickLower = TickHelpers.getTickForAmounts(
+                1 ether,
+                upperNFTPriceInETH,
+                tickDistance
+            );
+            tickUpper = TickHelpers.getTickForAmounts(
+                1 ether,
+                lowerNFTPriceInETH,
+                tickDistance
+            );
+        }
+    }
+
     /**
      * @notice Reads a boolean at a set character index of a uint.
      *
@@ -244,7 +323,7 @@ contract CreateVaultZap is ERC1155Holder {
     }
 
     receive() external payable {
-        // NFTXRouter can refund extra ETH
-        require(msg.sender == address(nftxRouter));
+        // Refund extra ETH from positionManger when called via NFTXRouter
+        require(msg.sender == address(positionManager));
     }
 }

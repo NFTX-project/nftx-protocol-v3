@@ -2,7 +2,7 @@
 pragma solidity =0.8.15;
 
 import {console} from "forge-std/Test.sol";
-import {Helpers} from "@test/lib/Helpers.sol";
+import {TickHelpers} from "@src/lib/TickHelpers.sol";
 
 import {INFTXRouter} from "@src/NFTXRouter.sol";
 
@@ -108,6 +108,8 @@ contract NFTXRouterTests is TestBase {
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
                     sqrtPriceX96: _currentSqrtP,
+                    amount0Min: 0,
+                    amount1Min: 0,
                     deadline: block.timestamp
                 })
             );
@@ -191,6 +193,8 @@ contract NFTXRouterTests is TestBase {
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
                     sqrtPriceX96: _currentSqrtP,
+                    amount0Min: 0,
+                    amount1Min: 0,
                     deadline: block.timestamp
                 })
             );
@@ -351,6 +355,8 @@ contract NFTXRouterTests is TestBase {
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
                     sqrtPriceX96: _currentSqrtP,
+                    amount0Min: 0,
+                    amount1Min: 0,
                     deadline: block.timestamp
                 }),
                 encodedPermit2
@@ -441,6 +447,8 @@ contract NFTXRouterTests is TestBase {
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
                     sqrtPriceX96: _currentSqrtP,
+                    amount0Min: 0,
+                    amount1Min: 0,
                     deadline: block.timestamp
                 }),
                 encodedPermit2
@@ -521,6 +529,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: 0,
                 nftIds: tokenIds,
                 nftAmounts: emptyIds,
+                amount0Min: 0,
+                amount1Min: 0,
                 deadline: block.timestamp
             })
         );
@@ -563,6 +573,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: mintedVTokens,
                 nftIds: emptyIds,
                 nftAmounts: emptyIds,
+                amount0Min: 0,
+                amount1Min: 0,
                 deadline: block.timestamp
             })
         );
@@ -610,6 +622,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: mintedVTokens,
                 nftIds: tokenIds,
                 nftAmounts: emptyIds,
+                amount0Min: 0,
+                amount1Min: 0,
                 deadline: block.timestamp
             })
         );
@@ -658,6 +672,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: 0,
                 nftIds: tokenIds,
                 nftAmounts: amounts,
+                amount0Min: 0,
+                amount1Min: 0,
                 deadline: block.timestamp
             })
         );
@@ -708,6 +724,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: mintedVTokens,
                 nftIds: emptyIds,
                 nftAmounts: emptyIds,
+                amount0Min: 0,
+                amount1Min: 0,
                 deadline: block.timestamp
             }),
             encodedPermit2
@@ -763,6 +781,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: mintedVTokens,
                 nftIds: tokenIds,
                 nftAmounts: emptyIds,
+                amount0Min: 0,
+                amount1Min: 0,
                 deadline: block.timestamp
             }),
             encodedPermit2
@@ -1334,26 +1354,32 @@ contract NFTXRouterTests is TestBase {
 
         uint256 tickDistance = _getTickDistance(DEFAULT_FEE_TIER);
         if (nftxRouter.isVToken0(address(vtoken))) {
-            currentSqrtP = Helpers.encodeSqrtRatioX96(currentNFTPrice, 1 ether);
+            currentSqrtP = TickHelpers.encodeSqrtRatioX96(
+                currentNFTPrice,
+                1 ether
+            );
             // price = amount1 / amount0 = 1.0001^tick => tick ∝ price
-            tickLower = Helpers.getTickForAmounts(
+            tickLower = TickHelpers.getTickForAmounts(
                 lowerNFTPrice,
                 1 ether,
                 tickDistance
             );
-            tickUpper = Helpers.getTickForAmounts(
+            tickUpper = TickHelpers.getTickForAmounts(
                 upperNFTPrice,
                 1 ether,
                 tickDistance
             );
         } else {
-            currentSqrtP = Helpers.encodeSqrtRatioX96(1 ether, currentNFTPrice);
-            tickLower = Helpers.getTickForAmounts(
+            currentSqrtP = TickHelpers.encodeSqrtRatioX96(
+                1 ether,
+                currentNFTPrice
+            );
+            tickLower = TickHelpers.getTickForAmounts(
                 1 ether,
                 upperNFTPrice,
                 tickDistance
             );
-            tickUpper = Helpers.getTickForAmounts(
+            tickUpper = TickHelpers.getTickForAmounts(
                 1 ether,
                 lowerNFTPrice,
                 tickDistance

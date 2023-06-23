@@ -2,7 +2,7 @@
 pragma solidity =0.8.15;
 
 import {console} from "forge-std/Test.sol";
-import {Helpers} from "@test/lib/Helpers.sol";
+import {TickHelpers} from "@src/lib/TickHelpers.sol";
 
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -293,26 +293,26 @@ contract MigratorZapTests is TestBase {
         uint256 tickDistance = _getTickDistance(fee);
 
         if (vToken < WETH) {
-            currentSqrtP = Helpers.encodeSqrtRatioX96(currentNFTPrice, 1 ether);
+            currentSqrtP = TickHelpers.encodeSqrtRatioX96(currentNFTPrice, 1 ether);
             // price = amount1 / amount0 = 1.0001^tick => tick ∝ price
-            tickLower = Helpers.getTickForAmounts(
+            tickLower = TickHelpers.getTickForAmounts(
                 lowerNFTPrice,
                 1 ether,
                 tickDistance
             );
-            tickUpper = Helpers.getTickForAmounts(
+            tickUpper = TickHelpers.getTickForAmounts(
                 upperNFTPrice,
                 1 ether,
                 tickDistance
             );
         } else {
-            currentSqrtP = Helpers.encodeSqrtRatioX96(1 ether, currentNFTPrice);
-            tickLower = Helpers.getTickForAmounts(
+            currentSqrtP = TickHelpers.encodeSqrtRatioX96(1 ether, currentNFTPrice);
+            tickLower = TickHelpers.getTickForAmounts(
                 1 ether,
                 upperNFTPrice,
                 tickDistance
             );
-            tickUpper = Helpers.getTickForAmounts(
+            tickUpper = TickHelpers.getTickForAmounts(
                 1 ether,
                 lowerNFTPrice,
                 tickDistance

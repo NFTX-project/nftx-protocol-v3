@@ -476,14 +476,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     //                      INTERNAL / PRIVATE
     // =============================================================
 
-    // to avoid stack too deep
-    struct TempAdd {
-        uint256 amount0Desired;
-        uint256 amount1Desired;
-        uint256 amount0Min;
-        uint256 amount1Min;
-    }
-
     function _addLiquidity(
         AddLiquidityParams calldata params,
         INFTXVaultV3 vToken
@@ -535,18 +527,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         );
 
         // mint position with vtoken and ETH
-        TempAdd memory ta;
-        if (_isVToken0) {
-            ta.amount0Desired = vTokensAmount;
-            // have a 5000 wei buffer to account for any dust amounts
-            ta.amount0Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
-            ta.amount1Desired = msg.value;
-        } else {
-            ta.amount0Desired = msg.value;
-            ta.amount1Desired = vTokensAmount;
-            // have a 5000 wei buffer to account for any dust amounts
-            ta.amount1Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
-        }
+        (uint256 amount0Desired, uint256 amount1Desired) = _isVToken0
+            ? (vTokensAmount, msg.value)
+            : (msg.value, vTokensAmount);
 
         (positionId, , , ) = positionManager.mint{value: msg.value}(
             INonfungiblePositionManager.MintParams({
@@ -555,11 +538,10 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 fee: params.fee,
                 tickLower: params.tickLower,
                 tickUpper: params.tickUpper,
-                amount0Desired: ta.amount0Desired,
-                amount1Desired: ta.amount1Desired,
-                // FIXME: pass amount0Min and amount1Min as params (as the price can fluctuate till this txn is confirmed)
-                amount0Min: ta.amount0Min,
-                amount1Min: ta.amount1Min,
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
                 recipient: msg.sender,
                 deadline: params.deadline
             })
@@ -629,30 +611,17 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
         bool _isVToken0 = isVToken0(address(vToken));
 
-        uint256 amount0Desired;
-        uint256 amount1Desired;
-        uint256 amount0Min;
-        uint256 amount1Min;
-        if (_isVToken0) {
-            amount0Desired = vTokensAmount;
-            // have a 5000 wei buffer to account for any dust amounts
-            amount0Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
-            amount1Desired = msg.value;
-        } else {
-            amount0Desired = msg.value;
-            amount1Desired = vTokensAmount;
-            // have a 5000 wei buffer to account for any dust amounts
-            amount1Min = vTokensAmount > 5000 ? vTokensAmount - 5000 : 0;
-        }
+        (uint256 amount0Desired, uint256 amount1Desired) = _isVToken0
+            ? (vTokensAmount, msg.value)
+            : (msg.value, vTokensAmount);
 
         positionManager.increaseLiquidity{value: msg.value}(
             INonfungiblePositionManager.IncreaseLiquidityParams({
                 tokenId: params.positionId,
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
-                // FIXME: pass amount0Min and amount1Min as params (as the price can fluctuate till this txn is confirmed)
-                amount0Min: amount0Min,
-                amount1Min: amount1Min,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
                 deadline: params.deadline
             })
         );

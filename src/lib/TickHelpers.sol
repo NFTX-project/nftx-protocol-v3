@@ -6,12 +6,11 @@ import {SafeCast} from "@uni-core/libraries/SafeCast.sol";
 import {TickMath} from "@uni-core/libraries/TickMath.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 
-library Helpers {
-    function encodeSqrtRatioX96(uint256 amount1, uint256 amount0)
-        internal
-        pure
-        returns (uint160 sqrtP)
-    {
+library TickHelpers {
+    function encodeSqrtRatioX96(
+        uint256 amount1,
+        uint256 amount0
+    ) internal pure returns (uint160 sqrtP) {
         // sqrtP = sqrt(price) * 2^96
         // = sqrt(amount1 / amount0) * 2^96
         // = sqrt(amount1 * 2^192 / amount0)

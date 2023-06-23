@@ -2,7 +2,7 @@
 pragma solidity =0.8.15;
 
 import {console} from "forge-std/Test.sol";
-import {Helpers} from "@test/lib/Helpers.sol";
+import {TickHelpers} from "@src/lib/TickHelpers.sol";
 
 import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolUpgradeable.sol";
 import {INFTXRouter} from "@src/NFTXRouter.sol";
@@ -98,7 +98,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
             address(vtoken) < address(weth) ? address(vtoken) : address(weth),
             address(vtoken) < address(weth) ? address(weth) : address(vtoken),
             feeDistributor.REWARD_FEE_TIER(),
-            Helpers.encodeSqrtRatioX96(5 ether, 1 ether)
+            TickHelpers.encodeSqrtRatioX96(5 ether, 1 ether)
         );
 
         (address pool, bool exists) = nftxRouter.getPoolExists(

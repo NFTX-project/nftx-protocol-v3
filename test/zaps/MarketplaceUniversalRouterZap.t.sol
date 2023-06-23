@@ -2,7 +2,7 @@
 pragma solidity =0.8.15;
 
 import {console, stdError} from "forge-std/Test.sol";
-import {Helpers} from "@test/lib/Helpers.sol";
+import {TickHelpers} from "@src/lib/TickHelpers.sol";
 
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
@@ -467,32 +467,32 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         uint256 tickDistance = _getTickDistance(DEFAULT_FEE_TIER);
 
         if (nftxRouter.isVToken0(address(token))) {
-            currentSqrtP = Helpers.encodeSqrtRatioX96(
+            currentSqrtP = TickHelpers.encodeSqrtRatioX96(
                 currentTokenPrice,
                 1 ether
             );
             // price = amount1 / amount0 = 1.0001^tick => tick ∝ price
-            tickLower = Helpers.getTickForAmounts(
+            tickLower = TickHelpers.getTickForAmounts(
                 lowerTokenPrice,
                 1 ether,
                 tickDistance
             );
-            tickUpper = Helpers.getTickForAmounts(
+            tickUpper = TickHelpers.getTickForAmounts(
                 upperTokenPrice,
                 1 ether,
                 tickDistance
             );
         } else {
-            currentSqrtP = Helpers.encodeSqrtRatioX96(
+            currentSqrtP = TickHelpers.encodeSqrtRatioX96(
                 1 ether,
                 currentTokenPrice
             );
-            tickLower = Helpers.getTickForAmounts(
+            tickLower = TickHelpers.getTickForAmounts(
                 1 ether,
                 upperTokenPrice,
                 tickDistance
             );
-            tickUpper = Helpers.getTickForAmounts(
+            tickUpper = TickHelpers.getTickForAmounts(
                 1 ether,
                 lowerTokenPrice,
                 tickDistance
@@ -511,6 +511,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
                 tickUpper: tickUpper,
                 fee: DEFAULT_FEE_TIER,
                 sqrtPriceX96: currentSqrtP,
+                amount0Min: 0,
+                amount1Min: 0,
                 deadline: block.timestamp
             })
         );

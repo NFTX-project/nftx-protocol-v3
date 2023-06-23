@@ -74,6 +74,8 @@ interface INFTXRouter {
         int24 tickUpper;
         uint24 fee;
         uint160 sqrtPriceX96;
+        uint256 amount0Min;
+        uint256 amount1Min;
         uint256 deadline;
     }
 
@@ -92,6 +94,8 @@ interface INFTXRouter {
         uint256 vTokensAmount; // user can provide just vTokens or NFTs or both
         uint256[] nftIds;
         uint256[] nftAmounts; // for ERC1155, ignored for ERC721
+        uint256 amount0Min;
+        uint256 amount1Min;
         uint256 deadline;
     }
 
