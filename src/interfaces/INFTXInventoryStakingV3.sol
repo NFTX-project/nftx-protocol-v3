@@ -185,4 +185,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     function pricePerShareVToken(
         uint256 vaultId
     ) external view returns (uint256);
+
+    function wethBalance(uint256 positionId) external view returns(uint256);
 }

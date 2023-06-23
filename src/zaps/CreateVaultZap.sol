@@ -35,7 +35,6 @@ contract CreateVaultZap is ERC1155Holder {
         bytes initData;
     }
 
-    // TODO: check if passing 9-decimal value, then converting to 18-decimal cheaper
     struct VaultFees {
         uint256 mintFee;
         uint256 redeemFee;

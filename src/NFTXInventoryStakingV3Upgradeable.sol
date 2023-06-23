@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity =0.8.15;
 
 import {ERC721PermitUpgradeable, ERC721Upgradeable} from "@src/custom/tokens/ERC721/ERC721PermitUpgradeable.sol";
@@ -448,13 +448,27 @@ contract NFTXInventoryStakingV3Upgradeable is
 
     function pricePerShareVToken(
         uint256 vaultId
-    ) external view returns (uint256) {
+    ) external view override returns (uint256) {
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
         address vToken = nftxVaultFactory.vault(vaultId);
 
         return
             (IERC20(vToken).balanceOf(address(this)) * 1 ether) /
             _vaultGlobal.totalVTokenShares;
+    }
+
+    function wethBalance(
+        uint256 positionId
+    ) external view override returns (uint256) {
+        Position memory position = positions[positionId];
+        VaultGlobal memory _vaultGlobal = vaultGlobal[position.vaultId];
+
+        return
+            _calcWethOwed(
+                _vaultGlobal.globalWethFeesPerVTokenShareX128,
+                position.wethFeesPerVTokenShareSnapshotX128,
+                position.vTokenShareBalance
+            ) + position.wethOwed;
     }
 
     function supportsInterface(

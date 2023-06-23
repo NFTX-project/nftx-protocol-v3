@@ -242,8 +242,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         }
         // convert remaining WETH to ETH & send to user
         IWETH9(WETH).withdraw(wethAmt);
-        (bool success, ) = msg.sender.call{value: wethAmt}("");
-        if (!success) revert UnableToSendETH();
+        TransferLib.transferETH(msg.sender, wethAmt);
 
         emit RemoveLiquidity(
             params.positionId,
@@ -321,8 +320,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
         // convert remaining WETH to ETH & send to user
         IWETH9(WETH).withdraw(wethRemaining);
-        (bool success, ) = msg.sender.call{value: wethRemaining}("");
-        if (!success) revert UnableToSendETH();
+        TransferLib.transferETH(msg.sender, wethRemaining);
 
         emit SellNFTs(params.nftIds.length, wethRemaining);
     }
@@ -363,8 +361,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         if (wethLeft > 0) {
             IWETH9(WETH).withdraw(wethLeft);
 
-            (bool success, ) = msg.sender.call{value: wethLeft}("");
-            if (!success) revert UnableToSendETH();
+            TransferLib.transferETH(msg.sender, wethLeft);
         }
 
         emit BuyNFTs(params.nftIds.length, wethSpent + wethFees);
@@ -383,9 +380,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             token.safeTransfer(msg.sender, balance);
         } else {
             uint256 balance = address(this).balance;
-            // TODO: move ETH transfer logic in the TransferLib
-            (bool success, ) = msg.sender.call{value: balance}("");
-            if (!success) revert UnableToSendETH();
+            TransferLib.transferETH(msg.sender, balance);
         }
     }
 
