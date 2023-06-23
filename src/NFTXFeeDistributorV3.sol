@@ -10,6 +10,7 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";
+import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 
@@ -33,14 +34,15 @@ contract NFTXFeeDistributorV3 is
     // =============================================================
 
     INFTXVaultFactoryV3 public immutable override nftxVaultFactory;
+    IUniswapV3Factory public immutable override ammFactory;
     INFTXInventoryStakingV3 public immutable override inventoryStaking;
     IERC20 public immutable override WETH;
-    uint24 public constant override REWARD_FEE_TIER = 10_000;
 
     // =============================================================
     //                            STORAGE
     // =============================================================
 
+    uint24 public override rewardFeeTier;
     INFTXRouter public override nftxRouter;
     address public override treasury;
 
@@ -56,15 +58,19 @@ contract NFTXFeeDistributorV3 is
 
     constructor(
         INFTXVaultFactoryV3 nftxVaultFactory_,
+        IUniswapV3Factory ammFactory_,
         INFTXInventoryStakingV3 inventoryStaking_,
         INFTXRouter nftxRouter_,
         address treasury_
     ) {
         nftxVaultFactory = nftxVaultFactory_;
+        ammFactory = ammFactory_;
         inventoryStaking = inventoryStaking_;
         WETH = IERC20(nftxRouter_.WETH());
         nftxRouter = nftxRouter_;
         treasury = treasury_;
+
+        rewardFeeTier = 10_000;
 
         // set 80% allocation to liquidity providers
         _addReceiver(address(0), 0.8 ether, ReceiverType.POOL);
@@ -163,6 +169,20 @@ contract NFTXFeeDistributorV3 is
         feeReceivers.pop();
     }
 
+    /**
+     * @notice Updating reward fee tier here won't change cardinality for existing UniV3 pools already deployed with new `rewardFeeTier_`. That has to be increased externally for each pool.
+     * If the new rewardFeeTier pool doesn't exist for a vToken, then the corresponding vault fees would immediately become 0, till liquidity is provided in the new pool.
+     * @param rewardFeeTier_ New reward fee tier
+     */
+    function changeRewardFeeTier(
+        uint24 rewardFeeTier_
+    ) external override onlyOwner {
+        // check if feeTier enabled
+        require(ammFactory.feeAmountTickSpacing(rewardFeeTier_) > 0);
+
+        rewardFeeTier = rewardFeeTier_;
+    }
+
     function setTreasuryAddress(address treasury_) external override onlyOwner {
         if (treasury_ == address(0)) revert AddressIsZero();
 
@@ -224,7 +244,7 @@ contract NFTXFeeDistributorV3 is
         } else if (feeReceiver.receiverType == ReceiverType.POOL) {
             (address pool, bool exists) = nftxRouter.getPoolExists(
                 vaultId,
-                REWARD_FEE_TIER
+                rewardFeeTier
             );
 
             if (exists) {

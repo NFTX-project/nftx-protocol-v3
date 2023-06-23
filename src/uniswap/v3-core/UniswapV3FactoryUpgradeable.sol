@@ -63,7 +63,7 @@ contract UniswapV3FactoryUpgradeable is
             token1,
             fee,
             tickSpacing,
-            INFTXFeeDistributorV3(feeDistributor).REWARD_FEE_TIER() == fee
+            INFTXFeeDistributorV3(feeDistributor).rewardFeeTier() == fee
                 ? rewardTierCardinality
                 : 1
         );

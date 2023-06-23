@@ -97,13 +97,13 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         positionManager.createAndInitializePoolIfNecessary(
             address(vtoken) < address(weth) ? address(vtoken) : address(weth),
             address(vtoken) < address(weth) ? address(weth) : address(vtoken),
-            feeDistributor.REWARD_FEE_TIER(),
+            feeDistributor.rewardFeeTier(),
             TickHelpers.encodeSqrtRatioX96(5 ether, 1 ether)
         );
 
         (address pool, bool exists) = nftxRouter.getPoolExists(
             0,
-            feeDistributor.REWARD_FEE_TIER()
+            feeDistributor.rewardFeeTier()
         );
         uint256 liquidity = IUniswapV3Pool(pool).liquidity();
         assertTrue(exists);

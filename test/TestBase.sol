@@ -138,6 +138,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         feeDistributor = new NFTXFeeDistributorV3(
             vaultFactory,
+            factory,
             inventoryStaking,
             nftxRouter,
             TREASURY

@@ -3,6 +3,7 @@ pragma solidity =0.8.15;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
+import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 
@@ -25,15 +26,17 @@ interface INFTXFeeDistributorV3 {
 
     function nftxVaultFactory() external view returns (INFTXVaultFactoryV3);
 
+    function ammFactory() external view returns (IUniswapV3Factory);
+
     function inventoryStaking() external view returns (INFTXInventoryStakingV3);
 
     function WETH() external view returns (IERC20);
 
-    function REWARD_FEE_TIER() external view returns (uint24);
-
     // =============================================================
     //                            STORAGE
     // =============================================================
+
+    function rewardFeeTier() external view returns (uint24);
 
     function nftxRouter() external view returns (INFTXRouter);
 
@@ -101,6 +104,8 @@ interface INFTXFeeDistributorV3 {
     ) external;
 
     function removeReceiver(uint256 receiverId) external;
+
+    function changeRewardFeeTier(uint24 rewardFeeTier_) external;
 
     function setTreasuryAddress(address treasury_) external;
 

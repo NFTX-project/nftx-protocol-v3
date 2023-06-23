@@ -912,7 +912,7 @@ contract NFTXVaultUpgradeableV3 is
 
         (address pool, bool exists) = nftxRouter.getPoolExists(
             address(this),
-            feeDistributor.REWARD_FEE_TIER()
+            feeDistributor.rewardFeeTier()
         );
         if (!exists) {
             return (0, feeDistributor);
