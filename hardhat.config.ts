@@ -77,9 +77,9 @@ const config: HardhatUserConfig = {
       "src/uniswap/v3-core/UniswapV3PoolDeployerUpgradeable.sol":
         UNICORE_OPTIMIZER_COMPILER_SETTINGS,
       "src/uniswap/v3-periphery/NonfungiblePositionManager.sol":
-        LOW_OPTIMIZER_COMPILER_SETTINGS,
+        LOWEST_OPTIMIZER_COMPILER_SETTINGS,
       "src/uniswap/v3-periphery/test/MockTimeNonfungiblePositionManager.sol":
-        LOW_OPTIMIZER_COMPILER_SETTINGS,
+        LOWEST_OPTIMIZER_COMPILER_SETTINGS,
       "src/uniswap/v3-periphery/test/NFTDescriptorTest.sol":
         LOWEST_OPTIMIZER_COMPILER_SETTINGS,
       "src/uniswap/v3-periphery/NonfungibleTokenPositionDescriptor.sol":
@@ -88,7 +88,7 @@ const config: HardhatUserConfig = {
         LOWEST_OPTIMIZER_COMPILER_SETTINGS,
       "src/uniswap/v3-periphery/libraries/NFTSVG.sol":
         LOWEST_OPTIMIZER_COMPILER_SETTINGS,
-      "src/NFTXVaultUpgradeableV3.sol": UNICORE_OPTIMIZER_COMPILER_SETTINGS
+      "src/NFTXVaultUpgradeableV3.sol": UNICORE_OPTIMIZER_COMPILER_SETTINGS,
     },
   },
   namedAccounts: {
