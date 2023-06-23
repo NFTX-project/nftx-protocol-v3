@@ -361,7 +361,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             amounts,
             ""
         );
-        // TODO: if already approved then might need to call this?
+
         IERC1155(assetAddress).setApprovalForAll(vault, true);
 
         uint256 totalAmount = _validate1155Ids(idsIn, amounts);

@@ -109,6 +109,8 @@ interface INFTXFeeDistributorV3 {
 
     function setTreasuryAddress(address treasury_) external;
 
+    function setNFTXRouter(INFTXRouter nftxRouter_) external;
+
     function pauseFeeDistribution(bool pause) external;
 
     function rescueTokens(IERC20 token) external;

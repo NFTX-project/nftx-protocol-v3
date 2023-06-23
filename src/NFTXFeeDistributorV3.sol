@@ -190,7 +190,11 @@ contract NFTXFeeDistributorV3 is
         emit UpdateTreasuryAddress(treasury_);
     }
 
-    // TODO: add function to change NFTXRouter address
+    function setNFTXRouter(
+        INFTXRouter nftxRouter_
+    ) external override onlyOwner {
+        nftxRouter = nftxRouter_;
+    }
 
     function pauseFeeDistribution(bool pause) external override onlyOwner {
         distributionPaused = pause;

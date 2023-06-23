@@ -469,6 +469,28 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         assertEq(postTreasury, newTreasury);
     }
 
+    // FeeDistributor#setNFTXRouter
+
+    function test_setNFTXRouter_RevertsForNonOwner() external {
+        address newNFTXRouter = makeAddr("newNFTXRouter");
+
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert("Ownable: caller is not the owner");
+        feeDistributor.setNFTXRouter(INFTXRouter(newNFTXRouter));
+    }
+
+    function test_setNFTXRouter_Success() external {
+        address newNFTXRouter = makeAddr("newNFTXRouter");
+
+        address preNFTXRouter = address(feeDistributor.nftxRouter());
+        assertTrue(preNFTXRouter != newNFTXRouter);
+
+        feeDistributor.setNFTXRouter(INFTXRouter(newNFTXRouter));
+
+        address postNFTXRouter = address(feeDistributor.nftxRouter());
+        assertEq(postNFTXRouter, newNFTXRouter);
+    }
+
     // FeeDistributor#pauseFeeDistribution
 
     function test_pauseFeeDistribution_RevertsForNonOwner() external {
