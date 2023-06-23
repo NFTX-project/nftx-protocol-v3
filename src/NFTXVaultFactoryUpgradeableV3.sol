@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
 import {UpgradeableBeacon} from "@src/custom/proxy/UpgradeableBeacon.sol";
 import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
+
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
+import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IUniswapV3PoolDerivedState} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol";
 
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {NFTXVaultUpgradeableV3} from "@src/NFTXVaultUpgradeableV3.sol";
@@ -231,6 +236,79 @@ contract NFTXVaultFactoryUpgradeableV3 is
 
     function vault(uint256 vaultId) external view override returns (address) {
         return _vaults[vaultId];
+    }
+
+    function getTwapX96(
+        address pool
+    ) external view override returns (uint256 priceX96) {
+        // secondsAgos[0] (from [before]) -> secondsAgos[1] (to [now])
+        uint32[] memory secondsAgos = new uint32[](2);
+        secondsAgos[0] = twapInterval;
+        secondsAgos[1] = 0;
+
+        (bool success, bytes memory data) = pool.staticcall(
+            abi.encodeWithSelector(
+                IUniswapV3PoolDerivedState.observe.selector,
+                secondsAgos
+            )
+        );
+
+        // observe might fail for newly created pools that don't have sufficient observations yet
+        if (!success) {
+            if (
+                keccak256(data) !=
+                keccak256(abi.encodeWithSignature("Error(string)", "OLD"))
+            ) {
+                return 0;
+            }
+
+            // observations = [0, 1, 2, ..., index, (index + 1), ..., (cardinality - 1)]
+            // Case 1: if entire array initialized once, then oldest observation at (index + 1) % cardinality
+            // Case 2: array only initialized till index, then oldest obseravtion at index 0
+
+            // Check Case 1
+            (, , uint16 index, uint16 cardinality, , , ) = IUniswapV3Pool(pool)
+                .slot0();
+
+            (
+                uint32 oldestAvailableTimestamp,
+                ,
+                ,
+                bool initialized
+            ) = IUniswapV3Pool(pool).observations((index + 1) % cardinality);
+
+            // Case 2
+            if (!initialized)
+                (oldestAvailableTimestamp, , , ) = IUniswapV3Pool(pool)
+                    .observations(0);
+
+            // get corresponding observation
+            secondsAgos[0] = uint32(block.timestamp - oldestAvailableTimestamp);
+            (success, data) = pool.staticcall(
+                abi.encodeWithSelector(
+                    IUniswapV3PoolDerivedState.observe.selector,
+                    secondsAgos
+                )
+            );
+            // might revert if oldestAvailableTimestamp == block.timestamp, so we return price as 0
+            if (!success) {
+                return 0;
+            }
+        }
+
+        int56[] memory tickCumulatives = abi.decode(data, (int56[])); // don't bother decoding the liquidityCumulatives array
+
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(
+            int24(
+                (tickCumulatives[1] - tickCumulatives[0]) /
+                    int56(int32(secondsAgos[0]))
+            )
+        );
+        priceX96 = FullMath.mulDiv(
+            sqrtPriceX96,
+            sqrtPriceX96,
+            FixedPoint96.Q96
+        );
     }
 
     // =============================================================

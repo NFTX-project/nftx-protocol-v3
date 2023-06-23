@@ -176,23 +176,11 @@ interface INFTXVaultV3 is IERC20Upgradeable {
 
     function mint(
         uint256[] calldata tokenIds,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external payable returns (uint256 vTokensMinted);
-
-    function mintTo(
-        uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         address to
     ) external payable returns (uint256 vTokensMinted);
 
-    // TODO: add wethAmount option to other functions as well?
     function redeem(
-        uint256[] calldata specificIds,
-        uint256 wethAmount, // if vault fees should be deducted in WETH instead of ETH (msg.value should be 0 here)
-        bool forceFees // deduct fees even if on the exclude list
-    ) external payable returns (uint256 ethFees);
-
-    function redeemTo(
         uint256[] calldata specificIds,
         address to,
         uint256 wethAmount, // if vault fees should be deducted in WETH instead of ETH (msg.value should be 0 here)
@@ -200,13 +188,6 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     ) external payable returns (uint256 ethFees);
 
     function swap(
-        uint256[] calldata tokenIds,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */,
-        uint256[] calldata specificIds,
-        bool forceFees // deduct fees even if on the exclude list
-    ) external payable returns (uint256 ethFees);
-
-    function swapTo(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata specificIds,

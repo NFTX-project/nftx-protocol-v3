@@ -27,7 +27,11 @@ contract NFTXVaultTests is TestBase {
         uint256[] memory amounts = new uint256[](0);
 
         // double ETH value here to check if refund working as well
-        vtoken.mint{value: expectedETHPaid * 2}(tokenIds, amounts);
+        vtoken.mint{value: expectedETHPaid * 2}(
+            tokenIds,
+            amounts,
+            address(this)
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         assertGt(ethPaid, expectedETHPaid);
@@ -57,7 +61,11 @@ contract NFTXVaultTests is TestBase {
         uint256[] memory amounts = new uint256[](0);
 
         // double ETH value here to check if refund working as well
-        vtoken.mint{value: expectedETHPaid * 2}(tokenIds, amounts);
+        vtoken.mint{value: expectedETHPaid * 2}(
+            tokenIds,
+            amounts,
+            address(this)
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         assertEq(ethPaid, 0);
@@ -95,7 +103,11 @@ contract NFTXVaultTests is TestBase {
         );
 
         // double ETH value here to check if refund working as well
-        vtoken1155.mint{value: expectedETHPaid * 2}(tokenIds, amounts);
+        vtoken1155.mint{value: expectedETHPaid * 2}(
+            tokenIds,
+            amounts,
+            address(this)
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         assertGt(ethPaid, expectedETHPaid);
@@ -137,7 +149,12 @@ contract NFTXVaultTests is TestBase {
         uint256 prevETHBal = address(this).balance;
 
         // double ETH value here to check if refund working as well
-        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds, 0, false);
+        vtoken.redeem{value: expectedETHPaid * 2}(
+            tokenIds,
+            address(this),
+            0,
+            false
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with No Premium", ethPaid);
@@ -156,7 +173,10 @@ contract NFTXVaultTests is TestBase {
         // have a separate depositor address that receives share of premium
         address depositor = makeAddr("depositor");
         startHoax(depositor);
-        (uint256 mintedVTokens, uint256[] memory tokenIds) = _mintVToken(qty);
+        (uint256 mintedVTokens, uint256[] memory tokenIds) = _mintVToken(
+            qty,
+            depositor
+        );
         vtoken.transfer(address(this), mintedVTokens);
         vm.stopPrank();
 
@@ -172,7 +192,12 @@ contract NFTXVaultTests is TestBase {
         uint256 prevDepositorBal = weth.balanceOf(depositor);
 
         // double ETH value here to check if refund working as well
-        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds, 0, false);
+        vtoken.redeem{value: expectedETHPaid * 2}(
+            tokenIds,
+            address(this),
+            0,
+            false
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         uint256 ethDepositorReceived = weth.balanceOf(depositor) -
@@ -208,7 +233,12 @@ contract NFTXVaultTests is TestBase {
         uint256 prevETHBal = address(this).balance;
 
         // double ETH value here to check if refund working as well
-        vtoken.redeem{value: expectedETHPaid * 2}(tokenIds, 0, false);
+        vtoken.redeem{value: expectedETHPaid * 2}(
+            tokenIds,
+            address(this),
+            0,
+            false
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with Premium", ethPaid);
@@ -241,7 +271,12 @@ contract NFTXVaultTests is TestBase {
         uint256 prevPointerIndex = vtoken1155.pointerIndex1155(tokenIds[0]);
 
         // double ETH value here to check if refund working as well
-        vtoken1155.redeem{value: expectedETHPaid * 2}(tokenIds, 0, false);
+        vtoken1155.redeem{value: expectedETHPaid * 2}(
+            tokenIds,
+            address(this),
+            0,
+            false
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         console.log("ethPaid with No Premium", ethPaid);
@@ -275,7 +310,10 @@ contract NFTXVaultTests is TestBase {
         // have a separate depositor address that receives share of premium
         rd.depositor = makeAddr("depositor");
         startHoax(rd.depositor);
-        (rd.mintedVTokens, rd._tokenIds) = _mintVTokenFor1155(rd.qty);
+        (rd.mintedVTokens, rd._tokenIds) = _mintVTokenFor1155(
+            rd.qty,
+            rd.depositor
+        );
 
         vtoken1155.transfer(address(this), rd.mintedVTokens);
         vm.stopPrank();
@@ -304,7 +342,12 @@ contract NFTXVaultTests is TestBase {
         uint256 prevPointerIndex = vtoken1155.pointerIndex1155(rd.tokenIds[0]);
 
         // double ETH value here to check if refund working as well
-        vtoken1155.redeem{value: expectedETHPaid * 2}(rd.tokenIds, 0, false);
+        vtoken1155.redeem{value: expectedETHPaid * 2}(
+            rd.tokenIds,
+            address(this),
+            0,
+            false
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         uint256 ethDepositorReceived = weth.balanceOf(rd.depositor) -
@@ -352,6 +395,7 @@ contract NFTXVaultTests is TestBase {
             tokenIds,
             amounts,
             specificIds,
+            address(this),
             false
         );
 
@@ -396,6 +440,7 @@ contract NFTXVaultTests is TestBase {
             tokenIds,
             amounts,
             specificIds,
+            address(this),
             false
         );
 
@@ -441,6 +486,7 @@ contract NFTXVaultTests is TestBase {
             tokenIds,
             amounts,
             specificIds,
+            address(this),
             false
         );
 
@@ -480,6 +526,7 @@ contract NFTXVaultTests is TestBase {
             tokenIds,
             amounts,
             specificIds,
+            address(this),
             false
         );
 

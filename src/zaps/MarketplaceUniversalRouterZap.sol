@@ -165,7 +165,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // Swap our tokens. Forcing to deduct vault fees
         uint256[] memory emptyIds;
-        uint256 ethFees = INFTXVaultV3(vault).swapTo{value: msg.value}(
+        uint256 ethFees = INFTXVaultV3(vault).swap{value: msg.value}(
             idsIn,
             emptyIds,
             idsOut,
@@ -209,7 +209,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // redeem NFTs
         TransferLib.unSafeMaxApprove(address(WETH), vault, wethLeft);
-        uint256 wethFees = INFTXVaultV3(vault).redeemTo(
+        uint256 wethFees = INFTXVaultV3(vault).redeem(
             idsOut,
             to,
             wethLeft,
@@ -367,7 +367,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256 totalAmount = _validate1155Ids(idsIn, amounts);
 
         // Swap our tokens. Forcing to deduct vault fees
-        uint256 ethFees = INFTXVaultV3(vault).swapTo{value: msg.value}(
+        uint256 ethFees = INFTXVaultV3(vault).swap{value: msg.value}(
             idsIn,
             amounts,
             idsOut,
@@ -439,7 +439,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // redeem NFTs
         TransferLib.unSafeMaxApprove(address(WETH), vault, wethLeft);
-        uint256 wethFees = INFTXVaultV3(vault).redeemTo(
+        uint256 wethFees = INFTXVaultV3(vault).redeem(
             params.idsOut,
             params.to,
             wethLeft,
@@ -479,7 +479,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // Mint our tokens from the vault to this contract
         uint256[] memory emptyIds;
-        INFTXVaultV3(vault).mint(ids, emptyIds);
+        INFTXVaultV3(vault).mint(ids, emptyIds, address(this));
     }
 
     function _mint1155(
@@ -500,7 +500,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         IERC1155(assetAddress).setApprovalForAll(vault, true);
 
         // Mint our tokens from the vault to this contract
-        INFTXVaultV3(vault).mint(ids, amounts);
+        INFTXVaultV3(vault).mint(ids, amounts, address(this));
     }
 
     function _validate1155Ids(

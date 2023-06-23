@@ -223,7 +223,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
             // burn vTokens to provided tokenIds array. Forcing to deduct vault fees
             TransferLib.unSafeMaxApprove(WETH, address(vToken), wethAmt);
-            uint256 wethFees = vToken.redeemTo(
+            uint256 wethFees = vToken.redeem(
                 params.nftIds,
                 msg.sender,
                 wethAmt,
@@ -284,7 +284,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         }
 
         // mint vToken
-        uint256 vTokensAmount = vToken.mint(params.nftIds, params.nftAmounts);
+        uint256 vTokensAmount = vToken.mint(
+            params.nftIds,
+            params.nftAmounts,
+            address(this)
+        );
 
         TransferLib.unSafeMaxApprove(
             address(vToken),
@@ -347,7 +351,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         // unwrap vTokens to tokenIds specified, and send to sender. Forcing to deduct vault fees
         uint256 wethLeft = msg.value - wethSpent;
         TransferLib.unSafeMaxApprove(WETH, address(vToken), wethLeft);
-        uint256 wethFees = vToken.redeemTo(
+        uint256 wethFees = vToken.redeem(
             params.nftIds,
             msg.sender,
             wethLeft,
@@ -505,7 +509,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
 
             // vault won't charge mintFees here as this contract is on exclude list
-            vTokensAmount += vToken.mint(params.nftIds, params.nftAmounts);
+            vTokensAmount += vToken.mint(
+                params.nftIds,
+                params.nftAmounts,
+                address(this)
+            );
         }
 
         TransferLib.unSafeMaxApprove(
@@ -600,7 +608,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
 
             // vault won't charge mintFees here as this contract is on exclude list
-            vTokensAmount += vToken.mint(params.nftIds, params.nftAmounts);
+            vTokensAmount += vToken.mint(
+                params.nftIds,
+                params.nftAmounts,
+                address(this)
+            );
         }
 
         TransferLib.unSafeMaxApprove(

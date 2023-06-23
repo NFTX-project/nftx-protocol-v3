@@ -202,7 +202,11 @@ contract NFTXInventoryStakingV3Upgradeable is
             }
 
             // mint vTokens
-            amount = INFTXVaultV3(vToken).mint(tokenIds, amounts);
+            amount = INFTXVaultV3(vToken).mint(
+                tokenIds,
+                amounts,
+                address(this)
+            );
         }
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
@@ -293,7 +297,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             if (vTokenOwed < requiredVTokens) revert InsufficientVTokens();
 
             address vault = nftxVaultFactory.vault(vaultId);
-            INFTXVaultV3(vault).redeemTo(nftIds, msg.sender, 0, false);
+            INFTXVaultV3(vault).redeem(nftIds, msg.sender, 0, false);
 
             // send vToken residue
             uint256 vTokenResidue = vTokenOwed - requiredVTokens;

@@ -7,7 +7,6 @@ import {ERC1155HolderUpgradeable} from "@openzeppelin-upgradeable/contracts/toke
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {ERC20FlashMintUpgradeable, IERC3156FlashBorrowerUpgradeable} from "@src/custom/tokens/ERC20/ERC20FlashMintUpgradeable.sol";
 
-import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
@@ -25,7 +24,6 @@ import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {IERC1155Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {INFTXEligibilityManager} from "@src/interfaces/INFTXEligibilityManager.sol";
-import {IUniswapV3PoolDerivedState} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol";
 
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 
@@ -48,8 +46,9 @@ contract NFTXVaultUpgradeableV3 is
 
     uint256 constant BASE = 10 ** 18;
     IWETH9 public immutable override WETH;
-    address CRYPTO_PUNKS = 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
-    address CRYPTO_KITTIES = 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
+    address constant CRYPTO_PUNKS = 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
+    address constant CRYPTO_KITTIES =
+        0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
 
     // only set during initialization
 
@@ -133,14 +132,6 @@ contract NFTXVaultUpgradeableV3 is
     // TODO: add NATSPEC
     function mint(
         uint256[] calldata tokenIds,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */
-    ) external payable override returns (uint256 vTokensMinted) {
-        return mintTo(tokenIds, amounts, msg.sender);
-    }
-
-    // TODO: add NATSPEC
-    function mintTo(
-        uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         address to
     ) public payable override nonReentrant returns (uint256 vTokensMinted) {
@@ -165,15 +156,6 @@ contract NFTXVaultUpgradeableV3 is
 
     // TODO: add NATSPEC
     function redeem(
-        uint256[] calldata idsOut,
-        uint256 wethAmount,
-        bool forceFees
-    ) external payable override returns (uint256 ethFees) {
-        return redeemTo(idsOut, msg.sender, wethAmount, forceFees);
-    }
-
-    // TODO: add NATSPEC
-    function redeemTo(
         uint256[] calldata idsOut,
         address to,
         uint256 wethAmount,
@@ -224,16 +206,6 @@ contract NFTXVaultUpgradeableV3 is
 
     // TODO: add NATSPEC
     function swap(
-        uint256[] calldata idsIn,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */,
-        uint256[] calldata idsOut,
-        bool forceFees
-    ) external payable override returns (uint256 ethFees) {
-        return swapTo(idsIn, amounts, idsOut, msg.sender, forceFees);
-    }
-
-    // TODO: add NATSPEC
-    function swapTo(
         uint256[] calldata idsIn,
         uint256[] calldata amounts /* ignored for ERC721 vaults */,
         uint256[] calldata idsOut,
@@ -826,79 +798,6 @@ contract NFTXVaultUpgradeableV3 is
         }
     }
 
-    function _getTwapX96(
-        address pool
-    ) internal view returns (uint256 priceX96) {
-        // secondsAgos[0] (from [before]) -> secondsAgos[1] (to [now])
-        uint32[] memory secondsAgos = new uint32[](2);
-        secondsAgos[0] = vaultFactory.twapInterval();
-        secondsAgos[1] = 0;
-
-        (bool success, bytes memory data) = pool.staticcall(
-            abi.encodeWithSelector(
-                IUniswapV3PoolDerivedState.observe.selector,
-                secondsAgos
-            )
-        );
-
-        // observe might fail for newly created pools that don't have sufficient observations yet
-        if (!success) {
-            if (
-                keccak256(data) !=
-                keccak256(abi.encodeWithSignature("Error(string)", "OLD"))
-            ) {
-                return 0;
-            }
-
-            // observations = [0, 1, 2, ..., index, (index + 1), ..., (cardinality - 1)]
-            // Case 1: if entire array initialized once, then oldest observation at (index + 1) % cardinality
-            // Case 2: array only initialized till index, then oldest obseravtion at index 0
-
-            // Check Case 1
-            (, , uint16 index, uint16 cardinality, , , ) = IUniswapV3Pool(pool)
-                .slot0();
-
-            (
-                uint32 oldestAvailableTimestamp,
-                ,
-                ,
-                bool initialized
-            ) = IUniswapV3Pool(pool).observations((index + 1) % cardinality);
-
-            // Case 2
-            if (!initialized)
-                (oldestAvailableTimestamp, , , ) = IUniswapV3Pool(pool)
-                    .observations(0);
-
-            // get corresponding observation
-            secondsAgos[0] = uint32(block.timestamp - oldestAvailableTimestamp);
-            (success, data) = pool.staticcall(
-                abi.encodeWithSelector(
-                    IUniswapV3PoolDerivedState.observe.selector,
-                    secondsAgos
-                )
-            );
-            // might revert if oldestAvailableTimestamp == block.timestamp, so we return price as 0
-            if (!success) {
-                return 0;
-            }
-        }
-
-        int56[] memory tickCumulatives = abi.decode(data, (int56[])); // don't bother decoding the liquidityCumulatives array
-
-        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(
-            int24(
-                (tickCumulatives[1] - tickCumulatives[0]) /
-                    int56(int32(secondsAgos[0]))
-            )
-        );
-        priceX96 = FullMath.mulDiv(
-            sqrtPriceX96,
-            sqrtPriceX96,
-            FixedPoint96.Q96
-        );
-    }
-
     function _vTokenToETH(
         INFTXVaultFactoryV3 _vaultFactory,
         uint256 vTokenAmount
@@ -920,7 +819,7 @@ contract NFTXVaultUpgradeableV3 is
 
         // price = amount1 / amount0
         // priceX96 = price * 2^96
-        uint256 priceX96 = _getTwapX96(pool);
+        uint256 priceX96 = vaultFactory.getTwapX96(pool);
         if (priceX96 == 0) return (0, feeDistributor);
 
         bool isVToken0 = nftxRouter.isVToken0(address(this));
