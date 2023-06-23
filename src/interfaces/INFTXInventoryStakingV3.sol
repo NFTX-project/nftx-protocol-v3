@@ -35,6 +35,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     //                           CONSTANTS
     // =============================================================
 
+    function MINIMUM_LIQUIDITY() external view returns (uint256);
+
     function nftxVaultFactory() external view returns (INFTXVaultFactoryV3);
 
     function timelockExcludeList() external view returns (ITimelockExcludeList);
@@ -186,5 +188,5 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 vaultId
     ) external view returns (uint256);
 
-    function wethBalance(uint256 positionId) external view returns(uint256);
+    function wethBalance(uint256 positionId) external view returns (uint256);
 }

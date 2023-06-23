@@ -214,7 +214,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         uint256 currentNFTPrice = 5 ether; // 5 * 10^18 wei for 1*10^18 vTokens
         uint256 lowerNFTPrice = 3 ether;
         uint256 upperNFTPrice = 6 ether;
-        // TODO: add tests for different fee tiers
+
         uint24 fee = DEFAULT_FEE_TIER;
 
         return
@@ -389,7 +389,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         uint256 currentNFTPrice = 5 ether; // 5 * 10^18 wei for 1*10^18 vTokens
         uint256 lowerNFTPrice = 3 ether;
         uint256 upperNFTPrice = 6 ether;
-        // TODO: add tests for different fee tiers
+
         uint24 fee = DEFAULT_FEE_TIER;
 
         return

@@ -160,7 +160,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         assertEq(nonce, 0);
         assertEq(vaultId, VAULT_ID);
         assertEq(timelockedUntil, 0);
-        assertEq(vTokenShareBalance, mintedVTokens);
+        assertEq(
+            vTokenShareBalance,
+            mintedVTokens - inventoryStaking.MINIMUM_LIQUIDITY()
+        );
         assertEq(
             wethFeesPerVTokenShareSnapshotX128,
             globalWethFeesPerVTokenShareX128
@@ -171,7 +174,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
             VAULT_ID
         );
-        assertEq(postTotalVTokenShares, vTokenShareBalance);
+        assertEq(postTotalVTokenShares, mintedVTokens);
     }
 
     function test_deposit_Success_WhenPreTotalSharesNonZero() external {
@@ -275,7 +278,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         assertEq(nonce, 0);
         assertEq(vaultId, VAULT_ID);
         assertEq(timelockedUntil, 0);
-        assertEq(vTokenShareBalance, mintedVTokens);
+        assertEq(
+            vTokenShareBalance,
+            mintedVTokens - inventoryStaking.MINIMUM_LIQUIDITY()
+        );
         assertEq(
             wethFeesPerVTokenShareSnapshotX128,
             globalWethFeesPerVTokenShareX128
@@ -286,7 +292,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
             VAULT_ID
         );
-        assertEq(postTotalVTokenShares, vTokenShareBalance);
+        assertEq(postTotalVTokenShares, mintedVTokens);
     }
 
     // InventoryStaking#depositWithNFT
@@ -357,7 +363,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             timelockedUntil,
             block.timestamp + inventoryStaking.timelock()
         );
-        assertEq(vTokenShareBalance, mintedVTokens);
+        assertEq(
+            vTokenShareBalance,
+            mintedVTokens - inventoryStaking.MINIMUM_LIQUIDITY()
+        );
         assertEq(
             wethFeesPerVTokenShareSnapshotX128,
             globalWethFeesPerVTokenShareX128
@@ -368,7 +377,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
             VAULT_ID
         );
-        assertEq(postTotalVTokenShares, vTokenShareBalance);
+        assertEq(postTotalVTokenShares, mintedVTokens);
     }
 
     function test_depositWithNFT_Success_WhenPreTotalSharesNonZero() external {
@@ -565,7 +574,10 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             timelockedUntil,
             block.timestamp + inventoryStaking.timelock()
         );
-        assertEq(vTokenShareBalance, mintedVTokens);
+        assertEq(
+            vTokenShareBalance,
+            mintedVTokens - inventoryStaking.MINIMUM_LIQUIDITY()
+        );
         assertEq(
             wethFeesPerVTokenShareSnapshotX128,
             globalWethFeesPerVTokenShareX128
@@ -576,7 +588,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         (uint256 postTotalVTokenShares, ) = inventoryStaking.vaultGlobal(
             VAULT_ID_1155
         );
-        assertEq(postTotalVTokenShares, vTokenShareBalance);
+        assertEq(postTotalVTokenShares, mintedVTokens);
     }
 
     // InventoryStaking#receiveRewards
@@ -830,7 +842,11 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         INFTXVaultV3 newVtoken = INFTXVaultV3(vaultFactory.vault(newVaultId));
         newNFT.setApprovalForAll(address(newVtoken), true);
         uint256[] memory amounts = new uint256[](0);
-        uint256 mintedVTokens = newVtoken.mint(tokenIds, amounts, address(this));
+        uint256 mintedVTokens = newVtoken.mint(
+            tokenIds,
+            amounts,
+            address(this)
+        );
         vaultFactory.setFeeExclusion(address(this), false); // setting this back
 
         newVtoken.approve(address(inventoryStaking), type(uint256).max);
@@ -1288,64 +1304,6 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.withdraw(positionId, vTokenShareBalance, nftIds);
     }
 
-    function test_withdraw_ToNFTs_Success_NoResidue() external {
-        // minting with NFTs to have a timelock
-        uint256 nftQty = 3;
-        uint256[] memory tokenIds = nft.mint(nftQty);
-        nft.setApprovalForAll(address(inventoryStaking), true);
-        uint256 positionId = inventoryStaking.depositWithNFT(
-            VAULT_ID,
-            tokenIds,
-            emptyIds,
-            address(this)
-        );
-        // timelock expired
-        vm.warp(block.timestamp + inventoryStaking.timelock() + 1);
-
-        _distributeWethRewards(1 ether);
-
-        (
-            wd.preVTokenShareBalance,
-            wd.preWethFeesPerVTokenShareSnapshotX128,
-            wd.preWethOwed
-        ) = _getPosition(positionId);
-        wd.preNetVTokenBalance = vtoken.balanceOf(address(inventoryStaking));
-        (
-            wd.preTotalVTokenShares,
-            wd.globalWethFeesPerVTokenShareX128
-        ) = inventoryStaking.vaultGlobal(VAULT_ID);
-
-        wd.vTokenSharesToWithdraw = wd.preVTokenShareBalance;
-        uint256 expectedWethAmount = _calcWethOwed(
-            wd.globalWethFeesPerVTokenShareX128,
-            wd.preWethFeesPerVTokenShareSnapshotX128,
-            wd.vTokenSharesToWithdraw
-        ) + wd.preWethOwed;
-
-        uint256 preWethBalance = weth.balanceOf(address(this));
-        uint256 preNFTBalance = nft.balanceOf(address(this));
-
-        inventoryStaking.withdraw(
-            positionId,
-            wd.vTokenSharesToWithdraw,
-            tokenIds
-        );
-
-        uint256 postWethBalance = weth.balanceOf(address(this));
-        uint256 postNFTBalance = nft.balanceOf(address(this));
-
-        assertEq(
-            postWethBalance - preWethBalance,
-            expectedWethAmount,
-            "expectedWethAmount mismatch"
-        );
-        assertEq(
-            postNFTBalance - preNFTBalance,
-            nftQty,
-            "postNFTBalance mismatch"
-        );
-    }
-
     function test_withdraw_ToNFTs_Success_WithResidue() external {
         // minting with NFTs to have a timelock
         uint256 nftQty = 3;
@@ -1381,7 +1339,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             wd.vTokenSharesToWithdraw
         ) + wd.preWethOwed;
 
-        uint256 expectedVTokenResidue = ((nftQty * 1 ether) / 2) % 1 ether; // 0.5 vTokenShareBalance
+        uint256 expectedVTokenResidue = ((nftQty *
+            1 ether -
+            inventoryStaking.MINIMUM_LIQUIDITY()) / 2) % 1 ether;
         uint256[] memory tokenIdsToRedeem = new uint256[](1);
         tokenIdsToRedeem[0] = tokenIds[0];
 

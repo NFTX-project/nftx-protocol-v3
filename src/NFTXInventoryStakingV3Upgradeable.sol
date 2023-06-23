@@ -43,6 +43,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     //                           CONSTANTS
     // =============================================================
 
+    uint256 public constant override MINIMUM_LIQUIDITY = 1_000;
+
     IWETH9 public immutable override WETH;
     IPermitAllowanceTransfer public immutable override PERMIT2;
     INFTXVaultFactoryV3 public immutable override nftxVaultFactory;
@@ -215,14 +217,15 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 vTokenShares;
         if (_vaultGlobal.totalVTokenShares == 0) {
-            vTokenShares = amount;
+            // permanently locked to avoid front-running attack
+            vTokenShares = amount - MINIMUM_LIQUIDITY;
+            _vaultGlobal.totalVTokenShares = MINIMUM_LIQUIDITY;
         } else {
             vTokenShares =
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
-        // TODO: add check that vTokenShares is non-zero
-        // TODO: add front running protection for initial staker
+        require(vTokenShares > 0);
         _vaultGlobal.totalVTokenShares += vTokenShares;
 
         positions[positionId] = Position({
@@ -508,14 +511,15 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 vTokenShares;
         if (_vaultGlobal.totalVTokenShares == 0) {
-            vTokenShares = amount;
+            // permanently locked to avoid front-running attack
+            vTokenShares = amount - MINIMUM_LIQUIDITY;
+            _vaultGlobal.totalVTokenShares = MINIMUM_LIQUIDITY;
         } else {
             vTokenShares =
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
-        // TODO: add check that vTokenShares is non-zero
-        // TODO: add front running protection for initial staker
+        require(vTokenShares > 0);
         _vaultGlobal.totalVTokenShares += vTokenShares;
 
         positions[positionId] = Position({
