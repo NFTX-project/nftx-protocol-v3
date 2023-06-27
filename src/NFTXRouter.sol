@@ -221,13 +221,19 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 wethAmt += msg.value;
             }
 
+            // if the position has completed its timelock, then we shouldn't charge redeem fees.
+            bool chargeFees = positionManager.lockedUntil(params.positionId) >
+                0;
+
             // burn vTokens to provided tokenIds array. Forcing to deduct vault fees
-            TransferLib.unSafeMaxApprove(WETH, address(vToken), wethAmt);
+            if (chargeFees) {
+                TransferLib.unSafeMaxApprove(WETH, address(vToken), wethAmt);
+            }
             uint256 wethFees = vToken.redeem(
                 params.nftIds,
                 msg.sender,
                 wethAmt,
-                true
+                chargeFees
             );
             wethAmt -= wethFees;
 
