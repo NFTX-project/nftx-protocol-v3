@@ -65,6 +65,7 @@ contract CreateVaultZap is ERC1155Holder {
     // =============================================================
     //                           CONSTANTS
     // =============================================================
+    uint256 internal immutable MINIMUM_INVENTORY_LIQUIDITY;
 
     IWETH9 public immutable WETH;
     INFTXVaultFactoryV3 public immutable vaultFactory;
@@ -94,6 +95,7 @@ contract CreateVaultZap is ERC1155Holder {
         inventoryStaking = inventoryStaking_;
 
         WETH = inventoryStaking_.WETH();
+        MINIMUM_INVENTORY_LIQUIDITY = inventoryStaking_.MINIMUM_LIQUIDITY();
         vaultFactory = inventoryStaking_.nftxVaultFactory();
         positionManager = nftxRouter_.positionManager();
     }
@@ -215,18 +217,24 @@ contract CreateVaultZap is ERC1155Holder {
 
             // vTokens left after providing liquidity are put into inventory staking
             if (vTokensBalance > 0) {
-                TransferLib.unSafeMaxApprove(
-                    address(vault),
-                    address(inventoryStaking),
-                    vTokensBalance
-                );
+                // if dust above the min allowed value
+                if (vTokensBalance > MINIMUM_INVENTORY_LIQUIDITY) {
+                    TransferLib.unSafeMaxApprove(
+                        address(vault),
+                        address(inventoryStaking),
+                        vTokensBalance
+                    );
 
-                inventoryStaking.deposit(
-                    vaultId,
-                    vTokensBalance,
-                    msg.sender,
-                    true // forceTimelock as we minted the vTokens with NFTs
-                );
+                    inventoryStaking.deposit(
+                        vaultId,
+                        vTokensBalance,
+                        msg.sender,
+                        true // forceTimelock as we minted the vTokens with NFTs
+                    );
+                } else {
+                    // dust amount worthless for the user, so send to InventoryStaking as reward for future stakers
+                    vault.transfer(address(inventoryStaking), vTokensBalance);
+                }
             }
         }
 
