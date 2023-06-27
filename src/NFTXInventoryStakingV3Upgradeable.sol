@@ -216,18 +216,19 @@ contract NFTXInventoryStakingV3Upgradeable is
         _mint(recipient, (positionId = _nextId++));
 
         uint256 vTokenShares;
-        // TODO: cache totalVTokenShares
-        if (_vaultGlobal.totalVTokenShares == 0) {
+        // cache
+        uint256 _totalVTokenShares = _vaultGlobal.totalVTokenShares;
+        if (_totalVTokenShares == 0) {
             vTokenShares = amount - MINIMUM_LIQUIDITY;
             // permanently locked to avoid front-running attack
-            _vaultGlobal.totalVTokenShares = MINIMUM_LIQUIDITY;
+            _totalVTokenShares = MINIMUM_LIQUIDITY;
         } else {
             vTokenShares =
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
         require(vTokenShares > 0);
-        _vaultGlobal.totalVTokenShares += vTokenShares;
+        _vaultGlobal.totalVTokenShares = _totalVTokenShares + vTokenShares;
 
         positions[positionId] = Position({
             nonce: 0,
@@ -520,18 +521,19 @@ contract NFTXInventoryStakingV3Upgradeable is
         _mint(recipient, (positionId = _nextId++));
 
         uint256 vTokenShares;
-        // TODO: cache totalVTokenShares
-        if (_vaultGlobal.totalVTokenShares == 0) {
+        // cache
+        uint256 _totalVTokenShares = _vaultGlobal.totalVTokenShares;
+        if (_totalVTokenShares == 0) {
             vTokenShares = amount - MINIMUM_LIQUIDITY;
             // permanently locked to avoid front-running attack
-            _vaultGlobal.totalVTokenShares = MINIMUM_LIQUIDITY;
+            _totalVTokenShares = MINIMUM_LIQUIDITY;
         } else {
             vTokenShares =
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
         require(vTokenShares > 0);
-        _vaultGlobal.totalVTokenShares += vTokenShares;
+        _vaultGlobal.totalVTokenShares = _totalVTokenShares + vTokenShares;
 
         positions[positionId] = Position({
             nonce: 0,

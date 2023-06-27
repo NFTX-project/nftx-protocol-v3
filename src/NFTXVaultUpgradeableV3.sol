@@ -822,9 +822,9 @@ contract NFTXVaultUpgradeableV3 is
         uint256 priceX96 = vaultFactory.getTwapX96(pool);
         if (priceX96 == 0) return (0, feeDistributor);
 
-        // TODO: directly calculate VToken0, without calling NFTXRouter
-        bool isVToken0 = nftxRouter.isVToken0(address(this));
-        if (isVToken0) {
+        if (
+            address(this) < address(WETH) // checking if isVToken0
+        ) {
             ethAmount = FullMath.mulDiv(
                 vTokenAmount,
                 priceX96,
