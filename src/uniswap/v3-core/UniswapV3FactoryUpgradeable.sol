@@ -78,6 +78,12 @@ contract UniswapV3FactoryUpgradeable is
         feeDistributor = feeDistributor_;
     }
 
+    function setRewardTierCardinality(
+        uint16 rewardTierCardinality_
+    ) external override onlyOwner {
+        rewardTierCardinality = rewardTierCardinality_;
+    }
+
     /// @inheritdoc IUniswapV3Factory
     function enableFeeAmount(
         uint24 fee,

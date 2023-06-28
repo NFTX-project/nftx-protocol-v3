@@ -67,6 +67,8 @@ interface IUniswapV3Factory {
 
     function setFeeDistributor(address feeDistributor_) external;
 
+    function setRewardTierCardinality(uint16 rewardTierCardinality_) external;
+
     /// @notice Enables a fee amount with the given tickSpacing
     /// @dev Fee amounts may never be removed once enabled
     /// @param fee The fee amount to enable, denominated in hundredths of a bip (i.e. 1e-6)
