@@ -125,6 +125,9 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     //                     ONLY PRIVILEGED WRITE
     // =============================================================
 
+    /**
+     * @notice Sets manager to zero address
+     */
     function finalizeVault() external;
 
     function setVaultMetadata(
@@ -139,22 +142,30 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     ) external;
 
     function setFees(
-        uint256 enableMint_,
-        uint256 enableRedeem_,
-        uint256 enableSwap_
+        uint256 mintFee_,
+        uint256 redeemFee_,
+        uint256 swapFee_
     ) external;
 
+    /**
+     * @notice Disables custom vault fees. Vault fees reverts back to the global vault fees.
+     */
     function disableVaultFees() external;
 
-    // This function allows for an easy setup of any eligibility module contract from the EligibilityManager.
-    // It takes in ABI encoded parameters for the desired module. This is to make sure they can all follow
-    // a similar interface.
+    /**
+     * @notice Allows for an easy setup of any eligibility module contract from the EligibilityManager.
+     *
+     * @param moduleIndex Index of the module to deploy
+     * @param initData ABI encoded parameters for the desired module
+     */
     function deployEligibilityStorage(
         uint256 moduleIndex,
         bytes calldata initData
     ) external returns (address);
 
-    // The manager has control over options like fees and features
+    /**
+     * @notice Set new manager. The manager has control over options like fees and features
+     */
     function setManager(address _manager) external;
 
     function rescueTokens(IERC20Upgradeable token) external;
@@ -174,27 +185,71 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
+    /**
+     * @notice Mints vault tokens in exchange for depositing NFTs. Mint fees is paid in ETH (via msg.value)
+     *
+     * @param tokenIds The token ids to deposit
+     * @param amounts For ERC1155: quantity corresponding to each tokenId to deposit
+     * @param to Recipient address for the vTokens
+     */
     function mint(
         uint256[] calldata tokenIds,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */,
+        uint256[] calldata amounts,
         address to
     ) external payable returns (uint256 vTokensMinted);
 
+    /**
+     * @notice Redeem vault tokens for the underlying NFTs. Redeem fees is paid in ETH (via msg.value) or WETH
+     *
+     * @param idsOut NFT ids to withdraw
+     * @param to Recipient address for the NFTs
+     * @param wethAmount if vault fees should be deducted in WETH instead of ETH (msg.value should be 0 here)
+     * @param forceFees forcefully deduct fees even if sender is on the exclude list
+     *
+     * @return ethFees The ETH fees charged
+     */
     function redeem(
-        uint256[] calldata specificIds,
+        uint256[] calldata idsOut,
         address to,
-        uint256 wethAmount, // if vault fees should be deducted in WETH instead of ETH (msg.value should be 0 here)
-        bool forceFees // deduct fees even if on the exclude list
+        uint256 wethAmount,
+        bool forceFees
     ) external payable returns (uint256 ethFees);
 
+    /**
+     * @notice Swap `idsIn` of NFTs into `idsOut` from the vault. Swap fees is paid in ETH (via msg.value)
+     *
+     * @param idsIn NFT ids to sell
+     * @param amounts For ERC1155: quantity corresponding to each tokenId to sell
+     * @param idsOut NFT ids to buy
+     * @param to Recipient address for the NFTs
+     * @param forceFees forcefully deduct fees even if sender is on the exclude list
+     *
+     * @return ethFees The ETH fees charged
+     */
     function swap(
-        uint256[] calldata tokenIds,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */,
-        uint256[] calldata specificIds,
+        uint256[] calldata idsIn,
+        uint256[] calldata amounts,
+        uint256[] calldata idsOut,
         address to,
-        bool forceFees // deduct fees even if on the exclude list
+        bool forceFees
     ) external payable returns (uint256 ethFees);
 
+    /**
+     * @notice Performs a flash loan. New tokens are minted and sent to the
+     * `receiver`, who is required to implement the {IERC3156FlashBorrower}
+     * interface. By the end of the flash loan, the receiver is expected to own
+     * amount + fee tokens and have them approved back to the token contract itself so
+     * they can be burned.
+     *
+     * @param receiver The receiver of the flash loan. Should implement the
+     * {IERC3156FlashBorrower-onFlashLoan} interface.
+     * @param token The token to be flash loaned. Only `address(this)` is
+     * supported.
+     * @param amount The amount of tokens to be loaned.
+     * @param data An arbitrary datafield that is passed to the receiver.
+     *
+     * @return `true` if the flash loan was successful.
+     */
     function flashLoan(
         IERC3156FlashBorrowerUpgradeable receiver,
         address token,
@@ -212,6 +267,9 @@ interface INFTXVaultV3 is IERC20Upgradeable {
 
     function totalHoldings() external view returns (uint256);
 
+    /**
+     * @notice Vault Fees in terms of vault tokens
+     */
     function vaultFees()
         external
         view
@@ -221,10 +279,27 @@ interface INFTXVaultV3 is IERC20Upgradeable {
         uint256[] calldata tokenIds
     ) external view returns (bool);
 
+    /**
+     * @notice Get vToken premium corresponding for a tokenId in the vault
+     *
+     * @param tokenId token id to calculate the premium for
+     * @return premium Premium in vTokens
+     * @return depositor Depositor that receives a share of this premium
+     */
     function getVTokenPremium721(
         uint256 tokenId
     ) external view returns (uint256 premium, address depositor);
 
+    /**
+     * @notice Get vToken premium corresponding for a tokenId in the vault
+     *
+     * @param tokenId token id to calculate the premium for
+     * @param amount ERC1155 amount of tokenId to redeem
+     *
+     * @return netPremium Net premium in vTokens
+     * @return premiums Premiums corresponding to each depositor
+     * @return depositors Depositors that receive a share from the `premiums`
+     */
     function getVTokenPremium1155(
         uint256 tokenId,
         uint256 amount
@@ -237,10 +312,17 @@ interface INFTXVaultV3 is IERC20Upgradeable {
             address[] memory depositors
         );
 
-    // Calculate ETH amount corresponding to the vToken amount, calculated via TWAP from the AMM
+    /**
+     * @notice Calculate ETH amount corresponding to a given vToken amount, calculated via TWAP from the NFTX AMM
+     */
     function vTokenToETH(uint256 vTokenAmount) external view returns (uint256);
 
+    /**
+     * @notice Length of depositInfo1155 array for a given `tokenId`
+     */
     function depositInfo1155Length(
         uint256 tokenId
     ) external view returns (uint256);
+
+    function version() external pure returns (string memory);
 }

@@ -991,7 +991,6 @@ contract UniswapV3PoolUpgradeable is IUniswapV3Pool, Initializable {
         slot0.unlocked = true;
     }
 
-    // TODO: handle rewards when no liquidity
     /// @inheritdoc IUniswapV3PoolActions
     function distributeRewards(
         uint256 rewardsAmount,

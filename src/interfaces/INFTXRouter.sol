@@ -61,89 +61,147 @@ interface INFTXRouter {
 
     struct AddLiquidityParams {
         uint256 vaultId;
-        uint256 vTokensAmount; // user can provide just vTokens or NFTs or both
+        // amount of vTokens to deposit (can be 0)
+        uint256 vTokensAmount;
+        // array of nft ids to deposit (can be empty)
         uint256[] nftIds;
-        uint256[] nftAmounts; // for ERC1155, ignored for ERC721
+        // for ERC1155: quantity corresponding to each tokenId to deposit
+        uint256[] nftAmounts;
+        // ticks range to provide the liquidity into
         int24 tickLower;
         int24 tickUpper;
+        // fee tier of the AMM pool
         uint24 fee;
+        // the initial sqrt price (as a Q64.96) to set if a new pool is deployed
         uint160 sqrtPriceX96;
+        // TODO: replace with vTokenMin and wethMin
+        // Minimum amount of token0 to be provided as liquidity
         uint256 amount0Min;
+        // Minimum amount of token1 to be provided as liquidity
         uint256 amount1Min;
+        // deadline after which the tx fails
         uint256 deadline;
     }
 
+    /**
+     * @notice Adds liquidity to the NFTX AMM. Deploys new AMM pool if doesn't already exist. User can addLiquidity via vTokens, NFTs or both. Timelock is set for the position if NFTs deposited.
+     */
     function addLiquidity(
         AddLiquidityParams calldata params
     ) external payable returns (uint256 positionId);
 
+    /**
+     * @notice Adds liquidity to the NFTX AMM. Deploys new AMM pool if doesn't already exist. User can deposit via vTokens, NFTs or both. Timelock is set for the position if NFTs deposited.
+     *
+     * @param encodedPermit2 Encoded function params (owner, permitSingle, signature) for `PERMIT2.permit()` to permit vToken
+     */
     function addLiquidityWithPermit2(
         AddLiquidityParams calldata params,
         bytes calldata encodedPermit2
     ) external payable returns (uint256 positionId);
 
     struct IncreaseLiquidityParams {
+        // the liquidity position to update
         uint256 positionId;
+        // vault id corresponding to the vTokens in this position
         uint256 vaultId;
-        uint256 vTokensAmount; // user can provide just vTokens or NFTs or both
+        // amount of vTokens to deposit (can be 0)
+        uint256 vTokensAmount;
+        // array of nft ids to deposit (can be empty)
         uint256[] nftIds;
-        uint256[] nftAmounts; // for ERC1155, ignored for ERC721
+        // for ERC1155: quantity corresponding to each tokenId to deposit
+        uint256[] nftAmounts;
+        // TODO: replace with vTokenMin and wethMin
+        // Minimum amount of token0 to be provided as liquidity
         uint256 amount0Min;
+        // Minimum amount of token1 to be provided as liquidity
         uint256 amount1Min;
+        // deadline after which the tx fails
         uint256 deadline;
     }
 
+    /**
+     * @notice Increase liquidity of an existing position. User can deposit via vTokens, NFTs or both. Timelock is updated for the position if NFTs deposited.
+     */
     function increaseLiquidity(
         IncreaseLiquidityParams calldata params
     ) external payable;
 
+    /**
+     * @notice Increase liquidity of an existing position. User can deposit via vTokens, NFTs or both. Timelock is updated for the position if NFTs deposited.
+     *
+     * @param encodedPermit2 Encoded function params (owner, permitSingle, signature) for `PERMIT2.permit()` to permit vToken
+     */
     function increaseLiquidityWithPermit2(
         IncreaseLiquidityParams calldata params,
         bytes calldata encodedPermit2
     ) external payable;
 
     struct RemoveLiquidityParams {
+        // the position id to withdraw liquidity from
         uint256 positionId;
+        // vault id corresponding to the vTokens in this position
         uint256 vaultId;
+        // array of nft ids to redeem with the vTokens (can be empty to just receive vTokens)
         uint256[] nftIds;
+        // the liquidity amount to burn and withdraw
         uint128 liquidity;
+        // TODO: replace with vTokenMin and wethMin
+        // Minimum amount of token0 to be withdrawn
         uint256 amount0Min;
+        // Minimum amount of token1 to be withdrawn
         uint256 amount1Min;
+        // deadline after which the tx fails
         uint256 deadline;
     }
 
+    /**
+     * Remove liquidity from position into ETH + vTokens or NFTs or a combination of both. ETH from the withdrawn liquidity and msg.value is used to pay for redeem fees if NFTs withdrawn.
+     */
     function removeLiquidity(
         RemoveLiquidityParams calldata params
     ) external payable;
 
-    /**
-     * @param sqrtPriceLimitX96 the price limit, if reached, stop swapping
-     */
     struct SellNFTsParams {
+        // vault id corresponding to the nfts being sold
         uint256 vaultId;
+        // array of nft ids to sell
         uint256[] nftIds;
-        uint256[] nftAmounts; // for ERC1155, ignored for ERC721
+        // for ERC1155: quantity corresponding to each tokenId to sell
+        uint256[] nftAmounts;
+        // deadline after which the tx fails
         uint256 deadline;
+        // the fee tier to execute the swap through
         uint24 fee;
+        // minimum amount of ETH to receive after swap (without considering any mint fees)
         uint256 amountOutMinimum;
+        // the price limit (as a Q64.96), if reached, to stop swapping
         uint160 sqrtPriceLimitX96;
     }
 
+    /**
+     * @notice Sell NFT ids into ETH via the given fee tier pool. Extra ETH sent as msg.value if the received WETH is insufficient to pay for the vault fees.
+     */
     function sellNFTs(
         SellNFTsParams calldata params
-    ) external payable returns (uint256 wethReceived);
+    ) external payable returns (uint256 ethReceived);
 
-    /**
-     * @param sqrtPriceLimitX96 the price limit, if reached, stop swapping
-     */
     struct BuyNFTsParams {
+        // vault id corresponding to the nfts being bought
         uint256 vaultId;
+        // array of nft ids to buy
         uint256[] nftIds;
+        // deadline after which the tx fails
         uint256 deadline;
+        // the fee tier to execute the swap through
         uint24 fee;
+        // the price limit (as a Q64.96), if reached, to stop swapping
         uint160 sqrtPriceLimitX96;
     }
 
+    /**
+     * @notice Buy NFT ids with ETH via the given fee tier pool. ETH sent as msg.value includes the amount to swap for vTokens + vault redeem fees (including premiums).
+     */
     function buyNFTs(BuyNFTsParams calldata params) external payable;
 
     // =============================================================

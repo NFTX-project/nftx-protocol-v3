@@ -75,6 +75,9 @@ contract NFTXVaultFactoryUpgradeableV3 is
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function createVault(
         string memory name,
         string memory symbol,
@@ -106,6 +109,9 @@ contract NFTXVaultFactoryUpgradeableV3 is
     //                     ONLY PRIVILEGED WRITE
     // =============================================================
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function setFactoryFees(
         uint256 mintFee,
         uint256 redeemFee,
@@ -122,6 +128,9 @@ contract NFTXVaultFactoryUpgradeableV3 is
         emit UpdateFactoryFees(mintFee, redeemFee, swapFee);
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function setVaultFees(
         uint256 vaultId,
         uint256 mintFee,
@@ -145,6 +154,9 @@ contract NFTXVaultFactoryUpgradeableV3 is
         emit UpdateVaultFees(vaultId, mintFee, redeemFee, swapFee);
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function disableVaultFees(uint256 vaultId) external override {
         if (msg.sender != owner()) {
             address vaultAddr = _vaults[vaultId];
@@ -154,6 +166,9 @@ contract NFTXVaultFactoryUpgradeableV3 is
         emit DisableVaultFees(vaultId);
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function setFeeDistributor(
         address feeDistributor_
     ) external override onlyOwner {
@@ -162,6 +177,9 @@ contract NFTXVaultFactoryUpgradeableV3 is
         feeDistributor = feeDistributor_;
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function setFeeExclusion(
         address excludedAddr,
         bool excluded
@@ -170,6 +188,9 @@ contract NFTXVaultFactoryUpgradeableV3 is
         emit FeeExclusion(excludedAddr, excluded);
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function setEligibilityManager(
         address eligibilityManager_
     ) external override onlyOwner {
@@ -177,20 +198,32 @@ contract NFTXVaultFactoryUpgradeableV3 is
         eligibilityManager = eligibilityManager_;
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function setTwapInterval(uint32 twapInterval_) external override onlyOwner {
         twapInterval = twapInterval_;
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function setPremiumDuration(
         uint256 premiumDuration_
     ) external override onlyOwner {
         premiumDuration = premiumDuration_;
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function setPremiumMax(uint256 premiumMax_) external override onlyOwner {
         premiumMax = premiumMax_;
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function setDepositorPremiumShare(
         uint256 depositorPremiumShare_
     ) external override onlyOwner {
@@ -201,6 +234,9 @@ contract NFTXVaultFactoryUpgradeableV3 is
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function vaultFees(
         uint256 vaultId
     )
@@ -225,28 +261,46 @@ contract NFTXVaultFactoryUpgradeableV3 is
         );
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function isLocked(uint256 lockId) external view override returns (bool) {
         return isPaused[lockId];
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function vaultsForAsset(
         address assetAddress
     ) external view override returns (address[] memory) {
         return _vaultsForAsset[assetAddress];
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function allVaults() external view override returns (address[] memory) {
         return _vaults;
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function numVaults() external view override returns (uint256) {
         return _vaults.length;
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function vault(uint256 vaultId) external view override returns (address) {
         return _vaults[vaultId];
     }
 
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
     function getTwapX96(
         address pool
     ) external view override returns (uint256 priceX96) {

@@ -94,6 +94,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         return _addLiquidity(params, vToken);
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function addLiquidityWithPermit2(
         AddLiquidityParams calldata params,
         bytes calldata encodedPermit2
@@ -127,6 +130,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         return _addLiquidity(params, vToken);
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function increaseLiquidity(
         IncreaseLiquidityParams calldata params
     ) external payable override {
@@ -145,6 +151,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         return _increaseLiquidity(params, vToken);
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function increaseLiquidityWithPermit2(
         IncreaseLiquidityParams calldata params,
         bytes calldata encodedPermit2
@@ -178,6 +187,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         return _increaseLiquidity(params, vToken);
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function removeLiquidity(
         RemoveLiquidityParams calldata params
     ) external payable override {
@@ -331,6 +343,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         emit SellNFTs(params.nftIds.length, wethRemaining);
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function buyNFTs(BuyNFTsParams calldata params) external payable override {
         INFTXVaultV3 vToken = INFTXVaultV3(
             nftxVaultFactory.vault(params.vaultId)
@@ -390,6 +405,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         }
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function setLpTimelock(uint256 lpTimelock_) external override onlyOwner {
         lpTimelock = lpTimelock_;
     }

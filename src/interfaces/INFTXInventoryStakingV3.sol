@@ -127,6 +127,17 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
+    /**
+     * @notice Deposits vToken to mint inventory staking xNFT position
+     * @dev User should have given vault token approval to this contract
+     *
+     * @param vaultId The id of the vault
+     * @param amount Vault tokens amount to deposit
+     * @param recipient Recipient address for the xNFT
+     * @param forceTimelock Forcefully apply timelock to the position
+     *
+     * @return positionId The tokenId for the xNFT position
+     */
     function deposit(
         uint256 vaultId,
         uint256 amount,
@@ -134,6 +145,17 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         bool forceTimelock
     ) external returns (uint256 positionId);
 
+    /**
+     * @notice Deposits vToken to mint inventory staking xNFT position
+     *
+     * @param vaultId The id of the vault
+     * @param amount Vault tokens amount to deposit
+     * @param recipient Recipient address for the xNFT
+     * @param encodedPermit2 Encoded function params (owner, permitSingle, signature) for `PERMIT2.permit()`
+     * @param forceTimelock Forcefully apply timelock to the position
+     *
+     * @return positionId The tokenId for the xNFT position
+     */
     function depositWithPermit2(
         uint256 vaultId,
         uint256 amount,
@@ -142,7 +164,16 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         bool forceTimelock
     ) external returns (uint256 positionId);
 
-    /// @notice This contract must be on the feeExclusion list to avoid mint fees, else revert
+    /**
+     * @notice Deposits NFT to mint inventory staking xNFT position
+     *
+     * @param vaultId The id of the vault corresponding to the NFT
+     * @param tokenIds The token ids to deposit
+     * @param amounts For ERC1155: quantity corresponding to each tokenId to deposit
+     * @param recipient Recipient address for the xNFT
+     *
+     * @return positionId The tokenId for the xNFT position
+     */
     function depositWithNFT(
         uint256 vaultId,
         uint256[] calldata tokenIds,
@@ -150,24 +181,49 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         address recipient
     ) external returns (uint256 positionId);
 
-    /// @notice This contract must be on the feeExclusion list to avoid redeem fees, else revert
+    /**
+     * @notice Withdraw vault tokens from the position. Penalty is deducted if position has not finished the timelock.
+     *
+     * @param positionId The position id to withdraw vault tokens from
+     * @param vTokenShares Amount of vault token shares to burn
+     * @param nftIds NFT tokenIds to redeem with the vault tokens withdrawn. If array is empty then only vault tokens transferred. Redeem fees (in ETH from msg.value) only paid for positions which were minted with vTokens
+     */
     function withdraw(
         uint256 positionId,
         uint256 vTokenShares,
         uint256[] calldata nftIds
     ) external payable;
 
+    /**
+     * @notice Combine underlying vToken and WETH balances from childPositions into parentPosition, if all of their timelocks ended. All positions must be for the same vault id.
+     *
+     * @param parentPositionId xNFT Position id that will receive the underlying balances from childPositions
+     * @param childPositionIds Array of xNFT position ids to be combined
+     */
     function combinePositions(
         uint256 parentPositionId,
         uint256[] calldata childPositionIds
     ) external;
 
+    /**
+     * @notice Receive WETH fees accumulated by a position
+     *
+     * @param positionId The position to withdraw weth fees from
+     */
     function collectWethFees(uint256 positionId) external;
 
+    /**
+     * @dev Can only be called by feeDistributor. vToken rewards can be directly transferred to this contract without calling this function
+     *
+     * @param vaultId The vault id that should receive the rewards
+     * @param wethAmount Amount of WETH to pull as rewards
+     *
+     * @return rewardsDistributed Returns false if the `totalVTokenShares` is zero for the given `vaultId`
+     */
     function receiveWethRewards(
         uint256 vaultId,
         uint256 wethAmount
-    ) external returns (bool);
+    ) external returns (bool rewardsDistributed);
 
     // =============================================================
     //                        ONLY OWNER WRITE
@@ -183,9 +239,15 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
 
+    /**
+     * @notice Returns the worth of 10^18 vTokenShares in terms of the underlying vToken corresponding to the provided `vaultId`
+     */
     function pricePerShareVToken(
         uint256 vaultId
     ) external view returns (uint256);
 
+    /**
+     * @notice Returns the current WETH balance for a given `positionId`
+     */
     function wethBalance(uint256 positionId) external view returns (uint256);
 }

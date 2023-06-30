@@ -80,6 +80,9 @@ contract NFTXFeeDistributorV3 is
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
+    /**
+     * @inheritdoc INFTXFeeDistributorV3
+     */
     function distribute(uint256 vaultId) external override nonReentrant {
         INFTXVaultV3 vault = INFTXVaultV3(nftxVaultFactory.vault(vaultId));
 
@@ -120,6 +123,9 @@ contract NFTXFeeDistributorV3 is
     //                        ONLY OWNER WRITE
     // =============================================================
 
+    /**
+     * @inheritdoc INFTXFeeDistributorV3
+     */
     function addReceiver(
         address receiver,
         uint256 allocPoint,
@@ -128,6 +134,9 @@ contract NFTXFeeDistributorV3 is
         _addReceiver(receiver, allocPoint, receiverType);
     }
 
+    /**
+     * @inheritdoc INFTXFeeDistributorV3
+     */
     function changeReceiverAlloc(
         uint256 receiverId,
         uint256 allocPoint
@@ -142,6 +151,9 @@ contract NFTXFeeDistributorV3 is
         emit UpdateFeeReceiverAlloc(feeReceiver.receiver, allocPoint);
     }
 
+    /**
+     * @inheritdoc INFTXFeeDistributorV3
+     */
     function changeReceiverAddress(
         uint256 receiverId,
         address receiver,
@@ -157,6 +169,9 @@ contract NFTXFeeDistributorV3 is
         emit UpdateFeeReceiverAddress(oldReceiver, receiver);
     }
 
+    /**
+     * @inheritdoc INFTXFeeDistributorV3
+     */
     function removeReceiver(uint256 receiverId) external override onlyOwner {
         uint256 arrLength = feeReceivers.length;
         if (receiverId >= arrLength) revert IdOutOfBounds();
@@ -170,9 +185,7 @@ contract NFTXFeeDistributorV3 is
     }
 
     /**
-     * @notice Updating reward fee tier here won't change cardinality for existing UniV3 pools already deployed with `rewardFeeTier_`. That has to be increased externally for each pool.
-     * If the new rewardFeeTier pool doesn't exist for a vToken, then the corresponding vault fees would immediately become 0, till liquidity is provided in the new pool.
-     * @param rewardFeeTier_ New reward fee tier
+     * @inheritdoc INFTXFeeDistributorV3
      */
     function changeRewardFeeTier(
         uint24 rewardFeeTier_
@@ -183,6 +196,9 @@ contract NFTXFeeDistributorV3 is
         rewardFeeTier = rewardFeeTier_;
     }
 
+    /**
+     * @inheritdoc INFTXFeeDistributorV3
+     */
     function setTreasuryAddress(address treasury_) external override onlyOwner {
         if (treasury_ == address(0)) revert AddressIsZero();
 
@@ -190,17 +206,26 @@ contract NFTXFeeDistributorV3 is
         emit UpdateTreasuryAddress(treasury_);
     }
 
+    /**
+     * @inheritdoc INFTXFeeDistributorV3
+     */
     function setNFTXRouter(
         INFTXRouter nftxRouter_
     ) external override onlyOwner {
         nftxRouter = nftxRouter_;
     }
 
+    /**
+     * @inheritdoc INFTXFeeDistributorV3
+     */
     function pauseFeeDistribution(bool pause) external override onlyOwner {
         distributionPaused = pause;
         emit PauseDistribution(pause);
     }
 
+    /**
+     * @inheritdoc INFTXFeeDistributorV3
+     */
     function rescueTokens(IERC20 token) external override onlyOwner {
         uint256 balance = token.balanceOf(address(this));
         token.safeTransfer(msg.sender, balance);
