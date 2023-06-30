@@ -25,6 +25,11 @@ abstract contract ERC20FlashMintUpgradeable is
     ERC20Upgradeable,
     IERC3156FlashLenderUpgradeable
 {
+    // Errors
+    error WrongToken();
+    error AmountExceedsMaxFlashLoan();
+    error InvalidReturnValue();
+
     function __ERC20FlashMint_init() internal onlyInitializing {}
 
     function __ERC20FlashMint_init_unchained() internal onlyInitializing {}
@@ -58,8 +63,7 @@ abstract contract ERC20FlashMintUpgradeable is
         address token,
         uint256 amount
     ) public view virtual override returns (uint256) {
-        // TODO: custom error
-        require(token == address(this), "ERC20FlashMint: wrong token");
+        if (token != address(this)) revert WrongToken();
         return _flashFee(token, amount);
     }
 
@@ -114,19 +118,15 @@ abstract contract ERC20FlashMintUpgradeable is
         uint256 amount,
         bytes calldata data
     ) public virtual override returns (bool) {
-        // TODO: custom error
-        require(
-            amount <= maxFlashLoan(token),
-            "ERC20FlashMint: amount exceeds maxFlashLoan"
-        );
+        if (amount > maxFlashLoan(token)) revert AmountExceedsMaxFlashLoan();
         uint256 fee = flashFee(token, amount);
         _mint(address(receiver), amount);
-        // TODO: custom error
-        require(
-            receiver.onFlashLoan(msg.sender, token, amount, fee, data) ==
-                _RETURN_VALUE,
-            "ERC20FlashMint: invalid return value"
-        );
+
+        if (
+            receiver.onFlashLoan(msg.sender, token, amount, fee, data) !=
+            _RETURN_VALUE
+        ) revert InvalidReturnValue();
+
         address flashFeeReceiver = _flashFeeReceiver();
         _spendAllowance(address(receiver), address(this), amount + fee);
         if (fee == 0 || flashFeeReceiver == address(0)) {

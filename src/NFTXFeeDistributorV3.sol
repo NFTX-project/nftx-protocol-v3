@@ -258,8 +258,7 @@ contract NFTXFeeDistributorV3 is
                     WETH.transfer(pool, wethAmountToSend);
                     IUniswapV3Pool(pool).distributeRewards(
                         wethAmountToSend,
-                        // TODO: directly calculate VToken0, without calling NFTXRouter
-                        !nftxRouter.isVToken0(address(vault))
+                        address(vault) > address(WETH) // !isVToken0
                     );
 
                     tokenSent = true;

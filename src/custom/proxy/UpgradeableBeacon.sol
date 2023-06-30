@@ -20,6 +20,9 @@ contract UpgradeableBeacon is IBeacon, OwnableUpgradeable {
      */
     event Upgraded(address indexed beaconImplementation);
 
+    // Errors
+    error ChildImplementationIsNotAContract();
+
     /**
      * @dev Sets the address of the initial implementation, and the deployer account as the owner who can upgrade the
      * beacon.
@@ -59,11 +62,9 @@ contract UpgradeableBeacon is IBeacon, OwnableUpgradeable {
      * - `newBeaconImplementation` must be a contract.
      */
     function _setBeaconImplementation(address newBeaconImplementation) private {
-        // TODO: custom error
-        require(
-            Address.isContract(newBeaconImplementation),
-            "UpgradeableBeacon: child implementation is not a contract"
-        );
+        if (!Address.isContract(newBeaconImplementation))
+            revert ChildImplementationIsNotAContract();
+
         _beaconImplementation = newBeaconImplementation;
         emit Upgraded(newBeaconImplementation);
     }

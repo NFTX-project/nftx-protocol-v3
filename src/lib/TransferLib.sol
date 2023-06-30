@@ -9,7 +9,9 @@ library TransferLib {
     address internal constant CRYPTO_PUNKS =
         0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
 
+    // Errors
     error UnableToSendETH();
+    error NotNFTOwner();
 
     function transferFromERC721(
         address assetAddress,
@@ -94,11 +96,8 @@ library TransferLib {
                 punkIndexToAddress
             );
             address nftOwner = abi.decode(result, (address));
-            // TODO: use custom error
-            require(
-                checkSuccess && nftOwner == msg.sender,
-                "Not the NFT owner"
-            );
+
+            if (!checkSuccess || nftOwner != msg.sender) revert NotNFTOwner();
             data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
         }
 
