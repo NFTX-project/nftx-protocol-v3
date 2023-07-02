@@ -5,6 +5,7 @@ import {console, stdError} from "forge-std/Test.sol";
 
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
+import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 
 import {MockNFT} from "@mocks/MockNFT.sol";
 import {NFTXInventoryStakingV3Upgradeable, INFTXInventoryStakingV3} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
@@ -116,7 +117,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.pause(0);
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Paused");
+        vm.expectRevert(PausableUpgradeable.Paused.selector);
         inventoryStaking.deposit(VAULT_ID, 0, address(this), false);
     }
 
@@ -302,7 +303,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256[] memory tokenIds;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Paused");
+        vm.expectRevert(PausableUpgradeable.Paused.selector);
         inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
@@ -707,7 +708,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.pause(3);
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Paused");
+        vm.expectRevert(PausableUpgradeable.Paused.selector);
         inventoryStaking.collectWethFees(1);
     }
 
@@ -999,7 +1000,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256[] memory nftIds;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Paused");
+        vm.expectRevert(PausableUpgradeable.Paused.selector);
         inventoryStaking.withdraw(1, 1 ether, nftIds);
     }
 
