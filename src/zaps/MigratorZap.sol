@@ -386,6 +386,7 @@ contract MigratorZap {
         vTokenV3Balance = INFTXVaultV3(vTokenV3).mint(
             idsRedeemed,
             amounts,
+            msg.sender,
             address(this)
         );
     }

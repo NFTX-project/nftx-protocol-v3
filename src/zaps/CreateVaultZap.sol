@@ -153,6 +153,7 @@ contract CreateVaultZap is ERC1155Holder {
             uint256 vTokensBalance = vault.mint(
                 params.nftIds,
                 params.nftAmounts,
+                msg.sender,
                 address(this)
             );
 

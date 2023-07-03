@@ -846,6 +846,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 mintedVTokens = newVtoken.mint(
             tokenIds,
             amounts,
+            address(this),
             address(this)
         );
         vaultFactory.setFeeExclusion(address(this), false); // setting this back

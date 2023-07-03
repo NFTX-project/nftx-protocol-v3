@@ -179,6 +179,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
     function _mintVToken(
         uint256 qty,
+        address depositor,
         address receiver
     ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
         tokenIds = nft.mint(qty);
@@ -188,6 +189,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         mintedVTokens = vtoken.mint{value: 100 ether * qty}(
             tokenIds,
             amounts,
+            depositor,
             receiver
         );
     }
@@ -195,7 +197,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     function _mintVToken(
         uint256 qty
     ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
-        return _mintVToken(qty, address(this));
+        return _mintVToken(qty, address(this), address(this));
     }
 
     function _mintPosition(
@@ -345,6 +347,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
     function _mintVTokenFor1155(
         uint256 qty,
+        address depositor,
         address receiver
     ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
         uint256[] memory _tokenIds = new uint256[](1);
@@ -358,6 +361,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         mintedVTokens = vtoken1155.mint{value: 100 ether * qty}(
             _tokenIds,
             amounts,
+            depositor,
             receiver
         );
 
@@ -370,7 +374,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     function _mintVTokenFor1155(
         uint256 qty
     ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
-        return _mintVTokenFor1155(qty, address(this));
+        return _mintVTokenFor1155(qty, address(this), address(this));
     }
 
     function _mintPosition1155(

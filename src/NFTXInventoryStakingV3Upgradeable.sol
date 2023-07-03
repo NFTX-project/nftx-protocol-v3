@@ -217,6 +217,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             amount = INFTXVaultV3(vToken).mint(
                 tokenIds,
                 amounts,
+                msg.sender,
                 address(this)
             );
         }

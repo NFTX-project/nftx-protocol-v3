@@ -304,6 +304,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         uint256 vTokensAmount = vToken.mint(
             params.nftIds,
             params.nftAmounts,
+            msg.sender,
             address(this)
         );
 
@@ -531,6 +532,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount += vToken.mint(
                 params.nftIds,
                 params.nftAmounts,
+                msg.sender,
                 address(this)
             );
         }
@@ -630,6 +632,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount += vToken.mint(
                 params.nftIds,
                 params.nftAmounts,
+                msg.sender,
                 address(this)
             );
         }

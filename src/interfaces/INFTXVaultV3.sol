@@ -190,11 +190,13 @@ interface INFTXVaultV3 is IERC20Upgradeable {
      *
      * @param tokenIds The token ids to deposit
      * @param amounts For ERC1155: quantity corresponding to each tokenId to deposit
+     * @param depositor Depositor address that should receive premiums for the `tokenIds` deposited here
      * @param to Recipient address for the vTokens
      */
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts,
+        address depositor,
         address to
     ) external payable returns (uint256 vTokensMinted);
 
@@ -221,6 +223,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
      * @param idsIn NFT ids to sell
      * @param amounts For ERC1155: quantity corresponding to each tokenId to sell
      * @param idsOut NFT ids to buy
+     * @param depositor Depositor address that should receive premiums for the `idsIn` deposited here
      * @param to Recipient address for the NFTs
      * @param forceFees forcefully deduct fees even if sender is on the exclude list
      *
@@ -230,6 +233,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
         uint256[] calldata idsIn,
         uint256[] calldata amounts,
         uint256[] calldata idsOut,
+        address depositor,
         address to,
         bool forceFees
     ) external payable returns (uint256 ethFees);

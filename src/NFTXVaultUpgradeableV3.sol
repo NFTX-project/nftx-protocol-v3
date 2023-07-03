@@ -135,13 +135,14 @@ contract NFTXVaultUpgradeableV3 is
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts,
+        address depositor,
         address to
     ) public payable override nonReentrant returns (uint256 vTokensMinted) {
         _onlyOwnerIfPaused(1);
         if (!enableMint) revert MintingDisabled();
 
         // Take the NFTs.
-        uint256 nftCount = _receiveNFTs(tokenIds, amounts);
+        uint256 nftCount = _receiveNFTs(depositor, tokenIds, amounts);
         vTokensMinted = BASE * nftCount;
 
         // Mint to the user.
@@ -215,45 +216,51 @@ contract NFTXVaultUpgradeableV3 is
         uint256[] calldata idsIn,
         uint256[] calldata amounts,
         uint256[] calldata idsOut,
+        address depositor,
         address to,
         bool forceFees
     ) public payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(3);
-        uint256 count;
-        if (is1155) {
-            for (uint256 i; i < idsIn.length; ++i) {
-                uint256 amount = amounts[i];
 
-                if (amount == 0) revert TransferAmountIsZero();
-                count += amount;
+        {
+            uint256 count;
+            if (is1155) {
+                for (uint256 i; i < idsIn.length; ++i) {
+                    uint256 amount = amounts[i];
+
+                    if (amount == 0) revert TransferAmountIsZero();
+                    count += amount;
+                }
+            } else {
+                count = idsIn.length;
             }
-        } else {
-            count = idsIn.length;
+
+            if (count != idsOut.length) revert TokenLengthMismatch();
         }
 
-        if (count != idsOut.length) revert TokenLengthMismatch();
+        {
+            (, , uint256 swapFee) = vaultFees();
+            uint256 totalVaultFee = (swapFee * idsOut.length);
 
-        (, , uint256 swapFee) = vaultFees();
-        uint256 totalVaultFee = (swapFee * idsOut.length);
+            // Give the NFTs first, so the user wont get the same thing back.
+            (
+                uint256 netVTokenPremium,
+                uint256[] memory vTokenPremiums,
+                address[] memory depositors
+            ) = _withdrawNFTsTo(idsOut, to, forceFees);
 
-        // Give the NFTs first, so the user wont get the same thing back.
-        (
-            uint256 netVTokenPremium,
-            uint256[] memory vTokenPremiums,
-            address[] memory depositors
-        ) = _withdrawNFTsTo(idsOut, to, forceFees);
+            ethFees = _chargeAndDistributeFees(
+                msg.value,
+                true,
+                totalVaultFee,
+                netVTokenPremium,
+                vTokenPremiums,
+                depositors,
+                forceFees
+            );
+        }
 
-        ethFees = _chargeAndDistributeFees(
-            msg.value,
-            true,
-            totalVaultFee,
-            netVTokenPremium,
-            vTokenPremiums,
-            depositors,
-            forceFees
-        );
-
-        _receiveNFTs(idsIn, amounts);
+        _receiveNFTs(depositor, idsIn, amounts);
 
         _refundETH(msg.value, ethFees);
 
@@ -611,6 +618,7 @@ contract NFTXVaultUpgradeableV3 is
     }
 
     function _receiveNFTs(
+        address depositor,
         uint256[] calldata tokenIds,
         uint256[] calldata amounts
     ) internal returns (uint256) {
@@ -642,7 +650,7 @@ contract NFTXVaultUpgradeableV3 is
                 depositInfo1155[tokenId].push(
                     DepositInfo1155({
                         qty: amount,
-                        depositor: msg.sender,
+                        depositor: depositor,
                         timestamp: uint48(block.timestamp)
                     })
                 );
@@ -662,7 +670,7 @@ contract NFTXVaultUpgradeableV3 is
                 _holdings.add(tokenId);
                 tokenDepositInfo[tokenId] = TokenDepositInfo({
                     timestamp: uint48(block.timestamp),
-                    depositor: msg.sender
+                    depositor: depositor
                 });
             }
             return tokenIds.length;
