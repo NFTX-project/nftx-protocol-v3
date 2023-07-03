@@ -57,7 +57,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // NFTXRouter has in-built fee handling
   console.log("Setting fee exclusion for NFTXRouter...");
   await execute(
-    "NFTXVaultFactoryUpgradeable",
+    "NFTXVaultFactoryUpgradeableV3",
     { from: deployer },
     "setFeeExclusion",
     nftxRouter.address,
@@ -120,7 +120,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("Set FeeDistributor in UniV3Factory");
   console.log("Setting FeeDistributor in NFTXVaultFactory...");
   await execute(
-    "NFTXVaultFactoryUpgradeable",
+    "NFTXVaultFactoryUpgradeableV3",
     { from: deployer },
     "setFeeDistributor",
     feeDistributor.address

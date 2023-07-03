@@ -10,28 +10,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await getNamedAccounts();
   const config = deployConfig[network.name];
 
-  const nftxRouter = await deployments.get("NFTXRouter");
-  const uniV3Factory = await deployments.get("UniswapV3FactoryUpgradeable");
-  const inventoryStaking = await deployments.get(
-    "NFTXInventoryStakingV3Upgradeable"
-  );
-
-  const createVaultZap = await deploy("CreateVaultZap", {
+  const vaultImpl = await deploy("NFTXVaultUpgradeableV3", {
     from: deployer,
-    args: [nftxRouter.address, uniV3Factory.address, inventoryStaking.address],
+    args: [config.WETH],
     log: true,
   });
 
-  console.log("Setting fee exclusion for CreateVaultZap...");
+  console.log("Setting new Vault Impl in NFTXVaultFactory...");
   await execute(
     "NFTXVaultFactoryUpgradeableV3",
     { from: deployer },
-    "setFeeExclusion",
-    createVaultZap.address,
-    true
+    "upgradeBeaconTo",
+    vaultImpl.address
   );
-  console.log("Fee exclusion set for CreateVaultZap");
+  console.log("New Vault Impl set in NFTXVaultFactory");
 };
 export default func;
-func.tags = ["CreateVaultZap"];
-// func.dependencies = ["NFTXV3"];
+func.tags = ["NFTXVault"];
