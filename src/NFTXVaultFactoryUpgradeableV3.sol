@@ -318,13 +318,6 @@ contract NFTXVaultFactoryUpgradeableV3 is
 
         // observe might fail for newly created pools that don't have sufficient observations yet
         if (!success) {
-            if (
-                keccak256(data) !=
-                keccak256(abi.encodeWithSignature("Error(string)", "OLD"))
-            ) {
-                return 0;
-            }
-
             // observations = [0, 1, 2, ..., index, (index + 1), ..., (cardinality - 1)]
             // Case 1: if entire array initialized once, then oldest observation at (index + 1) % cardinality
             // Case 2: array only initialized till index, then oldest obseravtion at index 0
@@ -354,7 +347,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
                 )
             );
             // might revert if oldestAvailableTimestamp == block.timestamp, so we return price as 0
-            if (!success) {
+            if (!success || secondsAgos[0] == 0) {
                 return 0;
             }
         }

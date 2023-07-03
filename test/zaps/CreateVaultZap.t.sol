@@ -4,6 +4,7 @@ pragma solidity =0.8.15;
 import {console} from "forge-std/Test.sol";
 
 import {CreateVaultZap} from "@src/zaps/CreateVaultZap.sol";
+import {NFTXVaultUpgradeableV3, INFTXVaultV3} from "@src/NFTXVaultUpgradeableV3.sol";
 
 import {TestBase} from "@test/TestBase.sol";
 
@@ -27,7 +28,7 @@ contract CreateVaultZapTests is TestBase {
         uint256[] memory tokenIds = nft.mint(qty);
         nft.setApprovalForAll(address(createVaultZap), true);
 
-        createVaultZap.createVault{value: 10 ether}(
+        uint256 vaultId = createVaultZap.createVault{value: 10 ether}(
             CreateVaultZap.CreateVaultParams({
                 vaultInfo: CreateVaultZap.VaultInfo({
                     assetAddress: address(nft),
@@ -59,5 +60,11 @@ contract CreateVaultZapTests is TestBase {
                 })
             })
         );
+
+        vm.warp(block.timestamp + 1);
+        address vault = vaultFactory.vault(vaultId);
+        uint256 vTokenTWAP = INFTXVaultV3(vault).vTokenToETH(1 ether);
+        console.log("vTokenTWAP", vTokenTWAP);
+        assertGt(vTokenTWAP, 0);
     }
 }
