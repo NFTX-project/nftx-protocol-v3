@@ -74,11 +74,10 @@ interface INFTXRouter {
         uint24 fee;
         // the initial sqrt price (as a Q64.96) to set if a new pool is deployed
         uint160 sqrtPriceX96;
-        // TODO: replace with vTokenMin and wethMin
-        // Minimum amount of token0 to be provided as liquidity
-        uint256 amount0Min;
-        // Minimum amount of token1 to be provided as liquidity
-        uint256 amount1Min;
+        // Minimum amount of vTokens to be provided as liquidity
+        uint256 vTokenMin;
+        // Minimum amount of Weth to be provided as liquidity
+        uint256 wethMin;
         // deadline after which the tx fails
         uint256 deadline;
     }
@@ -111,11 +110,10 @@ interface INFTXRouter {
         uint256[] nftIds;
         // for ERC1155: quantity corresponding to each tokenId to deposit
         uint256[] nftAmounts;
-        // TODO: replace with vTokenMin and wethMin
-        // Minimum amount of token0 to be provided as liquidity
-        uint256 amount0Min;
-        // Minimum amount of token1 to be provided as liquidity
-        uint256 amount1Min;
+        // Minimum amount of vTokens to be provided as liquidity
+        uint256 vTokenMin;
+        // Minimum amount of Weth to be provided as liquidity
+        uint256 wethMin;
         // deadline after which the tx fails
         uint256 deadline;
     }
@@ -146,7 +144,6 @@ interface INFTXRouter {
         uint256[] nftIds;
         // the liquidity amount to burn and withdraw
         uint128 liquidity;
-        // TODO: replace with vTokenMin and wethMin
         // Minimum amount of token0 to be withdrawn
         uint256 amount0Min;
         // Minimum amount of token1 to be withdrawn

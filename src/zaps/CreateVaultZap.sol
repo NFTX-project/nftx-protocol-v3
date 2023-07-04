@@ -185,16 +185,6 @@ contract CreateVaultZap is ERC1155Holder {
                         isVToken0
                     );
 
-                (uint256 amount0Min, uint256 amount1Min) = isVToken0
-                    ? (
-                        params.liquidityParams.vTokenMin,
-                        params.liquidityParams.wethMin
-                    )
-                    : (
-                        params.liquidityParams.wethMin,
-                        params.liquidityParams.vTokenMin
-                    );
-
                 uint256[] memory emptyIds;
                 nftxRouter.addLiquidity{value: msg.value}(
                     INFTXRouter.AddLiquidityParams({
@@ -206,8 +196,8 @@ contract CreateVaultZap is ERC1155Holder {
                         tickUpper: tickUpper,
                         fee: params.liquidityParams.fee,
                         sqrtPriceX96: currentSqrtPriceX96,
-                        amount0Min: amount0Min,
-                        amount1Min: amount1Min,
+                        vTokenMin: params.liquidityParams.vTokenMin,
+                        wethMin: params.liquidityParams.wethMin,
                         deadline: params.liquidityParams.deadline
                     })
                 );

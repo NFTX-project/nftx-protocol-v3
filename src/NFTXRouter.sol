@@ -556,9 +556,14 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         );
 
         // mint position with vtoken and ETH
-        (uint256 amount0Desired, uint256 amount1Desired) = _isVToken0
-            ? (vTokensAmount, msg.value)
-            : (msg.value, vTokensAmount);
+        (
+            uint256 amount0Desired,
+            uint256 amount1Desired,
+            uint256 amount0Min,
+            uint256 amount1Min
+        ) = _isVToken0
+                ? (vTokensAmount, msg.value, params.vTokenMin, params.wethMin)
+                : (msg.value, vTokensAmount, params.wethMin, params.vTokenMin);
 
         (positionId, , , ) = positionManager.mint{value: msg.value}(
             INonfungiblePositionManager.MintParams({
@@ -569,8 +574,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 tickUpper: params.tickUpper,
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
-                amount0Min: params.amount0Min,
-                amount1Min: params.amount1Min,
+                amount0Min: amount0Min,
+                amount1Min: amount1Min,
                 recipient: msg.sender,
                 deadline: params.deadline
             })
@@ -644,18 +649,22 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         );
 
         bool _isVToken0 = isVToken0(address(vToken));
-
-        (uint256 amount0Desired, uint256 amount1Desired) = _isVToken0
-            ? (vTokensAmount, msg.value)
-            : (msg.value, vTokensAmount);
+        (
+            uint256 amount0Desired,
+            uint256 amount1Desired,
+            uint256 amount0Min,
+            uint256 amount1Min
+        ) = _isVToken0
+                ? (vTokensAmount, msg.value, params.vTokenMin, params.wethMin)
+                : (msg.value, vTokensAmount, params.wethMin, params.vTokenMin);
 
         positionManager.increaseLiquidity{value: msg.value}(
             INonfungiblePositionManager.IncreaseLiquidityParams({
                 tokenId: params.positionId,
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
-                amount0Min: params.amount0Min,
-                amount1Min: params.amount1Min,
+                amount0Min: amount0Min,
+                amount1Min: amount1Min,
                 deadline: params.deadline
             })
         );
