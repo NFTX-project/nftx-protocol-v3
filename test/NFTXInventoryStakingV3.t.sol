@@ -54,7 +54,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.__NFTXInventoryStaking_init(
             timelock,
             earlyWithdrawPenaltyInWei,
-            ITimelockExcludeList(address(timelockExcludeList))
+            ITimelockExcludeList(address(timelockExcludeList)),
+            inventoryDescriptor
         );
     }
 
@@ -73,7 +74,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.__NFTXInventoryStaking_init(
             timelock,
             earlyWithdrawPenaltyInWei,
-            ITimelockExcludeList(address(timelockExcludeList))
+            ITimelockExcludeList(address(timelockExcludeList)),
+            inventoryDescriptor
         );
     }
 
@@ -89,7 +91,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.__NFTXInventoryStaking_init(
             timelock,
             earlyWithdrawPenaltyInWei,
-            ITimelockExcludeList(address(timelockExcludeList))
+            ITimelockExcludeList(address(timelockExcludeList)),
+            inventoryDescriptor
         );
 
         assertEq(inventoryStaking.name(), "NFTX Inventory Staking");

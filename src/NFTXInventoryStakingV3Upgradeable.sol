@@ -4,19 +4,22 @@ pragma solidity =0.8.15;
 import {ERC721PermitUpgradeable, ERC721EnumerableUpgradeable} from "@src/custom/tokens/ERC721/ERC721PermitUpgradeable.sol";
 import {ERC1155HolderUpgradeable, ERC1155ReceiverUpgradeable, IERC165Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
+import {Base64} from "base64-sol/base64.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
 import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
+import {IERC20Metadata, IERC20} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {InventoryStakingDescriptor} from "@src/custom/InventoryStakingDescriptor.sol";
 
 import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 
@@ -40,6 +43,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     ERC1155HolderUpgradeable,
     PausableUpgradeable
 {
+    using Strings for uint256;
     // =============================================================
     //                           CONSTANTS
     // =============================================================
@@ -70,6 +74,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     /// @dev vaultId => VaultGlobal
     mapping(uint256 => VaultGlobal) public override vaultGlobal;
 
+    InventoryStakingDescriptor public override descriptor;
+
     // =============================================================
     //                           INIT
     // =============================================================
@@ -87,7 +93,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     function __NFTXInventoryStaking_init(
         uint256 timelock_,
         uint256 earlyWithdrawPenaltyInWei_,
-        ITimelockExcludeList timelockExcludeList_
+        ITimelockExcludeList timelockExcludeList_,
+        InventoryStakingDescriptor descriptor_
     ) external override initializer {
         __ERC721PermitUpgradeable_init("NFTX Inventory Staking", "xNFT", "1");
         __Pausable_init();
@@ -98,6 +105,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         timelock = timelock_;
         earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
         timelockExcludeList = timelockExcludeList_;
+        descriptor = descriptor_;
     }
 
     // =============================================================
@@ -482,6 +490,15 @@ contract NFTXInventoryStakingV3Upgradeable is
         emit UpdateEarlyWithdrawPenalty(earlyWithdrawPenaltyInWei_);
     }
 
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
+    function setDescriptor(
+        InventoryStakingDescriptor descriptor_
+    ) external override onlyOwner {
+        descriptor = descriptor_;
+    }
+
     // =============================================================
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
@@ -491,7 +508,7 @@ contract NFTXInventoryStakingV3Upgradeable is
      */
     function pricePerShareVToken(
         uint256 vaultId
-    ) external view override returns (uint256) {
+    ) public view override returns (uint256) {
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
         address vToken = nftxVaultFactory.vault(vaultId);
 
@@ -505,7 +522,7 @@ contract NFTXInventoryStakingV3Upgradeable is
      */
     function wethBalance(
         uint256 positionId
-    ) external view override returns (uint256) {
+    ) public view override returns (uint256) {
         Position memory position = positions[positionId];
         VaultGlobal memory _vaultGlobal = vaultGlobal[position.vaultId];
 
@@ -534,7 +551,60 @@ contract NFTXInventoryStakingV3Upgradeable is
             interfaceId == type(ERC1155ReceiverUpgradeable).interfaceId;
     }
 
-    // TODO: add tokenURI for these xNFTs
+    function tokenURI(
+        uint256 tokenId
+    ) public view override returns (string memory) {
+        Position memory position = positions[tokenId];
+        address vToken = nftxVaultFactory.vault(position.vaultId);
+
+        uint256 vTokenBalance = (IERC20(vToken).balanceOf(address(this)) *
+            position.vTokenShareBalance) /
+            vaultGlobal[position.vaultId].totalVTokenShares;
+
+        string memory vTokenSymbol = IERC20Metadata(vToken).symbol();
+
+        string memory image = Base64.encode(
+            bytes(
+                descriptor.renderSVG(
+                    tokenId,
+                    position.vaultId,
+                    vToken,
+                    vTokenSymbol,
+                    vTokenBalance,
+                    wethBalance(tokenId),
+                    block.timestamp > position.timelockedUntil
+                        ? 0
+                        : position.timelockedUntil - block.timestamp
+                )
+            )
+        );
+
+        return
+            string.concat(
+                "data:application/json;base64,",
+                Base64.encode(
+                    bytes(
+                        string.concat(
+                            '{"name":"',
+                            string.concat(
+                                "x",
+                                vTokenSymbol,
+                                " #",
+                                tokenId.toString()
+                            ),
+                            '", "description":"',
+                            "xNFT representing inventory staking position on NFTX",
+                            '", "image": "',
+                            "data:image/svg+xml;base64,",
+                            image,
+                            '", "attributes": [{"trait_type": "VaultId", "value": "',
+                            position.vaultId.toString(),
+                            '"}]}'
+                        )
+                    )
+                )
+            );
+    }
 
     // =============================================================
     //                        INTERNAL HELPERS

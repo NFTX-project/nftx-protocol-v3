@@ -8,6 +8,7 @@ import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC7
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {InventoryStakingDescriptor} from "@src/custom/InventoryStakingDescriptor.sol";
 
 interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     // details about the staking position
@@ -77,6 +78,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
             uint256 globalWethFeesPerVTokenShareX128
         );
 
+    function descriptor() external view returns (InventoryStakingDescriptor);
+
     // =============================================================
     //                            EVENTS
     // =============================================================
@@ -120,7 +123,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     function __NFTXInventoryStaking_init(
         uint256 timelock_,
         uint256 earlyWithdrawPenaltyInWei_,
-        ITimelockExcludeList timelockExcludeList_
+        ITimelockExcludeList timelockExcludeList_,
+        InventoryStakingDescriptor descriptor_
     ) external;
 
     // =============================================================
@@ -234,6 +238,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     function setEarlyWithdrawPenalty(
         uint256 earlyWithdrawPenaltyInWei_
     ) external;
+
+    function setDescriptor(InventoryStakingDescriptor descriptor_) external;
 
     // =============================================================
     //                     PUBLIC / EXTERNAL VIEW

@@ -13,6 +13,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const vaultFactory = await deployments.get("NFTXVaultFactoryUpgradeableV3");
   const timelockExcludeList = await deployments.get("TimelockExcludeList");
 
+  const inventoryDescriptor = await deploy("InventoryStakingDescriptor", {
+    from: deployer,
+    log: true,
+  });
+
   const inventoryStaking = await deploy("NFTXInventoryStakingV3Upgradeable", {
     from: deployer,
     args: [config.WETH, config.permit2, vaultFactory.address],
@@ -25,6 +30,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             2 * 24 * 60 * 60, // timelock = 2 days timelock
             utils.parseEther("0.05"), // penalty = 5%
             timelockExcludeList.address,
+            inventoryDescriptor.address,
           ],
         },
       },

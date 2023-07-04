@@ -27,6 +27,7 @@ import {MockPermit2} from "@mocks/permit2/MockPermit2.sol";
 
 import {NFTXVaultUpgradeableV3, INFTXVaultV3} from "@src/NFTXVaultUpgradeableV3.sol";
 import {NFTXVaultFactoryUpgradeableV3} from "@src/NFTXVaultFactoryUpgradeableV3.sol";
+import {InventoryStakingDescriptor} from "@src/custom/InventoryStakingDescriptor.sol";
 import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
 import {TimelockExcludeList} from "@src/TimelockExcludeList.sol";
@@ -55,6 +56,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     NFTXVaultUpgradeableV3 vaultImpl;
     NFTXVaultFactoryUpgradeableV3 vaultFactory;
     NFTXRouter nftxRouter;
+    InventoryStakingDescriptor inventoryDescriptor;
     NFTXInventoryStakingV3Upgradeable inventoryStaking;
     MarketplaceUniversalRouterZap marketplaceZap;
 
@@ -123,6 +125,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
 
         timelockExcludeList = new TimelockExcludeList();
+        inventoryDescriptor = new InventoryStakingDescriptor();
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
             IWETH9(address(weth)),
             IPermitAllowanceTransfer(address(permit2)),
@@ -131,7 +134,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         inventoryStaking.__NFTXInventoryStaking_init(
             2 days, // timelock
             0.05 ether, // 5% penalty
-            ITimelockExcludeList(address(timelockExcludeList))
+            ITimelockExcludeList(address(timelockExcludeList)),
+            inventoryDescriptor
         );
         inventoryStaking.setIsGuardian(address(this), true);
 
