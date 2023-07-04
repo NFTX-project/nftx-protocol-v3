@@ -108,8 +108,8 @@ contract NFTXRouterTests is TestBase {
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
                     sqrtPriceX96: _currentSqrtP,
-                    amount0Min: 0,
-                    amount1Min: 0,
+                    vTokenMin: 0,
+                    wethMin: 0,
                     deadline: block.timestamp
                 })
             );
@@ -193,8 +193,8 @@ contract NFTXRouterTests is TestBase {
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
                     sqrtPriceX96: _currentSqrtP,
-                    amount0Min: 0,
-                    amount1Min: 0,
+                    vTokenMin: 0,
+                    wethMin: 0,
                     deadline: block.timestamp
                 })
             );
@@ -355,8 +355,8 @@ contract NFTXRouterTests is TestBase {
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
                     sqrtPriceX96: _currentSqrtP,
-                    amount0Min: 0,
-                    amount1Min: 0,
+                    vTokenMin: 0,
+                    wethMin: 0,
                     deadline: block.timestamp
                 }),
                 encodedPermit2
@@ -447,8 +447,8 @@ contract NFTXRouterTests is TestBase {
                     tickUpper: _tickUpper,
                     fee: DEFAULT_FEE_TIER,
                     sqrtPriceX96: _currentSqrtP,
-                    amount0Min: 0,
-                    amount1Min: 0,
+                    vTokenMin: 0,
+                    wethMin: 0,
                     deadline: block.timestamp
                 }),
                 encodedPermit2
@@ -529,8 +529,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: 0,
                 nftIds: tokenIds,
                 nftAmounts: emptyIds,
-                amount0Min: 0,
-                amount1Min: 0,
+                vTokenMin: 0,
+                wethMin: 0,
                 deadline: block.timestamp
             })
         );
@@ -573,8 +573,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: mintedVTokens,
                 nftIds: emptyIds,
                 nftAmounts: emptyIds,
-                amount0Min: 0,
-                amount1Min: 0,
+                vTokenMin: 0,
+                wethMin: 0,
                 deadline: block.timestamp
             })
         );
@@ -622,8 +622,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: mintedVTokens,
                 nftIds: tokenIds,
                 nftAmounts: emptyIds,
-                amount0Min: 0,
-                amount1Min: 0,
+                vTokenMin: 0,
+                wethMin: 0,
                 deadline: block.timestamp
             })
         );
@@ -672,8 +672,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: 0,
                 nftIds: tokenIds,
                 nftAmounts: amounts,
-                amount0Min: 0,
-                amount1Min: 0,
+                vTokenMin: 0,
+                wethMin: 0,
                 deadline: block.timestamp
             })
         );
@@ -724,8 +724,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: mintedVTokens,
                 nftIds: emptyIds,
                 nftAmounts: emptyIds,
-                amount0Min: 0,
-                amount1Min: 0,
+                vTokenMin: 0,
+                wethMin: 0,
                 deadline: block.timestamp
             }),
             encodedPermit2
@@ -781,8 +781,8 @@ contract NFTXRouterTests is TestBase {
                 vTokensAmount: mintedVTokens,
                 nftIds: tokenIds,
                 nftAmounts: emptyIds,
-                amount0Min: 0,
-                amount1Min: 0,
+                vTokenMin: 0,
+                wethMin: 0,
                 deadline: block.timestamp
             }),
             encodedPermit2

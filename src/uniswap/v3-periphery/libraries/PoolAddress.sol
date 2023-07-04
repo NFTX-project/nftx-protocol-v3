@@ -8,7 +8,7 @@ library PoolAddress {
     // NOTE: Ensure this value is latest & corresponds to current Create2BeaconProxy code
     // keccak256(type(Create2BeaconProxy).creationCode);
     bytes32 internal constant BEACON_CODE_HASH =
-        0x25e3ec08b5481ab6736bacbc1babb737902563de379be5263db365452e048cc1;
+        0x7700ec83d0dc69c0a1e228138168ca93778a8d2f0fe9a0afb44901e1d5142d48;
 
     /// @notice The identifying key of the pool
     struct PoolKey {

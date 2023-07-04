@@ -5,6 +5,7 @@ import {console, stdError} from "forge-std/Test.sol";
 
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
+import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 
 import {MockNFT} from "@mocks/MockNFT.sol";
 import {NFTXInventoryStakingV3Upgradeable, INFTXInventoryStakingV3} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
@@ -116,7 +117,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.pause(0);
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Paused");
+        vm.expectRevert(PausableUpgradeable.Paused.selector);
         inventoryStaking.deposit(VAULT_ID, 0, address(this), false);
     }
 
@@ -302,7 +303,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256[] memory tokenIds;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Paused");
+        vm.expectRevert(PausableUpgradeable.Paused.selector);
         inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
@@ -707,7 +708,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.pause(3);
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Paused");
+        vm.expectRevert(PausableUpgradeable.Paused.selector);
         inventoryStaking.collectWethFees(1);
     }
 
@@ -845,6 +846,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 mintedVTokens = newVtoken.mint(
             tokenIds,
             amounts,
+            address(this),
             address(this)
         );
         vaultFactory.setFeeExclusion(address(this), false); // setting this back
@@ -999,7 +1001,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256[] memory nftIds;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Paused");
+        vm.expectRevert(PausableUpgradeable.Paused.selector);
         inventoryStaking.withdraw(1, 1 ether, nftIds);
     }
 
@@ -1258,26 +1260,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
     // to NFTs
 
-    function test_withdraw_ToNFTs_RevertsForPositionWithoutTimelockValue()
-        external
-    {
-        // mint with vTokens to have 0 timelock
-        (uint256 mintedVTokens, uint256[] memory nftIds) = _mintVToken(1);
-        vtoken.approve(address(inventoryStaking), type(uint256).max);
-        uint256 positionId = inventoryStaking.deposit(
-            VAULT_ID,
-            mintedVTokens,
-            address(this),
-            false
-        );
-
-        (uint256 vTokenShareBalance, , ) = _getPosition(positionId);
-
-        vm.expectRevert(
-            INFTXInventoryStakingV3.RedeemNotAllowedWithoutTimelock.selector
-        );
-        inventoryStaking.withdraw(positionId, vTokenShareBalance, nftIds);
-    }
+    // TODO: add test case for withdraw to NFTs from position with no timelock value
 
     function test_withdraw_ToNFTs_RevertsIfVTokenOwedInsufficientForRedeem()
         external

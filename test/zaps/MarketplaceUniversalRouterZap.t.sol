@@ -226,7 +226,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         );
         nft.setApprovalForAll(address(token), true);
         uint256[] memory amounts = new uint256[](0);
-        token.mint(tokenIds, amounts, address(this));
+        token.mint(tokenIds, amounts, address(this), address(this));
 
         token.approve(address(marketplaceZap), tokenInRequiredForETHFees);
         marketplaceZap.buyNFTsWithERC20(
@@ -300,7 +300,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         );
         nft.setApprovalForAll(address(token), true);
         uint256[] memory amounts = new uint256[](0);
-        token.mint(tokenIds, amounts, from);
+        token.mint(tokenIds, amounts, from, from);
 
         bytes memory encodedPermit2 = _getEncodedPermit2(
             address(token),
@@ -456,7 +456,12 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
             uint256[] memory tokenIds = nft.mint(qty);
             nft.setApprovalForAll(address(token), true);
             uint256[] memory amounts = new uint256[](0);
-            amount = token.mint(tokenIds, amounts, address(this));
+            amount = token.mint(
+                tokenIds,
+                amounts,
+                address(this),
+                address(this)
+            );
         }
 
         uint256 currentTokenPrice = 3 ether;
@@ -511,8 +516,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
                 tickUpper: tickUpper,
                 fee: DEFAULT_FEE_TIER,
                 sqrtPriceX96: currentSqrtP,
-                amount0Min: 0,
-                amount1Min: 0,
+                vTokenMin: 0,
+                wethMin: 0,
                 deadline: block.timestamp
             })
         );

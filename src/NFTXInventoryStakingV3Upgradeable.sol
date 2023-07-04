@@ -31,6 +31,7 @@ import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.s
  * 3: collectWethFees
  *
  * @notice Allows users to stake vTokens to earn fees in vTokens and WETH. The position is minted as xNFT.
+ * @dev This contract must be on the feeExclusion list to avoid redeem fees, else revert.
  */
 
 contract NFTXInventoryStakingV3Upgradeable is
@@ -103,6 +104,9 @@ contract NFTXInventoryStakingV3Upgradeable is
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function deposit(
         uint256 vaultId,
         uint256 amount,
@@ -126,6 +130,9 @@ contract NFTXInventoryStakingV3Upgradeable is
             );
     }
 
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function depositWithPermit2(
         uint256 vaultId,
         uint256 amount,
@@ -169,6 +176,9 @@ contract NFTXInventoryStakingV3Upgradeable is
             );
     }
 
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function depositWithNFT(
         uint256 vaultId,
         uint256[] calldata tokenIds,
@@ -207,6 +217,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             amount = INFTXVaultV3(vToken).mint(
                 tokenIds,
                 amounts,
+                msg.sender,
                 address(this)
             );
         }
@@ -216,17 +227,19 @@ contract NFTXInventoryStakingV3Upgradeable is
         _mint(recipient, (positionId = _nextId++));
 
         uint256 vTokenShares;
-        if (_vaultGlobal.totalVTokenShares == 0) {
-            // permanently locked to avoid front-running attack
+        // cache
+        uint256 _totalVTokenShares = _vaultGlobal.totalVTokenShares;
+        if (_totalVTokenShares == 0) {
             vTokenShares = amount - MINIMUM_LIQUIDITY;
-            _vaultGlobal.totalVTokenShares = MINIMUM_LIQUIDITY;
+            // permanently locked to avoid front-running attack
+            _totalVTokenShares = MINIMUM_LIQUIDITY;
         } else {
             vTokenShares =
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
         require(vTokenShares > 0);
-        _vaultGlobal.totalVTokenShares += vTokenShares;
+        _vaultGlobal.totalVTokenShares = _totalVTokenShares + vTokenShares;
 
         positions[positionId] = Position({
             nonce: 0,
@@ -241,11 +254,14 @@ contract NFTXInventoryStakingV3Upgradeable is
         emit DepositWithNFT(vaultId, positionId, amount);
     }
 
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function withdraw(
         uint256 positionId,
         uint256 vTokenShares,
         uint256[] calldata nftIds
-    ) external override {
+    ) external payable override {
         onlyOwnerIfPaused(2);
 
         if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
@@ -271,14 +287,16 @@ contract NFTXInventoryStakingV3Upgradeable is
             .globalWethFeesPerVTokenShareX128;
         position.wethOwed = 0;
 
-        if (block.timestamp <= position.timelockedUntil) {
+        // cache
+        uint256 _timelockedUntil = position.timelockedUntil;
+
+        if (block.timestamp <= _timelockedUntil) {
             // Eg: timelock = 10 days, vTokenOwed = 100, penalty% = 5%
             // Case 1: Instant withdraw, with 10 days left
             // penaltyAmt = 100 * 5% = 5
             // Case 2: With 2 days timelock left
             // penaltyAmt = (100 * 5%) * 2 / 10 = 1
-            uint256 vTokenPenalty = ((position.timelockedUntil -
-                block.timestamp) *
+            uint256 vTokenPenalty = ((_timelockedUntil - block.timestamp) *
                 vTokenOwed *
                 earlyWithdrawPenaltyInWei) / (timelock * 1 ether);
             vTokenOwed -= vTokenPenalty;
@@ -291,21 +309,25 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 nftCount = nftIds.length;
         if (nftCount > 0) {
-            // redeem is only available for positions which were/are under timelock (as redeem fee is avoided here)
-            if (position.timelockedUntil == 0)
-                revert RedeemNotAllowedWithoutTimelock();
-
             // check if we have sufficient vTokens
             uint256 requiredVTokens = nftCount * 1 ether;
             if (vTokenOwed < requiredVTokens) revert InsufficientVTokens();
 
-            address vault = nftxVaultFactory.vault(vaultId);
-            INFTXVaultV3(vault).redeem(nftIds, msg.sender, 0, false);
+            {
+                address vault = nftxVaultFactory.vault(vaultId);
 
-            // send vToken residue
-            uint256 vTokenResidue = vTokenOwed - requiredVTokens;
-            if (vTokenResidue > 0) {
-                IERC20(vault).transfer(msg.sender, vTokenResidue);
+                INFTXVaultV3(vault).redeem{value: msg.value}(
+                    nftIds,
+                    msg.sender,
+                    0,
+                    _timelockedUntil == 0 // forcing fees for positions which never were under timelock (or else they can bypass redeem fees as deposit was made in vTokens)
+                );
+
+                // send vToken residue
+                uint256 vTokenResidue = vTokenOwed - requiredVTokens;
+                if (vTokenResidue > 0) {
+                    IERC20(vault).transfer(msg.sender, vTokenResidue);
+                }
             }
         } else {
             // transfer tokens to the user
@@ -316,10 +338,15 @@ contract NFTXInventoryStakingV3Upgradeable is
         }
         WETH.transfer(msg.sender, wethOwed);
 
+        uint256 ethResidue = address(this).balance;
+        TransferLib.transferETH(msg.sender, ethResidue);
+
         emit Withdraw(positionId, vTokenShares, vTokenOwed, wethOwed);
     }
 
-    // combine multiple xNFTs (if timelock expired)
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function combinePositions(
         uint256 parentPositionId,
         uint256[] calldata childPositionIds
@@ -381,6 +408,9 @@ contract NFTXInventoryStakingV3Upgradeable is
         parentPosition.wethOwed += netWethOwed;
     }
 
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function collectWethFees(uint256 positionId) external override {
         onlyOwnerIfPaused(3);
 
@@ -402,8 +432,9 @@ contract NFTXInventoryStakingV3Upgradeable is
         emit CollectWethFees(positionId, wethOwed);
     }
 
-    /// @dev Can only be called by feeDistributor, after it sends the reward tokens to this contract
-    /// vToken rewards can be directly transferred to this contract without calling this function
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function receiveWethRewards(
         uint256 vaultId,
         uint256 wethAmount
@@ -428,6 +459,9 @@ contract NFTXInventoryStakingV3Upgradeable is
     //                        ONLY OWNER WRITE
     // =============================================================
 
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function setTimelock(uint256 timelock_) external override onlyOwner {
         if (timelock_ > 14 days) revert TimelockTooLong();
 
@@ -435,6 +469,9 @@ contract NFTXInventoryStakingV3Upgradeable is
         emit UpdateTimelock(timelock_);
     }
 
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function setEarlyWithdrawPenalty(
         uint256 earlyWithdrawPenaltyInWei_
     ) external override onlyOwner {
@@ -449,6 +486,9 @@ contract NFTXInventoryStakingV3Upgradeable is
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
 
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function pricePerShareVToken(
         uint256 vaultId
     ) external view override returns (uint256) {
@@ -460,6 +500,9 @@ contract NFTXInventoryStakingV3Upgradeable is
             _vaultGlobal.totalVTokenShares;
     }
 
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function wethBalance(
         uint256 positionId
     ) external view override returns (uint256) {
@@ -510,17 +553,19 @@ contract NFTXInventoryStakingV3Upgradeable is
         _mint(recipient, (positionId = _nextId++));
 
         uint256 vTokenShares;
-        if (_vaultGlobal.totalVTokenShares == 0) {
-            // permanently locked to avoid front-running attack
+        // cache
+        uint256 _totalVTokenShares = _vaultGlobal.totalVTokenShares;
+        if (_totalVTokenShares == 0) {
             vTokenShares = amount - MINIMUM_LIQUIDITY;
-            _vaultGlobal.totalVTokenShares = MINIMUM_LIQUIDITY;
+            // permanently locked to avoid front-running attack
+            _totalVTokenShares = MINIMUM_LIQUIDITY;
         } else {
             vTokenShares =
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
         require(vTokenShares > 0);
-        _vaultGlobal.totalVTokenShares += vTokenShares;
+        _vaultGlobal.totalVTokenShares = _totalVTokenShares + vTokenShares;
 
         positions[positionId] = Position({
             nonce: 0,

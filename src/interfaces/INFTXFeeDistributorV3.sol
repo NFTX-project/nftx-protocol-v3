@@ -80,6 +80,10 @@ interface INFTXFeeDistributorV3 {
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
+    /**
+     * @notice Distributes current WETH balance with the `feeReceivers` for `vaultId`
+     * @dev called by other contracts like NFTXVault, after transferring WETH to distribute in the same tx
+     */
     function distribute(uint256 vaultId) external;
 
     // =============================================================
@@ -105,11 +109,17 @@ interface INFTXFeeDistributorV3 {
 
     function removeReceiver(uint256 receiverId) external;
 
+    /**
+     * @notice Updating reward fee tier here won't change cardinality for existing UniV3 pools already deployed with `rewardFeeTier_`. That has to be increased externally for each pool.
+     * If the new rewardFeeTier pool doesn't exist for a vToken, then the corresponding vault fees would immediately become 0, till liquidity is provided in the new pool.
+     *
+     * @param rewardFeeTier_ New reward fee tier
+     */
     function changeRewardFeeTier(uint24 rewardFeeTier_) external;
 
-    function setTreasuryAddress(address treasury_) external;
+    function setTreasuryAddress(address treasury) external;
 
-    function setNFTXRouter(INFTXRouter nftxRouter_) external;
+    function setNFTXRouter(INFTXRouter nftxRouter) external;
 
     function pauseFeeDistribution(bool pause) external;
 

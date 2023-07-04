@@ -28,6 +28,12 @@ abstract contract ERC721PermitUpgradeable is
     /// @dev The hash of the version string used in the permit signature verification
     bytes32 private versionHash;
 
+    // Errors
+    error PermitExpired();
+    error ApprovalToCurrentOwner();
+    error InvalidSignature();
+    error Unauthorized();
+
     /// @notice Computes the nameHash and versionHash
     function __ERC721PermitUpgradeable_init(
         string memory name_,
@@ -69,8 +75,7 @@ abstract contract ERC721PermitUpgradeable is
         bytes32 r,
         bytes32 s
     ) external payable override {
-        // TODO: add custom errors
-        require(_blockTimestamp() <= deadline, "Permit expired");
+        if (_blockTimestamp() > deadline) revert PermitExpired();
 
         bytes32 digest = keccak256(
             abi.encodePacked(
@@ -88,8 +93,7 @@ abstract contract ERC721PermitUpgradeable is
             )
         );
         address owner = ownerOf(tokenId);
-        // TODO: add custom errors
-        require(spender != owner, "ERC721Permit: approval to current owner");
+        if (spender == owner) revert ApprovalToCurrentOwner();
 
         if (AddressUpgradeable.isContract(owner)) {
             require(
@@ -101,10 +105,8 @@ abstract contract ERC721PermitUpgradeable is
             );
         } else {
             address recoveredAddress = ecrecover(digest, v, r, s);
-            // TODO: add custom errors
-            require(recoveredAddress != address(0), "Invalid signature");
-            // TODO: add custom errors
-            require(recoveredAddress == owner, "Unauthorized");
+            if (recoveredAddress == address(0)) revert InvalidSignature();
+            if (recoveredAddress != owner) revert Unauthorized();
         }
 
         _approve(spender, tokenId);

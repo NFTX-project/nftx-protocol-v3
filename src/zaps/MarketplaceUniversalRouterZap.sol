@@ -169,6 +169,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             idsIn,
             emptyIds,
             idsOut,
+            msg.sender,
             to,
             true
         );
@@ -371,6 +372,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             idsIn,
             amounts,
             idsOut,
+            msg.sender,
             to,
             true
         );
@@ -479,7 +481,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // Mint our tokens from the vault to this contract
         uint256[] memory emptyIds;
-        INFTXVaultV3(vault).mint(ids, emptyIds, address(this));
+        INFTXVaultV3(vault).mint(ids, emptyIds, msg.sender, address(this));
     }
 
     function _mint1155(
@@ -500,7 +502,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         IERC1155(assetAddress).setApprovalForAll(vault, true);
 
         // Mint our tokens from the vault to this contract
-        INFTXVaultV3(vault).mint(ids, amounts, address(this));
+        INFTXVaultV3(vault).mint(ids, amounts, msg.sender, address(this));
     }
 
     function _validate1155Ids(

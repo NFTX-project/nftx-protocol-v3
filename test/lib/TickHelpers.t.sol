@@ -6,23 +6,16 @@ import {SafeCast} from "@uni-core/libraries/SafeCast.sol";
 import {TickMath} from "@uni-core/libraries/TickMath.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 
-library TickHelpers {
-    function encodeSqrtRatioX96(
-        uint256 amount1,
-        uint256 amount0
-    ) internal pure returns (uint160 sqrtP) {
-        // sqrtP = sqrt(price) * 2^96
-        // = sqrt(amount1 / amount0) * 2^96
-        // = sqrt(amount1 * 2^192 / amount0)
+import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/Test.sol";
 
-        sqrtP = SafeCast.toUint160(Babylonian.sqrt((amount1 << 192) / amount0));
-    }
+contract TickHelpersTest is Test {
+    function testIntermediateValues() external view {
+        uint256 amount1 = 500000000000000;
+        uint256 amount0 = 1000000000000000000;
+        uint256 tickDistance = 200;
 
-    function getTickForAmounts(
-        uint256 amount1,
-        uint256 amount0,
-        uint256 tickDistance
-    ) internal pure returns (int24 tick) {
+        // getTickForAmounts
         uint160 sqrtP = encodeSqrtRatioX96(amount1, amount0);
         int24 tempTick = TickMath.getTickAtSqrtRatio(sqrtP); // this might not be in the tickDistance
 
@@ -37,9 +30,28 @@ library TickHelpers {
         ) * tickDistance;
 
         // cast to int24 & add back the sign
-        tick = int24(uint24(unsignedTick));
+        int24 tick = int24(uint24(unsignedTick));
         if (tempTick < 0) {
             tick = -tick;
         }
+
+        console.log("sqrtP", uint256(sqrtP));
+        console.logInt(int256(tempTick));
+        console.log("unsignedTempTick", unsignedTempTick);
+        console.log("unsignedTick", unsignedTick);
+        console.logInt(int256(tick));
+    }
+
+    // internal
+
+    function encodeSqrtRatioX96(
+        uint256 amount1,
+        uint256 amount0
+    ) internal pure returns (uint160 sqrtP) {
+        // sqrtP = sqrt(price) * 2^96
+        // = sqrt(amount1 / amount0) * 2^96
+        // = sqrt(amount1 * 2^192 / amount0)
+
+        sqrtP = SafeCast.toUint160(Babylonian.sqrt((amount1 << 192) / amount0));
     }
 }

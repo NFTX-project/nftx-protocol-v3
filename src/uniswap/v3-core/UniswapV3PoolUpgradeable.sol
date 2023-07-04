@@ -127,7 +127,7 @@ contract UniswapV3PoolUpgradeable is IUniswapV3Pool, Initializable {
             tickSpacing_
         );
 
-        // When this pool is the DEFAULT_FEE_TIER and we require to have TWAP
+        // When this pool is the `rewardFeeTier` and we require to have TWAP
         // the cost of initialization is forwarded to the first swappers
         if (observationCardinalityNext_ > 0) {
             slot0.observationCardinalityNext = observations.grow(
@@ -991,7 +991,6 @@ contract UniswapV3PoolUpgradeable is IUniswapV3Pool, Initializable {
         slot0.unlocked = true;
     }
 
-    // TODO: handle rewards when no liquidity
     /// @inheritdoc IUniswapV3PoolActions
     function distributeRewards(
         uint256 rewardsAmount,

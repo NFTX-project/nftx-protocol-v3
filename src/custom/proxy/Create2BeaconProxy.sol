@@ -23,6 +23,10 @@ contract Create2BeaconProxy is Proxy {
     bytes32 private constant _BEACON_SLOT =
         0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50;
 
+    // Errors
+    error BeaconIsNotAContract();
+    error BeaconImplementationIsNotAContract();
+
     /**
      * @dev Initializes the proxy with `beacon`.
      *
@@ -77,14 +81,9 @@ contract Create2BeaconProxy is Proxy {
      * - The implementation returned by `beacon` must be a contract.
      */
     function _setBeacon(address beacon, bytes memory data) internal virtual {
-        require(
-            Address.isContract(beacon),
-            "BeaconProxy: beacon is not a contract"
-        );
-        require(
-            Address.isContract(IBeacon(beacon).implementation()),
-            "BeaconProxy: beacon implementation is not a contract"
-        );
+        if (!Address.isContract(beacon)) revert BeaconIsNotAContract();
+        if (!Address.isContract(IBeacon(beacon).implementation()))
+            revert BeaconImplementationIsNotAContract();
         bytes32 slot = _BEACON_SLOT;
 
         // solhint-disable-next-line no-inline-assembly

@@ -94,6 +94,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         return _addLiquidity(params, vToken);
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function addLiquidityWithPermit2(
         AddLiquidityParams calldata params,
         bytes calldata encodedPermit2
@@ -127,6 +130,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         return _addLiquidity(params, vToken);
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function increaseLiquidity(
         IncreaseLiquidityParams calldata params
     ) external payable override {
@@ -145,6 +151,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         return _increaseLiquidity(params, vToken);
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function increaseLiquidityWithPermit2(
         IncreaseLiquidityParams calldata params,
         bytes calldata encodedPermit2
@@ -178,6 +187,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         return _increaseLiquidity(params, vToken);
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function removeLiquidity(
         RemoveLiquidityParams calldata params
     ) external payable override {
@@ -221,13 +233,19 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 wethAmt += msg.value;
             }
 
+            // if the position has completed its timelock, then we shouldn't charge redeem fees.
+            bool chargeFees = positionManager.lockedUntil(params.positionId) >
+                0;
+
             // burn vTokens to provided tokenIds array. Forcing to deduct vault fees
-            TransferLib.unSafeMaxApprove(WETH, address(vToken), wethAmt);
+            if (chargeFees) {
+                TransferLib.unSafeMaxApprove(WETH, address(vToken), wethAmt);
+            }
             uint256 wethFees = vToken.redeem(
                 params.nftIds,
                 msg.sender,
                 wethAmt,
-                true
+                chargeFees
             );
             wethAmt -= wethFees;
 
@@ -286,6 +304,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         uint256 vTokensAmount = vToken.mint(
             params.nftIds,
             params.nftAmounts,
+            msg.sender,
             address(this)
         );
 
@@ -325,6 +344,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         emit SellNFTs(params.nftIds.length, wethRemaining);
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function buyNFTs(BuyNFTsParams calldata params) external payable override {
         INFTXVaultV3 vToken = INFTXVaultV3(
             nftxVaultFactory.vault(params.vaultId)
@@ -384,6 +406,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         }
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
     function setLpTimelock(uint256 lpTimelock_) external override onlyOwner {
         lpTimelock = lpTimelock_;
     }
@@ -507,6 +532,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount += vToken.mint(
                 params.nftIds,
                 params.nftAmounts,
+                msg.sender,
                 address(this)
             );
         }
@@ -530,9 +556,14 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         );
 
         // mint position with vtoken and ETH
-        (uint256 amount0Desired, uint256 amount1Desired) = _isVToken0
-            ? (vTokensAmount, msg.value)
-            : (msg.value, vTokensAmount);
+        (
+            uint256 amount0Desired,
+            uint256 amount1Desired,
+            uint256 amount0Min,
+            uint256 amount1Min
+        ) = _isVToken0
+                ? (vTokensAmount, msg.value, params.vTokenMin, params.wethMin)
+                : (msg.value, vTokensAmount, params.wethMin, params.vTokenMin);
 
         (positionId, , , ) = positionManager.mint{value: msg.value}(
             INonfungiblePositionManager.MintParams({
@@ -543,8 +574,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 tickUpper: params.tickUpper,
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
-                amount0Min: params.amount0Min,
-                amount1Min: params.amount1Min,
+                amount0Min: amount0Min,
+                amount1Min: amount1Min,
                 recipient: msg.sender,
                 deadline: params.deadline
             })
@@ -606,6 +637,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount += vToken.mint(
                 params.nftIds,
                 params.nftAmounts,
+                msg.sender,
                 address(this)
             );
         }
@@ -617,18 +649,22 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         );
 
         bool _isVToken0 = isVToken0(address(vToken));
-
-        (uint256 amount0Desired, uint256 amount1Desired) = _isVToken0
-            ? (vTokensAmount, msg.value)
-            : (msg.value, vTokensAmount);
+        (
+            uint256 amount0Desired,
+            uint256 amount1Desired,
+            uint256 amount0Min,
+            uint256 amount1Min
+        ) = _isVToken0
+                ? (vTokensAmount, msg.value, params.vTokenMin, params.wethMin)
+                : (msg.value, vTokensAmount, params.wethMin, params.vTokenMin);
 
         positionManager.increaseLiquidity{value: msg.value}(
             INonfungiblePositionManager.IncreaseLiquidityParams({
                 tokenId: params.positionId,
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
-                amount0Min: params.amount0Min,
-                amount1Min: params.amount1Min,
+                amount0Min: amount0Min,
+                amount1Min: amount1Min,
                 deadline: params.deadline
             })
         );

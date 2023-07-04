@@ -65,6 +65,7 @@ contract CreateVaultZap is ERC1155Holder {
     // =============================================================
     //                           CONSTANTS
     // =============================================================
+    uint256 internal immutable MINIMUM_INVENTORY_LIQUIDITY;
 
     IWETH9 public immutable WETH;
     INFTXVaultFactoryV3 public immutable vaultFactory;
@@ -94,6 +95,7 @@ contract CreateVaultZap is ERC1155Holder {
         inventoryStaking = inventoryStaking_;
 
         WETH = inventoryStaking_.WETH();
+        MINIMUM_INVENTORY_LIQUIDITY = inventoryStaking_.MINIMUM_LIQUIDITY();
         vaultFactory = inventoryStaking_.nftxVaultFactory();
         positionManager = nftxRouter_.positionManager();
     }
@@ -151,6 +153,7 @@ contract CreateVaultZap is ERC1155Holder {
             uint256 vTokensBalance = vault.mint(
                 params.nftIds,
                 params.nftAmounts,
+                msg.sender,
                 address(this)
             );
 
@@ -182,16 +185,6 @@ contract CreateVaultZap is ERC1155Holder {
                         isVToken0
                     );
 
-                (uint256 amount0Min, uint256 amount1Min) = isVToken0
-                    ? (
-                        params.liquidityParams.vTokenMin,
-                        params.liquidityParams.wethMin
-                    )
-                    : (
-                        params.liquidityParams.wethMin,
-                        params.liquidityParams.vTokenMin
-                    );
-
                 uint256[] memory emptyIds;
                 nftxRouter.addLiquidity{value: msg.value}(
                     INFTXRouter.AddLiquidityParams({
@@ -203,8 +196,8 @@ contract CreateVaultZap is ERC1155Holder {
                         tickUpper: tickUpper,
                         fee: params.liquidityParams.fee,
                         sqrtPriceX96: currentSqrtPriceX96,
-                        amount0Min: amount0Min,
-                        amount1Min: amount1Min,
+                        vTokenMin: params.liquidityParams.vTokenMin,
+                        wethMin: params.liquidityParams.wethMin,
                         deadline: params.liquidityParams.deadline
                     })
                 );
@@ -215,18 +208,24 @@ contract CreateVaultZap is ERC1155Holder {
 
             // vTokens left after providing liquidity are put into inventory staking
             if (vTokensBalance > 0) {
-                TransferLib.unSafeMaxApprove(
-                    address(vault),
-                    address(inventoryStaking),
-                    vTokensBalance
-                );
+                // if dust above the min allowed value
+                if (vTokensBalance > MINIMUM_INVENTORY_LIQUIDITY) {
+                    TransferLib.unSafeMaxApprove(
+                        address(vault),
+                        address(inventoryStaking),
+                        vTokensBalance
+                    );
 
-                inventoryStaking.deposit(
-                    vaultId,
-                    vTokensBalance,
-                    msg.sender,
-                    true // forceTimelock as we minted the vTokens with NFTs
-                );
+                    inventoryStaking.deposit(
+                        vaultId,
+                        vTokensBalance,
+                        msg.sender,
+                        true // forceTimelock as we minted the vTokens with NFTs
+                    );
+                } else {
+                    // dust amount worthless for the user, so send to InventoryStaking as reward for future stakers
+                    vault.transfer(address(inventoryStaking), vTokensBalance);
+                }
             }
         }
 

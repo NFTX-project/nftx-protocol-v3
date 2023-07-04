@@ -100,23 +100,23 @@ contract NFTXVaultUpgradeableV3 is
     }
 
     function __NFTXVault_init(
-        string memory _name,
-        string memory _symbol,
-        address _assetAddress,
-        bool _is1155,
-        bool _allowAllItems
+        string calldata name_,
+        string calldata symbol_,
+        address assetAddress_,
+        bool is1155_,
+        bool allowAllItems_
     ) public override initializer {
         __Ownable_init();
-        __ERC20_init(_name, _symbol);
+        __ERC20_init(name_, symbol_);
 
-        if (_assetAddress == address(0)) revert ZeroAddress();
-        assetAddress = _assetAddress;
+        if (assetAddress_ == address(0)) revert ZeroAddress();
+        assetAddress = assetAddress_;
         vaultFactory = INFTXVaultFactoryV3(msg.sender);
         vaultId = vaultFactory.numVaults();
-        is1155 = _is1155;
-        allowAllItems = _allowAllItems;
+        is1155 = is1155_;
+        allowAllItems = allowAllItems_;
 
-        emit VaultInit(vaultId, _assetAddress, _is1155, _allowAllItems);
+        emit VaultInit(vaultId, assetAddress_, is1155_, allowAllItems_);
 
         setVaultFeatures(
             true /*enableMint*/,
@@ -129,17 +129,20 @@ contract NFTXVaultUpgradeableV3 is
     //                     PUBLIC / EXTERNAL WRITE
     // =============================================================
 
-    // TODO: add NATSPEC
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function mint(
         uint256[] calldata tokenIds,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */,
+        uint256[] calldata amounts,
+        address depositor,
         address to
     ) public payable override nonReentrant returns (uint256 vTokensMinted) {
         _onlyOwnerIfPaused(1);
         if (!enableMint) revert MintingDisabled();
 
         // Take the NFTs.
-        uint256 nftCount = _receiveNFTs(tokenIds, amounts);
+        uint256 nftCount = _receiveNFTs(depositor, tokenIds, amounts);
         vTokensMinted = BASE * nftCount;
 
         // Mint to the user.
@@ -154,7 +157,9 @@ contract NFTXVaultUpgradeableV3 is
         emit Minted(tokenIds, amounts, to);
     }
 
-    // TODO: add NATSPEC
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function redeem(
         uint256[] calldata idsOut,
         address to,
@@ -174,7 +179,7 @@ contract NFTXVaultUpgradeableV3 is
 
         uint256 count = idsOut.length;
 
-        // We burn all from sender and mint to fee receiver to reduce costs.
+        // burn from the sender.
         _burn(msg.sender, BASE * count);
 
         (, uint256 redeemFee, ) = vaultFees();
@@ -204,57 +209,67 @@ contract NFTXVaultUpgradeableV3 is
         emit Redeemed(idsOut, to);
     }
 
-    // TODO: add NATSPEC
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function swap(
         uint256[] calldata idsIn,
-        uint256[] calldata amounts /* ignored for ERC721 vaults */,
+        uint256[] calldata amounts,
         uint256[] calldata idsOut,
+        address depositor,
         address to,
         bool forceFees
     ) public payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(3);
-        uint256 count;
-        if (is1155) {
-            for (uint256 i; i < idsIn.length; ++i) {
-                uint256 amount = amounts[i];
 
-                if (amount == 0) revert TransferAmountIsZero();
-                count += amount;
+        {
+            uint256 count;
+            if (is1155) {
+                for (uint256 i; i < idsIn.length; ++i) {
+                    uint256 amount = amounts[i];
+
+                    if (amount == 0) revert TransferAmountIsZero();
+                    count += amount;
+                }
+            } else {
+                count = idsIn.length;
             }
-        } else {
-            count = idsIn.length;
+
+            if (count != idsOut.length) revert TokenLengthMismatch();
         }
 
-        if (count != idsOut.length) revert TokenLengthMismatch();
+        {
+            (, , uint256 swapFee) = vaultFees();
+            uint256 totalVaultFee = (swapFee * idsOut.length);
 
-        (, , uint256 swapFee) = vaultFees();
-        uint256 totalVaultFee = (swapFee * idsOut.length);
+            // Give the NFTs first, so the user wont get the same thing back.
+            (
+                uint256 netVTokenPremium,
+                uint256[] memory vTokenPremiums,
+                address[] memory depositors
+            ) = _withdrawNFTsTo(idsOut, to, forceFees);
 
-        // Give the NFTs first, so the user wont get the same thing back, just to be nice.
-        (
-            uint256 netVTokenPremium,
-            uint256[] memory vTokenPremiums,
-            address[] memory depositors
-        ) = _withdrawNFTsTo(idsOut, to, forceFees);
+            ethFees = _chargeAndDistributeFees(
+                msg.value,
+                true,
+                totalVaultFee,
+                netVTokenPremium,
+                vTokenPremiums,
+                depositors,
+                forceFees
+            );
+        }
 
-        ethFees = _chargeAndDistributeFees(
-            msg.value,
-            true,
-            totalVaultFee,
-            netVTokenPremium,
-            vTokenPremiums,
-            depositors,
-            forceFees
-        );
-
-        _receiveNFTs(idsIn, amounts);
+        _receiveNFTs(depositor, idsIn, amounts);
 
         _refundETH(msg.value, ethFees);
 
         emit Swapped(idsIn, amounts, idsOut, to);
     }
 
-    // TODO: add NATSPEC
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function flashLoan(
         IERC3156FlashBorrowerUpgradeable receiver,
         address token,
@@ -269,11 +284,16 @@ contract NFTXVaultUpgradeableV3 is
     //                     ONLY PRIVILEGED WRITE
     // =============================================================
 
-    // TODO: add NATSPEC
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function finalizeVault() external override {
         setManager(address(0));
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function setVaultMetadata(
         string calldata name_,
         string calldata symbol_
@@ -282,6 +302,9 @@ contract NFTXVaultUpgradeableV3 is
         _setMetadata(name_, symbol_);
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function setVaultFeatures(
         bool enableMint_,
         bool enableRedeem_,
@@ -295,6 +318,9 @@ contract NFTXVaultUpgradeableV3 is
         emit EnableSwapUpdated(enableSwap_);
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function setFees(
         uint256 mintFee_,
         uint256 redeemFee_,
@@ -304,14 +330,17 @@ contract NFTXVaultUpgradeableV3 is
         vaultFactory.setVaultFees(vaultId, mintFee_, redeemFee_, swapFee_);
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function disableVaultFees() public override {
         _onlyPrivileged();
         vaultFactory.disableVaultFees(vaultId);
     }
 
-    // This function allows for an easy setup of any eligibility module contract from the EligibilityManager.
-    // It takes in ABI encoded parameters for the desired module. This is to make sure they can all follow
-    // a similar interface.
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function deployEligibilityStorage(
         uint256 moduleIndex,
         bytes calldata initData
@@ -349,19 +378,27 @@ contract NFTXVaultUpgradeableV3 is
     //     emit CustomEligibilityDeployed(address(_newEligibility));
     // }
 
-    // The manager has control over options like fees and features
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function setManager(address manager_) public override {
         _onlyPrivileged();
         manager = manager_;
         emit ManagerSet(manager_);
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function rescueTokens(IERC20Upgradeable token) external override {
         _onlyPrivileged();
         uint256 balance = token.balanceOf(address(this));
         token.safeTransfer(msg.sender, balance);
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function rescueERC721(
         IERC721Upgradeable nft,
         uint256[] calldata ids
@@ -374,6 +411,9 @@ contract NFTXVaultUpgradeableV3 is
         }
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function rescueERC1155(
         IERC1155Upgradeable nft,
         uint256[] calldata ids,
@@ -389,6 +429,9 @@ contract NFTXVaultUpgradeableV3 is
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function vaultFees()
         public
         view
@@ -398,6 +441,9 @@ contract NFTXVaultUpgradeableV3 is
         return vaultFactory.vaultFees(vaultId);
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function allValidNFTs(
         uint256[] memory tokenIds
     ) public view override returns (bool) {
@@ -412,12 +458,18 @@ contract NFTXVaultUpgradeableV3 is
         return _eligibilityStorage.checkAllEligible(tokenIds);
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function nftIdAt(
         uint256 holdingsIndex
     ) external view override returns (uint256) {
         return _holdings.at(holdingsIndex);
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function allHoldings() external view override returns (uint256[] memory) {
         uint256 len = _holdings.length();
         uint256[] memory idArray = new uint256[](len);
@@ -427,14 +479,23 @@ contract NFTXVaultUpgradeableV3 is
         return idArray;
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function totalHoldings() external view override returns (uint256) {
         return _holdings.length();
     }
 
-    function version() external pure returns (string memory) {
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
+    function version() external pure override returns (string memory) {
         return "v3.0.0";
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function getVTokenPremium721(
         uint256 tokenId
     ) external view override returns (uint256 premium, address depositor) {
@@ -451,6 +512,9 @@ contract NFTXVaultUpgradeableV3 is
         );
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function getVTokenPremium1155(
         uint256 tokenId,
         uint256 amount
@@ -522,12 +586,18 @@ contract NFTXVaultUpgradeableV3 is
         }
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function vTokenToETH(
         uint256 vTokenAmount
     ) external view override returns (uint256 ethAmount) {
         (ethAmount, ) = _vTokenToETH(vaultFactory, vTokenAmount);
     }
 
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function depositInfo1155Length(
         uint256 tokenId
     ) external view override returns (uint256) {
@@ -548,6 +618,7 @@ contract NFTXVaultUpgradeableV3 is
     }
 
     function _receiveNFTs(
+        address depositor,
         uint256[] calldata tokenIds,
         uint256[] calldata amounts
     ) internal returns (uint256) {
@@ -579,7 +650,7 @@ contract NFTXVaultUpgradeableV3 is
                 depositInfo1155[tokenId].push(
                     DepositInfo1155({
                         qty: amount,
-                        depositor: msg.sender,
+                        depositor: depositor,
                         timestamp: uint48(block.timestamp)
                     })
                 );
@@ -599,7 +670,7 @@ contract NFTXVaultUpgradeableV3 is
                 _holdings.add(tokenId);
                 tokenDepositInfo[tokenId] = TokenDepositInfo({
                     timestamp: uint48(block.timestamp),
-                    depositor: msg.sender
+                    depositor: depositor
                 });
             }
             return tokenIds.length;
@@ -822,8 +893,9 @@ contract NFTXVaultUpgradeableV3 is
         uint256 priceX96 = vaultFactory.getTwapX96(pool);
         if (priceX96 == 0) return (0, feeDistributor);
 
-        bool isVToken0 = nftxRouter.isVToken0(address(this));
-        if (isVToken0) {
+        if (
+            address(this) < address(WETH) // checking if isVToken0
+        ) {
             ethAmount = FullMath.mulDiv(
                 vTokenAmount,
                 priceX96,

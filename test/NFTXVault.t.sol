@@ -30,6 +30,7 @@ contract NFTXVaultTests is TestBase {
         vtoken.mint{value: expectedETHPaid * 2}(
             tokenIds,
             amounts,
+            address(this),
             address(this)
         );
 
@@ -64,6 +65,7 @@ contract NFTXVaultTests is TestBase {
         vtoken.mint{value: expectedETHPaid * 2}(
             tokenIds,
             amounts,
+            address(this),
             address(this)
         );
 
@@ -106,6 +108,7 @@ contract NFTXVaultTests is TestBase {
         vtoken1155.mint{value: expectedETHPaid * 2}(
             tokenIds,
             amounts,
+            address(this),
             address(this)
         );
 
@@ -175,6 +178,7 @@ contract NFTXVaultTests is TestBase {
         startHoax(depositor);
         (uint256 mintedVTokens, uint256[] memory tokenIds) = _mintVToken(
             qty,
+            depositor,
             depositor
         );
         vtoken.transfer(address(this), mintedVTokens);
@@ -312,6 +316,7 @@ contract NFTXVaultTests is TestBase {
         startHoax(rd.depositor);
         (rd.mintedVTokens, rd._tokenIds) = _mintVTokenFor1155(
             rd.qty,
+            rd.depositor,
             rd.depositor
         );
 
@@ -396,6 +401,7 @@ contract NFTXVaultTests is TestBase {
             amounts,
             specificIds,
             address(this),
+            address(this),
             false
         );
 
@@ -417,7 +423,11 @@ contract NFTXVaultTests is TestBase {
         // have a separate depositor address that receives share of premium
         address depositor = makeAddr("depositor");
         startHoax(depositor);
-        (, uint256[] memory specificIds) = _mintVToken(qty);
+        (, uint256[] memory specificIds) = _mintVToken(
+            qty,
+            depositor,
+            depositor
+        );
         vm.stopPrank();
 
         uint256[] memory tokenIds = nft.mint(qty);
@@ -440,6 +450,7 @@ contract NFTXVaultTests is TestBase {
             tokenIds,
             amounts,
             specificIds,
+            address(this),
             address(this),
             false
         );
@@ -487,6 +498,7 @@ contract NFTXVaultTests is TestBase {
             amounts,
             specificIds,
             address(this),
+            address(this),
             false
         );
 
@@ -526,6 +538,7 @@ contract NFTXVaultTests is TestBase {
             tokenIds,
             amounts,
             specificIds,
+            address(this),
             address(this),
             false
         );
