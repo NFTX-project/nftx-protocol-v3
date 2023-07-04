@@ -77,6 +77,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
 
         // Remove all receivers
         feeDistributor.removeReceiver(0);
+        feeDistributor.removeReceiver(0);
         assertEq(feeDistributor.allocTotal(), 0);
 
         uint256 preTreasuryWethBalance = weth.balanceOf(TREASURY);
@@ -93,6 +94,9 @@ contract NFTXFeeDistributorV3Tests is TestBase {
     }
 
     function test_feeDistribution_whenZeroLiquidity() external {
+        // remove inventory staking from receiver
+        feeDistributor.removeReceiver(1);
+
         // deploy pool, but not provide any liquidity
         positionManager.createAndInitializePoolIfNecessary(
             address(vtoken) < address(weth) ? address(vtoken) : address(weth),
@@ -124,22 +128,18 @@ contract NFTXFeeDistributorV3Tests is TestBase {
 
     function test_feeDistribution_Success() external {
         uint256 poolAllocPoint = 0.8 ether; // this value is set in the constructor of NFTXFeeDistributorV3
-        uint256 inventoryAllocPoint = 0.15 ether;
+        uint256 inventoryAllocPoint = 0.15 ether; // this value is different from the one set in constructor, so updating below
         uint256 addressAllocPoint = 0.05 ether;
 
         address receiverAddress = makeAddr("receiverAddress");
 
         // add remaining types of receivers as well
         feeDistributor.addReceiver(
-            address(inventoryStaking),
-            inventoryAllocPoint,
-            INFTXFeeDistributorV3.ReceiverType.INVENTORY
-        );
-        feeDistributor.addReceiver(
             receiverAddress,
             addressAllocPoint,
             INFTXFeeDistributorV3.ReceiverType.ADDRESS
         );
+        feeDistributor.changeReceiverAlloc(1, inventoryAllocPoint);
 
         uint256 mintQty = 5;
 
@@ -273,7 +273,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
             address _receiver,
             uint256 _allocPoint,
             INFTXFeeDistributorV3.ReceiverType _receiverType
-        ) = feeDistributor.feeReceivers(1);
+        ) = feeDistributor.feeReceivers(2);
 
         assertEq(postAllocTotal, prevAllocTotal + allocPoint);
         assertEq(_receiver, newReceiver);
@@ -419,7 +419,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
     }
 
     function test_removeReceiver_Success() external {
-        uint256 receiverId = 0;
+        uint256 receiverId = 1;
 
         uint256 prevAllocTotal = feeDistributor.allocTotal();
         (address preReceiver, uint256 preAllocPoint, ) = feeDistributor

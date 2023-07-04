@@ -74,6 +74,12 @@ contract NFTXFeeDistributorV3 is
 
         // set 80% allocation to liquidity providers
         _addReceiver(address(0), 0.8 ether, ReceiverType.POOL);
+        // set 20% allocation to inventory staking
+        _addReceiver(
+            address(inventoryStaking_),
+            0.2 ether,
+            ReceiverType.INVENTORY
+        );
     }
 
     // =============================================================

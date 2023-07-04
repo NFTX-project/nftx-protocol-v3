@@ -234,7 +234,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
 
             // if the position has completed its timelock, then we shouldn't charge redeem fees.
-            bool chargeFees = positionManager.lockedUntil(params.positionId) >
+            bool chargeFees = positionManager.lockedUntil(params.positionId) ==
                 0;
 
             // burn vTokens to provided tokenIds array. Forcing to deduct vault fees

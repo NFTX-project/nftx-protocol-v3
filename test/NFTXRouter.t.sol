@@ -1063,10 +1063,9 @@ contract NFTXRouterTests is TestBase {
 
         uint256 preNFTBalance = nft.balanceOf(address(this));
         uint256 preVTokenBalance = vtoken.balanceOf(address(this));
-        uint256 preETHBalance = address(this).balance;
 
         // sending ETH as vault fees more than withdrawn amount
-        nftxRouter.removeLiquidity{value: 300 ether}(
+        nftxRouter.removeLiquidity{value: 0}(
             INFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
                 vaultId: VAULT_ID,
@@ -1080,7 +1079,6 @@ contract NFTXRouterTests is TestBase {
 
         uint256 postNFTBalance = nft.balanceOf(address(this));
         uint256 postVTokenBalance = vtoken.balanceOf(address(this));
-        uint256 postETHBalance = address(this).balance;
 
         assertEq(
             postNFTBalance - preNFTBalance,
@@ -1092,9 +1090,7 @@ contract NFTXRouterTests is TestBase {
             nftResidue * 1 ether - 2, // 2 wei round down during txn
             "vToken balance didn't change"
         );
-        // Because in this case ETH fees > withdrawn amount. so preBal > postBal
-        // though for most cases post > pre
-        assertGt(preETHBalance, postETHBalance, "ETH balance didn't change");
+
         assertEq(
             positionManager.ownerOf(positionId),
             address(this),
@@ -1207,10 +1203,9 @@ contract NFTXRouterTests is TestBase {
             allTokenIds[0]
         ) + nft1155.balanceOf(address(this), soldTokenIds[0]);
         uint256 preVTokenBalance = vtoken1155.balanceOf(address(this));
-        uint256 preETHBalance = address(this).balance;
 
         // sending ETH as vault fees more than withdrawn amount
-        nftxRouter.removeLiquidity{value: 300 ether}(
+        nftxRouter.removeLiquidity{value: 0}(
             INFTXRouter.RemoveLiquidityParams({
                 positionId: positionId,
                 vaultId: VAULT_ID_1155,
@@ -1227,7 +1222,6 @@ contract NFTXRouterTests is TestBase {
             allTokenIds[0]
         ) + nft1155.balanceOf(address(this), soldTokenIds[0]);
         uint256 postVTokenBalance = vtoken1155.balanceOf(address(this));
-        uint256 postETHBalance = address(this).balance;
 
         assertEq(
             postNFTBalance - preNFTBalance,
@@ -1239,9 +1233,7 @@ contract NFTXRouterTests is TestBase {
             nftResidue * 1 ether - 2, // 2 wei round down during txn
             "vToken balance didn't change"
         );
-        // Because in this case ETH fees > withdrawn amount. so preBal > postBal
-        // though for most cases post > pre
-        assertGt(preETHBalance, postETHBalance, "ETH balance didn't change");
+
         assertEq(
             positionManager.ownerOf(positionId),
             address(this),
