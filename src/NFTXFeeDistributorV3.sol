@@ -125,6 +125,29 @@ contract NFTXFeeDistributorV3 is
         }
     }
 
+    /**
+     * @inheritdoc INFTXFeeDistributorV3
+     */
+    function distributeVTokensToPool(
+        address pool,
+        address vToken,
+        uint256 vTokenAmount
+    ) external {
+        require(msg.sender == address(nftxRouter));
+
+        uint256 liquidity = IUniswapV3Pool(pool).liquidity();
+        if (liquidity > 0) {
+            IERC20(vToken).transfer(pool, vTokenAmount);
+            IUniswapV3Pool(pool).distributeRewards(
+                vTokenAmount,
+                true // isVToken0
+            );
+        } else {
+            // distribute to inventory stakers if pool doesn't have liquidity
+            IERC20(vToken).transfer(address(inventoryStaking), vTokenAmount);
+        }
+    }
+
     // =============================================================
     //                        ONLY OWNER WRITE
     // =============================================================

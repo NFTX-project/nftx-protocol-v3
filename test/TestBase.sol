@@ -136,7 +136,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             vaultFactory,
             IPermitAllowanceTransfer(address(permit2)),
             LP_TIMELOCK,
-            0.05 ether,
+            0.05 ether, // 5% penalty
+            0.05 ether, // vTokenDustThreshold
             inventoryStaking
         );
         vaultFactory.setFeeExclusion(address(nftxRouter), true);

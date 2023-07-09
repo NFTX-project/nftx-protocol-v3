@@ -32,7 +32,7 @@ import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
  * @author @apoorvlathey
  *
  * @notice Router to facilitate vault tokens minting/burning + addition/removal of concentrated liquidity
- * @dev This router must be excluded from the vault fees, as vault fees handled via custom logic here.
+ * @dev This router must be excluded from the vault fees, as vault fees handled via custom logic here. Also should be excluded from timelocks on NonfungiblePositionManager.
  */
 contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     using SafeERC20 for IERC20;
@@ -55,6 +55,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     // =============================================================
 
     uint256 public override lpTimelock;
+    /// @dev the max penalty applicable. The penalty goes down linearly as the `timelockedUntil` approaches
+    uint256 public override earlyWithdrawPenaltyInWei;
     uint256 public override vTokenDustThreshold;
 
     constructor(
@@ -64,6 +66,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         INFTXVaultFactoryV3 nftxVaultFactory_,
         IPermitAllowanceTransfer PERMIT2_,
         uint256 lpTimelock_,
+        uint256 earlyWithdrawPenaltyInWei_,
         uint256 vTokenDustThreshold_,
         INFTXInventoryStakingV3 inventoryStaking_
     ) {
@@ -73,6 +76,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         nftxVaultFactory = nftxVaultFactory_;
         PERMIT2 = PERMIT2_;
         lpTimelock = lpTimelock_;
+
+        if (earlyWithdrawPenaltyInWei_ > 1 ether)
+            revert InvalidEarlyWithdrawPenalty();
+        earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
+
         vTokenDustThreshold = vTokenDustThreshold_;
         inventoryStaking = inventoryStaking_;
 
@@ -203,7 +211,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function removeLiquidity(
         RemoveLiquidityParams calldata params
     ) external payable override {
-        // remove liquidity to get vTokens and WETH
+        // decrease liquidity of the position (this contract is excluded from the timelocks)
         positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
                 tokenId: params.positionId,
@@ -233,8 +241,47 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             ? (amount0, amount1)
             : (amount1, amount0);
 
+        // checking timelock penalty
+        uint256 _timelockedUntil = positionManager.lockedUntil(
+            params.positionId
+        );
+        if (block.timestamp <= _timelockedUntil) {
+            if (vTokenAmt > 0) {
+                // Eg: lpTimelock = 10 days, vTokenAmt = 100, penalty% = 5%
+                // Case 1: Instant withdraw, with 10 days left
+                // penaltyAmt = 100 * 5% = 5
+                // Case 2: With 2 days timelock left
+                // penaltyAmt = (100 * 5%) * 2 / 10 = 1
+                uint256 vTokenPenalty = ((_timelockedUntil - block.timestamp) *
+                    vTokenAmt *
+                    earlyWithdrawPenaltyInWei) / (lpTimelock * 1 ether);
+
+                // distribute this penalty
+                {
+                    (, , , , uint24 fee, , , , , , , ) = positionManager
+                        .positions(params.positionId);
+                    address pool = IUniswapV3Factory(router.factory()).getPool(
+                        address(vToken),
+                        WETH,
+                        fee
+                    );
+
+                    address feeDistributor = nftxVaultFactory.feeDistributor();
+                    vToken.transfer(feeDistributor, vTokenPenalty);
+                    INFTXFeeDistributorV3(feeDistributor)
+                        .distributeVTokensToPool(
+                            pool,
+                            address(vToken),
+                            vTokenPenalty
+                        );
+                }
+
+                vTokenAmt -= vTokenPenalty;
+            }
+        }
+
         // No NFTs to redeem, directly withdraw vTokens
-        if (params.nftIds.length == 0) {
+        if (params.nftIds.length == 0 && vTokenAmt > 0) {
             vToken.transfer(msg.sender, vTokenAmt);
         } else {
             // if withdrawn WETH is insufficient to pay for vault fees, user sends ETH (can be excess, as refunded back) along with the transaction
@@ -430,6 +477,18 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         uint256 vTokenDustThreshold_
     ) external override onlyOwner {
         vTokenDustThreshold = vTokenDustThreshold_;
+    }
+
+    /**
+     * @inheritdoc INFTXRouter
+     */
+    function setEarlyWithdrawPenalty(
+        uint256 earlyWithdrawPenaltyInWei_
+    ) external onlyOwner {
+        if (earlyWithdrawPenaltyInWei_ > 1 ether)
+            revert InvalidEarlyWithdrawPenalty();
+
+        earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
     }
 
     // =============================================================

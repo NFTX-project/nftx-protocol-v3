@@ -84,10 +84,7 @@ interface IUniswapV3PoolActions {
     /// @dev Can only be called by feeDistributor, after it sends the reward tokens to this pool
     /// @param rewardsAmount The amount of reward tokens to distribute
     /// @param isToken0 If reward token is token0 then true, else false
-    function distributeRewards(
-        uint256 rewardsAmount,
-        bool isToken0
-    ) external;
+    function distributeRewards(uint256 rewardsAmount, bool isToken0) external;
 
     /// @notice Receive token0 and/or token1 and pay it back, plus a fee, in the callback
     /// @dev The caller of this method receives a callback in the form of IUniswapV3FlashCallback#uniswapV3FlashCallback
@@ -108,5 +105,7 @@ interface IUniswapV3PoolActions {
     /// @dev This method is no-op if the pool already has an observationCardinalityNext greater than or equal to
     /// the input observationCardinalityNext.
     /// @param observationCardinalityNext The desired minimum number of observations for the pool to store
-    function increaseObservationCardinalityNext(uint16 observationCardinalityNext) external;
+    function increaseObservationCardinalityNext(
+        uint16 observationCardinalityNext
+    ) external;
 }

@@ -86,6 +86,16 @@ interface INFTXFeeDistributorV3 {
      */
     function distribute(uint256 vaultId) external;
 
+    /**
+     * @notice Distributes vTokens to NFTX AMM pool, can only be called by NFTXRouter
+     * @dev called by NFTXRouter, after it sends the vTokens to this contract
+     */
+    function distributeVTokensToPool(
+        address pool,
+        address vToken,
+        uint256 vTokenAmount
+    ) external;
+
     // =============================================================
     //                        ONLY OWNER WRITE
     // =============================================================

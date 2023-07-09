@@ -36,6 +36,8 @@ interface INFTXRouter {
 
     function lpTimelock() external returns (uint256);
 
+    function earlyWithdrawPenaltyInWei() external returns (uint256);
+
     /// @notice the dust threshold for vTokens above which the additional vTokens minted during add/increase liquidity are put into inventory staking.
     function vTokenDustThreshold() external returns (uint256);
 
@@ -60,6 +62,12 @@ interface INFTXRouter {
     event SellNFTs(uint256 nftCount, uint256 ethReceived);
 
     event BuyNFTs(uint256 nftCount, uint256 ethSpent);
+
+    // =============================================================
+    //                            ERRORS
+    // =============================================================
+
+    error InvalidEarlyWithdrawPenalty();
 
     // =============================================================
     //                     PUBLIC / EXTERNAL WRITE
@@ -223,6 +231,10 @@ interface INFTXRouter {
     function setLpTimelock(uint256 lpTimelock_) external;
 
     function setVTokenDustThreshold(uint256 vTokenDustThreshold_) external;
+
+    function setEarlyWithdrawPenalty(
+        uint256 earlyWithdrawPenaltyInWei_
+    ) external;
 
     // =============================================================
     //                     PUBLIC / EXTERNAL VIEW

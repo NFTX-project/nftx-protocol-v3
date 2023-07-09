@@ -312,8 +312,8 @@ contract NonfungiblePositionManager is
     {
         require(params.liquidity > 0);
         require(
-            block.timestamp > lockedUntil[params.tokenId] ||
-                timelockExcluded[msg.sender]
+            timelockExcluded[msg.sender] ||
+                block.timestamp > lockedUntil[params.tokenId]
         );
 
         Position storage position = _positions[params.tokenId];
