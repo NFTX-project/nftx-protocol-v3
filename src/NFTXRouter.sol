@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
+// inheriting
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
+// libs
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {PoolAddress} from "@uni-periphery/libraries/PoolAddress.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+// interfaces
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -18,6 +21,7 @@ import {IUniswapV3Factory} from "@uni-core/interfaces/IUniswapV3Factory.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
+import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 
@@ -44,12 +48,14 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     SwapRouter public immutable override router;
     IQuoterV2 public immutable override quoter;
     INFTXVaultFactoryV3 public immutable override nftxVaultFactory;
+    INFTXInventoryStakingV3 public immutable override inventoryStaking;
 
     // =============================================================
     //                           STORAGE
     // =============================================================
 
     uint256 public override lpTimelock;
+    uint256 public override vTokenDustThreshold;
 
     constructor(
         INonfungiblePositionManager positionManager_,
@@ -57,7 +63,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         IQuoterV2 quoter_,
         INFTXVaultFactoryV3 nftxVaultFactory_,
         IPermitAllowanceTransfer PERMIT2_,
-        uint256 lpTimelock_
+        uint256 lpTimelock_,
+        uint256 vTokenDustThreshold_,
+        INFTXInventoryStakingV3 inventoryStaking_
     ) {
         positionManager = positionManager_;
         router = router_;
@@ -65,6 +73,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         nftxVaultFactory = nftxVaultFactory_;
         PERMIT2 = PERMIT2_;
         lpTimelock = lpTimelock_;
+        vTokenDustThreshold = vTokenDustThreshold_;
+        inventoryStaking = inventoryStaking_;
 
         WETH = positionManager_.WETH9();
     }
@@ -413,6 +423,15 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         lpTimelock = lpTimelock_;
     }
 
+    /**
+     * @inheritdoc INFTXRouter
+     */
+    function setVTokenDustThreshold(
+        uint256 vTokenDustThreshold_
+    ) external override onlyOwner {
+        vTokenDustThreshold = vTokenDustThreshold_;
+    }
+
     // =============================================================
     //                     PUBLIC / EXTERNAL VIEW
     // =============================================================
@@ -580,22 +599,43 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 deadline: params.deadline
             })
         );
+
+        uint256 vTokenBalance = vToken.balanceOf(address(this));
         if (params.nftIds.length > 0) {
             // vault fees not charged, so instead add timelock to the minted LP NFT
             positionManager.setLockedUntil(
                 positionId,
                 block.timestamp + lpTimelock
             );
+
+            if (vTokenBalance > 0) {
+                if (vTokenBalance > vTokenDustThreshold) {
+                    // stake vTokens left in the inventory
+                    TransferLib.unSafeMaxApprove(
+                        address(vToken),
+                        address(inventoryStaking),
+                        vTokenBalance
+                    );
+
+                    inventoryStaking.deposit(
+                        params.vaultId,
+                        vTokenBalance,
+                        msg.sender,
+                        true // forceTimelock as we minted the vTokens with NFTs
+                    );
+                } else {
+                    vToken.transfer(msg.sender, vTokenBalance);
+                }
+            }
+        } else {
+            // refund vTokens dust (if any left)
+            if (vTokenBalance > 0) {
+                vToken.transfer(msg.sender, vTokenBalance);
+            }
         }
 
         // refund extra ETH
         positionManager.refundETH(msg.sender);
-
-        // refund vTokens dust (if any left)
-        uint256 vTokenBalance = vToken.balanceOf(address(this));
-        if (vTokenBalance > 0) {
-            vToken.transfer(msg.sender, vTokenBalance);
-        }
 
         emit AddLiquidity(
             params.vaultId,
@@ -668,21 +708,43 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 deadline: params.deadline
             })
         );
+
+        uint256 vTokenBalance = vToken.balanceOf(address(this));
         if (params.nftIds.length > 0) {
             // vault fees not charged, so instead update timelock of the position NFT
             positionManager.setLockedUntil(
                 params.positionId,
                 block.timestamp + lpTimelock
             );
+
+            if (vTokenBalance > 0) {
+                if (vTokenBalance > vTokenDustThreshold) {
+                    // stake vTokens left in the inventory
+                    TransferLib.unSafeMaxApprove(
+                        address(vToken),
+                        address(inventoryStaking),
+                        vTokenBalance
+                    );
+
+                    inventoryStaking.deposit(
+                        params.vaultId,
+                        vTokenBalance,
+                        msg.sender,
+                        true // forceTimelock as we minted the vTokens with NFTs
+                    );
+                } else {
+                    vToken.transfer(msg.sender, vTokenBalance);
+                }
+            }
+        } else {
+            // refund vTokens dust (if any left)
+            if (vTokenBalance > 0) {
+                vToken.transfer(msg.sender, vTokenBalance);
+            }
         }
+
         // refund extra ETH
         positionManager.refundETH(msg.sender);
-
-        // refund vTokens dust (if any left)
-        uint256 vTokenBalance = vToken.balanceOf(address(this));
-        if (vTokenBalance > 0) {
-            vToken.transfer(msg.sender, vTokenBalance);
-        }
     }
 
     function _distributeVaultFees(

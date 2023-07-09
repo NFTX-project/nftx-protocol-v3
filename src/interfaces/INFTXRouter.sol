@@ -6,6 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 import {SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
+import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
@@ -27,11 +28,16 @@ interface INFTXRouter {
 
     function nftxVaultFactory() external returns (INFTXVaultFactoryV3);
 
+    function inventoryStaking() external returns (INFTXInventoryStakingV3);
+
     // =============================================================
     //                           STORAGE
     // =============================================================
 
     function lpTimelock() external returns (uint256);
+
+    /// @notice the dust threshold for vTokens above which the additional vTokens minted during add/increase liquidity are put into inventory staking.
+    function vTokenDustThreshold() external returns (uint256);
 
     // =============================================================
     //                            EVENTS
@@ -211,6 +217,8 @@ interface INFTXRouter {
     function rescueTokens(IERC20 token) external;
 
     function setLpTimelock(uint256 lpTimelock_) external;
+
+    function setVTokenDustThreshold(uint256 vTokenDustThreshold_) external;
 
     // =============================================================
     //                     PUBLIC / EXTERNAL VIEW

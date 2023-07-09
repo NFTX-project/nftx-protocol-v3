@@ -114,16 +114,6 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         permit2 = new MockPermit2();
 
-        nftxRouter = new NFTXRouter(
-            positionManager,
-            router,
-            quoter,
-            vaultFactory,
-            IPermitAllowanceTransfer(address(permit2)),
-            LP_TIMELOCK
-        );
-        vaultFactory.setFeeExclusion(address(nftxRouter), true);
-
         timelockExcludeList = new TimelockExcludeList();
         inventoryDescriptor = new InventoryStakingDescriptor();
         inventoryStaking = new NFTXInventoryStakingV3Upgradeable(
@@ -138,6 +128,18 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             inventoryDescriptor
         );
         inventoryStaking.setIsGuardian(address(this), true);
+
+        nftxRouter = new NFTXRouter(
+            positionManager,
+            router,
+            quoter,
+            vaultFactory,
+            IPermitAllowanceTransfer(address(permit2)),
+            LP_TIMELOCK,
+            0.05 ether,
+            inventoryStaking
+        );
+        vaultFactory.setFeeExclusion(address(nftxRouter), true);
 
         feeDistributor = new NFTXFeeDistributorV3(
             vaultFactory,
