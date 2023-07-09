@@ -443,6 +443,44 @@ contract NFTXInventoryStakingV3Upgradeable is
     /**
      * @inheritdoc INFTXInventoryStakingV3
      */
+    function collectWethFees(uint256[] calldata positionIds) external {
+        onlyOwnerIfPaused(3);
+
+        uint256 totalWethOwed;
+        uint256 wethOwed;
+        for (uint256 i; i < positionIds.length; ) {
+            if (ownerOf(positionIds[i]) != msg.sender)
+                revert NotPositionOwner();
+
+            Position storage position = positions[positionIds[i]];
+            VaultGlobal storage _vaultGlobal = vaultGlobal[position.vaultId];
+
+            wethOwed =
+                _calcWethOwed(
+                    _vaultGlobal.globalWethFeesPerVTokenShareX128,
+                    position.wethFeesPerVTokenShareSnapshotX128,
+                    position.vTokenShareBalance
+                ) +
+                position.wethOwed;
+            totalWethOwed += wethOwed;
+
+            position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
+                .globalWethFeesPerVTokenShareX128;
+            position.wethOwed = 0;
+
+            emit CollectWethFees(positionIds[i], wethOwed);
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        WETH.transfer(msg.sender, totalWethOwed);
+    }
+
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
     function receiveWethRewards(
         uint256 vaultId,
         uint256 wethAmount

@@ -217,6 +217,13 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     function collectWethFees(uint256 positionId) external;
 
     /**
+     * @notice Receive WETH fees accumulated by multiple positions
+     *
+     * @param positionIds The positions to withdraw weth fees from
+     */
+    function collectWethFees(uint256[] calldata positionIds) external;
+
+    /**
      * @dev Can only be called by feeDistributor. vToken rewards can be directly transferred to this contract without calling this function
      *
      * @param vaultId The vault id that should receive the rewards
