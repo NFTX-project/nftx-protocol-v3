@@ -303,7 +303,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
                 sqrtPriceX96: currentSqrtP,
                 vTokenMin: 0,
                 wethMin: 0,
-                deadline: block.timestamp
+                deadline: block.timestamp,
+                forceTimelock: false
             })
         );
 
@@ -485,7 +486,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
                 sqrtPriceX96: currentSqrtP,
                 vTokenMin: 0,
                 wethMin: 0,
-                deadline: block.timestamp
+                deadline: block.timestamp,
+                forceTimelock: false
             })
         );
 

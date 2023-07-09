@@ -86,6 +86,8 @@ interface INFTXRouter {
         uint256 wethMin;
         // deadline after which the tx fails
         uint256 deadline;
+        // Forcefully apply timelock to the position
+        bool forceTimelock;
     }
 
     /**
@@ -122,6 +124,8 @@ interface INFTXRouter {
         uint256 wethMin;
         // deadline after which the tx fails
         uint256 deadline;
+        // Forcefully apply timelock to the position
+        bool forceTimelock;
     }
 
     /**

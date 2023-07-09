@@ -199,7 +199,8 @@ contract CreateVaultZap is ERC1155Holder {
                         sqrtPriceX96: currentSqrtPriceX96,
                         vTokenMin: params.liquidityParams.vTokenMin,
                         wethMin: params.liquidityParams.wethMin,
-                        deadline: params.liquidityParams.deadline
+                        deadline: params.liquidityParams.deadline,
+                        forceTimelock: false
                     })
                 );
 

@@ -628,6 +628,14 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 }
             }
         } else {
+            // if forcing timelock requested
+            if (params.forceTimelock) {
+                positionManager.setLockedUntil(
+                    positionId,
+                    block.timestamp + lpTimelock
+                );
+            }
+
             // refund vTokens dust (if any left)
             if (vTokenBalance > 0) {
                 vToken.transfer(msg.sender, vTokenBalance);
@@ -737,6 +745,14 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 }
             }
         } else {
+            // if forcing timelock requested
+            if (params.forceTimelock) {
+                positionManager.setLockedUntil(
+                    params.positionId,
+                    block.timestamp + lpTimelock
+                );
+            }
+
             // refund vTokens dust (if any left)
             if (vTokenBalance > 0) {
                 vToken.transfer(msg.sender, vTokenBalance);

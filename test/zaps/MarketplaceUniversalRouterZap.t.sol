@@ -518,7 +518,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
                 sqrtPriceX96: currentSqrtP,
                 vTokenMin: 0,
                 wethMin: 0,
-                deadline: block.timestamp
+                deadline: block.timestamp,
+                forceTimelock: false
             })
         );
     }
