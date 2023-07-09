@@ -94,6 +94,11 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 indexed positionId,
         uint256 amount
     );
+    event IncreasePosition(
+        uint256 indexed vaultId,
+        uint256 indexed positionId,
+        uint256 amount
+    );
     event Withdraw(
         uint256 indexed positionId,
         uint256 vTokenShares,
@@ -184,6 +189,34 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256[] calldata amounts,
         address recipient
     ) external returns (uint256 positionId);
+
+    /**
+     * @notice Add more vTokens to an existing position (the position have been created with just vTokens)
+     *
+     * @param positionId The position to add vTokens into
+     * @param amount Vault tokens amount to deposit
+     * @param forceTimelock Forcefully apply timelock to the position
+     */
+    function increasePosition(
+        uint256 positionId,
+        uint256 amount,
+        bool forceTimelock
+    ) external;
+
+    /**
+     * @notice Add more vTokens to an existing position (the position have been created with just vTokens)
+     *
+     * @param positionId The position to add vTokens into
+     * @param amount Vault tokens amount to deposit
+     * @param encodedPermit2 Encoded function params (owner, permitSingle, signature) for `PERMIT2.permit()`
+     * @param forceTimelock Forcefully apply timelock to the position
+     */
+    function increasePositionWithPermit2(
+        uint256 positionId,
+        uint256 amount,
+        bytes calldata encodedPermit2,
+        bool forceTimelock
+    ) external;
 
     /**
      * @notice Withdraw vault tokens from the position. Penalty is deducted if position has not finished the timelock.

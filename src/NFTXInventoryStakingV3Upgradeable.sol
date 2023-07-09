@@ -32,6 +32,7 @@ import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.s
  * 1: depositWithNFT
  * 2: withdraw
  * 3: collectWethFees
+ * 4: increasePosition
  *
  * @notice Allows users to stake vTokens to earn fees in vTokens and WETH. The position is minted as xNFT.
  * @dev This contract must be on the feeExclusion list to avoid redeem fees, else revert.
@@ -260,6 +261,80 @@ contract NFTXInventoryStakingV3Upgradeable is
         });
 
         emit DepositWithNFT(vaultId, positionId, amount);
+    }
+
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
+    function increasePosition(
+        uint256 positionId,
+        uint256 amount,
+        bool forceTimelock
+    ) external {
+        Position storage position = positions[positionId];
+
+        uint256 vaultId = position.vaultId;
+        address vToken = nftxVaultFactory.vault(vaultId);
+
+        uint256 preVTokenBalance = IERC20(vToken).balanceOf(address(this));
+        IERC20(vToken).transferFrom(msg.sender, address(this), amount);
+
+        return
+            _increasePosition(
+                positionId,
+                position,
+                vaultId,
+                amount,
+                preVTokenBalance,
+                forceTimelock
+            );
+    }
+
+    /**
+     * @inheritdoc INFTXInventoryStakingV3
+     */
+    function increasePositionWithPermit2(
+        uint256 positionId,
+        uint256 amount,
+        bytes calldata encodedPermit2,
+        bool forceTimelock
+    ) external {
+        Position storage position = positions[positionId];
+
+        uint256 vaultId = position.vaultId;
+        address vToken = nftxVaultFactory.vault(vaultId);
+
+        uint256 preVTokenBalance = IERC20(vToken).balanceOf(address(this));
+
+        if (encodedPermit2.length > 0) {
+            (
+                address _owner,
+                IPermitAllowanceTransfer.PermitSingle memory permitSingle,
+                bytes memory signature
+            ) = abi.decode(
+                    encodedPermit2,
+                    (address, IPermitAllowanceTransfer.PermitSingle, bytes)
+                );
+
+            PERMIT2.permit(_owner, permitSingle, signature);
+        }
+
+        PERMIT2.transferFrom(
+            msg.sender,
+            address(this),
+            uint160(amount),
+            address(vToken)
+        );
+
+        return
+            _increasePosition(
+                positionId,
+                position,
+                vaultId,
+                amount,
+                preVTokenBalance,
+                forceTimelock
+            );
     }
 
     /**
@@ -660,7 +735,58 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         _mint(recipient, (positionId = _nextId++));
 
-        uint256 vTokenShares;
+        uint256 vTokenShares = _mintVTokenShares(
+            _vaultGlobal,
+            amount,
+            preVTokenBalance
+        );
+
+        positions[positionId] = Position({
+            nonce: 0,
+            vaultId: vaultId,
+            timelockedUntil: forceTimelock ? block.timestamp + timelock : 0,
+            vTokenShareBalance: vTokenShares,
+            wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
+                .globalWethFeesPerVTokenShareX128,
+            wethOwed: 0
+        });
+
+        emit Deposit(vaultId, positionId, amount);
+    }
+
+    function _increasePosition(
+        uint256 positionId,
+        Position storage position,
+        uint256 vaultId,
+        uint256 amount,
+        uint256 preVTokenBalance,
+        bool forceTimelock
+    ) internal {
+        onlyOwnerIfPaused(4);
+
+        // only allow for positions created with just vTokens
+        require(position.timelockedUntil == 0);
+
+        VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
+
+        position.vTokenShareBalance += _mintVTokenShares(
+            _vaultGlobal,
+            amount,
+            preVTokenBalance
+        );
+
+        if (forceTimelock) {
+            position.timelockedUntil = block.timestamp + timelock;
+        }
+
+        emit IncreasePosition(vaultId, positionId, amount);
+    }
+
+    function _mintVTokenShares(
+        VaultGlobal storage _vaultGlobal,
+        uint256 amount,
+        uint256 preVTokenBalance
+    ) internal returns (uint256 vTokenShares) {
         // cache
         uint256 _totalVTokenShares = _vaultGlobal.totalVTokenShares;
         if (_totalVTokenShares == 0) {
@@ -674,18 +800,6 @@ contract NFTXInventoryStakingV3Upgradeable is
         }
         require(vTokenShares > 0);
         _vaultGlobal.totalVTokenShares = _totalVTokenShares + vTokenShares;
-
-        positions[positionId] = Position({
-            nonce: 0,
-            vaultId: vaultId,
-            timelockedUntil: forceTimelock ? block.timestamp + timelock : 0,
-            vTokenShareBalance: vTokenShares,
-            wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
-                .globalWethFeesPerVTokenShareX128,
-            wethOwed: 0
-        });
-
-        emit Deposit(vaultId, positionId, amount);
     }
 
     function _getTimelockedUntil(
