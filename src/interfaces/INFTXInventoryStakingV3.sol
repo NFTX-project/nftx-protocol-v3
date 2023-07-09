@@ -138,11 +138,12 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
 
     /**
      * @notice Deposits vToken to mint inventory staking xNFT position
-     * @dev User should have given vault token approval to this contract
      *
      * @param vaultId The id of the vault
      * @param amount Vault tokens amount to deposit
      * @param recipient Recipient address for the xNFT
+     * @param encodedPermit2 Encoded function params (owner, permitSingle, signature) for `PERMIT2.permit()`
+     * @param viaPermit2 If true then vTokens transferred via Permit2 else normal token transferFrom
      * @param forceTimelock Forcefully apply timelock to the position
      *
      * @return positionId The tokenId for the xNFT position
@@ -151,25 +152,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 vaultId,
         uint256 amount,
         address recipient,
-        bool forceTimelock
-    ) external returns (uint256 positionId);
-
-    /**
-     * @notice Deposits vToken to mint inventory staking xNFT position
-     *
-     * @param vaultId The id of the vault
-     * @param amount Vault tokens amount to deposit
-     * @param recipient Recipient address for the xNFT
-     * @param encodedPermit2 Encoded function params (owner, permitSingle, signature) for `PERMIT2.permit()`
-     * @param forceTimelock Forcefully apply timelock to the position
-     *
-     * @return positionId The tokenId for the xNFT position
-     */
-    function depositWithPermit2(
-        uint256 vaultId,
-        uint256 amount,
-        address recipient,
         bytes calldata encodedPermit2,
+        bool viaPermit2,
         bool forceTimelock
     ) external returns (uint256 positionId);
 
@@ -195,26 +179,15 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
      *
      * @param positionId The position to add vTokens into
      * @param amount Vault tokens amount to deposit
+     * @param encodedPermit2 Encoded function params (owner, permitSingle, signature) for `PERMIT2.permit()`
+     * @param viaPermit2 If true then vTokens transferred via Permit2 else normal token transferFrom
      * @param forceTimelock Forcefully apply timelock to the position
      */
     function increasePosition(
         uint256 positionId,
         uint256 amount,
-        bool forceTimelock
-    ) external;
-
-    /**
-     * @notice Add more vTokens to an existing position (the position have been created with just vTokens)
-     *
-     * @param positionId The position to add vTokens into
-     * @param amount Vault tokens amount to deposit
-     * @param encodedPermit2 Encoded function params (owner, permitSingle, signature) for `PERMIT2.permit()`
-     * @param forceTimelock Forcefully apply timelock to the position
-     */
-    function increasePositionWithPermit2(
-        uint256 positionId,
-        uint256 amount,
         bytes calldata encodedPermit2,
+        bool viaPermit2,
         bool forceTimelock
     ) external;
 
@@ -241,13 +214,6 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 parentPositionId,
         uint256[] calldata childPositionIds
     ) external;
-
-    /**
-     * @notice Receive WETH fees accumulated by a position
-     *
-     * @param positionId The position to withdraw weth fees from
-     */
-    function collectWethFees(uint256 positionId) external;
 
     /**
      * @notice Receive WETH fees accumulated by multiple positions

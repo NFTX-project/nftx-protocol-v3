@@ -120,33 +120,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vaultId,
         uint256 amount,
         address recipient,
-        bool forceTimelock
-    ) external override returns (uint256 positionId) {
-        address vToken = nftxVaultFactory.vault(vaultId);
-        VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
-
-        uint256 preVTokenBalance = IERC20(vToken).balanceOf(address(this));
-        IERC20(vToken).transferFrom(msg.sender, address(this), amount);
-
-        return
-            _deposit(
-                vaultId,
-                amount,
-                recipient,
-                _vaultGlobal,
-                preVTokenBalance,
-                forceTimelock
-            );
-    }
-
-    /**
-     * @inheritdoc INFTXInventoryStakingV3
-     */
-    function depositWithPermit2(
-        uint256 vaultId,
-        uint256 amount,
-        address recipient,
         bytes calldata encodedPermit2,
+        bool viaPermit2,
         bool forceTimelock
     ) external override returns (uint256 positionId) {
         address vToken = nftxVaultFactory.vault(vaultId);
@@ -154,25 +129,29 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 preVTokenBalance = IERC20(vToken).balanceOf(address(this));
 
-        if (encodedPermit2.length > 0) {
-            (
-                address _owner,
-                IPermitAllowanceTransfer.PermitSingle memory permitSingle,
-                bytes memory signature
-            ) = abi.decode(
-                    encodedPermit2,
-                    (address, IPermitAllowanceTransfer.PermitSingle, bytes)
-                );
+        if (viaPermit2) {
+            if (encodedPermit2.length > 0) {
+                (
+                    address _owner,
+                    IPermitAllowanceTransfer.PermitSingle memory permitSingle,
+                    bytes memory signature
+                ) = abi.decode(
+                        encodedPermit2,
+                        (address, IPermitAllowanceTransfer.PermitSingle, bytes)
+                    );
 
-            PERMIT2.permit(_owner, permitSingle, signature);
+                PERMIT2.permit(_owner, permitSingle, signature);
+            }
+
+            PERMIT2.transferFrom(
+                msg.sender,
+                address(this),
+                uint160(amount),
+                address(vToken)
+            );
+        } else {
+            IERC20(vToken).transferFrom(msg.sender, address(this), amount);
         }
-
-        PERMIT2.transferFrom(
-            msg.sender,
-            address(this),
-            uint160(amount),
-            address(vToken)
-        );
 
         return
             _deposit(
@@ -235,20 +214,11 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         _mint(recipient, (positionId = _nextId++));
 
-        uint256 vTokenShares;
-        // cache
-        uint256 _totalVTokenShares = _vaultGlobal.totalVTokenShares;
-        if (_totalVTokenShares == 0) {
-            vTokenShares = amount - MINIMUM_LIQUIDITY;
-            // permanently locked to avoid front-running attack
-            _totalVTokenShares = MINIMUM_LIQUIDITY;
-        } else {
-            vTokenShares =
-                (amount * _vaultGlobal.totalVTokenShares) /
-                preVTokenBalance;
-        }
-        require(vTokenShares > 0);
-        _vaultGlobal.totalVTokenShares = _totalVTokenShares + vTokenShares;
+        uint256 vTokenShares = _mintVTokenShares(
+            _vaultGlobal,
+            amount,
+            preVTokenBalance
+        );
 
         positions[positionId] = Position({
             nonce: 0,
@@ -269,34 +239,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     function increasePosition(
         uint256 positionId,
         uint256 amount,
-        bool forceTimelock
-    ) external {
-        Position storage position = positions[positionId];
-
-        uint256 vaultId = position.vaultId;
-        address vToken = nftxVaultFactory.vault(vaultId);
-
-        uint256 preVTokenBalance = IERC20(vToken).balanceOf(address(this));
-        IERC20(vToken).transferFrom(msg.sender, address(this), amount);
-
-        return
-            _increasePosition(
-                positionId,
-                position,
-                vaultId,
-                amount,
-                preVTokenBalance,
-                forceTimelock
-            );
-    }
-
-    /**
-     * @inheritdoc INFTXInventoryStakingV3
-     */
-    function increasePositionWithPermit2(
-        uint256 positionId,
-        uint256 amount,
         bytes calldata encodedPermit2,
+        bool viaPermit2,
         bool forceTimelock
     ) external {
         Position storage position = positions[positionId];
@@ -306,25 +250,29 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 preVTokenBalance = IERC20(vToken).balanceOf(address(this));
 
-        if (encodedPermit2.length > 0) {
-            (
-                address _owner,
-                IPermitAllowanceTransfer.PermitSingle memory permitSingle,
-                bytes memory signature
-            ) = abi.decode(
-                    encodedPermit2,
-                    (address, IPermitAllowanceTransfer.PermitSingle, bytes)
-                );
+        if (viaPermit2) {
+            if (encodedPermit2.length > 0) {
+                (
+                    address _owner,
+                    IPermitAllowanceTransfer.PermitSingle memory permitSingle,
+                    bytes memory signature
+                ) = abi.decode(
+                        encodedPermit2,
+                        (address, IPermitAllowanceTransfer.PermitSingle, bytes)
+                    );
 
-            PERMIT2.permit(_owner, permitSingle, signature);
+                PERMIT2.permit(_owner, permitSingle, signature);
+            }
+
+            PERMIT2.transferFrom(
+                msg.sender,
+                address(this),
+                uint160(amount),
+                address(vToken)
+            );
+        } else {
+            IERC20(vToken).transferFrom(msg.sender, address(this), amount);
         }
-
-        PERMIT2.transferFrom(
-            msg.sender,
-            address(this),
-            uint160(amount),
-            address(vToken)
-        );
 
         return
             _increasePosition(
@@ -489,30 +437,6 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         // add net wethOwed to the parent position
         parentPosition.wethOwed += netWethOwed;
-    }
-
-    /**
-     * @inheritdoc INFTXInventoryStakingV3
-     */
-    function collectWethFees(uint256 positionId) external override {
-        onlyOwnerIfPaused(3);
-
-        if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
-
-        Position storage position = positions[positionId];
-        VaultGlobal storage _vaultGlobal = vaultGlobal[position.vaultId];
-        uint256 wethOwed = _calcWethOwed(
-            _vaultGlobal.globalWethFeesPerVTokenShareX128,
-            position.wethFeesPerVTokenShareSnapshotX128,
-            position.vTokenShareBalance
-        ) + position.wethOwed;
-        position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
-            .globalWethFeesPerVTokenShareX128;
-        position.wethOwed = 0;
-
-        WETH.transfer(msg.sender, wethOwed);
-
-        emit CollectWethFees(positionId, wethOwed);
     }
 
     /**

@@ -121,12 +121,12 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         hoax(makeAddr("nonOwner"));
         vm.expectRevert(PausableUpgradeable.Paused.selector);
-        inventoryStaking.deposit(VAULT_ID, 0, address(this), false);
+        inventoryStaking.deposit(VAULT_ID, 0, address(this), "", false, false);
     }
 
     function test_deposit_RevertsForInvalidVaultId() external {
         vm.expectRevert(stdError.indexOOBError);
-        inventoryStaking.deposit(999, 0, address(this), false);
+        inventoryStaking.deposit(999, 0, address(this), "", false, false);
     }
 
     function test_deposit_Success_WhenPreTotalSharesZero() external {
@@ -146,6 +146,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             VAULT_ID,
             mintedVTokens,
             recipient,
+            "",
+            false,
             false
         );
 
@@ -203,6 +205,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             VAULT_ID,
             mintedVTokens,
             recipient,
+            "",
+            false,
             false
         );
 
@@ -259,11 +263,12 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         address recipient = makeAddr("recipient");
         vm.expectEmit(true, true, false, true);
         emit Deposit(VAULT_ID, 1, mintedVTokens);
-        uint256 positionId = inventoryStaking.depositWithPermit2(
+        uint256 positionId = inventoryStaking.deposit(
             VAULT_ID,
             mintedVTokens,
             recipient,
             encodedPermit2,
+            true,
             false
         );
 
@@ -710,23 +715,32 @@ contract NFTXInventoryStakingV3Tests is TestBase {
     function test_collectWethFees_RevertsForNonOwnerIfPaused() external {
         inventoryStaking.pause(3);
 
+        uint256[] memory positionIds = new uint256[](1);
+        positionIds[0] = 1;
+
         hoax(makeAddr("nonOwner"));
         vm.expectRevert(PausableUpgradeable.Paused.selector);
-        inventoryStaking.collectWethFees(1);
+        inventoryStaking.collectWethFees(positionIds);
     }
 
     function test_collectWethFees_RevertsForNonPositionOwner() external {
         // stake to mint positionId
         uint256 positionId = _mintXNFT(1);
 
+        uint256[] memory positionIds = new uint256[](1);
+        positionIds[0] = positionId;
+
         hoax(makeAddr("nonPositionOwner"));
         vm.expectRevert(INFTXInventoryStakingV3.NotPositionOwner.selector);
-        inventoryStaking.collectWethFees(positionId);
+        inventoryStaking.collectWethFees(positionIds);
     }
 
     function test_collectWethFees_Success() external {
         // position where wethOwed > 0
         uint256 positionId = _mintXNFTWithWethOwed(1);
+
+        uint256[] memory positionIds = new uint256[](1);
+        positionIds[0] = positionId;
 
         (
             ,
@@ -750,7 +764,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         vm.expectEmit(true, false, false, true);
         emit CollectWethFees(positionId, expectedWethAmount);
-        inventoryStaking.collectWethFees(positionId);
+        inventoryStaking.collectWethFees(positionIds);
 
         (
             ,
@@ -861,6 +875,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             newVaultId,
             mintedVTokens,
             address(this),
+            "",
+            false,
             false
         );
         (, , uint256 childTimelockedUntil, , , ) = inventoryStaking.positions(
@@ -1444,6 +1460,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             VAULT_ID,
             mintedVTokens,
             address(this),
+            "",
+            false,
             false
         );
     }

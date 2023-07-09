@@ -222,6 +222,8 @@ contract CreateVaultZap is ERC1155Holder {
                         vaultId,
                         vTokensBalance,
                         msg.sender,
+                        "",
+                        false,
                         true // forceTimelock as we minted the vTokens with NFTs
                     );
                 } else {

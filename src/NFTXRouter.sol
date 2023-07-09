@@ -621,6 +621,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                         params.vaultId,
                         vTokenBalance,
                         msg.sender,
+                        "",
+                        false,
                         true // forceTimelock as we minted the vTokens with NFTs
                     );
                 } else {
@@ -738,6 +740,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                         params.vaultId,
                         vTokenBalance,
                         msg.sender,
+                        "",
+                        false,
                         true // forceTimelock as we minted the vTokens with NFTs
                     );
                 } else {

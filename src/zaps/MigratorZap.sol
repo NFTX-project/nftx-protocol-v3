@@ -225,6 +225,8 @@ contract MigratorZap {
             vaultIdV3,
             vTokenV3Balance,
             msg.sender,
+            "",
+            false,
             false
         );
     }
@@ -272,6 +274,8 @@ contract MigratorZap {
             vaultIdV3,
             vTokenV3Balance,
             msg.sender,
+            "",
+            false,
             false
         );
     }
