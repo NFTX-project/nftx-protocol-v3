@@ -6,6 +6,7 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@uniswap/v3-core/contracts/libraries/FixedPoint128.sol";
 import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import "./interfaces/INonfungiblePositionManager.sol";
@@ -24,6 +25,7 @@ import "./base/PoolInitializer.sol";
 /// @notice Wraps Uniswap V3 positions in the ERC721 non-fungible token interface
 contract NonfungiblePositionManager is
     INonfungiblePositionManager,
+    Ownable,
     Multicall,
     ERC721Permit,
     PeripheryImmutableState,
@@ -72,6 +74,8 @@ contract NonfungiblePositionManager is
 
     // token ID => timestamp
     mapping(uint256 => uint256) public override lockedUntil;
+
+    mapping(address => bool) public override timelockExcluded;
 
     constructor(
         address _factory,
@@ -307,7 +311,10 @@ contract NonfungiblePositionManager is
         returns (uint256 amount0, uint256 amount1)
     {
         require(params.liquidity > 0);
-        require(block.timestamp > lockedUntil[params.tokenId]);
+        require(
+            block.timestamp > lockedUntil[params.tokenId] ||
+                timelockExcluded[msg.sender]
+        );
 
         Position storage position = _positions[params.tokenId];
 
@@ -498,6 +505,13 @@ contract NonfungiblePositionManager is
         );
 
         lockedUntil[tokenId] = timestamp;
+    }
+
+    function setTimelockExcluded(
+        address addr,
+        bool isExcluded
+    ) external onlyOwner {
+        timelockExcluded[addr] = isExcluded;
     }
 
     function _getAndIncrementNonce(
