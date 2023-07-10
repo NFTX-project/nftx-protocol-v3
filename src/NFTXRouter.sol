@@ -621,43 +621,45 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount
         );
 
+        // creating struct first to avoid stack too deep. Variables not yet defined are set later
+        INonfungiblePositionManager.MintParams
+            memory mintParams = INonfungiblePositionManager.MintParams({
+                token0: address(0),
+                token1: address(0),
+                fee: params.fee,
+                tickLower: params.tickLower,
+                tickUpper: params.tickUpper,
+                amount0Desired: 0,
+                amount1Desired: 0,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: msg.sender,
+                deadline: params.deadline
+            });
+
         bool _isVToken0 = isVToken0(address(vToken));
-        (address token0, address token1) = _isVToken0
+        (mintParams.token0, mintParams.token1) = _isVToken0
             ? (address(vToken), WETH)
             : (WETH, address(vToken));
 
-        positionManager.createAndInitializePoolIfNecessary(
-            token0,
-            token1,
+        address pool = positionManager.createAndInitializePoolIfNecessary(
+            mintParams.token0,
+            mintParams.token1,
             params.fee,
             params.sqrtPriceX96
         );
 
         // mint position with vtoken and ETH
         (
-            uint256 amount0Desired,
-            uint256 amount1Desired,
-            uint256 amount0Min,
-            uint256 amount1Min
+            mintParams.amount0Desired,
+            mintParams.amount1Desired,
+            mintParams.amount0Min,
+            mintParams.amount1Min
         ) = _isVToken0
-                ? (vTokensAmount, msg.value, params.vTokenMin, params.wethMin)
-                : (msg.value, vTokensAmount, params.wethMin, params.vTokenMin);
+            ? (vTokensAmount, msg.value, params.vTokenMin, params.wethMin)
+            : (msg.value, vTokensAmount, params.wethMin, params.vTokenMin);
 
-        (positionId, , , ) = positionManager.mint{value: msg.value}(
-            INonfungiblePositionManager.MintParams({
-                token0: token0,
-                token1: token1,
-                fee: params.fee,
-                tickLower: params.tickLower,
-                tickUpper: params.tickUpper,
-                amount0Desired: amount0Desired,
-                amount1Desired: amount1Desired,
-                amount0Min: amount0Min,
-                amount1Min: amount1Min,
-                recipient: msg.sender,
-                deadline: params.deadline
-            })
-        );
+        (positionId, , , ) = positionManager.mint{value: msg.value}(mintParams);
 
         uint256 vTokenBalance = vToken.balanceOf(address(this));
         if (params.nftIds.length > 0) {
@@ -710,7 +712,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.vaultId,
             params.vTokensAmount,
             params.nftIds,
-            positionId
+            positionId,
+            pool
         );
     }
 

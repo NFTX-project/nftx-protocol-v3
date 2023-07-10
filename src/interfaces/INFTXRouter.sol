@@ -49,7 +49,8 @@ interface INFTXRouter {
         uint256 vaultId,
         uint256 vTokensAmount,
         uint256[] nftIds,
-        uint256 positionId
+        uint256 positionId,
+        address pool
     );
 
     event RemoveLiquidity(
