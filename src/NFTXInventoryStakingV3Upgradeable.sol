@@ -19,7 +19,6 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
-import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {IERC20Metadata, IERC20} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
 import {InventoryStakingDescriptor} from "@src/custom/InventoryStakingDescriptor.sol";

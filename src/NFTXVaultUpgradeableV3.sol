@@ -404,36 +404,34 @@ contract NFTXVaultUpgradeableV3 is
     /**
      * @inheritdoc INFTXVaultV3
      */
-    function rescueTokens(IERC20Upgradeable token) external override onlyOwner {
-        uint256 balance = token.balanceOf(address(this));
-        token.safeTransfer(msg.sender, balance);
-    }
-
-    /**
-     * @inheritdoc INFTXVaultV3
-     */
-    function rescueERC721(
-        IERC721Upgradeable nft,
-        uint256[] calldata ids
-    ) external override onlyOwner {
-        require(address(nft) != assetAddress);
-
-        for (uint256 i; i < ids.length; ++i) {
-            nft.safeTransferFrom(address(this), msg.sender, ids[i]);
-        }
-    }
-
-    /**
-     * @inheritdoc INFTXVaultV3
-     */
-    function rescueERC1155(
-        IERC1155Upgradeable nft,
+    function rescueTokens(
+        TokenType tt,
+        address token,
         uint256[] calldata ids,
         uint256[] calldata amounts
-    ) external override onlyOwner {
-        require(address(nft) != assetAddress);
+    ) external onlyOwner {
+        require(address(token) != assetAddress);
 
-        nft.safeBatchTransferFrom(address(this), msg.sender, ids, amounts, "");
+        if (tt == TokenType.ERC20) {
+            uint256 balance = IERC20Upgradeable(token).balanceOf(address(this));
+            IERC20Upgradeable(token).safeTransfer(msg.sender, balance);
+        } else if (tt == TokenType.ERC721) {
+            for (uint256 i; i < ids.length; ++i) {
+                IERC721Upgradeable(token).safeTransferFrom(
+                    address(this),
+                    msg.sender,
+                    ids[i]
+                );
+            }
+        } else {
+            IERC1155Upgradeable(token).safeBatchTransferFrom(
+                address(this),
+                msg.sender,
+                ids,
+                amounts,
+                ""
+            );
+        }
     }
 
     function shutdown(address recipient) external override onlyOwner {

@@ -25,6 +25,12 @@ interface INFTXVaultV3 is IERC20Upgradeable {
         uint48 timestamp;
     }
 
+    enum TokenType {
+        ERC20,
+        ERC721,
+        ERC1155
+    }
+
     // =============================================================
     //                           CONSTANTS
     // =============================================================
@@ -179,15 +185,9 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     //                     ONLY OWNER WRITE
     // =============================================================
 
-    function rescueTokens(IERC20Upgradeable token) external;
-
-    function rescueERC721(
-        IERC721Upgradeable nft,
-        uint256[] calldata ids
-    ) external;
-
-    function rescueERC1155(
-        IERC1155Upgradeable nft,
+    function rescueTokens(
+        TokenType tt,
+        address token,
         uint256[] calldata ids,
         uint256[] calldata amounts
     ) external;
