@@ -709,7 +709,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         emit AddLiquidity(
             params.vaultId,
             params.vTokensAmount,
-            params.nftIds.length,
+            params.nftIds,
             positionId
         );
     }

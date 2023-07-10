@@ -22,12 +22,14 @@ contract NFTXInventoryStakingV3Tests is TestBase {
     event Deposit(
         uint256 indexed vaultId,
         uint256 indexed positionId,
-        uint256 amount
+        uint256 amount,
+        bool forceTimelock
     );
     event DepositWithNFT(
         uint256 indexed vaultId,
         uint256 indexed positionId,
-        uint256 amount
+        uint256[] tokenIds,
+        uint256[] amounts
     );
     event Withdraw(
         uint256 indexed positionId,
@@ -141,7 +143,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         vtoken.approve(address(inventoryStaking), type(uint256).max);
         address recipient = makeAddr("recipient");
         vm.expectEmit(true, true, false, true);
-        emit Deposit(VAULT_ID, 1, mintedVTokens);
+        emit Deposit(VAULT_ID, 1, mintedVTokens, false);
         uint256 positionId = inventoryStaking.deposit(
             VAULT_ID,
             mintedVTokens,
@@ -200,7 +202,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         address recipient = makeAddr("recipient");
 
         vm.expectEmit(true, true, false, true);
-        emit Deposit(VAULT_ID, 2, mintedVTokens);
+        emit Deposit(VAULT_ID, 2, mintedVTokens, false);
         uint256 positionId = inventoryStaking.deposit(
             VAULT_ID,
             mintedVTokens,
@@ -262,7 +264,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         );
         address recipient = makeAddr("recipient");
         vm.expectEmit(true, true, false, true);
-        emit Deposit(VAULT_ID, 1, mintedVTokens);
+        emit Deposit(VAULT_ID, 1, mintedVTokens, false);
         uint256 positionId = inventoryStaking.deposit(
             VAULT_ID,
             mintedVTokens,
@@ -346,7 +348,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         address recipient = makeAddr("recipient");
         vm.expectEmit(true, true, false, true);
-        emit DepositWithNFT(VAULT_ID, 1, mintedVTokens);
+        emit DepositWithNFT(VAULT_ID, 1, tokenIds, emptyIds);
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
@@ -417,7 +419,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         address recipient = makeAddr("recipient");
 
         vm.expectEmit(true, true, false, true);
-        emit DepositWithNFT(VAULT_ID, 2, mintedVTokens);
+        emit DepositWithNFT(VAULT_ID, 2, tokenIds, emptyIds);
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
@@ -492,7 +494,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         address recipient = makeAddr("recipient");
 
         vm.expectEmit(true, true, false, true);
-        emit DepositWithNFT(VAULT_ID, 2, mintedVTokens);
+        emit DepositWithNFT(VAULT_ID, 2, tokenIds, emptyIds);
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID,
             tokenIds,
@@ -561,7 +563,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         address recipient = makeAddr("recipient");
         vm.expectEmit(true, true, false, true);
-        emit DepositWithNFT(VAULT_ID_1155, 1, mintedVTokens);
+        emit DepositWithNFT(VAULT_ID_1155, 1, tokenIds, amounts);
         uint256 positionId = inventoryStaking.depositWithNFT(
             VAULT_ID_1155,
             tokenIds,

@@ -48,7 +48,7 @@ interface INFTXRouter {
     event AddLiquidity(
         uint256 vaultId,
         uint256 vTokensAmount,
-        uint256 nftCount,
+        uint256[] nftIds,
         uint256 positionId
     );
 

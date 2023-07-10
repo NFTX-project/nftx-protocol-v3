@@ -59,15 +59,22 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     /// @param to The user affected by the event
     event Sell(uint256 count, uint256 ethReceived, address to);
 
-    /// @param count The number of tokens affected by the event
     /// @param ethSpent The amount of ETH spent in the swap
     /// @param to The user affected by the event
-    event Swap(uint256 count, uint256 ethSpent, address to);
+    event Swap(uint256[] idsIn, uint256[] idsOut, uint256 ethSpent, address to);
 
-    /// @param count The number of tokens affected by the event
+    event Swap(
+        uint256[] idsIn,
+        uint256[] amounts,
+        uint256[] idsOut,
+        uint256 ethSpent,
+        address to
+    );
+
+    /// @param nftIds The nftIds bought
     /// @param ethSpent The amount of ETH spent in the buy
     /// @param to The user affected by the event
-    event Buy(uint256 count, uint256 ethSpent, address to);
+    event Buy(uint256[] nftIds, uint256 ethSpent, address to);
 
     /// @notice Emitted when dust is returned after a transaction.
     /// @param ethAmount Amount of ETH returned to user
@@ -177,7 +184,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         // send back remaining ETH
         _sendETHResidue(to);
 
-        emit Swap(idsOut.length, ethFees, to);
+        emit Swap(idsIn, idsOut, ethFees, to);
     }
 
     /**
@@ -226,7 +233,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         // transfer vToken dust and remaining WETH balance
         _transferDust(vault, true);
 
-        emit Buy(idsOut.length, wethSpent + wethFees + netRoyaltyAmount, to);
+        emit Buy(idsOut, wethSpent + wethFees + netRoyaltyAmount, to);
     }
 
     struct BuyNFTsWithERC20Params {
@@ -365,8 +372,6 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         IERC1155(assetAddress).setApprovalForAll(vault, true);
 
-        uint256 totalAmount = _validate1155Ids(idsIn, amounts);
-
         // Swap our tokens. Forcing to deduct vault fees
         uint256 ethFees = INFTXVaultV3(vault).swap{value: msg.value}(
             idsIn,
@@ -380,7 +385,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         // send back remaining ETH
         _sendETHResidue(to);
 
-        emit Swap(totalAmount, ethFees, to);
+        emit Swap(idsIn, amounts, idsOut, ethFees, to);
     }
 
     // =============================================================
@@ -462,7 +467,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _transferDust(vault, true);
 
         emit Buy(
-            params.idsOut.length,
+            params.idsOut,
             wethSpent + wethFees + netRoyaltyAmount,
             params.to
         );

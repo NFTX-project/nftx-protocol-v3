@@ -50,6 +50,8 @@ contract ERC20Upgradeable is
     string private _name;
     string private _symbol;
 
+    event MetadataUpdated(string name, string symbol);
+
     /**
      * @dev Sets the values for {name} and {symbol}.
      *
@@ -77,6 +79,8 @@ contract ERC20Upgradeable is
     function _setMetadata(string memory name_, string memory symbol_) internal {
         _name = name_;
         _symbol = symbol_;
+
+        emit MetadataUpdated(name_, symbol_);
     }
 
     /**

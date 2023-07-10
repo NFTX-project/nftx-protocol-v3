@@ -87,25 +87,31 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     event Deposit(
         uint256 indexed vaultId,
         uint256 indexed positionId,
-        uint256 amount
+        uint256 amount,
+        bool forceTimelock
     );
     event DepositWithNFT(
         uint256 indexed vaultId,
         uint256 indexed positionId,
-        uint256 amount
+        uint256[] tokenIds,
+        uint256[] amounts
     );
     event IncreasePosition(
         uint256 indexed vaultId,
         uint256 indexed positionId,
         uint256 amount
     );
+    event CombinePositions(
+        uint256 parentPositionId,
+        uint256[] childPositionIds
+    );
+    event CollectWethFees(uint256 indexed positionId, uint256 wethAmount);
     event Withdraw(
         uint256 indexed positionId,
         uint256 vTokenShares,
         uint256 vTokenAmount,
         uint256 wethAmount
     );
-    event CollectWethFees(uint256 indexed positionId, uint256 wethAmount);
     event UpdateTimelock(uint256 newTimelock);
     event UpdateEarlyWithdrawPenalty(uint256 newEarlyWithdrawPenaltyInWei);
 

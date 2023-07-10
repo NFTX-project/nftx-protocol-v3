@@ -107,7 +107,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
         _vaultsForAsset[assetAddress].push(vaultAddr);
         _vaults.push(vaultAddr);
 
-        emit NewVault(vaultId, vaultAddr, assetAddress);
+        emit NewVault(vaultId, vaultAddr, assetAddress, name, symbol);
     }
 
     // =============================================================

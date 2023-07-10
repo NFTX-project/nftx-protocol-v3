@@ -233,7 +233,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             wethOwed: 0
         });
 
-        emit DepositWithNFT(vaultId, positionId, amount);
+        emit DepositWithNFT(vaultId, positionId, tokenIds, amounts);
     }
 
     /**
@@ -442,6 +442,8 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         // add net wethOwed to the parent position
         parentPosition.wethOwed += netWethOwed;
+
+        emit CombinePositions(parentPositionId, childPositionIds);
     }
 
     /**
@@ -680,7 +682,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             wethOwed: 0
         });
 
-        emit Deposit(vaultId, positionId, amount);
+        emit Deposit(vaultId, positionId, amount, forceTimelock);
     }
 
     function _increasePosition(

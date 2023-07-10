@@ -867,11 +867,12 @@ contract NFTXVaultUpgradeableV3 is
 
             for (uint256 i; i < vTokenPremiums.length; ) {
                 if (vTokenPremiums[i] > 0) {
-                    WETH.transfer(
-                        depositors[i],
-                        (netETHPremiumForDepositors * vTokenPremiums[i]) /
-                            netVTokenPremium
-                    );
+                    uint256 wethPremium = (netETHPremiumForDepositors *
+                        vTokenPremiums[i]) / netVTokenPremium;
+
+                    WETH.transfer(depositors[i], wethPremium);
+
+                    emit PremiumShared(depositors[i], wethPremium);
                 }
 
                 unchecked {

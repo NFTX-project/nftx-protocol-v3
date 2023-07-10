@@ -91,6 +91,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
         uint256[] specificIds,
         address to
     );
+    event PremiumShared(address depositor, uint256 wethPremium);
     event VaultShutdown(
         address assetAddress,
         uint256 numItems,

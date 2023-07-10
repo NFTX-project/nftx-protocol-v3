@@ -52,7 +52,9 @@ interface INFTXVaultFactoryV3 is IBeacon {
     event NewVault(
         uint256 indexed vaultId,
         address vaultAddress,
-        address assetAddress
+        address assetAddress,
+        string name,
+        string symbol
     );
     event UpdateVaultFees(
         uint256 vaultId,
