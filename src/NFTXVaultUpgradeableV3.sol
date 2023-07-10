@@ -30,7 +30,7 @@ import {INFTXEligibilityManager} from "@src/interfaces/INFTXEligibilityManager.s
 
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 
-// Authors: @0xKiwi_, @alexgausman and @apoorvlathey
+// Authors: @apoorvlathey, @0xKiwi_ and @alexgausman
 
 contract NFTXVaultUpgradeableV3 is
     INFTXVaultV3,
@@ -297,6 +297,7 @@ contract NFTXVaultUpgradeableV3 is
      * @inheritdoc INFTXVaultV3
      */
     function finalizeVault() external override {
+        _onlyPrivileged();
         setManager(address(0));
     }
 
