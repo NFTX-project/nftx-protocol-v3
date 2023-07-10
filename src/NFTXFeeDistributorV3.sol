@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.15;
 
+// inheriting
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+// libs
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+// interfaces
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {IUniswapV3Pool} from "@uni-core/interfaces/IUniswapV3Pool.sol";

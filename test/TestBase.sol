@@ -49,7 +49,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     MockUniversalRouter universalRouter;
     MockPermit2 permit2;
 
-    INFTXVaultV3 vtoken;
+    NFTXVaultUpgradeableV3 vtoken;
     INFTXVaultV3 vtoken1155;
     TimelockExcludeList timelockExcludeList;
     NFTXFeeDistributorV3 feeDistributor;
@@ -72,6 +72,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     address from = vm.addr(fromPrivateKey);
 
     uint256[] emptyIds;
+    uint256[] emptyAmounts;
 
     function setUp() public virtual {
         // to prevent underflow during calculations involving block.timestamp
@@ -159,7 +160,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             false, // is1155
             true // allowAllItems
         );
-        vtoken = INFTXVaultV3(vaultFactory.vault(vaultId));
+        vtoken = NFTXVaultUpgradeableV3(vaultFactory.vault(vaultId));
         vaultFactory.createVault(
             "TEST1155",
             "TST1155",

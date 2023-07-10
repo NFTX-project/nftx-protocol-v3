@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+// inheriting
 import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {ERC721HolderUpgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {ERC1155HolderUpgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {ERC20FlashMintUpgradeable, IERC3156FlashBorrowerUpgradeable} from "@src/custom/tokens/ERC20/ERC20FlashMintUpgradeable.sol";
 
+// libs
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
@@ -14,6 +16,7 @@ import {ExponentialPremium} from "@src/lib/ExponentialPremium.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {EnumerableSetUpgradeable} from "@openzeppelin-upgradeable/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 
+// interfaces
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -186,21 +189,25 @@ contract NFTXVaultUpgradeableV3 is
         uint256 totalVaultFee = (redeemFee * count);
 
         // Withdraw from vault.
+        INFTXVaultFactoryV3 _vaultFactory = vaultFactory;
+        bool deductFees = forceFees ||
+            !_vaultFactory.excludedFromFees(msg.sender);
         (
             uint256 netVTokenPremium,
             uint256[] memory vTokenPremiums,
             address[] memory depositors
-        ) = _withdrawNFTsTo(idsOut, to, forceFees);
+        ) = _withdrawNFTsTo(idsOut, to, deductFees, _vaultFactory);
 
-        ethFees = _chargeAndDistributeFees(
-            ethOrWethAmt,
-            msg.value > 0,
-            totalVaultFee,
-            netVTokenPremium,
-            vTokenPremiums,
-            depositors,
-            forceFees
-        );
+        if (deductFees) {
+            ethFees = _chargeAndDistributeFeesForRedeem(
+                ethOrWethAmt,
+                msg.value > 0,
+                totalVaultFee,
+                netVTokenPremium,
+                vTokenPremiums,
+                depositors
+            );
+        }
 
         if (msg.value > 0) {
             _refundETH(msg.value, ethFees);
@@ -226,10 +233,8 @@ contract NFTXVaultUpgradeableV3 is
             uint256 count;
             if (is1155) {
                 for (uint256 i; i < idsIn.length; ++i) {
-                    uint256 amount = amounts[i];
-
-                    if (amount == 0) revert TransferAmountIsZero();
-                    count += amount;
+                    if (amounts[i] == 0) revert TransferAmountIsZero();
+                    count += amounts[i];
                 }
             } else {
                 count = idsIn.length;
@@ -243,21 +248,25 @@ contract NFTXVaultUpgradeableV3 is
             uint256 totalVaultFee = (swapFee * idsOut.length);
 
             // Give the NFTs first, so the user wont get the same thing back.
+            INFTXVaultFactoryV3 _vaultFactory = vaultFactory;
+            bool deductFees = forceFees ||
+                !_vaultFactory.excludedFromFees(msg.sender);
             (
                 uint256 netVTokenPremium,
                 uint256[] memory vTokenPremiums,
                 address[] memory depositors
-            ) = _withdrawNFTsTo(idsOut, to, forceFees);
+            ) = _withdrawNFTsTo(idsOut, to, deductFees, _vaultFactory);
 
-            ethFees = _chargeAndDistributeFees(
-                msg.value,
-                true,
-                totalVaultFee,
-                netVTokenPremium,
-                vTokenPremiums,
-                depositors,
-                forceFees
-            );
+            if (deductFees) {
+                ethFees = _chargeAndDistributeFeesForRedeem(
+                    msg.value,
+                    true,
+                    totalVaultFee,
+                    netVTokenPremium,
+                    vTokenPremiums,
+                    depositors
+                );
+            }
         }
 
         _receiveNFTs(depositor, idsIn, amounts);
@@ -431,7 +440,7 @@ contract NFTXVaultUpgradeableV3 is
         if (numItems > 4) revert TooManyItems();
 
         uint256[] memory specificIds = new uint256[](0);
-        _withdrawNFTsTo(specificIds, recipient, false);
+        _withdrawNFTsTo(specificIds, recipient, false, vaultFactory);
 
         emit VaultShutdown(assetAddress, numItems, recipient);
         assetAddress = address(0);
@@ -636,7 +645,25 @@ contract NFTXVaultUpgradeableV3 is
     ) internal returns (uint256) {
         if (!allValidNFTs(tokenIds)) revert NotEligible();
 
-        if (is1155) {
+        if (!is1155) {
+            address _assetAddress = assetAddress;
+            for (uint256 i; i < tokenIds.length; ++i) {
+                uint256 tokenId = tokenIds[i];
+                // We may already own the NFT here so we check in order:
+                // Does the vault own it?
+                //   - If so, check if its in holdings list
+                //      - If so, we reject. This means the NFT has already been claimed for.
+                //      - If not, it means we have not yet accounted for this NFT, so we continue.
+                //   -If not, we "pull" it from the msg.sender and add to holdings.
+                _transferFromERC721(_assetAddress, tokenId);
+                _holdings.add(tokenId);
+                tokenDepositInfo[tokenId] = TokenDepositInfo({
+                    timestamp: uint48(block.timestamp),
+                    depositor: depositor
+                });
+            }
+            return tokenIds.length;
+        } else {
             // This is technically a check, so placing it before the effect.
             IERC1155Upgradeable(assetAddress).safeBatchTransferFrom(
                 msg.sender,
@@ -668,31 +695,14 @@ contract NFTXVaultUpgradeableV3 is
                 );
             }
             return count;
-        } else {
-            address _assetAddress = assetAddress;
-            for (uint256 i; i < tokenIds.length; ++i) {
-                uint256 tokenId = tokenIds[i];
-                // We may already own the NFT here so we check in order:
-                // Does the vault own it?
-                //   - If so, check if its in holdings list
-                //      - If so, we reject. This means the NFT has already been claimed for.
-                //      - If not, it means we have not yet accounted for this NFT, so we continue.
-                //   -If not, we "pull" it from the msg.sender and add to holdings.
-                _transferFromERC721(_assetAddress, tokenId);
-                _holdings.add(tokenId);
-                tokenDepositInfo[tokenId] = TokenDepositInfo({
-                    timestamp: uint48(block.timestamp),
-                    depositor: depositor
-                });
-            }
-            return tokenIds.length;
         }
     }
 
     function _withdrawNFTsTo(
         uint256[] memory specificIds,
         address to,
-        bool forceFees
+        bool deductFees,
+        INFTXVaultFactoryV3 _vaultFactory
     )
         internal
         returns (
@@ -704,29 +714,26 @@ contract NFTXVaultUpgradeableV3 is
         // cache
         bool _is1155 = is1155;
         address _assetAddress = assetAddress;
-        INFTXVaultFactoryV3 _vaultFactory = vaultFactory;
-
-        bool deductFees = forceFees ||
-            !_vaultFactory.excludedFromFees(msg.sender);
 
         uint256 premiumMax;
         uint256 premiumDuration;
 
         if (deductFees) {
-            premiumMax = vaultFactory.premiumMax();
-            premiumDuration = vaultFactory.premiumDuration();
+            premiumMax = _vaultFactory.premiumMax();
+            premiumDuration = _vaultFactory.premiumDuration();
 
             vTokenPremiums = new uint256[](specificIds.length);
             depositors = new address[](specificIds.length);
         }
 
         for (uint256 i; i < specificIds.length; ++i) {
-            // This will always be fine considering the validations made above.
             uint256 tokenId = specificIds[i];
 
             if (_is1155) {
-                _quantity1155[tokenId] -= 1;
-                if (_quantity1155[tokenId] == 0) {
+                uint256 _qty1155 = _quantity1155[tokenId];
+                _quantity1155[tokenId] = _qty1155 - 1;
+                // updated _quantity1155 is 0 now, so remove from holdings
+                if (_qty1155 == 1) {
                     _holdings.remove(tokenId);
                 }
 
@@ -814,26 +821,18 @@ contract NFTXVaultUpgradeableV3 is
         }
     }
 
-    function _chargeAndDistributeFees(
+    function _chargeAndDistributeFeesForRedeem(
         uint256 ethOrWethReceived,
         bool isETH,
         uint256 totalVaultFees,
         uint256 netVTokenPremium,
         uint256[] memory vTokenPremiums,
-        address[] memory depositors,
-        bool forceFees
+        address[] memory depositors
     ) internal returns (uint256 ethAmount) {
-        // cache
-        INFTXVaultFactoryV3 _vaultFactory = vaultFactory;
-
-        if (!forceFees && _vaultFactory.excludedFromFees(msg.sender)) {
-            return 0;
-        }
-
         uint256 vaultETHFees;
         INFTXFeeDistributorV3 feeDistributor;
         (vaultETHFees, feeDistributor) = _vTokenToETH(
-            _vaultFactory,
+            vaultFactory,
             totalVaultFees
         );
 
@@ -1012,6 +1011,7 @@ contract NFTXVaultUpgradeableV3 is
 
             data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
         } else {
+            // CRYPTO_KITTIES
             data = abi.encodeWithSignature(
                 "transferFrom(address,address,uint256)",
                 msg.sender,

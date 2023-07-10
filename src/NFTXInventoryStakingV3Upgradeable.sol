@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity =0.8.15;
 
+// inheriting
+import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 import {ERC721PermitUpgradeable, ERC721EnumerableUpgradeable} from "@src/custom/tokens/ERC721/ERC721PermitUpgradeable.sol";
 import {ERC1155HolderUpgradeable, ERC1155ReceiverUpgradeable, IERC165Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
+// libs
 import {Base64} from "base64-sol/base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
-import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 
+// interfaces
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
@@ -305,9 +308,11 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vaultId = position.vaultId;
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
         address vToken = nftxVaultFactory.vault(vaultId);
+
         // withdraw vTokens corresponding to the vTokenShares requested
         uint256 vTokenOwed = (IERC20(vToken).balanceOf(address(this)) *
             vTokenShares) / _vaultGlobal.totalVTokenShares;
+
         // withdraw all the weth fees accrued
         uint256 wethOwed = _calcWethOwed(
             _vaultGlobal.globalWethFeesPerVTokenShareX128,

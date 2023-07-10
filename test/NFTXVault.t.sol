@@ -4,6 +4,7 @@ pragma solidity =0.8.15;
 import {console} from "forge-std/Test.sol";
 
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
+import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 
 import {TestBase} from "@test/TestBase.sol";
 
@@ -12,7 +13,137 @@ contract NFTXVaultTests is TestBase {
 
     // NFTXVault#mint
 
-    function test_mint_Succcess() external {
+    function test_mint_RevertsForNonOwnerIfPaused() external {
+        vaultFactory.setIsGuardian(address(this), true);
+        vaultFactory.pause(1);
+
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert(PausableUpgradeable.Paused.selector);
+        vtoken.mint{value: 0}(
+            emptyIds,
+            emptyAmounts,
+            address(this),
+            address(this)
+        );
+    }
+
+    function test_mint_RevertsIfMintNotEnabled() external {
+        vtoken.setVaultFeatures(
+            false, // enableMint_
+            true, // enableRedeem_
+            true // enableSwap_
+        );
+
+        vm.expectRevert(INFTXVaultV3.MintingDisabled.selector);
+        vtoken.mint{value: 0}(
+            emptyIds,
+            emptyAmounts,
+            address(this),
+            address(this)
+        );
+    }
+
+    function test_mint_721_RevertsIfUsingTokenIdAlreadyInHoldings() external {
+        uint256[] memory tokenIds = nft.mint(1);
+        nft.setApprovalForAll(address(vtoken), true);
+        vtoken.mint{value: 0}(
+            tokenIds,
+            emptyAmounts,
+            address(this),
+            address(this)
+        );
+
+        vm.expectRevert(INFTXVaultV3.NFTAlreadyOwned.selector);
+        vtoken.mint{value: 0}(
+            tokenIds,
+            emptyAmounts,
+            address(this),
+            address(this)
+        );
+    }
+
+    function test_mint_721_WhenNFTExternallyTransferred_Success() external {
+        uint256 qty = 5;
+
+        uint256[] memory tokenIds = nft.mint(qty);
+        for (uint i; i < qty; i++) {
+            nft.safeTransferFrom(address(this), address(vtoken), tokenIds[i]);
+        }
+
+        vtoken.mint{value: 0}(
+            tokenIds,
+            emptyAmounts,
+            address(this),
+            address(this)
+        );
+
+        assertEq(
+            vtoken.balanceOf(address(this)),
+            qty * 1 ether,
+            "vTokens not received"
+        );
+
+        for (uint i; i < qty; i++) {
+            assertEq(nft.ownerOf(tokenIds[i]), address(vtoken), "!ownerOf");
+
+            (uint48 timestamp, address depositor) = vtoken.tokenDepositInfo(
+                tokenIds[i]
+            );
+            assertEq(depositor, address(this), "!depositor");
+            assertEq(timestamp, block.timestamp, "!timestamp");
+        }
+    }
+
+    function test_mint_721_WhenNoPoolExists_Success() external {
+        uint256 qty = 5;
+        (uint256 mintFee, , ) = vtoken.vaultFees();
+        uint256 exactETHPaidIfPoolExisted = (mintFee * qty * currentNFTPrice) /
+            1 ether;
+        uint256 expectedETHPaidIfPoolExisted = _valueWithError(
+            exactETHPaidIfPoolExisted
+        );
+
+        uint256 prevETHBal = address(this).balance;
+
+        uint256[] memory tokenIds = nft.mint(qty);
+        nft.setApprovalForAll(address(vtoken), true);
+
+        // sending ETH to check if all is refunded back
+        vtoken.mint{value: expectedETHPaidIfPoolExisted}(
+            tokenIds,
+            emptyAmounts,
+            address(this),
+            address(this)
+        );
+
+        uint256 ethPaid = prevETHBal - address(this).balance;
+        assertEq(ethPaid, 0, "ETH Fees deducted");
+        assertEq(vtoken.balanceOf(address(this)), qty * 1 ether, "!vTokens");
+
+        for (uint i; i < qty; i++) {
+            assertEq(nft.ownerOf(tokenIds[i]), address(vtoken), "!ownerOf");
+
+            (uint48 timestamp, address depositor) = vtoken.tokenDepositInfo(
+                tokenIds[i]
+            );
+            assertEq(depositor, address(this), "!depositor");
+            assertEq(timestamp, block.timestamp, "!timestamp");
+        }
+    }
+
+    function test_mint_721_RevertsWhenLessETHSent() external {
+        _mintPositionWithTwap(currentNFTPrice);
+        uint256 qty = 5;
+
+        uint256[] memory tokenIds = nft.mint(qty);
+        nft.setApprovalForAll(address(vtoken), true);
+        uint256[] memory amounts = new uint256[](0);
+
+        vm.expectRevert(INFTXVaultV3.InsufficientETHSent.selector);
+        vtoken.mint{value: 0}(tokenIds, amounts, address(this), address(this));
+    }
+
+    function test_mint_721_WhenPoolExists_Succcess() external {
         _mintPositionWithTwap(currentNFTPrice);
         uint256 qty = 5;
         (uint256 mintFee, , ) = vtoken.vaultFees();
@@ -39,47 +170,37 @@ contract NFTXVaultTests is TestBase {
         assertLe(ethPaid, exactETHPaid);
 
         for (uint i; i < qty; i++) {
-            assertEq(nft.ownerOf(tokenIds[i]), address(vtoken));
+            assertEq(nft.ownerOf(tokenIds[i]), address(vtoken), "!ownerOf");
 
             (uint48 timestamp, address depositor) = vtoken.tokenDepositInfo(
                 tokenIds[i]
             );
-            assertEq(depositor, address(this));
-            assertEq(timestamp, block.timestamp);
-        }
-    }
-
-    function test_mint_WhenNoPoolExists_Success() external {
-        uint256 qty = 5;
-        (uint256 mintFee, , ) = vtoken.vaultFees();
-        uint256 exactETHPaid = (mintFee * qty * currentNFTPrice) / 1 ether;
-        uint256 expectedETHPaid = _valueWithError(exactETHPaid);
-
-        uint256 prevETHBal = address(this).balance;
-
-        uint256[] memory tokenIds = nft.mint(qty);
-        nft.setApprovalForAll(address(vtoken), true);
-        uint256[] memory amounts = new uint256[](0);
-
-        // double ETH value here to check if refund working as well
-        vtoken.mint{value: expectedETHPaid * 2}(
-            tokenIds,
-            amounts,
-            address(this),
-            address(this)
-        );
-
-        uint256 ethPaid = prevETHBal - address(this).balance;
-        assertEq(ethPaid, 0);
-
-        for (uint i; i < qty; i++) {
-            assertEq(nft.ownerOf(tokenIds[i]), address(vtoken));
+            assertEq(depositor, address(this), "!depositor");
+            assertEq(timestamp, block.timestamp, "!timestamp");
         }
     }
 
     // 1155
 
-    function test_mint_Succcess_1155() external {
+    function test_mint_1155_RevertsForZeroAmount() external {
+        uint256[] memory tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        tokenIds[0] = nft1155.mint(5);
+        amounts[0] = 0;
+
+        nft1155.setApprovalForAll(address(vtoken1155), true);
+
+        vm.expectRevert(INFTXVaultV3.TransferAmountIsZero.selector);
+        vtoken1155.mint{value: 0}(
+            tokenIds,
+            amounts,
+            address(this),
+            address(this)
+        );
+    }
+
+    function test_mint_1155_WhenPoolExists_Succcess() external {
         _mintPositionWithTwap1155(currentNFTPrice);
         uint256 qty = 5;
         (uint256 mintFee, , ) = vtoken.vaultFees();
@@ -138,7 +259,7 @@ contract NFTXVaultTests is TestBase {
 
     // NFTXVault#redeem
 
-    function test_redeem_NoPremium_Success() external {
+    function test_redeem_721_NoPremium_Success() external {
         _mintPositionWithTwap(currentNFTPrice);
         uint256 qty = 5;
         (, uint256[] memory tokenIds) = _mintVToken(qty);
@@ -169,7 +290,7 @@ contract NFTXVaultTests is TestBase {
         }
     }
 
-    function test_redeem_WithPremium_Success() external {
+    function test_redeem_721_WithPremium_Success() external {
         _mintPositionWithTwap(currentNFTPrice);
         uint256 qty = 5;
 
@@ -224,7 +345,7 @@ contract NFTXVaultTests is TestBase {
         }
     }
 
-    function test_redeem_WithPremium_WhenNoPoolExists_Success() external {
+    function test_redeem_721_WithPremium_WhenNoPoolExists_Success() external {
         uint256 qty = 5;
         (, uint256[] memory tokenIds) = _mintVToken(qty);
 
@@ -255,7 +376,7 @@ contract NFTXVaultTests is TestBase {
 
     // 1155
 
-    function test_redeem_NoPremium_Success_1155_pointerIndexUpdates() external {
+    function test_redeem_1155_NoPremium_Success_pointerIndexUpdates() external {
         _mintPositionWithTwap1155(currentNFTPrice);
         uint256 qty = 5;
         (, uint256[] memory tokenIds) = _mintVTokenFor1155(qty);
@@ -307,7 +428,7 @@ contract NFTXVaultTests is TestBase {
     }
     RedeemData rd;
 
-    function test_redeem_WithPremium_Success_1155_samePointerIndex() external {
+    function test_redeem_1155_WithPremium_Success_samePointerIndex() external {
         _mintPositionWithTwap1155(currentNFTPrice);
         rd.qty = 5;
 
@@ -379,7 +500,7 @@ contract NFTXVaultTests is TestBase {
 
     // NFTXVault#swap
 
-    function test_swap_NoPremium_Success() external {
+    function test_swap_721_NoPremium_Success() external {
         _mintPositionWithTwap(currentNFTPrice);
         uint256 qty = 5;
         (, uint256[] memory specificIds) = _mintVToken(qty);
@@ -416,7 +537,7 @@ contract NFTXVaultTests is TestBase {
         }
     }
 
-    function test_swap_WithPremium_Success() external {
+    function test_swap_721_WithPremium_Success() external {
         _mintPositionWithTwap(currentNFTPrice);
         uint256 qty = 5;
 
@@ -477,7 +598,7 @@ contract NFTXVaultTests is TestBase {
         }
     }
 
-    function test_swap_WithPremium_WhenNoPoolExists_Success() external {
+    function test_swap_721_WithPremium_WhenNoPoolExists_Success() external {
         uint256 qty = 5;
         (, uint256[] memory specificIds) = _mintVToken(qty);
 
@@ -514,7 +635,7 @@ contract NFTXVaultTests is TestBase {
 
     // 1155
 
-    function test_swap_NoPremium_Success_1155() external {
+    function test_swap_1155_NoPremium_Success() external {
         _mintPositionWithTwap1155(currentNFTPrice);
         uint256 qty = 5;
         (, uint256[] memory specificIds) = _mintVTokenFor1155(qty);

@@ -327,7 +327,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.depositWithNFT(999, tokenIds, emptyIds, address(this));
     }
 
-    function test_depositWithNFT_Success_WhenPreTotalSharesZero() external {
+    function test_depositWithNFT_721_Success_WhenPreTotalSharesZero() external {
         (
             uint256 preTotalVTokenShares,
             uint256 globalWethFeesPerVTokenShareX128
@@ -389,7 +389,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         assertEq(postTotalVTokenShares, mintedVTokens);
     }
 
-    function test_depositWithNFT_Success_WhenPreTotalSharesNonZero() external {
+    function test_depositWithNFT_721_Success_WhenPreTotalSharesNonZero()
+        external
+    {
         // initial stake to make totalVTokenShares non zero
         _mintXNFT(1);
 
@@ -460,7 +462,9 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         );
     }
 
-    function test_depositWithNFT_Success_WhenOnTimelockExcludeList() external {
+    function test_depositWithNFT_721_Success_WhenOnTimelockExcludeList()
+        external
+    {
         timelockExcludeList.setExcludeFromAll(address(this), true);
 
         // initial stake to make totalVTokenShares non zero
@@ -532,7 +536,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
     // 1155
 
-    function test_depositWithNFT_Success_WhenPreTotalSharesZero_1155()
+    function test_depositWithNFT_1155_Success_WhenPreTotalSharesZero()
         external
     {
         (
