@@ -1,0 +1,935 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<style type="text/css">
+pre { white-space: pre-wrap; }
+.ef0,.f0 { color: #000000; } .eb0,.b0 { background-color: #000000; }
+.ef1,.f1 { color: #AA0000; } .eb1,.b1 { background-color: #AA0000; }
+.ef2,.f2 { color: #00AA00; } .eb2,.b2 { background-color: #00AA00; }
+.ef3,.f3 { color: #AA5500; } .eb3,.b3 { background-color: #AA5500; }
+.ef4,.f4 { color: #0000AA; } .eb4,.b4 { background-color: #0000AA; }
+.ef5,.f5 { color: #AA00AA; } .eb5,.b5 { background-color: #AA00AA; }
+.ef6,.f6 { color: #00AAAA; } .eb6,.b6 { background-color: #00AAAA; }
+.ef7,.f7 { color: #AAAAAA; } .eb7,.b7 { background-color: #AAAAAA; }
+.ef8, .f0 > .bold,.bold > .f0 { color: #555555; font-weight: normal; }
+.ef9, .f1 > .bold,.bold > .f1 { color: #FF5555; font-weight: normal; }
+.ef10,.f2 > .bold,.bold > .f2 { color: #55FF55; font-weight: normal; }
+.ef11,.f3 > .bold,.bold > .f3 { color: #FFFF55; font-weight: normal; }
+.ef12,.f4 > .bold,.bold > .f4 { color: #5555FF; font-weight: normal; }
+.ef13,.f5 > .bold,.bold > .f5 { color: #FF55FF; font-weight: normal; }
+.ef14,.f6 > .bold,.bold > .f6 { color: #55FFFF; font-weight: normal; }
+.ef15,.f7 > .bold,.bold > .f7 { color: #FFFFFF; font-weight: normal; }
+.eb8  { background-color: #555555; }
+.eb9  { background-color: #FF5555; }
+.eb10 { background-color: #55FF55; }
+.eb11 { background-color: #FFFF55; }
+.eb12 { background-color: #5555FF; }
+.eb13 { background-color: #FF55FF; }
+.eb14 { background-color: #55FFFF; }
+.eb15 { background-color: #FFFFFF; }
+.ef16 { color: #000000; } .eb16 { background-color: #000000; }
+.ef17 { color: #00005f; } .eb17 { background-color: #00005f; }
+.ef18 { color: #000087; } .eb18 { background-color: #000087; }
+.ef19 { color: #0000af; } .eb19 { background-color: #0000af; }
+.ef20 { color: #0000d7; } .eb20 { background-color: #0000d7; }
+.ef21 { color: #0000ff; } .eb21 { background-color: #0000ff; }
+.ef22 { color: #005f00; } .eb22 { background-color: #005f00; }
+.ef23 { color: #005f5f; } .eb23 { background-color: #005f5f; }
+.ef24 { color: #005f87; } .eb24 { background-color: #005f87; }
+.ef25 { color: #005faf; } .eb25 { background-color: #005faf; }
+.ef26 { color: #005fd7; } .eb26 { background-color: #005fd7; }
+.ef27 { color: #005fff; } .eb27 { background-color: #005fff; }
+.ef28 { color: #008700; } .eb28 { background-color: #008700; }
+.ef29 { color: #00875f; } .eb29 { background-color: #00875f; }
+.ef30 { color: #008787; } .eb30 { background-color: #008787; }
+.ef31 { color: #0087af; } .eb31 { background-color: #0087af; }
+.ef32 { color: #0087d7; } .eb32 { background-color: #0087d7; }
+.ef33 { color: #0087ff; } .eb33 { background-color: #0087ff; }
+.ef34 { color: #00af00; } .eb34 { background-color: #00af00; }
+.ef35 { color: #00af5f; } .eb35 { background-color: #00af5f; }
+.ef36 { color: #00af87; } .eb36 { background-color: #00af87; }
+.ef37 { color: #00afaf; } .eb37 { background-color: #00afaf; }
+.ef38 { color: #00afd7; } .eb38 { background-color: #00afd7; }
+.ef39 { color: #00afff; } .eb39 { background-color: #00afff; }
+.ef40 { color: #00d700; } .eb40 { background-color: #00d700; }
+.ef41 { color: #00d75f; } .eb41 { background-color: #00d75f; }
+.ef42 { color: #00d787; } .eb42 { background-color: #00d787; }
+.ef43 { color: #00d7af; } .eb43 { background-color: #00d7af; }
+.ef44 { color: #00d7d7; } .eb44 { background-color: #00d7d7; }
+.ef45 { color: #00d7ff; } .eb45 { background-color: #00d7ff; }
+.ef46 { color: #00ff00; } .eb46 { background-color: #00ff00; }
+.ef47 { color: #00ff5f; } .eb47 { background-color: #00ff5f; }
+.ef48 { color: #00ff87; } .eb48 { background-color: #00ff87; }
+.ef49 { color: #00ffaf; } .eb49 { background-color: #00ffaf; }
+.ef50 { color: #00ffd7; } .eb50 { background-color: #00ffd7; }
+.ef51 { color: #00ffff; } .eb51 { background-color: #00ffff; }
+.ef52 { color: #5f0000; } .eb52 { background-color: #5f0000; }
+.ef53 { color: #5f005f; } .eb53 { background-color: #5f005f; }
+.ef54 { color: #5f0087; } .eb54 { background-color: #5f0087; }
+.ef55 { color: #5f00af; } .eb55 { background-color: #5f00af; }
+.ef56 { color: #5f00d7; } .eb56 { background-color: #5f00d7; }
+.ef57 { color: #5f00ff; } .eb57 { background-color: #5f00ff; }
+.ef58 { color: #5f5f00; } .eb58 { background-color: #5f5f00; }
+.ef59 { color: #5f5f5f; } .eb59 { background-color: #5f5f5f; }
+.ef60 { color: #5f5f87; } .eb60 { background-color: #5f5f87; }
+.ef61 { color: #5f5faf; } .eb61 { background-color: #5f5faf; }
+.ef62 { color: #5f5fd7; } .eb62 { background-color: #5f5fd7; }
+.ef63 { color: #5f5fff; } .eb63 { background-color: #5f5fff; }
+.ef64 { color: #5f8700; } .eb64 { background-color: #5f8700; }
+.ef65 { color: #5f875f; } .eb65 { background-color: #5f875f; }
+.ef66 { color: #5f8787; } .eb66 { background-color: #5f8787; }
+.ef67 { color: #5f87af; } .eb67 { background-color: #5f87af; }
+.ef68 { color: #5f87d7; } .eb68 { background-color: #5f87d7; }
+.ef69 { color: #5f87ff; } .eb69 { background-color: #5f87ff; }
+.ef70 { color: #5faf00; } .eb70 { background-color: #5faf00; }
+.ef71 { color: #5faf5f; } .eb71 { background-color: #5faf5f; }
+.ef72 { color: #5faf87; } .eb72 { background-color: #5faf87; }
+.ef73 { color: #5fafaf; } .eb73 { background-color: #5fafaf; }
+.ef74 { color: #5fafd7; } .eb74 { background-color: #5fafd7; }
+.ef75 { color: #5fafff; } .eb75 { background-color: #5fafff; }
+.ef76 { color: #5fd700; } .eb76 { background-color: #5fd700; }
+.ef77 { color: #5fd75f; } .eb77 { background-color: #5fd75f; }
+.ef78 { color: #5fd787; } .eb78 { background-color: #5fd787; }
+.ef79 { color: #5fd7af; } .eb79 { background-color: #5fd7af; }
+.ef80 { color: #5fd7d7; } .eb80 { background-color: #5fd7d7; }
+.ef81 { color: #5fd7ff; } .eb81 { background-color: #5fd7ff; }
+.ef82 { color: #5fff00; } .eb82 { background-color: #5fff00; }
+.ef83 { color: #5fff5f; } .eb83 { background-color: #5fff5f; }
+.ef84 { color: #5fff87; } .eb84 { background-color: #5fff87; }
+.ef85 { color: #5fffaf; } .eb85 { background-color: #5fffaf; }
+.ef86 { color: #5fffd7; } .eb86 { background-color: #5fffd7; }
+.ef87 { color: #5fffff; } .eb87 { background-color: #5fffff; }
+.ef88 { color: #870000; } .eb88 { background-color: #870000; }
+.ef89 { color: #87005f; } .eb89 { background-color: #87005f; }
+.ef90 { color: #870087; } .eb90 { background-color: #870087; }
+.ef91 { color: #8700af; } .eb91 { background-color: #8700af; }
+.ef92 { color: #8700d7; } .eb92 { background-color: #8700d7; }
+.ef93 { color: #8700ff; } .eb93 { background-color: #8700ff; }
+.ef94 { color: #875f00; } .eb94 { background-color: #875f00; }
+.ef95 { color: #875f5f; } .eb95 { background-color: #875f5f; }
+.ef96 { color: #875f87; } .eb96 { background-color: #875f87; }
+.ef97 { color: #875faf; } .eb97 { background-color: #875faf; }
+.ef98 { color: #875fd7; } .eb98 { background-color: #875fd7; }
+.ef99 { color: #875fff; } .eb99 { background-color: #875fff; }
+.ef100 { color: #878700; } .eb100 { background-color: #878700; }
+.ef101 { color: #87875f; } .eb101 { background-color: #87875f; }
+.ef102 { color: #878787; } .eb102 { background-color: #878787; }
+.ef103 { color: #8787af; } .eb103 { background-color: #8787af; }
+.ef104 { color: #8787d7; } .eb104 { background-color: #8787d7; }
+.ef105 { color: #8787ff; } .eb105 { background-color: #8787ff; }
+.ef106 { color: #87af00; } .eb106 { background-color: #87af00; }
+.ef107 { color: #87af5f; } .eb107 { background-color: #87af5f; }
+.ef108 { color: #87af87; } .eb108 { background-color: #87af87; }
+.ef109 { color: #87afaf; } .eb109 { background-color: #87afaf; }
+.ef110 { color: #87afd7; } .eb110 { background-color: #87afd7; }
+.ef111 { color: #87afff; } .eb111 { background-color: #87afff; }
+.ef112 { color: #87d700; } .eb112 { background-color: #87d700; }
+.ef113 { color: #87d75f; } .eb113 { background-color: #87d75f; }
+.ef114 { color: #87d787; } .eb114 { background-color: #87d787; }
+.ef115 { color: #87d7af; } .eb115 { background-color: #87d7af; }
+.ef116 { color: #87d7d7; } .eb116 { background-color: #87d7d7; }
+.ef117 { color: #87d7ff; } .eb117 { background-color: #87d7ff; }
+.ef118 { color: #87ff00; } .eb118 { background-color: #87ff00; }
+.ef119 { color: #87ff5f; } .eb119 { background-color: #87ff5f; }
+.ef120 { color: #87ff87; } .eb120 { background-color: #87ff87; }
+.ef121 { color: #87ffaf; } .eb121 { background-color: #87ffaf; }
+.ef122 { color: #87ffd7; } .eb122 { background-color: #87ffd7; }
+.ef123 { color: #87ffff; } .eb123 { background-color: #87ffff; }
+.ef124 { color: #af0000; } .eb124 { background-color: #af0000; }
+.ef125 { color: #af005f; } .eb125 { background-color: #af005f; }
+.ef126 { color: #af0087; } .eb126 { background-color: #af0087; }
+.ef127 { color: #af00af; } .eb127 { background-color: #af00af; }
+.ef128 { color: #af00d7; } .eb128 { background-color: #af00d7; }
+.ef129 { color: #af00ff; } .eb129 { background-color: #af00ff; }
+.ef130 { color: #af5f00; } .eb130 { background-color: #af5f00; }
+.ef131 { color: #af5f5f; } .eb131 { background-color: #af5f5f; }
+.ef132 { color: #af5f87; } .eb132 { background-color: #af5f87; }
+.ef133 { color: #af5faf; } .eb133 { background-color: #af5faf; }
+.ef134 { color: #af5fd7; } .eb134 { background-color: #af5fd7; }
+.ef135 { color: #af5fff; } .eb135 { background-color: #af5fff; }
+.ef136 { color: #af8700; } .eb136 { background-color: #af8700; }
+.ef137 { color: #af875f; } .eb137 { background-color: #af875f; }
+.ef138 { color: #af8787; } .eb138 { background-color: #af8787; }
+.ef139 { color: #af87af; } .eb139 { background-color: #af87af; }
+.ef140 { color: #af87d7; } .eb140 { background-color: #af87d7; }
+.ef141 { color: #af87ff; } .eb141 { background-color: #af87ff; }
+.ef142 { color: #afaf00; } .eb142 { background-color: #afaf00; }
+.ef143 { color: #afaf5f; } .eb143 { background-color: #afaf5f; }
+.ef144 { color: #afaf87; } .eb144 { background-color: #afaf87; }
+.ef145 { color: #afafaf; } .eb145 { background-color: #afafaf; }
+.ef146 { color: #afafd7; } .eb146 { background-color: #afafd7; }
+.ef147 { color: #afafff; } .eb147 { background-color: #afafff; }
+.ef148 { color: #afd700; } .eb148 { background-color: #afd700; }
+.ef149 { color: #afd75f; } .eb149 { background-color: #afd75f; }
+.ef150 { color: #afd787; } .eb150 { background-color: #afd787; }
+.ef151 { color: #afd7af; } .eb151 { background-color: #afd7af; }
+.ef152 { color: #afd7d7; } .eb152 { background-color: #afd7d7; }
+.ef153 { color: #afd7ff; } .eb153 { background-color: #afd7ff; }
+.ef154 { color: #afff00; } .eb154 { background-color: #afff00; }
+.ef155 { color: #afff5f; } .eb155 { background-color: #afff5f; }
+.ef156 { color: #afff87; } .eb156 { background-color: #afff87; }
+.ef157 { color: #afffaf; } .eb157 { background-color: #afffaf; }
+.ef158 { color: #afffd7; } .eb158 { background-color: #afffd7; }
+.ef159 { color: #afffff; } .eb159 { background-color: #afffff; }
+.ef160 { color: #d70000; } .eb160 { background-color: #d70000; }
+.ef161 { color: #d7005f; } .eb161 { background-color: #d7005f; }
+.ef162 { color: #d70087; } .eb162 { background-color: #d70087; }
+.ef163 { color: #d700af; } .eb163 { background-color: #d700af; }
+.ef164 { color: #d700d7; } .eb164 { background-color: #d700d7; }
+.ef165 { color: #d700ff; } .eb165 { background-color: #d700ff; }
+.ef166 { color: #d75f00; } .eb166 { background-color: #d75f00; }
+.ef167 { color: #d75f5f; } .eb167 { background-color: #d75f5f; }
+.ef168 { color: #d75f87; } .eb168 { background-color: #d75f87; }
+.ef169 { color: #d75faf; } .eb169 { background-color: #d75faf; }
+.ef170 { color: #d75fd7; } .eb170 { background-color: #d75fd7; }
+.ef171 { color: #d75fff; } .eb171 { background-color: #d75fff; }
+.ef172 { color: #d78700; } .eb172 { background-color: #d78700; }
+.ef173 { color: #d7875f; } .eb173 { background-color: #d7875f; }
+.ef174 { color: #d78787; } .eb174 { background-color: #d78787; }
+.ef175 { color: #d787af; } .eb175 { background-color: #d787af; }
+.ef176 { color: #d787d7; } .eb176 { background-color: #d787d7; }
+.ef177 { color: #d787ff; } .eb177 { background-color: #d787ff; }
+.ef178 { color: #d7af00; } .eb178 { background-color: #d7af00; }
+.ef179 { color: #d7af5f; } .eb179 { background-color: #d7af5f; }
+.ef180 { color: #d7af87; } .eb180 { background-color: #d7af87; }
+.ef181 { color: #d7afaf; } .eb181 { background-color: #d7afaf; }
+.ef182 { color: #d7afd7; } .eb182 { background-color: #d7afd7; }
+.ef183 { color: #d7afff; } .eb183 { background-color: #d7afff; }
+.ef184 { color: #d7d700; } .eb184 { background-color: #d7d700; }
+.ef185 { color: #d7d75f; } .eb185 { background-color: #d7d75f; }
+.ef186 { color: #d7d787; } .eb186 { background-color: #d7d787; }
+.ef187 { color: #d7d7af; } .eb187 { background-color: #d7d7af; }
+.ef188 { color: #d7d7d7; } .eb188 { background-color: #d7d7d7; }
+.ef189 { color: #d7d7ff; } .eb189 { background-color: #d7d7ff; }
+.ef190 { color: #d7ff00; } .eb190 { background-color: #d7ff00; }
+.ef191 { color: #d7ff5f; } .eb191 { background-color: #d7ff5f; }
+.ef192 { color: #d7ff87; } .eb192 { background-color: #d7ff87; }
+.ef193 { color: #d7ffaf; } .eb193 { background-color: #d7ffaf; }
+.ef194 { color: #d7ffd7; } .eb194 { background-color: #d7ffd7; }
+.ef195 { color: #d7ffff; } .eb195 { background-color: #d7ffff; }
+.ef196 { color: #ff0000; } .eb196 { background-color: #ff0000; }
+.ef197 { color: #ff005f; } .eb197 { background-color: #ff005f; }
+.ef198 { color: #ff0087; } .eb198 { background-color: #ff0087; }
+.ef199 { color: #ff00af; } .eb199 { background-color: #ff00af; }
+.ef200 { color: #ff00d7; } .eb200 { background-color: #ff00d7; }
+.ef201 { color: #ff00ff; } .eb201 { background-color: #ff00ff; }
+.ef202 { color: #ff5f00; } .eb202 { background-color: #ff5f00; }
+.ef203 { color: #ff5f5f; } .eb203 { background-color: #ff5f5f; }
+.ef204 { color: #ff5f87; } .eb204 { background-color: #ff5f87; }
+.ef205 { color: #ff5faf; } .eb205 { background-color: #ff5faf; }
+.ef206 { color: #ff5fd7; } .eb206 { background-color: #ff5fd7; }
+.ef207 { color: #ff5fff; } .eb207 { background-color: #ff5fff; }
+.ef208 { color: #ff8700; } .eb208 { background-color: #ff8700; }
+.ef209 { color: #ff875f; } .eb209 { background-color: #ff875f; }
+.ef210 { color: #ff8787; } .eb210 { background-color: #ff8787; }
+.ef211 { color: #ff87af; } .eb211 { background-color: #ff87af; }
+.ef212 { color: #ff87d7; } .eb212 { background-color: #ff87d7; }
+.ef213 { color: #ff87ff; } .eb213 { background-color: #ff87ff; }
+.ef214 { color: #ffaf00; } .eb214 { background-color: #ffaf00; }
+.ef215 { color: #ffaf5f; } .eb215 { background-color: #ffaf5f; }
+.ef216 { color: #ffaf87; } .eb216 { background-color: #ffaf87; }
+.ef217 { color: #ffafaf; } .eb217 { background-color: #ffafaf; }
+.ef218 { color: #ffafd7; } .eb218 { background-color: #ffafd7; }
+.ef219 { color: #ffafff; } .eb219 { background-color: #ffafff; }
+.ef220 { color: #ffd700; } .eb220 { background-color: #ffd700; }
+.ef221 { color: #ffd75f; } .eb221 { background-color: #ffd75f; }
+.ef222 { color: #ffd787; } .eb222 { background-color: #ffd787; }
+.ef223 { color: #ffd7af; } .eb223 { background-color: #ffd7af; }
+.ef224 { color: #ffd7d7; } .eb224 { background-color: #ffd7d7; }
+.ef225 { color: #ffd7ff; } .eb225 { background-color: #ffd7ff; }
+.ef226 { color: #ffff00; } .eb226 { background-color: #ffff00; }
+.ef227 { color: #ffff5f; } .eb227 { background-color: #ffff5f; }
+.ef228 { color: #ffff87; } .eb228 { background-color: #ffff87; }
+.ef229 { color: #ffffaf; } .eb229 { background-color: #ffffaf; }
+.ef230 { color: #ffffd7; } .eb230 { background-color: #ffffd7; }
+.ef231 { color: #ffffff; } .eb231 { background-color: #ffffff; }
+.ef232 { color: #080808; } .eb232 { background-color: #080808; }
+.ef233 { color: #121212; } .eb233 { background-color: #121212; }
+.ef234 { color: #1c1c1c; } .eb234 { background-color: #1c1c1c; }
+.ef235 { color: #262626; } .eb235 { background-color: #262626; }
+.ef236 { color: #303030; } .eb236 { background-color: #303030; }
+.ef237 { color: #3a3a3a; } .eb237 { background-color: #3a3a3a; }
+.ef238 { color: #444444; } .eb238 { background-color: #444444; }
+.ef239 { color: #4e4e4e; } .eb239 { background-color: #4e4e4e; }
+.ef240 { color: #585858; } .eb240 { background-color: #585858; }
+.ef241 { color: #626262; } .eb241 { background-color: #626262; }
+.ef242 { color: #6c6c6c; } .eb242 { background-color: #6c6c6c; }
+.ef243 { color: #767676; } .eb243 { background-color: #767676; }
+.ef244 { color: #808080; } .eb244 { background-color: #808080; }
+.ef245 { color: #8a8a8a; } .eb245 { background-color: #8a8a8a; }
+.ef246 { color: #949494; } .eb246 { background-color: #949494; }
+.ef247 { color: #9e9e9e; } .eb247 { background-color: #9e9e9e; }
+.ef248 { color: #a8a8a8; } .eb248 { background-color: #a8a8a8; }
+.ef249 { color: #b2b2b2; } .eb249 { background-color: #b2b2b2; }
+.ef250 { color: #bcbcbc; } .eb250 { background-color: #bcbcbc; }
+.ef251 { color: #c6c6c6; } .eb251 { background-color: #c6c6c6; }
+.ef252 { color: #d0d0d0; } .eb252 { background-color: #d0d0d0; }
+.ef253 { color: #dadada; } .eb253 { background-color: #dadada; }
+.ef254 { color: #e4e4e4; } .eb254 { background-color: #e4e4e4; }
+.ef255 { color: #eeeeee; } .eb255 { background-color: #eeeeee; }
+
+.f9 { color: #000000; }
+.b9 { background-color: #FFFFFF; }
+.f9 > .bold,.bold > .f9, body.f9 > pre > .bold {
+  /* Bold is heavy black on white, or bright white
+     depending on the default background */
+  color: #000000;
+  font-weight: bold;
+}
+.reverse {
+  /* CSS does not support swapping fg and bg colours unfortunately,
+     so just hardcode something that will look OK on all backgrounds. */
+  color: #000000; background-color: #AAAAAA;
+}
+.underline { text-decoration: underline; }
+.line-through { text-decoration: line-through; }
+.blink { text-decoration: blink; }
+
+/* Avoid pixels between adjacent span elements.
+   Note this only works for lines less than 80 chars
+   where we close span elements on the same line.
+span { display: inline-block; }
+*/
+</style>
+</head>
+
+<body class="f9 b9">
+<pre>
+<span class="bold">diff --git a/src/uniswap/v3-periphery/libraries/NFTSVG.sol b/src/uniswap/v3-periphery/libraries/NFTSVG.sol
+index 5bb9ddd..a7133d2 100644</span>
+<span class="bold">--- a/src/uniswap/v3-periphery/libraries/NFTSVG.sol</span>
+<span class="bold">+++ b/src/uniswap/v3-periphery/libraries/NFTSVG.sol</span>
+<span class="f6">@@ -1,446 +1,492 @@</span>
+ // SPDX-License-Identifier: GPL-2.0-or-later
+<span class="f1">-pragma solidity &gt;=0.7.6;</span>
+<span class="f1">-pragma abicoder v2;</span>
+<span class="f2">+pragma solidity =0.8.15;</span>
+ 
+ import &quot;@openzeppelin/contracts/utils/Strings.sol&quot;;
+ import &quot;@uniswap/v3-core/contracts/libraries/BitMath.sol&quot;;
+ import &quot;base64-sol/base64.sol&quot;;
+ 
+ /// @title NFTSVG
+ /// @notice Provides a function for generating an SVG associated with a Uniswap NFT
+ library NFTSVG {
+     using Strings for uint256;
+ 
+     string constant curve1 = &quot;M1 1C41 41 105 105 145 145&quot;;
+     string constant curve2 = &quot;M1 1C33 49 97 113 145 145&quot;;
+     string constant curve3 = &quot;M1 1C33 57 89 113 145 145&quot;;
+     string constant curve4 = &quot;M1 1C25 65 81 121 145 145&quot;;
+     string constant curve5 = &quot;M1 1C17 73 73 129 145 145&quot;;
+     string constant curve6 = &quot;M1 1C9 81 65 137 145 145&quot;;
+     string constant curve7 = &quot;M1 1C1 89 57.5 145 145 145&quot;;
+     string constant curve8 = &quot;M1 1C1 97 49 145 145 145&quot;;
+ 
+     struct SVGBodyParams {
+         string quoteToken;
+         string baseToken;
+         address poolAddress;
+         string quoteTokenSymbol;
+         string baseTokenSymbol;
+         string feeTier;
+         int24 tickLower;
+         int24 tickUpper;
+         int24 tickSpacing;
+         int8 overRange;
+         uint256 tokenId;
+     }
+ 
+     struct SVGDefsParams {
+         string color0;
+         string color1;
+         string color2;
+         string color3;
+         string x1;
+         string y1;
+         string x2;
+         string y2;
+         string x3;
+         string y3;
+     }
+ 
+     function generateSVG(
+         string memory defs,
+         string memory body
+     ) internal pure returns (string memory svg) {
+         /*
+         address: &quot;0xe8ab59d3bcde16a29912de83a90eb39628cfc163&quot;,
+         msg: &quot;Forged in SVG for Uniswap in 2021 by 0xe8ab59d3bcde16a29912de83a90eb39628cfc163&quot;,
+         sig: &quot;0x2df0e99d9cbfec33a705d83f75666d98b22dea7c1af412c584f7d626d83f02875993df740dc87563b9c73378f8462426da572d7989de88079a382ad96c57b68d1b&quot;,
+         version: &quot;2&quot;
+         */
+         return string(abi.encodePacked(defs, body, &quot;&lt;/svg&gt;&quot;));
+     }
+ 
+     function generateSVGBody(
+         SVGBodyParams memory params
+     ) internal pure returns (string memory body) {
+         return
+<span class="f1">-            string(</span>
+<span class="f1">-                abi.encodePacked(</span>
+<span class="f1">-                    generateSVGBorderText(</span>
+<span class="f1">-                        params.quoteToken,</span>
+<span class="f1">-                        params.baseToken,</span>
+<span class="f1">-                        params.quoteTokenSymbol,</span>
+<span class="f1">-                        params.baseTokenSymbol</span>
+<span class="f1">-                    ),</span>
+<span class="f1">-                    generateSVGCardMantle(</span>
+<span class="f1">-                        params.quoteTokenSymbol,</span>
+<span class="f1">-                        params.baseTokenSymbol,</span>
+<span class="f1">-                        params.feeTier</span>
+<span class="f1">-                    ),</span>
+<span class="f1">-                    generageSvgCurve(</span>
+<span class="f1">-                        params.tickLower,</span>
+<span class="f1">-                        params.tickUpper,</span>
+<span class="f1">-                        params.tickSpacing,</span>
+<span class="f1">-                        params.overRange</span>
+<span class="f1">-                    ),</span>
+<span class="f1">-                    generateSVGPositionDataAndLocationCurve(</span>
+<span class="f1">-                        params.tokenId.toString(),</span>
+<span class="f1">-                        params.tickLower,</span>
+<span class="f1">-                        params.tickUpper</span>
+<span class="f1">-                    ),</span>
+<span class="f1">-                    generateSVGRareSparkle(params.tokenId, params.poolAddress)</span>
+<span class="f2">+            string.concat(</span>
+<span class="f2">+                generateSVGBodyPartOne(params),</span>
+<span class="f2">+                generateSVGBodyPartTwo(</span>
+<span class="f2">+                    params.poolAddress,</span>
+<span class="f2">+                    params.tickLower,</span>
+<span class="f2">+                    params.tickUpper,</span>
+<span class="f2">+                    params.tokenId</span>
+                 )
+             );
+     }
+ 
+<span class="f2">+    function generateSVGBodyPartOne(</span>
+<span class="f2">+        SVGBodyParams memory params</span>
+<span class="f2">+    ) private pure returns (string memory) {</span>
+<span class="f2">+        return</span>
+<span class="f2">+            string.concat(</span>
+<span class="f2">+                generateSVGBorderText(</span>
+<span class="f2">+                    params.quoteToken,</span>
+<span class="f2">+                    params.baseToken,</span>
+<span class="f2">+                    params.quoteTokenSymbol,</span>
+<span class="f2">+                    params.baseTokenSymbol</span>
+<span class="f2">+                ),</span>
+<span class="f2">+                generateSVGCardMantle(</span>
+<span class="f2">+                    params.quoteTokenSymbol,</span>
+<span class="f2">+                    params.baseTokenSymbol,</span>
+<span class="f2">+                    params.feeTier</span>
+<span class="f2">+                ),</span>
+<span class="f2">+                generageSvgCurve(</span>
+<span class="f2">+                    params.tickLower,</span>
+<span class="f2">+                    params.tickUpper,</span>
+<span class="f2">+                    params.tickSpacing,</span>
+<span class="f2">+                    params.overRange</span>
+<span class="f2">+                )</span>
+<span class="f2">+            );</span>
+<span class="f2">+    }</span>
+<span class="f2">+</span>
+<span class="f2">+    function generateSVGBodyPartTwo(</span>
+<span class="f2">+        address poolAddress,</span>
+<span class="f2">+        int24 tickLower,</span>
+<span class="f2">+        int24 tickUpper,</span>
+<span class="f2">+        uint256 tokenId</span>
+<span class="f2">+    ) private pure returns (string memory) {</span>
+<span class="f2">+        return</span>
+<span class="f2">+            string.concat(</span>
+<span class="f2">+                generateSVGPositionDataAndLocationCurve(</span>
+<span class="f2">+                    tokenId.toString(),</span>
+<span class="f2">+                    tickLower,</span>
+<span class="f2">+                    tickUpper</span>
+<span class="f2">+                ),</span>
+<span class="f2">+                generateSVGRareSparkle(tokenId, poolAddress)</span>
+<span class="f2">+            );</span>
+<span class="f2">+    }</span>
+<span class="f2">+</span>
+     function generateSVGDefs(
+         SVGDefsParams memory params
+     ) internal pure returns (string memory svg) {
+<span class="f1">-        svg = string(</span>
+<span class="f1">-            abi.encodePacked(</span>
+<span class="f2">+        svg = string.concat(</span>
+<span class="f2">+            generateSVGDefsPartOne(params),</span>
+<span class="f2">+            generateSVGDefsPartTwo(params)</span>
+<span class="f2">+        );</span>
+<span class="f2">+    }</span>
+<span class="f2">+</span>
+<span class="f2">+    function generateSVGDefsPartOne(</span>
+<span class="f2">+        SVGDefsParams memory params</span>
+<span class="f2">+    ) private pure returns (string memory) {</span>
+<span class="f2">+        return</span>
+<span class="f2">+            string.concat(</span>
+                 '&lt;svg width=&quot;290&quot; height=&quot;500&quot; viewBox=&quot;0 0 290 500&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;',
+                 &quot; xmlns:xlink='http://www.w3.org/1999/xlink'&gt;&quot;,
+                 &quot;&lt;defs&gt;&quot;,
+                 '&lt;filter id=&quot;f1&quot;&gt;&lt;feImage result=&quot;p0&quot; xlink:href=&quot;data:image/svg+xml;base64,',
+                 Base64.encode(
+                     bytes(
+<span class="f1">-                        abi.encodePacked(</span>
+<span class="f2">+                        string.concat(</span>
+                             &quot;&lt;svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'&gt;&lt;rect width='290px' height='500px' fill='#&quot;,
+                             params.color0,
+                             &quot;'/&gt;&lt;/svg&gt;&quot;
+                         )
+                     )
+                 ),
+                 '&quot;/&gt;&lt;feImage result=&quot;p1&quot; xlink:href=&quot;data:image/svg+xml;base64,',
+                 Base64.encode(
+                     bytes(
+<span class="f1">-                        abi.encodePacked(</span>
+<span class="f2">+                        string.concat(</span>
+                             &quot;&lt;svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'&gt;&lt;circle cx='&quot;,
+                             params.x1,
+                             &quot;' cy='&quot;,
+                             params.y1,
+                             &quot;' r='120px' fill='#&quot;,
+                             params.color1,
+                             &quot;'/&gt;&lt;/svg&gt;&quot;
+                         )
+                     )
+                 ),
+                 '&quot;/&gt;&lt;feImage result=&quot;p2&quot; xlink:href=&quot;data:image/svg+xml;base64,',
+                 Base64.encode(
+                     bytes(
+<span class="f1">-                        abi.encodePacked(</span>
+<span class="f2">+                        string.concat(</span>
+                             &quot;&lt;svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'&gt;&lt;circle cx='&quot;,
+                             params.x2,
+                             &quot;' cy='&quot;,
+                             params.y2,
+                             &quot;' r='120px' fill='#&quot;,
+                             params.color2,
+                             &quot;'/&gt;&lt;/svg&gt;&quot;
+                         )
+                     )
+                 ),
+                 '&quot; /&gt;',
+<span class="f1">-                '&lt;feImage result=&quot;p3&quot; xlink:href=&quot;data:image/svg+xml;base64,',</span>
+<span class="f2">+                '&lt;feImage result=&quot;p3&quot; xlink:href=&quot;data:image/svg+xml;base64,'</span>
+<span class="f2">+            );</span>
+<span class="f2">+    }</span>
+<span class="f2">+</span>
+<span class="f2">+    function generateSVGDefsPartTwo(</span>
+<span class="f2">+        SVGDefsParams memory params</span>
+<span class="f2">+    ) private pure returns (string memory) {</span>
+<span class="f2">+        return</span>
+<span class="f2">+            string.concat(</span>
+                 Base64.encode(
+                     bytes(
+<span class="f1">-                        abi.encodePacked(</span>
+<span class="f2">+                        string.concat(</span>
+                             &quot;&lt;svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'&gt;&lt;circle cx='&quot;,
+                             params.x3,
+                             &quot;' cy='&quot;,
+                             params.y3,
+                             &quot;' r='100px' fill='#&quot;,
+                             params.color3,
+                             &quot;'/&gt;&lt;/svg&gt;&quot;
+                         )
+                     )
+                 ),
+                 '&quot; /&gt;&lt;feBlend mode=&quot;overlay&quot; in=&quot;p0&quot; in2=&quot;p1&quot; /&gt;&lt;feBlend mode=&quot;exclusion&quot; in2=&quot;p2&quot; /&gt;&lt;feBlend mode=&quot;overlay&quot; in2=&quot;p3&quot; result=&quot;blendOut&quot; /&gt;&lt;feGaussianBlur ',
+                 'in=&quot;blendOut&quot; stdDeviation=&quot;42&quot; /&gt;&lt;/filter&gt; &lt;clipPath id=&quot;corners&quot;&gt;&lt;rect width=&quot;290&quot; height=&quot;500&quot; rx=&quot;42&quot; ry=&quot;42&quot; /&gt;&lt;/clipPath&gt;',
+                 '&lt;path id=&quot;text-path-a&quot; d=&quot;M40 12 H250 A28 28 0 0 1 278 40 V460 A28 28 0 0 1 250 488 H40 A28 28 0 0 1 12 460 V40 A28 28 0 0 1 40 12 z&quot; /&gt;',
+                 '&lt;path id=&quot;minimap&quot; d=&quot;M234 444C234 457.949 242.21 463 253 463&quot; /&gt;',
+                 '&lt;filter id=&quot;top-region-blur&quot;&gt;&lt;feGaussianBlur in=&quot;SourceGraphic&quot; stdDeviation=&quot;24&quot; /&gt;&lt;/filter&gt;',
+                 '&lt;linearGradient id=&quot;grad-up&quot; x1=&quot;1&quot; x2=&quot;0&quot; y1=&quot;1&quot; y2=&quot;0&quot;&gt;&lt;stop offset=&quot;0.0&quot; stop-color=&quot;white&quot; stop-opacity=&quot;1&quot; /&gt;',
+                 '&lt;stop offset=&quot;.9&quot; stop-color=&quot;white&quot; stop-opacity=&quot;0&quot; /&gt;&lt;/linearGradient&gt;',
+                 '&lt;linearGradient id=&quot;grad-down&quot; x1=&quot;0&quot; x2=&quot;1&quot; y1=&quot;0&quot; y2=&quot;1&quot;&gt;&lt;stop offset=&quot;0.0&quot; stop-color=&quot;white&quot; stop-opacity=&quot;1&quot; /&gt;&lt;stop offset=&quot;0.9&quot; stop-color=&quot;white&quot; stop-opacity=&quot;0&quot; /&gt;&lt;/linearGradient&gt;',
+                 '&lt;mask id=&quot;fade-up&quot; maskContentUnits=&quot;objectBoundingBox&quot;&gt;&lt;rect width=&quot;1&quot; height=&quot;1&quot; fill=&quot;url(#grad-up)&quot; /&gt;&lt;/mask&gt;',
+                 '&lt;mask id=&quot;fade-down&quot; maskContentUnits=&quot;objectBoundingBox&quot;&gt;&lt;rect width=&quot;1&quot; height=&quot;1&quot; fill=&quot;url(#grad-down)&quot; /&gt;&lt;/mask&gt;',
+                 '&lt;mask id=&quot;none&quot; maskContentUnits=&quot;objectBoundingBox&quot;&gt;&lt;rect width=&quot;1&quot; height=&quot;1&quot; fill=&quot;white&quot; /&gt;&lt;/mask&gt;',
+                 '&lt;linearGradient id=&quot;grad-symbol&quot;&gt;&lt;stop offset=&quot;0.7&quot; stop-color=&quot;white&quot; stop-opacity=&quot;1&quot; /&gt;&lt;stop offset=&quot;.95&quot; stop-color=&quot;white&quot; stop-opacity=&quot;0&quot; /&gt;&lt;/linearGradient&gt;',
+                 '&lt;mask id=&quot;fade-symbol&quot; maskContentUnits=&quot;userSpaceOnUse&quot;&gt;&lt;rect width=&quot;290px&quot; height=&quot;200px&quot; fill=&quot;url(#grad-symbol)&quot; /&gt;&lt;/mask&gt;&lt;/defs&gt;',
+                 '&lt;g clip-path=&quot;url(#corners)&quot;&gt;',
+                 '&lt;rect fill=&quot;',
+                 params.color0,
+                 '&quot; x=&quot;0px&quot; y=&quot;0px&quot; width=&quot;290px&quot; height=&quot;500px&quot; /&gt;',
+                 '&lt;rect style=&quot;filter: url(#f1)&quot; x=&quot;0px&quot; y=&quot;0px&quot; width=&quot;290px&quot; height=&quot;500px&quot; /&gt;',
+                 ' &lt;g style=&quot;filter:url(#top-region-blur); transform:scale(1.5); transform-origin:center top;&quot;&gt;',
+                 '&lt;rect fill=&quot;none&quot; x=&quot;0px&quot; y=&quot;0px&quot; width=&quot;290px&quot; height=&quot;500px&quot; /&gt;',
+                 '&lt;ellipse cx=&quot;50%&quot; cy=&quot;0px&quot; rx=&quot;180px&quot; ry=&quot;120px&quot; fill=&quot;#000&quot; opacity=&quot;0.85&quot; /&gt;&lt;/g&gt;',
+                 '&lt;rect x=&quot;0&quot; y=&quot;0&quot; width=&quot;290&quot; height=&quot;500&quot; rx=&quot;42&quot; ry=&quot;42&quot; fill=&quot;rgba(0,0,0,0)&quot; stroke=&quot;rgba(255,255,255,0.2)&quot; /&gt;&lt;/g&gt;'
+<span class="f1">-            )</span>
+<span class="f1">-        );</span>
+<span class="f2">+            );</span>
+     }
+ 
+     function generateSVGBorderText(
+         string memory quoteToken,
+         string memory baseToken,
+         string memory quoteTokenSymbol,
+         string memory baseTokenSymbol
+     ) private pure returns (string memory svg) {
+<span class="f1">-        svg = string(</span>
+<span class="f1">-            abi.encodePacked(</span>
+<span class="f1">-                '&lt;text text-rendering=&quot;optimizeSpeed&quot;&gt;',</span>
+<span class="f1">-                '&lt;textPath startOffset=&quot;-100%&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;10px&quot; xlink:href=&quot;#text-path-a&quot;&gt;',</span>
+<span class="f1">-                baseToken,</span>
+<span class="f1">-                unicode&quot; • &quot;,</span>
+<span class="f1">-                baseTokenSymbol,</span>
+<span class="f1">-                ' &lt;animate additive=&quot;sum&quot; attributeName=&quot;startOffset&quot; from=&quot;0%&quot; to=&quot;100%&quot; begin=&quot;0s&quot; dur=&quot;30s&quot; repeatCount=&quot;indefinite&quot; /&gt;',</span>
+<span class="f1">-                '&lt;/textPath&gt; &lt;textPath startOffset=&quot;0%&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;10px&quot; xlink:href=&quot;#text-path-a&quot;&gt;',</span>
+<span class="f1">-                baseToken,</span>
+<span class="f1">-                unicode&quot; • &quot;,</span>
+<span class="f1">-                baseTokenSymbol,</span>
+<span class="f1">-                ' &lt;animate additive=&quot;sum&quot; attributeName=&quot;startOffset&quot; from=&quot;0%&quot; to=&quot;100%&quot; begin=&quot;0s&quot; dur=&quot;30s&quot; repeatCount=&quot;indefinite&quot; /&gt; &lt;/textPath&gt;',</span>
+<span class="f1">-                '&lt;textPath startOffset=&quot;50%&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;10px&quot; xlink:href=&quot;#text-path-a&quot;&gt;',</span>
+<span class="f1">-                quoteToken,</span>
+<span class="f1">-                unicode&quot; • &quot;,</span>
+<span class="f1">-                quoteTokenSymbol,</span>
+<span class="f1">-                ' &lt;animate additive=&quot;sum&quot; attributeName=&quot;startOffset&quot; from=&quot;0%&quot; to=&quot;100%&quot; begin=&quot;0s&quot; dur=&quot;30s&quot;',</span>
+<span class="f1">-                ' repeatCount=&quot;indefinite&quot; /&gt;&lt;/textPath&gt;&lt;textPath startOffset=&quot;-50%&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;10px&quot; xlink:href=&quot;#text-path-a&quot;&gt;',</span>
+<span class="f1">-                quoteToken,</span>
+<span class="f1">-                unicode&quot; • &quot;,</span>
+<span class="f1">-                quoteTokenSymbol,</span>
+<span class="f1">-                ' &lt;animate additive=&quot;sum&quot; attributeName=&quot;startOffset&quot; from=&quot;0%&quot; to=&quot;100%&quot; begin=&quot;0s&quot; dur=&quot;30s&quot; repeatCount=&quot;indefinite&quot; /&gt;&lt;/textPath&gt;&lt;/text&gt;'</span>
+<span class="f1">-            )</span>
+<span class="f2">+        svg = string.concat(</span>
+<span class="f2">+            '&lt;text text-rendering=&quot;optimizeSpeed&quot;&gt;',</span>
+<span class="f2">+            '&lt;textPath startOffset=&quot;-100%&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;10px&quot; xlink:href=&quot;#text-path-a&quot;&gt;',</span>
+<span class="f2">+            baseToken,</span>
+<span class="f2">+            unicode&quot; • &quot;,</span>
+<span class="f2">+            baseTokenSymbol,</span>
+<span class="f2">+            ' &lt;animate additive=&quot;sum&quot; attributeName=&quot;startOffset&quot; from=&quot;0%&quot; to=&quot;100%&quot; begin=&quot;0s&quot; dur=&quot;30s&quot; repeatCount=&quot;indefinite&quot; /&gt;',</span>
+<span class="f2">+            '&lt;/textPath&gt; &lt;textPath startOffset=&quot;0%&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;10px&quot; xlink:href=&quot;#text-path-a&quot;&gt;',</span>
+<span class="f2">+            baseToken,</span>
+<span class="f2">+            unicode&quot; • &quot;,</span>
+<span class="f2">+            baseTokenSymbol,</span>
+<span class="f2">+            ' &lt;animate additive=&quot;sum&quot; attributeName=&quot;startOffset&quot; from=&quot;0%&quot; to=&quot;100%&quot; begin=&quot;0s&quot; dur=&quot;30s&quot; repeatCount=&quot;indefinite&quot; /&gt; &lt;/textPath&gt;',</span>
+<span class="f2">+            '&lt;textPath startOffset=&quot;50%&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;10px&quot; xlink:href=&quot;#text-path-a&quot;&gt;',</span>
+<span class="f2">+            quoteToken,</span>
+<span class="f2">+            unicode&quot; • &quot;,</span>
+<span class="f2">+            quoteTokenSymbol,</span>
+<span class="f2">+            ' &lt;animate additive=&quot;sum&quot; attributeName=&quot;startOffset&quot; from=&quot;0%&quot; to=&quot;100%&quot; begin=&quot;0s&quot; dur=&quot;30s&quot;',</span>
+<span class="f2">+            ' repeatCount=&quot;indefinite&quot; /&gt;&lt;/textPath&gt;&lt;textPath startOffset=&quot;-50%&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;10px&quot; xlink:href=&quot;#text-path-a&quot;&gt;',</span>
+<span class="f2">+            quoteToken,</span>
+<span class="f2">+            unicode&quot; • &quot;,</span>
+<span class="f2">+            quoteTokenSymbol,</span>
+<span class="f2">+            ' &lt;animate additive=&quot;sum&quot; attributeName=&quot;startOffset&quot; from=&quot;0%&quot; to=&quot;100%&quot; begin=&quot;0s&quot; dur=&quot;30s&quot; repeatCount=&quot;indefinite&quot; /&gt;&lt;/textPath&gt;&lt;/text&gt;'</span>
+         );
+     }
+ 
+     function generateSVGCardMantle(
+         string memory quoteTokenSymbol,
+         string memory baseTokenSymbol,
+         string memory feeTier
+     ) private pure returns (string memory svg) {
+<span class="f1">-        svg = string(</span>
+<span class="f1">-            abi.encodePacked(</span>
+<span class="f1">-                '&lt;g mask=&quot;url(#fade-symbol)&quot;&gt;&lt;rect fill=&quot;none&quot; x=&quot;0px&quot; y=&quot;0px&quot; width=&quot;290px&quot; height=&quot;200px&quot; /&gt; &lt;text y=&quot;70px&quot; x=&quot;32px&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-weight=&quot;200&quot; font-size=&quot;36px&quot;&gt;',
+-                quoteTokenSymbol,</span>
+<span class="f1">-                &quot;/&quot;,</span>
+<span class="f1">-                baseTokenSymbol,</span>
+<span class="f1">-                '&lt;/text&gt;&lt;text y=&quot;115px&quot; x=&quot;32px&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-weight=&quot;200&quot; font-size=&quot;36px&quot;&gt;',</span>
+<span class="f1">-                feeTier,</span>
+<span class="f1">-                &quot;&lt;/text&gt;&lt;/g&gt;&quot;,</span>
+<span class="f1">-                '&lt;rect x=&quot;16&quot; y=&quot;16&quot; width=&quot;258&quot; height=&quot;468&quot; rx=&quot;26&quot; ry=&quot;26&quot; fill=&quot;rgba(0,0,0,0)&quot; stroke=&quot;rgba(255,255,255,0.2)&quot; /&gt;'</span>
+<span class="f1">-            )</span>
+<span class="f2">+        svg = string.concat(</span>
+<span class="f2">+            '&lt;g mask=&quot;url(#fade-symbol)&quot;&gt;&lt;rect fill=&quot;none&quot; x=&quot;0px&quot; y=&quot;0px&quot; width=&quot;290px&quot; height=&quot;200px&quot; /&gt; &lt;text y=&quot;70px&quot; x=&quot;32px&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-weight=&quot;200&quot; font-size=&quot;36px&quot;&gt;',</span>
+<span class="f2">+            quoteTokenSymbol,</span>
+<span class="f2">+            &quot;/&quot;,</span>
+<span class="f2">+            baseTokenSymbol,</span>
+<span class="f2">+            '&lt;/text&gt;&lt;text y=&quot;115px&quot; x=&quot;32px&quot; fill=&quot;white&quot; font-family=&quot;\'Courier New\', monospace&quot; font-weight=&quot;200&quot; font-size=&quot;36px&quot;&gt;',</span>
+<span class="f2">+            feeTier,</span>
+<span class="f2">+            &quot;&lt;/text&gt;&lt;/g&gt;&quot;,</span>
+<span class="f2">+            '&lt;rect x=&quot;16&quot; y=&quot;16&quot; width=&quot;258&quot; height=&quot;468&quot; rx=&quot;26&quot; ry=&quot;26&quot; fill=&quot;rgba(0,0,0,0)&quot; stroke=&quot;rgba(255,255,255,0.2)&quot; /&gt;'</span>
+         );
+     }
+ 
+     function generageSvgCurve(
+         int24 tickLower,
+         int24 tickUpper,
+         int24 tickSpacing,
+         int8 overRange
+     ) private pure returns (string memory svg) {
+         string memory fade = overRange == 1 ? &quot;#fade-up&quot; : overRange == -1
+             ? &quot;#fade-down&quot;
+             : &quot;#none&quot;;
+         string memory curve = getCurve(tickLower, tickUpper, tickSpacing);
+<span class="f1">-        svg = string(</span>
+<span class="f1">-            abi.encodePacked(</span>
+<span class="f1">-                '&lt;g mask=&quot;url(',</span>
+<span class="f1">-                fade,</span>
+<span class="f1">-                ')&quot;',</span>
+<span class="f1">-                ' style=&quot;transform:translate(72px,189px)&quot;&gt;'</span>
+<span class="f1">-                '&lt;rect x=&quot;-16px&quot; y=&quot;-16px&quot; width=&quot;180px&quot; height=&quot;180px&quot; fill=&quot;none&quot; /&gt;'</span>
+<span class="f1">-                '&lt;path d=&quot;',</span>
+<span class="f1">-                curve,</span>
+<span class="f1">-                '&quot; stroke=&quot;rgba(0,0,0,0.3)&quot; stroke-width=&quot;32px&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot; /&gt;',</span>
+<span class="f1">-                '&lt;/g&gt;&lt;g mask=&quot;url(',</span>
+<span class="f1">-                fade,</span>
+<span class="f1">-                ')&quot;',</span>
+<span class="f1">-                ' style=&quot;transform:translate(72px,189px)&quot;&gt;',</span>
+<span class="f1">-                '&lt;rect x=&quot;-16px&quot; y=&quot;-16px&quot; width=&quot;180px&quot; height=&quot;180px&quot; fill=&quot;none&quot; /&gt;',</span>
+<span class="f1">-                '&lt;path d=&quot;',</span>
+<span class="f1">-                curve,</span>
+<span class="f1">-                '&quot; stroke=&quot;rgba(255,255,255,1)&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot; /&gt;&lt;/g&gt;',</span>
+<span class="f1">-                generateSVGCurveCircle(overRange)</span>
+<span class="f1">-            )</span>
+<span class="f2">+        svg = string.concat(</span>
+<span class="f2">+            '&lt;g mask=&quot;url(',</span>
+<span class="f2">+            fade,</span>
+<span class="f2">+            ')&quot;',</span>
+<span class="f2">+            ' style=&quot;transform:translate(72px,189px)&quot;&gt;'</span>
+<span class="f2">+            '&lt;rect x=&quot;-16px&quot; y=&quot;-16px&quot; width=&quot;180px&quot; height=&quot;180px&quot; fill=&quot;none&quot; /&gt;'</span>
+<span class="f2">+            '&lt;path d=&quot;',</span>
+<span class="f2">+            curve,</span>
+<span class="f2">+            '&quot; stroke=&quot;rgba(0,0,0,0.3)&quot; stroke-width=&quot;32px&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot; /&gt;',</span>
+<span class="f2">+            '&lt;/g&gt;&lt;g mask=&quot;url(',</span>
+<span class="f2">+            fade,</span>
+<span class="f2">+            ')&quot;',</span>
+<span class="f2">+            ' style=&quot;transform:translate(72px,189px)&quot;&gt;',</span>
+<span class="f2">+            '&lt;rect x=&quot;-16px&quot; y=&quot;-16px&quot; width=&quot;180px&quot; height=&quot;180px&quot; fill=&quot;none&quot; /&gt;',</span>
+<span class="f2">+            '&lt;path d=&quot;',</span>
+<span class="f2">+            curve,</span>
+<span class="f2">+            '&quot; stroke=&quot;rgba(255,255,255,1)&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot; /&gt;&lt;/g&gt;',</span>
+<span class="f2">+            generateSVGCurveCircle(overRange)</span>
+         );
+     }
+ 
+     function getCurve(
+         int24 tickLower,
+         int24 tickUpper,
+         int24 tickSpacing
+     ) internal pure returns (string memory curve) {
+         int24 tickRange = (tickUpper - tickLower) / tickSpacing;
+         if (tickRange &lt;= 4) {
+             curve = curve1;
+         } else if (tickRange &lt;= 8) {
+             curve = curve2;
+         } else if (tickRange &lt;= 16) {
+             curve = curve3;
+         } else if (tickRange &lt;= 32) {
+             curve = curve4;
+         } else if (tickRange &lt;= 64) {
+             curve = curve5;
+         } else if (tickRange &lt;= 128) {
+             curve = curve6;
+         } else if (tickRange &lt;= 256) {
+             curve = curve7;
+         } else {
+             curve = curve8;
+         }
+     }
+ 
+     function generateSVGCurveCircle(
+         int8 overRange
+     ) internal pure returns (string memory svg) {
+         string memory curvex1 = &quot;73&quot;;
+         string memory curvey1 = &quot;190&quot;;
+         string memory curvex2 = &quot;217&quot;;
+         string memory curvey2 = &quot;334&quot;;
+         if (overRange == 1 || overRange == -1) {
+<span class="f1">-            svg = string(</span>
+<span class="f1">-                abi.encodePacked(</span>
+<span class="f1">-                    '&lt;circle cx=&quot;',</span>
+<span class="f1">-                    overRange == -1 ? curvex1 : curvex2,</span>
+<span class="f1">-                    'px&quot; cy=&quot;',</span>
+<span class="f1">-                    overRange == -1 ? curvey1 : curvey2,</span>
+<span class="f1">-                    'px&quot; r=&quot;4px&quot; fill=&quot;white&quot; /&gt;&lt;circle cx=&quot;',</span>
+<span class="f1">-                    overRange == -1 ? curvex1 : curvex2,</span>
+<span class="f1">-                    'px&quot; cy=&quot;',</span>
+<span class="f1">-                    overRange == -1 ? curvey1 : curvey2,</span>
+<span class="f1">-                    'px&quot; r=&quot;24px&quot; fill=&quot;none&quot; stroke=&quot;white&quot; /&gt;'</span>
+<span class="f1">-                )</span>
+<span class="f2">+            svg = string.concat(</span>
+<span class="f2">+                '&lt;circle cx=&quot;',</span>
+<span class="f2">+                overRange == -1 ? curvex1 : curvex2,</span>
+<span class="f2">+                'px&quot; cy=&quot;',</span>
+<span class="f2">+                overRange == -1 ? curvey1 : curvey2,</span>
+<span class="f2">+                'px&quot; r=&quot;4px&quot; fill=&quot;white&quot; /&gt;&lt;circle cx=&quot;',</span>
+<span class="f2">+                overRange == -1 ? curvex1 : curvex2,</span>
+<span class="f2">+                'px&quot; cy=&quot;',</span>
+<span class="f2">+                overRange == -1 ? curvey1 : curvey2,</span>
+<span class="f2">+                'px&quot; r=&quot;24px&quot; fill=&quot;none&quot; stroke=&quot;white&quot; /&gt;'</span>
+             );
+         } else {
+<span class="f1">-            svg = string(</span>
+<span class="f1">-                abi.encodePacked(</span>
+<span class="f1">-                    '&lt;circle cx=&quot;',</span>
+<span class="f1">-                    curvex1,</span>
+<span class="f1">-                    'px&quot; cy=&quot;',</span>
+<span class="f1">-                    curvey1,</span>
+<span class="f1">-                    'px&quot; r=&quot;4px&quot; fill=&quot;white&quot; /&gt;',</span>
+<span class="f1">-                    '&lt;circle cx=&quot;',</span>
+<span class="f1">-                    curvex2,</span>
+<span class="f1">-                    'px&quot; cy=&quot;',</span>
+<span class="f1">-                    curvey2,</span>
+<span class="f1">-                    'px&quot; r=&quot;4px&quot; fill=&quot;white&quot; /&gt;'</span>
+<span class="f1">-                )</span>
+<span class="f2">+            svg = string.concat(</span>
+<span class="f2">+                '&lt;circle cx=&quot;',</span>
+<span class="f2">+                curvex1,</span>
+<span class="f2">+                'px&quot; cy=&quot;',</span>
+<span class="f2">+                curvey1,</span>
+<span class="f2">+                'px&quot; r=&quot;4px&quot; fill=&quot;white&quot; /&gt;',</span>
+<span class="f2">+                '&lt;circle cx=&quot;',</span>
+<span class="f2">+                curvex2,</span>
+<span class="f2">+                'px&quot; cy=&quot;',</span>
+<span class="f2">+                curvey2,</span>
+<span class="f2">+                'px&quot; r=&quot;4px&quot; fill=&quot;white&quot; /&gt;'</span>
+             );
+         }
+     }
+ 
+     function generateSVGPositionDataAndLocationCurve(
+         string memory tokenId,
+         int24 tickLower,
+         int24 tickUpper
+     ) private pure returns (string memory svg) {
+         string memory tickLowerStr = tickToString(tickLower);
+         string memory tickUpperStr = tickToString(tickUpper);
+         uint256 str1length = bytes(tokenId).length + 4;
+         uint256 str2length = bytes(tickLowerStr).length + 10;
+         uint256 str3length = bytes(tickUpperStr).length + 10;
+         (string memory xCoord, string memory yCoord) = rangeLocation(
+             tickLower,
+             tickUpper
+         );
+<span class="f1">-        svg = string(</span>
+<span class="f1">-            abi.encodePacked(</span>
+<span class="f2">+        svg = string.concat(</span>
+<span class="f2">+            generateSVGPositionDataAndLocationCurvePartOne(</span>
+<span class="f2">+                tokenId,</span>
+<span class="f2">+                str1length,</span>
+<span class="f2">+                str2length,</span>
+<span class="f2">+                str3length,</span>
+<span class="f2">+                tickLowerStr,</span>
+<span class="f2">+                tickUpperStr</span>
+<span class="f2">+            ),</span>
+<span class="f2">+            &quot;&lt;/text&gt;&lt;/g&gt;&quot;</span>
+<span class="f2">+            '&lt;g style=&quot;transform:translate(226px, 433px)&quot;&gt;',</span>
+<span class="f2">+            '&lt;rect width=&quot;36px&quot; height=&quot;36px&quot; rx=&quot;8px&quot; ry=&quot;8px&quot; fill=&quot;none&quot; stroke=&quot;rgba(255,255,255,0.2)&quot; /&gt;',</span>
+<span class="f2">+            '&lt;path stroke-linecap=&quot;round&quot; d=&quot;M8 9C8.00004 22.9494 16.2099 28 27 28&quot; fill=&quot;none&quot; stroke=&quot;white&quot; /&gt;',</span>
+<span class="f2">+            '&lt;circle style=&quot;transform:translate3d(',</span>
+<span class="f2">+            xCoord,</span>
+<span class="f2">+            &quot;px, &quot;,</span>
+<span class="f2">+            yCoord,</span>
+<span class="f2">+            'px, 0px)&quot; cx=&quot;0px&quot; cy=&quot;0px&quot; r=&quot;4px&quot; fill=&quot;white&quot;/&gt;&lt;/g&gt;'</span>
+<span class="f2">+        );</span>
+<span class="f2">+    }</span>
+<span class="f2">+</span>
+<span class="f2">+    function generateSVGPositionDataAndLocationCurvePartOne(</span>
+<span class="f2">+        string memory tokenId,</span>
+<span class="f2">+        uint256 str1length,</span>
+<span class="f2">+        uint256 str2length,</span>
+<span class="f2">+        uint256 str3length,</span>
+<span class="f2">+        string memory tickLowerStr,</span>
+<span class="f2">+        string memory tickUpperStr</span>
+<span class="f2">+    ) private pure returns (string memory) {</span>
+<span class="f2">+        return</span>
+<span class="f2">+            string.concat(</span>
+                 ' &lt;g style=&quot;transform:translate(29px, 384px)&quot;&gt;',
+                 '&lt;rect width=&quot;',
+                 uint256(7 * (str1length + 4)).toString(),
+                 'px&quot; height=&quot;26px&quot; rx=&quot;8px&quot; ry=&quot;8px&quot; fill=&quot;rgba(0,0,0,0.6)&quot; /&gt;',
+                 '&lt;text x=&quot;12px&quot; y=&quot;17px&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;12px&quot; fill=&quot;white&quot;&gt;&lt;tspan fill=&quot;rgba(255,255,255,0.6)&quot;&gt;ID: &lt;/tspan&gt;',
+                 tokenId,
+                 &quot;&lt;/text&gt;&lt;/g&gt;&quot;,
+                 ' &lt;g style=&quot;transform:translate(29px, 414px)&quot;&gt;',
+                 '&lt;rect width=&quot;',
+                 uint256(7 * (str2length + 4)).toString(),
+                 'px&quot; height=&quot;26px&quot; rx=&quot;8px&quot; ry=&quot;8px&quot; fill=&quot;rgba(0,0,0,0.6)&quot; /&gt;',
+                 '&lt;text x=&quot;12px&quot; y=&quot;17px&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;12px&quot; fill=&quot;white&quot;&gt;&lt;tspan fill=&quot;rgba(255,255,255,0.6)&quot;&gt;Min Tick: &lt;/tspan&gt;',
+                 tickLowerStr,
+                 &quot;&lt;/text&gt;&lt;/g&gt;&quot;,
+                 ' &lt;g style=&quot;transform:translate(29px, 444px)&quot;&gt;',
+                 '&lt;rect width=&quot;',
+                 uint256(7 * (str3length + 4)).toString(),
+                 'px&quot; height=&quot;26px&quot; rx=&quot;8px&quot; ry=&quot;8px&quot; fill=&quot;rgba(0,0,0,0.6)&quot; /&gt;',
+                 '&lt;text x=&quot;12px&quot; y=&quot;17px&quot; font-family=&quot;\'Courier New\', monospace&quot; font-size=&quot;12px&quot; fill=&quot;white&quot;&gt;&lt;tspan fill=&quot;rgba(255,255,255,0.6)&quot;&gt;Max Tick: &lt;/tspan&gt;',
+<span class="f1">-                tickUpperStr,</span>
+<span class="f1">-                &quot;&lt;/text&gt;&lt;/g&gt;&quot;</span>
+<span class="f1">-                '&lt;g style=&quot;transform:translate(226px, 433px)&quot;&gt;',</span>
+<span class="f1">-                '&lt;rect width=&quot;36px&quot; height=&quot;36px&quot; rx=&quot;8px&quot; ry=&quot;8px&quot; fill=&quot;none&quot; stroke=&quot;rgba(255,255,255,0.2)&quot; /&gt;',</span>
+<span class="f1">-                '&lt;path stroke-linecap=&quot;round&quot; d=&quot;M8 9C8.00004 22.9494 16.2099 28 27 28&quot; fill=&quot;none&quot; stroke=&quot;white&quot; /&gt;',</span>
+<span class="f1">-                '&lt;circle style=&quot;transform:translate3d(',</span>
+<span class="f1">-                xCoord,</span>
+<span class="f1">-                &quot;px, &quot;,</span>
+<span class="f1">-                yCoord,</span>
+<span class="f1">-                'px, 0px)&quot; cx=&quot;0px&quot; cy=&quot;0px&quot; r=&quot;4px&quot; fill=&quot;white&quot;/&gt;&lt;/g&gt;'</span>
+<span class="f1">-            )</span>
+<span class="f1">-        );</span>
+<span class="f2">+                tickUpperStr</span>
+<span class="f2">+            );</span>
+     }
+ 
+     function tickToString(int24 tick) private pure returns (string memory) {
+         string memory sign = &quot;&quot;;
+         if (tick &lt; 0) {
+             tick = tick * -1;
+             sign = &quot;-&quot;;
+         }
+         return string(abi.encodePacked(sign, uint256(uint24(tick)).toString()));
+     }
+ 
+     function rangeLocation(
+         int24 tickLower,
+         int24 tickUpper
+     ) internal pure returns (string memory, string memory) {
+         int24 midPoint = (tickLower + tickUpper) / 2;
+         if (midPoint &lt; -125_000) {
+             return (&quot;8&quot;, &quot;7&quot;);
+         } else if (midPoint &lt; -75_000) {
+             return (&quot;8&quot;, &quot;10.5&quot;);
+         } else if (midPoint &lt; -25_000) {
+             return (&quot;8&quot;, &quot;14.25&quot;);
+         } else if (midPoint &lt; -5_000) {
+             return (&quot;10&quot;, &quot;18&quot;);
+         } else if (midPoint &lt; 0) {
+             return (&quot;11&quot;, &quot;21&quot;);
+         } else if (midPoint &lt; 5_000) {
+             return (&quot;13&quot;, &quot;23&quot;);
+         } else if (midPoint &lt; 25_000) {
+             return (&quot;15&quot;, &quot;25&quot;);
+         } else if (midPoint &lt; 75_000) {
+             return (&quot;18&quot;, &quot;26&quot;);
+         } else if (midPoint &lt; 125_000) {
+             return (&quot;21&quot;, &quot;27&quot;);
+         } else {
+             return (&quot;24&quot;, &quot;27&quot;);
+         }
+     }
+ 
+     function generateSVGRareSparkle(
+         uint256 tokenId,
+         address poolAddress
+     ) private pure returns (string memory svg) {
+         if (isRare(tokenId, poolAddress)) {
+<span class="f1">-            svg = string(</span>
+<span class="f1">-                abi.encodePacked(</span>
+<span class="f1">-                    '&lt;g style=&quot;transform:translate(226px, 392px)&quot;&gt;&lt;rect width=&quot;36px&quot; height=&quot;36px&quot; rx=&quot;8px&quot; ry=&quot;8px&quot; fill=&quot;none&quot; stroke=&quot;rgba(255,255,255,0.2)&quot; /&gt;',</span>
+<span class="f1">-                    '&lt;g&gt;&lt;path style=&quot;transform:translate(6px,6px)&quot; d=&quot;M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 ',</span>
+<span class="f1">-                    &quot;11.3478L24 12L14.4341 12.6522L22.3923 18L13.7819 13.7819L18 22.3923L12.6522 14.4341L12 24L11.3478 14.4341L6 22.39&quot;,</span>
+<span class="f1">-                    '23L10.2181 13.7819L1.6077 18L9.56587 12.6522L0 12L9.56587 11.3478L1.6077 6L10.2181 10.2181L6 1.6077L11.3478 9.56587L12 0Z&quot; fill=&quot;white&quot; /&gt;',</span>
+<span class="f1">-                    '&lt;animateTransform attributeName=&quot;transform&quot; type=&quot;rotate&quot; from=&quot;0 18 18&quot; to=&quot;360 18 18&quot; dur=&quot;10s&quot; repeatCount=&quot;indefinite&quot;/&gt;&lt;/g&gt;&lt;/g&gt;'</span>
+<span class="f1">-                )</span>
+<span class="f2">+            svg = string.concat(</span>
+<span class="f2">+                '&lt;g style=&quot;transform:translate(226px, 392px)&quot;&gt;&lt;rect width=&quot;36px&quot; height=&quot;36px&quot; rx=&quot;8px&quot; ry=&quot;8px&quot; fill=&quot;none&quot; stroke=&quot;rgba(255,255,255,0.2)&quot; /&gt;',</span>
+<span class="f2">+                '&lt;g&gt;&lt;path style=&quot;transform:translate(6px,6px)&quot; d=&quot;M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 ',</span>
+<span class="f2">+                &quot;11.3478L24 12L14.4341 12.6522L22.3923 18L13.7819 13.7819L18 22.3923L12.6522 14.4341L12 24L11.3478 14.4341L6 22.39&quot;,</span>
+<span class="f2">+                '23L10.2181 13.7819L1.6077 18L9.56587 12.6522L0 12L9.56587 11.3478L1.6077 6L10.2181 10.2181L6 1.6077L11.3478 9.56587L12 0Z&quot; fill=&quot;white&quot; /&gt;',</span>
+<span class="f2">+                '&lt;animateTransform attributeName=&quot;transform&quot; type=&quot;rotate&quot; from=&quot;0 18 18&quot; to=&quot;360 18 18&quot; dur=&quot;10s&quot; repeatCount=&quot;indefinite&quot;/&gt;&lt;/g&gt;&lt;/g&gt;'</span>
+             );
+         } else {
+             svg = &quot;&quot;;
+         }
+     }
+ 
+     function isRare(
+         uint256 tokenId,
+         address poolAddress
+     ) internal pure returns (bool) {
+         bytes32 h = keccak256(abi.encodePacked(tokenId, poolAddress));
+         return
+             uint256(h) &lt;
+             type(uint256).max / (1 + BitMath.mostSignificantBit(tokenId) * 2);
+     }
+ }
+</pre>
+</body>
+</html>
