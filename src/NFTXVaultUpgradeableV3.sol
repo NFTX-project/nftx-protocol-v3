@@ -387,11 +387,14 @@ contract NFTXVaultUpgradeableV3 is
         emit ManagerSet(manager_);
     }
 
+    // =============================================================
+    //                     ONLY OWNER WRITE
+    // =============================================================
+
     /**
      * @inheritdoc INFTXVaultV3
      */
-    function rescueTokens(IERC20Upgradeable token) external override {
-        _onlyPrivileged();
+    function rescueTokens(IERC20Upgradeable token) external override onlyOwner {
         uint256 balance = token.balanceOf(address(this));
         token.safeTransfer(msg.sender, balance);
     }
@@ -402,8 +405,7 @@ contract NFTXVaultUpgradeableV3 is
     function rescueERC721(
         IERC721Upgradeable nft,
         uint256[] calldata ids
-    ) external override {
-        _onlyPrivileged();
+    ) external override onlyOwner {
         require(address(nft) != assetAddress);
 
         for (uint256 i; i < ids.length; ++i) {
@@ -418,11 +420,21 @@ contract NFTXVaultUpgradeableV3 is
         IERC1155Upgradeable nft,
         uint256[] calldata ids,
         uint256[] calldata amounts
-    ) external override {
-        _onlyPrivileged();
+    ) external override onlyOwner {
         require(address(nft) != assetAddress);
 
         nft.safeBatchTransferFrom(address(this), msg.sender, ids, amounts, "");
+    }
+
+    function shutdown(address recipient) external override onlyOwner {
+        uint256 numItems = totalSupply() / BASE;
+        if (numItems > 4) revert TooManyItems();
+
+        uint256[] memory specificIds = new uint256[](0);
+        _withdrawNFTsTo(specificIds, recipient, false);
+
+        emit VaultShutdown(assetAddress, numItems, recipient);
+        assetAddress = address(0);
     }
 
     // =============================================================
@@ -678,7 +690,7 @@ contract NFTXVaultUpgradeableV3 is
     }
 
     function _withdrawNFTsTo(
-        uint256[] calldata specificIds,
+        uint256[] memory specificIds,
         address to,
         bool forceFees
     )

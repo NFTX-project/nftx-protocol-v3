@@ -91,6 +91,11 @@ interface INFTXVaultV3 is IERC20Upgradeable {
         uint256[] specificIds,
         address to
     );
+    event VaultShutdown(
+        address assetAddress,
+        uint256 numItems,
+        address recipient
+    );
 
     // =============================================================
     //                            ERRORS
@@ -108,6 +113,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     error NotOwner();
     error NotManager();
     error Paused();
+    error TooManyItems();
 
     // =============================================================
     //                           INIT
@@ -168,6 +174,10 @@ interface INFTXVaultV3 is IERC20Upgradeable {
      */
     function setManager(address _manager) external;
 
+    // =============================================================
+    //                     ONLY OWNER WRITE
+    // =============================================================
+
     function rescueTokens(IERC20Upgradeable token) external;
 
     function rescueERC721(
@@ -180,6 +190,8 @@ interface INFTXVaultV3 is IERC20Upgradeable {
         uint256[] calldata ids,
         uint256[] calldata amounts
     ) external;
+
+    function shutdown(address recipient) external;
 
     // =============================================================
     //                     PUBLIC / EXTERNAL WRITE
