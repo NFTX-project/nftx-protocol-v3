@@ -39,7 +39,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
     // =============================================================
-    //                            STORAGE
+    //                           VARIABLES
     // =============================================================
 
     address public universalRouter;

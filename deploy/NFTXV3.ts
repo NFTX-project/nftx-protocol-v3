@@ -30,16 +30,66 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           methodName: "__NFTXVaultFactory_init",
           args: [
             vaultImpl.address,
-            20 * 60, // twapInterval = 20 mins
-            10 * 60 * 60, // premiumDuration = 10 hrs
-            utils.parseEther("5"), // premiumMax = 5 ether
-            utils.parseEther("0.30"), // depositorPremiumShare = 0.30 ether
+            config.twapInterval,
+            config.premiumDuration,
+            config.premiumMax,
+            config.depositorPremiumShare,
           ],
         },
       },
     },
     log: true,
   });
+
+  const timelockExcludeList = await deploy("TimelockExcludeList", {
+    from: deployer,
+    log: true,
+  });
+
+  const inventoryDescriptor = await deploy("InventoryStakingDescriptor", {
+    from: deployer,
+    log: true,
+  });
+  const inventoryStaking = await deploy("NFTXInventoryStakingV3Upgradeable", {
+    from: deployer,
+    args: [config.WETH, config.permit2, vaultFactory.address],
+    proxy: {
+      proxyContract: "OpenZeppelinTransparentProxy",
+      execute: {
+        init: {
+          methodName: "__NFTXInventoryStaking_init",
+          args: [
+            config.inventoryTimelock,
+            config.inventoryEarlyWithdrawPenaltyInWei,
+            timelockExcludeList.address,
+            inventoryDescriptor.address,
+          ],
+        },
+      },
+    },
+    log: true,
+  });
+
+  // InventoryStaking has in-built fee handling
+  console.log("Setting fee exclusion for InventoryStaking...");
+  await execute(
+    "NFTXVaultFactoryUpgradeableV3",
+    { from: deployer },
+    "setFeeExclusion",
+    inventoryStaking.address,
+    true
+  );
+  console.log("Fee exclusion set for InventoryStaking");
+
+  console.log("Setting guardian on InventoryStaking...");
+  await execute(
+    "NFTXInventoryStakingV3Upgradeable",
+    { from: deployer },
+    "setIsGuardian",
+    deployer,
+    true
+  );
+  console.log("Set guardian on InventoryStaking");
 
   const nftxRouter = await deploy("NFTXRouter", {
     from: deployer,
@@ -49,7 +99,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       quoter.address,
       vaultFactory.address,
       config.permit2,
-      2 * 24 * 60 * 60, // lpTimelock = 2 days
+      config.lpTimelock,
+      config.lpEarlyWithdrawPenaltyInWei,
+      config.nftxRouterVTokenDustThreshold,
+      inventoryStaking.address,
     ],
     log: true,
   });
@@ -65,38 +118,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   );
   console.log("Fee exclusion set for NFTXRouter");
 
-  const timelockExcludeList = await deploy("TimelockExcludeList", {
-    from: deployer,
-    log: true,
-  });
-
-  const inventoryStaking = await deploy("NFTXInventoryStakingV3Upgradeable", {
-    from: deployer,
-    args: [config.WETH, config.permit2, vaultFactory.address],
-    proxy: {
-      proxyContract: "OpenZeppelinTransparentProxy",
-      execute: {
-        init: {
-          methodName: "__NFTXInventoryStaking_init",
-          args: [
-            2 * 24 * 60 * 60, // timelock = 2 days timelock
-            utils.parseEther("0.05"), // penalty = 5%
-            timelockExcludeList.address,
-          ],
-        },
-      },
-    },
-    log: true,
-  });
-  console.log("Setting guardian on InventoryStaking...");
+  console.log(
+    "Setting timelock exclusion for NFTXRouter on positionManager..."
+  );
   await execute(
-    "NFTXInventoryStakingV3Upgradeable",
+    "NonfungiblePositionManager",
     { from: deployer },
-    "setIsGuardian",
-    deployer,
+    "setTimelockExcluded",
+    nftxRouter.address,
     true
   );
-  console.log("Set guardian on InventoryStaking");
+  console.log("Timelock exclusion set for NFTXRouter on positionManager");
 
   const feeDistributor = await deploy("NFTXFeeDistributorV3", {
     from: deployer,
@@ -118,6 +150,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     feeDistributor.address
   );
   console.log("Set FeeDistributor in UniV3Factory");
+
   console.log("Setting FeeDistributor in NFTXVaultFactory...");
   await execute(
     "NFTXVaultFactoryUpgradeableV3",
@@ -138,7 +171,35 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     ],
     log: true,
   });
+
+  // MarketplaceZap has in-built fee handling
+  console.log("Setting fee exclusion for MarketplaceZap...");
+  await execute(
+    "NFTXVaultFactoryUpgradeableV3",
+    { from: deployer },
+    "setFeeExclusion",
+    marketplaceZap.address,
+    true
+  );
+  console.log("Fee exclusion set for MarketplaceZap");
+
+  const createVaultZap = await deploy("CreateVaultZap", {
+    from: deployer,
+    args: [nftxRouter.address, uniV3Factory.address, inventoryStaking.address],
+    log: true,
+  });
+
+  // CreateVaultZap doesn't deduct fees
+  console.log("Setting fee exclusion for CreateVaultZap...");
+  await execute(
+    "NFTXVaultFactoryUpgradeableV3",
+    { from: deployer },
+    "setFeeExclusion",
+    createVaultZap.address,
+    true
+  );
+  console.log("Fee exclusion set for CreateVaultZap");
 };
 export default func;
 func.tags = ["NFTXV3"];
-func.dependencies = ["UniV3", "Mocks"];
+func.dependencies = ["UniV3"];

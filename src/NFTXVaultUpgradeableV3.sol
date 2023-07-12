@@ -53,7 +53,7 @@ contract NFTXVaultUpgradeableV3 is
     address constant CRYPTO_KITTIES =
         0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
 
-    // only set during initialization
+    // "constants": only set during initialization
 
     address public override assetAddress;
     INFTXVaultFactoryV3 public override vaultFactory;

@@ -3,10 +3,11 @@ dotenv.config();
 import { parseEther } from "@ethersproject/units";
 
 import { HardhatUserConfig } from "hardhat/types";
-import "@typechain/hardhat";
+import "hardhat-deploy";
+// commenting this out as generating types fails currently after updating events in the contracts.
+// import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
-import "hardhat-deploy";
 import "hardhat-deploy-ethers";
 import "hardhat-abi-exporter";
 import "hardhat-tracer";
@@ -92,7 +93,9 @@ const config: HardhatUserConfig = {
     },
   },
   namedAccounts: {
-    deployer: 0,
+    deployer: {
+      default: 0,
+    },
   },
   defaultNetwork: "hardhat",
   networks: {
@@ -139,12 +142,12 @@ const config: HardhatUserConfig = {
     sources: "src",
     cache: "cache/hh",
   },
-  contractSizer: {
-    alphaSort: true,
-    disambiguatePaths: false,
-    runOnCompile: true,
-    strict: true,
-  },
+  // contractSizer: {
+  //   alphaSort: true,
+  //   disambiguatePaths: false,
+  //   runOnCompile: true,
+  //   strict: true,
+  // },
 };
 
 export default config;

@@ -51,12 +51,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     INFTXInventoryStakingV3 public immutable override inventoryStaking;
 
     // =============================================================
-    //                           STORAGE
+    //                          VARIABLES
     // =============================================================
 
     uint256 public override lpTimelock;
-    /// @dev the max penalty applicable. The penalty goes down linearly as the `timelockedUntil` approaches
+    /// @notice the max penalty applicable. The penalty goes down linearly as the `timelockedUntil` approaches
     uint256 public override earlyWithdrawPenaltyInWei;
+    /// @notice the vToken dust amount during add/increase liquidity, above which the vTokens get staked into inventory
     uint256 public override vTokenDustThreshold;
 
     constructor(

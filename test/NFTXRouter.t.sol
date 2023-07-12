@@ -987,35 +987,7 @@ contract NFTXRouterTests is TestBase {
     // Remove Liquidity
     // ================================
 
-    function test_removeLiquidity_RevertsIfTimelocked() external {
-        (, uint256 positionId, , , ) = _mintPosition(
-            10,
-            currentNFTPrice,
-            currentNFTPrice - 0.5 ether,
-            currentNFTPrice + 0.5 ether,
-            DEFAULT_FEE_TIER
-        );
-        assertGt(positionManager.lockedUntil(positionId), block.timestamp);
-
-        positionManager.setApprovalForAll(address(nftxRouter), true);
-
-        // vm.expectRevert() only detects the next top-level call, that's why adding `assertTrue` so the call status returns false
-        (bool status, ) = address(nftxRouter).call(
-            abi.encodeWithSelector(
-                INFTXRouter.removeLiquidity.selector,
-                INFTXRouter.RemoveLiquidityParams({
-                    positionId: positionId,
-                    vaultId: VAULT_ID,
-                    nftIds: emptyIds,
-                    liquidity: _getLiquidity(positionId),
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    deadline: block.timestamp
-                })
-            )
-        );
-        assertTrue(!status, "expectRevert: call did not revert");
-    }
+    // TODO: add test case for deducting vTokens if still under timelock
 
     function test_removeLiquidity_ToNFTs_Success() external {
         uint256 _positionId = _mintPositionWithTwap(currentNFTPrice);

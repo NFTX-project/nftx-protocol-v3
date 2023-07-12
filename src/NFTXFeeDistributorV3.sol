@@ -42,7 +42,7 @@ contract NFTXFeeDistributorV3 is
     IERC20 public immutable override WETH;
 
     // =============================================================
-    //                            STORAGE
+    //                           VARIABLES
     // =============================================================
 
     uint24 public override rewardFeeTier;

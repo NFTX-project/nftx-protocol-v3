@@ -45,7 +45,7 @@ contract CreateVaultZap is ERC1155Holder {
         uint256 lowerNFTPriceInETH;
         uint256 upperNFTPriceInETH;
         uint24 fee;
-        // this price is used if new pool needs to be initialized
+        // this current price is used if new pool needs to be initialized
         uint256 currentNFTPriceInETH;
         uint256 vTokenMin;
         uint256 wethMin;

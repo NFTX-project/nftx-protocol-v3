@@ -57,10 +57,11 @@ contract NFTXInventoryStakingV3Upgradeable is
     IPermitAllowanceTransfer public immutable override PERMIT2;
     INFTXVaultFactoryV3 public immutable override nftxVaultFactory;
 
+    // "constants": only set during initialization
     ITimelockExcludeList public override timelockExcludeList;
 
     // =============================================================
-    //                            STORAGE
+    //                          VARIABLES
     // =============================================================
 
     /// @dev The ID of the next token that will be minted. Skips 0

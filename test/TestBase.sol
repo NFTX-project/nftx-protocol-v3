@@ -128,6 +128,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             ITimelockExcludeList(address(timelockExcludeList)),
             inventoryDescriptor
         );
+        vaultFactory.setFeeExclusion(address(inventoryStaking), true);
         inventoryStaking.setIsGuardian(address(this), true);
 
         nftxRouter = new NFTXRouter(
@@ -142,6 +143,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             inventoryStaking
         );
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
+        positionManager.setTimelockExcluded(address(nftxRouter), true);
 
         feeDistributor = new NFTXFeeDistributorV3(
             vaultFactory,
