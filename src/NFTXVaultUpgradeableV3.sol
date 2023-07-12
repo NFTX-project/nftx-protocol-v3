@@ -434,12 +434,14 @@ contract NFTXVaultUpgradeableV3 is
         }
     }
 
-    function shutdown(address recipient) external override onlyOwner {
+    function shutdown(
+        address recipient,
+        uint256[] calldata tokenIds
+    ) external override onlyOwner {
         uint256 numItems = totalSupply() / BASE;
         if (numItems > 4) revert TooManyItems();
 
-        uint256[] memory specificIds = new uint256[](0);
-        _withdrawNFTsTo(specificIds, recipient, false, vaultFactory);
+        _withdrawNFTsTo(tokenIds, recipient, false, vaultFactory);
 
         emit VaultShutdown(assetAddress, numItems, recipient);
         assetAddress = address(0);

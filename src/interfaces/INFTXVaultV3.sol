@@ -192,7 +192,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
         uint256[] calldata amounts
     ) external;
 
-    function shutdown(address recipient) external;
+    function shutdown(address recipient, uint256[] calldata tokenIds) external;
 
     // =============================================================
     //                     PUBLIC / EXTERNAL WRITE
