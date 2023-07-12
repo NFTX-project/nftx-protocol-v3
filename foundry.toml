@@ -3,6 +3,7 @@ src = 'src'
 out = 'out'
 cache_path = 'cache/forge'
 libs = ['lib']
+fs_permissions = [{ access = "read-write", path = "./"}]
 solc = "0.8.15"
 optimizer = true
 optimizer_runs = 380
