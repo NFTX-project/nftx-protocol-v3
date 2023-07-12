@@ -142,12 +142,12 @@ const config: HardhatUserConfig = {
     sources: "src",
     cache: "cache/hh",
   },
-  // contractSizer: {
-  //   alphaSort: true,
-  //   disambiguatePaths: false,
-  //   runOnCompile: true,
-  //   strict: true,
-  // },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
+  },
 };
 
 export default config;
