@@ -142,11 +142,26 @@ forge test
 
 ### Deployment
 
+1. To deploy core V3 contracts (including Uniswap V3 Fork):
+
 ```sh
-yarn deploy:goerli --maxfee <inWei> --priorityfee <inWei> --tags <tag>
+yarn deploy:goerli --maxfee <inWei> --priorityfee <inWei> --tags NFTXV3
 ```
 
-Tags are defined in the deploy script at the end like: `func.tags = ["<tag>"]`
+2. Deploy new Universal Router (https://github.com/NFTX-project/nftx-universal-router) with updated address for UniswapV3 Factory address.
+3. Deploy all Zaps:
+
+```sh
+yarn deploy:goerli --maxfee <inWei> --priorityfee <inWei> --tags Zaps
+```
+
+4. Run the following to generate `./addresses.json` for the deployed contract addresses
+
+```sh
+yarn gen:addresses
+```
+
+Note: Tags are defined in the deploy script at the end like: `func.tags = ["<tag>"]`
 
 ### Verify Contracts
 

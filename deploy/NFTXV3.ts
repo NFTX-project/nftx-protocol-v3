@@ -159,46 +159,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     feeDistributor.address
   );
   console.log("Set FeeDistributor in NFTXVaultFactory");
-
-  const marketplaceZap = await deploy("MarketplaceUniversalRouterZap", {
-    from: deployer,
-    args: [
-      vaultFactory.address,
-      config.nftxUniversalRouter,
-      config.permit2,
-      inventoryStaking.address,
-      config.WETH,
-    ],
-    log: true,
-  });
-
-  // MarketplaceZap has in-built fee handling
-  console.log("Setting fee exclusion for MarketplaceZap...");
-  await execute(
-    "NFTXVaultFactoryUpgradeableV3",
-    { from: deployer },
-    "setFeeExclusion",
-    marketplaceZap.address,
-    true
-  );
-  console.log("Fee exclusion set for MarketplaceZap");
-
-  const createVaultZap = await deploy("CreateVaultZap", {
-    from: deployer,
-    args: [nftxRouter.address, uniV3Factory.address, inventoryStaking.address],
-    log: true,
-  });
-
-  // CreateVaultZap doesn't deduct fees
-  console.log("Setting fee exclusion for CreateVaultZap...");
-  await execute(
-    "NFTXVaultFactoryUpgradeableV3",
-    { from: deployer },
-    "setFeeExclusion",
-    createVaultZap.address,
-    true
-  );
-  console.log("Fee exclusion set for CreateVaultZap");
 };
 export default func;
 func.tags = ["NFTXV3"];

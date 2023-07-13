@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import prettier from "prettier";
+import deployConfig from "../deployConfig";
 
 // alphabetical order
 const deploymentsList = [
@@ -15,6 +16,7 @@ const deploymentsList = [
   "TickLens",
   "UniswapV3FactoryUpgradeable",
 ];
+const deployConfigKeysList = ["nftxUniversalRouter", "permit2", "WETH"];
 
 const main = async () => {
   console.log("Generating addresses.json...");
@@ -36,6 +38,19 @@ const main = async () => {
 
     output.goerli[deploymentsList[i]] = data.address;
   }
+  deployConfigKeysList.map((k) => {
+    // @ts-ignore
+    output.goerli[k] = deployConfig["goerli"][k];
+  });
+
+  // make output alphabetical
+  output.goerli = Object.keys(output.goerli)
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+    .reduce((obj, key) => {
+      // @ts-ignore
+      obj[key] = output.goerli[key];
+      return obj;
+    }, {});
 
   const formattedJson = prettier.format(JSON.stringify(output), {
     parser: "json",
