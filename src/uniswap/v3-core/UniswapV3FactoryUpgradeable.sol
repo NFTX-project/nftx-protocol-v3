@@ -31,6 +31,7 @@ contract UniswapV3FactoryUpgradeable is
     ) external initializer {
         __UniswapV3PoolDeployerUpgradeable_init(beaconImplementation_);
 
+        require(rewardTierCardinality_ > 1);
         rewardTierCardinality = rewardTierCardinality_;
 
         // feeAmountTickSpacing[500] = 10;
@@ -81,6 +82,8 @@ contract UniswapV3FactoryUpgradeable is
     function setRewardTierCardinality(
         uint16 rewardTierCardinality_
     ) external override onlyOwner {
+        require(rewardTierCardinality_ > 1);
+
         rewardTierCardinality = rewardTierCardinality_;
     }
 
