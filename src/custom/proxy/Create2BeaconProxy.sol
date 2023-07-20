@@ -91,7 +91,7 @@ contract Create2BeaconProxy is Proxy {
             sstore(slot, beacon)
         }
 
-        if (data.length > 0) {
+        if (data.length != 0) {
             Address.functionDelegateCall(
                 _implementation(),
                 data,
