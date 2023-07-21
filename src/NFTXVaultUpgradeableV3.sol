@@ -410,7 +410,7 @@ contract NFTXVaultUpgradeableV3 is
         uint256[] calldata ids,
         uint256[] calldata amounts
     ) external onlyOwner {
-        require(address(token) != assetAddress);
+        if (address(token) == assetAddress) revert InvalidToken();
 
         if (tt == TokenType.ERC20) {
             uint256 balance = IERC20Upgradeable(token).balanceOf(address(this));
