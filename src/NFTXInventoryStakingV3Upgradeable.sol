@@ -360,7 +360,10 @@ contract NFTXInventoryStakingV3Upgradeable is
                 );
 
                 // send vToken residue
-                uint256 vTokenResidue = vTokenOwed - requiredVTokens;
+                uint256 vTokenResidue;
+                unchecked {
+                    vTokenResidue = vTokenOwed - requiredVTokens;
+                }
                 if (vTokenResidue > 0) {
                     IERC20(vault).transfer(msg.sender, vTokenResidue);
                 }
