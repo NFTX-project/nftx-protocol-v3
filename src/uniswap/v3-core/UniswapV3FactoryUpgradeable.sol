@@ -31,7 +31,7 @@ contract UniswapV3FactoryUpgradeable is
     ) external initializer {
         __UniswapV3PoolDeployerUpgradeable_init(beaconImplementation_);
 
-        require(rewardTierCardinality_ > 1);
+        if (rewardTierCardinality_ <= 1) revert InvalidRewardTierCardinality();
         rewardTierCardinality = rewardTierCardinality_;
 
         // feeAmountTickSpacing[500] = 10;
@@ -62,9 +62,7 @@ contract UniswapV3FactoryUpgradeable is
             token1,
             fee,
             tickSpacing,
-            INFTXFeeDistributorV3(feeDistributor).rewardFeeTier() == fee
-                ? rewardTierCardinality
-                : 1
+            rewardTierCardinality
         );
         getPool[token0][token1][fee] = pool;
         // populate mapping in the reverse direction, deliberate choice to avoid the cost of comparing addresses
@@ -82,7 +80,7 @@ contract UniswapV3FactoryUpgradeable is
     function setRewardTierCardinality(
         uint16 rewardTierCardinality_
     ) external override onlyOwner {
-        require(rewardTierCardinality_ > 1);
+        if (rewardTierCardinality_ <= 1) revert InvalidRewardTierCardinality();
 
         rewardTierCardinality = rewardTierCardinality_;
     }
