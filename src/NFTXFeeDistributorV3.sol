@@ -234,8 +234,9 @@ contract NFTXFeeDistributorV3 is
     function setTreasuryAddress(address treasury_) external override onlyOwner {
         if (treasury_ == address(0)) revert AddressIsZero();
 
+        emit UpdateTreasuryAddress(treasury, treasury_);
+
         treasury = treasury_;
-        emit UpdateTreasuryAddress(treasury_);
     }
 
     /**
