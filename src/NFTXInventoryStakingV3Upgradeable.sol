@@ -587,7 +587,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         bytes4 interfaceId
     )
         public
-        pure
+        view
         override(
             ERC1155ReceiverUpgradeable,
             ERC721EnumerableUpgradeable,
@@ -597,7 +597,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     {
         return
             interfaceId == type(ERC721PermitUpgradeable).interfaceId ||
-            interfaceId == type(ERC1155ReceiverUpgradeable).interfaceId;
+            interfaceId == type(ERC1155ReceiverUpgradeable).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     function tokenURI(
