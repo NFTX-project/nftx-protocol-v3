@@ -15,7 +15,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
     event UpdateFeeReceiverAlloc(address receiver, uint256 allocPoint);
     event UpdateFeeReceiverAddress(address oldReceiver, address newReceiver);
     event RemoveFeeReceiver(address receiver);
-    event UpdateTreasuryAddress(address newTreasury);
+    event UpdateTreasuryAddress(address oldTreasury, address newTreasury);
     event PauseDistribution(bool paused);
 
     // UniswapV3FactoryUpgradeable#setFeeDistributor
@@ -158,7 +158,14 @@ contract NFTXFeeDistributorV3Tests is TestBase {
             // stake vTokens so that inventoryStaking has stakers to distribute to
             (uint256 mintedVTokens, ) = _mintVToken(1);
             vtoken.approve(address(inventoryStaking), type(uint256).max);
-            inventoryStaking.deposit(0, mintedVTokens, address(this), "", false, false);
+            inventoryStaking.deposit(
+                0,
+                mintedVTokens,
+                address(this),
+                "",
+                false,
+                false
+            );
 
             (uint256 totalVTokenShares, ) = inventoryStaking.vaultGlobal(0);
             console.log("totalVTokenShares", totalVTokenShares);
@@ -461,7 +468,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         assertTrue(preTreasury != newTreasury);
 
         vm.expectEmit(false, false, false, true);
-        emit UpdateTreasuryAddress(newTreasury);
+        emit UpdateTreasuryAddress(preTreasury, newTreasury);
         feeDistributor.setTreasuryAddress(newTreasury);
 
         address postTreasury = feeDistributor.treasury();
