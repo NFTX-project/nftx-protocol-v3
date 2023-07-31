@@ -140,7 +140,7 @@ contract NFTXVaultUpgradeableV3 is
         uint256[] calldata amounts,
         address depositor,
         address to
-    ) public payable override nonReentrant returns (uint256 vTokensMinted) {
+    ) external payable override nonReentrant returns (uint256 vTokensMinted) {
         _onlyOwnerIfPaused(1);
         if (!enableMint) revert MintingDisabled();
 
@@ -168,7 +168,7 @@ contract NFTXVaultUpgradeableV3 is
         address to,
         uint256 wethAmount,
         bool forceFees
-    ) public payable override nonReentrant returns (uint256 ethFees) {
+    ) external payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(2);
 
         uint256 ethOrWethAmt;
@@ -226,7 +226,7 @@ contract NFTXVaultUpgradeableV3 is
         address depositor,
         address to,
         bool forceFees
-    ) public payable override nonReentrant returns (uint256 ethFees) {
+    ) external payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(3);
 
         {
@@ -335,7 +335,7 @@ contract NFTXVaultUpgradeableV3 is
         uint256 mintFee_,
         uint256 redeemFee_,
         uint256 swapFee_
-    ) public override {
+    ) external override {
         _onlyPrivileged();
         vaultFactory.setVaultFees(vaultId, mintFee_, redeemFee_, swapFee_);
     }
@@ -343,7 +343,7 @@ contract NFTXVaultUpgradeableV3 is
     /**
      * @inheritdoc INFTXVaultV3
      */
-    function disableVaultFees() public override {
+    function disableVaultFees() external override {
         _onlyPrivileged();
         vaultFactory.disableVaultFees(vaultId);
     }
