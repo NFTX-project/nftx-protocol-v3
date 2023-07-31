@@ -61,7 +61,7 @@ interface INFTXFeeDistributorV3 {
     //                            EVENTS
     // =============================================================
 
-    event UpdateTreasuryAddress(address newTreasury);
+    event UpdateTreasuryAddress(address oldTreasury, address newTreasury);
     event PauseDistribution(bool paused);
 
     event AddFeeReceiver(address receiver, uint256 allocPoint);
