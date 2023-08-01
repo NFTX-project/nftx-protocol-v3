@@ -248,6 +248,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         bool viaPermit2,
         bool forceTimelock
     ) external {
+        if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
+
         Position storage position = positions[positionId];
 
         uint256 vaultId = position.vaultId;
