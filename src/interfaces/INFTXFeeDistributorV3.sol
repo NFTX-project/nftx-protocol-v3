@@ -68,6 +68,8 @@ interface INFTXFeeDistributorV3 {
     event UpdateFeeReceiverAlloc(address receiver, uint256 allocPoint);
     event UpdateFeeReceiverAddress(address oldReceiver, address newReceiver);
     event RemoveFeeReceiver(address receiver);
+    event NewRewardFeeTier(uint24 rewardFeeTier);
+    event NewNFTXRouter(address nftxRouter);
 
     // =============================================================
     //                            ERRORS

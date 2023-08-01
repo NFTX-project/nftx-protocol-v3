@@ -46,18 +46,25 @@ interface INFTXRouter {
     // =============================================================
 
     event AddLiquidity(
+        uint256 indexed positionId,
         uint256 vaultId,
         uint256 vTokensAmount,
         uint256[] nftIds,
-        uint256 positionId,
         address pool
     );
 
     event RemoveLiquidity(
-        uint256 positionId,
+        uint256 indexed positionId,
         uint256 vaultId,
         uint256 vTokenAmt,
         uint256 wethAmt
+    );
+
+    event IncreaseLiquidity(
+        uint256 indexed positionId,
+        uint256 vaultId,
+        uint256 vTokensAmount,
+        uint256[] nftIds
     );
 
     event SellNFTs(uint256 nftCount, uint256 ethReceived);
