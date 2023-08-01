@@ -146,7 +146,7 @@ contract NFTXFeeDistributorV3 is
             IERC20(vToken).transfer(pool, vTokenAmount);
             IUniswapV3Pool(pool).distributeRewards(
                 vTokenAmount,
-                true // isVToken0
+                address(vToken) < address(WETH) // isVToken0
             );
         } else {
             // distribute to inventory stakers if pool doesn't have liquidity
