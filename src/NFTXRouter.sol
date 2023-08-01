@@ -395,7 +395,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             wethReceived += msg.value;
         }
         // distributing vault fees with the wethReceived
-        uint256 wethFees = _ethMintFees(vToken, params.nftIds.length);
+        uint256 nftCount;
+        if (params.nftAmounts.length > 0) {
+            nftCount = _sum1155Ids(params.nftIds, params.nftAmounts);
+        } else {
+            nftCount = params.nftIds.length;
+        }
+        uint256 wethFees = _ethMintFees(vToken, nftCount);
         _distributeVaultFees(params.vaultId, wethFees, true);
         uint256 wethRemaining = wethReceived - wethFees; // if underflow, then revert desired
 
@@ -856,6 +862,19 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
             IWETH9(WETH).transfer(address(feeDistributor), ethAmount);
             feeDistributor.distribute(vaultId);
+        }
+    }
+
+    function _sum1155Ids(
+        uint256[] calldata ids,
+        uint256[] calldata amounts
+    ) internal pure returns (uint256 totalAmount) {
+        for (uint i; i < ids.length; ) {
+            unchecked {
+                // simultaneously verifies that lengths of `ids` and `amounts` match.
+                totalAmount += amounts[i];
+                ++i;
+            }
         }
     }
 
