@@ -60,6 +60,10 @@ contract NFTXInventoryStakingV3Upgradeable is
     // "constants": only set during initialization
     ITimelockExcludeList public override timelockExcludeList;
 
+    uint256 constant MAX_TIMELOCK = 14 days;
+    uint256 constant MAX_EARLY_WITHDRAW_PENALTY = 1 ether;
+    uint256 constant BASE = 1 ether;
+
     // =============================================================
     //                          VARIABLES
     // =============================================================
@@ -103,8 +107,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         __ERC721PermitUpgradeable_init("NFTX Inventory Staking", "xNFT", "1");
         __Pausable_init();
 
-        if (timelock_ > 14 days) revert TimelockTooLong();
-        if (earlyWithdrawPenaltyInWei_ > 1 ether)
+        if (timelock_ > MAX_TIMELOCK) revert TimelockTooLong();
+        if (earlyWithdrawPenaltyInWei_ > MAX_EARLY_WITHDRAW_PENALTY)
             revert InvalidEarlyWithdrawPenalty();
         timelock = timelock_;
         earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
@@ -334,7 +338,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             // penaltyAmt = (100 * 5%) * 2 / 10 = 1
             uint256 vTokenPenalty = ((_timelockedUntil - block.timestamp) *
                 vTokenOwed *
-                earlyWithdrawPenaltyInWei) / (timelock * 1 ether);
+                earlyWithdrawPenaltyInWei) / (timelock * BASE);
             vTokenOwed -= vTokenPenalty;
         }
 
@@ -346,7 +350,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 nftCount = nftIds.length;
         if (nftCount > 0) {
             // check if we have sufficient vTokens
-            uint256 requiredVTokens = nftCount * 1 ether;
+            uint256 requiredVTokens = nftCount * BASE;
             if (vTokenOwed < requiredVTokens) revert InsufficientVTokens();
 
             {
@@ -515,7 +519,7 @@ contract NFTXInventoryStakingV3Upgradeable is
      * @inheritdoc INFTXInventoryStakingV3
      */
     function setTimelock(uint256 timelock_) external override onlyOwner {
-        if (timelock_ > 14 days) revert TimelockTooLong();
+        if (timelock_ > MAX_TIMELOCK) revert TimelockTooLong();
 
         timelock = timelock_;
         emit UpdateTimelock(timelock_);
@@ -527,7 +531,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     function setEarlyWithdrawPenalty(
         uint256 earlyWithdrawPenaltyInWei_
     ) external override onlyOwner {
-        if (earlyWithdrawPenaltyInWei_ > 1 ether)
+        if (earlyWithdrawPenaltyInWei_ > MAX_EARLY_WITHDRAW_PENALTY)
             revert InvalidEarlyWithdrawPenalty();
 
         earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
@@ -557,7 +561,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         address vToken = nftxVaultFactory.vault(vaultId);
 
         return
-            (IERC20(vToken).balanceOf(address(this)) * 1 ether) /
+            (IERC20(vToken).balanceOf(address(this)) * BASE) /
             _vaultGlobal.totalVTokenShares;
     }
 
