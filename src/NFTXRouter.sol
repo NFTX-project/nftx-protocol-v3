@@ -303,6 +303,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 params.nftIds,
                 msg.sender,
                 wethAmt,
+                params.vTokenPremiumLimit,
                 chargeFees
             );
             wethAmt -= wethFees;
@@ -433,6 +434,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.nftIds,
             msg.sender,
             wethLeft,
+            params.vTokenPremiumLimit,
             true
         );
 

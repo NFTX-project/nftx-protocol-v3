@@ -161,6 +161,8 @@ interface INFTXRouter {
         uint256 vaultId;
         // array of nft ids to redeem with the vTokens (can be empty to just receive vTokens)
         uint256[] nftIds;
+        // The max net premium in vTokens the user is willing to pay to redeem nftIds, else tx reverts
+        uint256 vTokenPremiumLimit;
         // the liquidity amount to burn and withdraw
         uint128 liquidity;
         // Minimum amount of token0 to be withdrawn
@@ -207,6 +209,8 @@ interface INFTXRouter {
         uint256 vaultId;
         // array of nft ids to buy
         uint256[] nftIds;
+        // The max net premium in vTokens the user is willing to pay to redeem nftIds, else tx reverts
+        uint256 vTokenPremiumLimit;
         // deadline after which the tx fails
         uint256 deadline;
         // the fee tier to execute the swap through
