@@ -212,6 +212,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function removeLiquidity(
         RemoveLiquidityParams calldata params
     ) external payable override {
+        if (positionManager.ownerOf(params.positionId) != msg.sender)
+            revert NotPositionOwner();
+
         // decrease liquidity of the position (this contract is excluded from the timelocks)
         positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
