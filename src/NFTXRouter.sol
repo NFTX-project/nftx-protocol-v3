@@ -710,10 +710,10 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         positionManager.refundETH(msg.sender);
 
         emit AddLiquidity(
+            positionId,
             params.vaultId,
             params.vTokensAmount,
             params.nftIds,
-            positionId,
             pool
         );
     }
@@ -828,6 +828,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
         // refund extra ETH
         positionManager.refundETH(msg.sender);
+
+        emit IncreaseLiquidity(
+            params.positionId,
+            params.vaultId,
+            params.vTokensAmount,
+            params.nftIds
+        );
     }
 
     function _distributeVaultFees(

@@ -208,6 +208,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
      */
     function setTwapInterval(uint32 twapInterval_) external override onlyOwner {
         twapInterval = twapInterval_;
+
+        emit NewTwapInterval(twapInterval_);
     }
 
     /**
@@ -217,6 +219,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
         uint256 premiumDuration_
     ) external override onlyOwner {
         premiumDuration = premiumDuration_;
+
+        emit NewPremiumDuration(premiumDuration_);
     }
 
     /**
@@ -224,6 +228,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
      */
     function setPremiumMax(uint256 premiumMax_) external override onlyOwner {
         premiumMax = premiumMax_;
+
+        emit NewPremiumMax(premiumMax_);
     }
 
     /**
@@ -233,6 +239,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
         uint256 depositorPremiumShare_
     ) external override onlyOwner {
         depositorPremiumShare = depositorPremiumShare_;
+
+        emit NewDepositorPremiumShare(depositorPremiumShare_);
     }
 
     // =============================================================

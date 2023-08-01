@@ -226,6 +226,8 @@ contract NFTXFeeDistributorV3 is
         require(ammFactory.feeAmountTickSpacing(rewardFeeTier_) > 0);
 
         rewardFeeTier = rewardFeeTier_;
+
+        emit NewRewardFeeTier(rewardFeeTier_);
     }
 
     /**
@@ -245,6 +247,8 @@ contract NFTXFeeDistributorV3 is
         INFTXRouter nftxRouter_
     ) external override onlyOwner {
         nftxRouter = nftxRouter_;
+
+        emit NewNFTXRouter(address(nftxRouter_));
     }
 
     /**
