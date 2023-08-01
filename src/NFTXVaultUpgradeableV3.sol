@@ -421,11 +421,7 @@ contract NFTXVaultUpgradeableV3 is
             IERC20Upgradeable(token).safeTransfer(msg.sender, balance);
         } else if (tt == TokenType.ERC721) {
             for (uint256 i; i < ids.length; ++i) {
-                IERC721Upgradeable(token).safeTransferFrom(
-                    address(this),
-                    msg.sender,
-                    ids[i]
-                );
+                _transferERC721(token, msg.sender, ids[i]);
             }
         } else {
             IERC1155Upgradeable(token).safeBatchTransferFrom(
