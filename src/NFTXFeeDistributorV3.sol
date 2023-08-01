@@ -41,6 +41,9 @@ contract NFTXFeeDistributorV3 is
     INFTXInventoryStakingV3 public immutable override inventoryStaking;
     IERC20 public immutable override WETH;
 
+    uint256 constant POOL_DEFAULT_ALLOC = 0.8 ether; // 80%
+    uint256 constant INVENTORY_DEFAULT_ALLOC = 0.2 ether; // 20%
+
     // =============================================================
     //                           VARIABLES
     // =============================================================
@@ -76,11 +79,11 @@ contract NFTXFeeDistributorV3 is
         rewardFeeTier = 10_000;
 
         // set 80% allocation to liquidity providers
-        _addReceiver(address(0), 0.8 ether, ReceiverType.POOL);
+        _addReceiver(address(0), POOL_DEFAULT_ALLOC, ReceiverType.POOL);
         // set 20% allocation to inventory staking
         _addReceiver(
             address(inventoryStaking_),
-            0.2 ether,
+            INVENTORY_DEFAULT_ALLOC,
             ReceiverType.INVENTORY
         );
     }
