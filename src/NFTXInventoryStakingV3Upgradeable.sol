@@ -302,7 +302,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     function withdraw(
         uint256 positionId,
         uint256 vTokenShares,
-        uint256[] calldata nftIds
+        uint256[] calldata nftIds,
+        uint256 vTokenPremiumLimit
     ) external payable override {
         onlyOwnerIfPaused(2);
 
@@ -310,12 +311,18 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         Position storage position = positions[positionId];
 
-        uint256 positionVTokenShareBalance = position.vTokenShareBalance;
-        require(positionVTokenShareBalance >= vTokenShares);
+        {
+            uint256 positionVTokenShareBalance = position.vTokenShareBalance;
+            require(positionVTokenShareBalance >= vTokenShares);
+        }
 
-        uint256 vaultId = position.vaultId;
-        VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
-        address vToken = nftxVaultFactory.vault(vaultId);
+        VaultGlobal storage _vaultGlobal;
+        address vToken;
+        {
+            uint256 vaultId = position.vaultId;
+            _vaultGlobal = vaultGlobal[vaultId];
+            vToken = nftxVaultFactory.vault(vaultId);
+        }
 
         // withdraw vTokens corresponding to the vTokenShares requested
         uint256 vTokenOwed = (IERC20(vToken).balanceOf(address(this)) *
@@ -358,12 +365,11 @@ contract NFTXInventoryStakingV3Upgradeable is
             if (vTokenOwed < requiredVTokens) revert InsufficientVTokens();
 
             {
-                address vault = nftxVaultFactory.vault(vaultId);
-
-                INFTXVaultV3(vault).redeem{value: msg.value}(
+                INFTXVaultV3(vToken).redeem{value: msg.value}(
                     nftIds,
                     msg.sender,
                     0,
+                    vTokenPremiumLimit,
                     _timelockedUntil == 0 // forcing fees for positions which never were under timelock (or else they can bypass redeem fees as deposit was made in vTokens)
                 );
 
@@ -373,15 +379,12 @@ contract NFTXInventoryStakingV3Upgradeable is
                     vTokenResidue = vTokenOwed - requiredVTokens;
                 }
                 if (vTokenResidue > 0) {
-                    IERC20(vault).transfer(msg.sender, vTokenResidue);
+                    IERC20(vToken).transfer(msg.sender, vTokenResidue);
                 }
             }
         } else {
             // transfer tokens to the user
-            IERC20(nftxVaultFactory.vault(vaultId)).transfer(
-                msg.sender,
-                vTokenOwed
-            );
+            IERC20(vToken).transfer(msg.sender, vTokenOwed);
         }
         WETH.transfer(msg.sender, wethOwed);
 

@@ -128,6 +128,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     error Paused();
     error TooManyItems();
     error InvalidToken();
+    error PremiumLimitExceeded();
 
     // =============================================================
     //                           INIT
@@ -226,6 +227,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
      * @param idsOut NFT ids to withdraw
      * @param to Recipient address for the NFTs
      * @param wethAmount if vault fees should be deducted in WETH instead of ETH (msg.value should be 0 here)
+     * @param vTokenPremiumLimit The max net premium in vTokens the user is willing to pay, else tx reverts
      * @param forceFees forcefully deduct fees even if sender is on the exclude list
      *
      * @return ethFees The ETH fees charged
@@ -234,6 +236,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
         uint256[] calldata idsOut,
         address to,
         uint256 wethAmount,
+        uint256 vTokenPremiumLimit,
         bool forceFees
     ) external payable returns (uint256 ethFees);
 
@@ -245,6 +248,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
      * @param idsOut NFT ids to buy
      * @param depositor Depositor address that should receive premiums for the `idsIn` deposited here
      * @param to Recipient address for the NFTs
+     * @param vTokenPremiumLimit The max net premium in vTokens the user is willing to pay, else tx reverts
      * @param forceFees forcefully deduct fees even if sender is on the exclude list
      *
      * @return ethFees The ETH fees charged
@@ -255,6 +259,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
         uint256[] calldata idsOut,
         address depositor,
         address to,
+        uint256 vTokenPremiumLimit,
         bool forceFees
     ) external payable returns (uint256 ethFees);
 

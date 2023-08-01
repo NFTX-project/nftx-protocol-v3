@@ -169,6 +169,7 @@ contract NFTXVaultUpgradeableV3 is
         uint256[] calldata idsOut,
         address to,
         uint256 wethAmount,
+        uint256 vTokenPremiumLimit,
         bool forceFees
     ) external payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(2);
@@ -183,13 +184,18 @@ contract NFTXVaultUpgradeableV3 is
             ethOrWethAmt = msg.value;
         }
 
-        uint256 count = idsOut.length;
+        uint256 totalVaultFee;
+        {
+            uint256 count = idsOut.length;
 
-        // burn from the sender.
-        _burn(msg.sender, BASE * count);
+            // burn from the sender.
+            _burn(msg.sender, BASE * count);
 
-        (, uint256 redeemFee, ) = vaultFees();
-        uint256 totalVaultFee = (redeemFee * count);
+            {
+                (, uint256 redeemFee, ) = vaultFees();
+                totalVaultFee = (redeemFee * count);
+            }
+        }
 
         // Withdraw from vault.
         INFTXVaultFactoryV3 _vaultFactory = vaultFactory;
@@ -202,6 +208,9 @@ contract NFTXVaultUpgradeableV3 is
         ) = _withdrawNFTsTo(idsOut, to, deductFees, _vaultFactory);
 
         if (deductFees) {
+            if (netVTokenPremium > vTokenPremiumLimit)
+                revert PremiumLimitExceeded();
+
             ethFees = _chargeAndDistributeFeesForRedeem(
                 ethOrWethAmt,
                 msg.value > 0,
@@ -228,6 +237,7 @@ contract NFTXVaultUpgradeableV3 is
         uint256[] calldata idsOut,
         address depositor,
         address to,
+        uint256 vTokenPremiumLimit,
         bool forceFees
     ) external payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(3);
@@ -262,6 +272,9 @@ contract NFTXVaultUpgradeableV3 is
             ) = _withdrawNFTsTo(idsOut, to, deductFees, _vaultFactory);
 
             if (deductFees) {
+                if (netVTokenPremium > vTokenPremiumLimit)
+                    revert PremiumLimitExceeded();
+
                 ethFees = _chargeAndDistributeFeesForRedeem(
                     msg.value,
                     true,
