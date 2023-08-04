@@ -3,6 +3,7 @@ pragma solidity =0.8.15;
 
 // inheriting
 import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721PermitUpgradeable, ERC721EnumerableUpgradeable} from "@src/custom/tokens/ERC721/ERC721PermitUpgradeable.sol";
 import {ERC1155HolderUpgradeable, ERC1155ReceiverUpgradeable, IERC165Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
@@ -44,7 +45,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     INFTXInventoryStakingV3,
     ERC721PermitUpgradeable,
     ERC1155HolderUpgradeable,
-    PausableUpgradeable
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable
 {
     using Strings for uint256;
     // =============================================================
@@ -102,6 +104,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     ) external override initializer {
         __ERC721PermitUpgradeable_init("NFTX Inventory Staking", "xNFT", "1");
         __Pausable_init();
+        __ReentrancyGuard_init();
 
         if (timelock_ > 14 days) revert TimelockTooLong();
         if (earlyWithdrawPenaltyInWei_ > 1 ether)
@@ -295,7 +298,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 positionId,
         uint256 vTokenShares,
         uint256[] calldata nftIds
-    ) external payable override {
+    ) external payable override nonReentrant {
         onlyOwnerIfPaused(2);
 
         if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
@@ -352,18 +355,20 @@ contract NFTXInventoryStakingV3Upgradeable is
             {
                 address vault = nftxVaultFactory.vault(vaultId);
 
+                // send vToken residue first
+                {
+                    uint256 vTokenResidue = vTokenOwed - requiredVTokens;
+                    if (vTokenResidue > 0) {
+                        IERC20(vault).transfer(msg.sender, vTokenResidue);
+                    }
+                }
+
                 INFTXVaultV3(vault).redeem{value: msg.value}(
                     nftIds,
                     msg.sender,
                     0,
                     _timelockedUntil == 0 // forcing fees for positions which never were under timelock (or else they can bypass redeem fees as deposit was made in vTokens)
                 );
-
-                // send vToken residue
-                uint256 vTokenResidue = vTokenOwed - requiredVTokens;
-                if (vTokenResidue > 0) {
-                    IERC20(vault).transfer(msg.sender, vTokenResidue);
-                }
             }
         } else {
             // transfer tokens to the user
