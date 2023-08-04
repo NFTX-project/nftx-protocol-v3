@@ -299,6 +299,10 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             if (chargeFees) {
                 TransferLib.unSafeMaxApprove(WETH, address(vToken), wethAmt);
             }
+
+            uint256 vTokenBurned = params.nftIds.length * 1 ether;
+            if (vTokenAmt < vTokenBurned) revert InsufficientVTokens();
+
             uint256 wethFees = vToken.redeem(
                 params.nftIds,
                 msg.sender,
@@ -306,8 +310,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 chargeFees
             );
             wethAmt -= wethFees;
-
-            uint256 vTokenBurned = params.nftIds.length * 1 ether;
 
             // if more vTokens collected than burned
             uint256 vTokenResidue = vTokenAmt - vTokenBurned;
@@ -651,6 +653,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         );
 
         // mint position with vtoken and ETH
+        if (msg.value < params.wethMin) revert ETHValueLowerThanMin();
         (
             mintParams.amount0Desired,
             mintParams.amount1Desired,
@@ -761,6 +764,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vTokensAmount
         );
 
+        if (msg.value < params.wethMin) revert ETHValueLowerThanMin();
         bool _isVToken0 = isVToken0(address(vToken));
         (
             uint256 amount0Desired,

@@ -69,6 +69,8 @@ interface INFTXRouter {
     // =============================================================
 
     error InvalidEarlyWithdrawPenalty();
+    error InsufficientVTokens();
+    error ETHValueLowerThanMin();
 
     // =============================================================
     //                     PUBLIC / EXTERNAL WRITE
