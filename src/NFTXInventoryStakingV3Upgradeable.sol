@@ -700,11 +700,24 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
 
-        position.vTokenShareBalance += _mintVTokenShares(
-            _vaultGlobal,
-            amount,
-            preVTokenBalance
-        );
+        // cache
+        uint256 _globalWethFeesPerVTokenShareX128 = _vaultGlobal
+            .globalWethFeesPerVTokenShareX128;
+        uint256 _preVTokenShareBalance = position.vTokenShareBalance;
+        // account for weth fees accumulated till now
+        position.wethOwed =
+            _calcWethOwed(
+                _globalWethFeesPerVTokenShareX128,
+                position.wethFeesPerVTokenShareSnapshotX128,
+                _preVTokenShareBalance
+            ) +
+            position.wethOwed;
+        position
+            .wethFeesPerVTokenShareSnapshotX128 = _globalWethFeesPerVTokenShareX128;
+
+        position.vTokenShareBalance =
+            _preVTokenShareBalance +
+            _mintVTokenShares(_vaultGlobal, amount, preVTokenBalance);
 
         if (forceTimelock) {
             position.timelockedUntil = block.timestamp + timelock;
