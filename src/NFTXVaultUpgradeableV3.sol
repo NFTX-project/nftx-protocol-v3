@@ -657,7 +657,7 @@ contract NFTXVaultUpgradeableV3 is
                 //      - If not, it means we have not yet accounted for this NFT, so we continue.
                 //   -If not, we "pull" it from the msg.sender and add to holdings.
                 _transferFromERC721(_assetAddress, tokenId);
-                _holdings.add(tokenId);
+                if (!_holdings.add(tokenId)) revert HoldingsUpdationFailed();
                 tokenDepositInfo[tokenId] = TokenDepositInfo({
                     timestamp: uint48(block.timestamp),
                     depositor: depositor
@@ -682,7 +682,8 @@ contract NFTXVaultUpgradeableV3 is
                 if (amount == 0) revert TransferAmountIsZero();
 
                 if (_quantity1155[tokenId] == 0) {
-                    _holdings.add(tokenId);
+                    if (!_holdings.add(tokenId))
+                        revert HoldingsUpdationFailed();
                 }
                 _quantity1155[tokenId] += amount;
                 count += amount;
@@ -735,7 +736,8 @@ contract NFTXVaultUpgradeableV3 is
                 _quantity1155[tokenId] = _qty1155 - 1;
                 // updated _quantity1155 is 0 now, so remove from holdings
                 if (_qty1155 == 1) {
-                    _holdings.remove(tokenId);
+                    if (!_holdings.remove(tokenId))
+                        revert HoldingsUpdationFailed();
                 }
 
                 IERC1155Upgradeable(_assetAddress).safeTransferFrom(
@@ -787,7 +789,7 @@ contract NFTXVaultUpgradeableV3 is
                     depositors[i] = depositInfo.depositor;
                 }
 
-                _holdings.remove(tokenId);
+                if (!_holdings.remove(tokenId)) revert HoldingsUpdationFailed();
                 _transferERC721(_assetAddress, to, tokenId);
             }
         }
