@@ -450,7 +450,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
     function test_setTreasuryAddress_RevertsForNullAddress() external {
         address newTreasury = address(0);
 
-        vm.expectRevert(INFTXFeeDistributorV3.AddressIsZero.selector);
+        vm.expectRevert(INFTXFeeDistributorV3.ZeroAddress.selector);
         feeDistributor.setTreasuryAddress(newTreasury);
     }
 
