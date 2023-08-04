@@ -454,7 +454,8 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 totalWethOwed;
         uint256 wethOwed;
-        for (uint256 i; i < positionIds.length; ) {
+        uint256 len = positionIds.length;
+        for (uint256 i; i < len; ) {
             if (ownerOf(positionIds[i]) != msg.sender)
                 revert NotPositionOwner();
 

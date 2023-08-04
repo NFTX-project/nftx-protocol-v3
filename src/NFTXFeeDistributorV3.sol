@@ -103,7 +103,8 @@ contract NFTXFeeDistributorV3 is
         }
 
         uint256 leftover;
-        for (uint256 i; i < feeReceivers.length; ) {
+        uint256 len = feeReceivers.length;
+        for (uint256 i; i < len; ) {
             FeeReceiver storage feeReceiver = feeReceivers[i];
 
             uint256 wethAmountToSend = leftover +
