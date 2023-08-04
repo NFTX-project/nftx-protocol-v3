@@ -5,6 +5,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
+import {SafeCast} from "@uni-core/libraries/SafeCast.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -284,7 +285,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         PERMIT2.transferFrom(
             msg.sender,
             address(this),
-            uint160(params.amountIn),
+            SafeCast.toUint160(params.amountIn),
             address(params.tokenIn)
         );
 
