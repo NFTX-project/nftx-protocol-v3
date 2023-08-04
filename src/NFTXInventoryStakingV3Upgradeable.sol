@@ -317,7 +317,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 wethOwed = _calcWethOwed(
             _vaultGlobal.globalWethFeesPerVTokenShareX128,
             position.wethFeesPerVTokenShareSnapshotX128,
-            vTokenShares
+            positionVTokenShareBalance
         ) + position.wethOwed;
         position.wethFeesPerVTokenShareSnapshotX128 = _vaultGlobal
             .globalWethFeesPerVTokenShareX128;
