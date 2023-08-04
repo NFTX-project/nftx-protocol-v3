@@ -558,12 +558,14 @@ contract NFTXVaultUpgradeableV3 is
 
         uint256 _pointerIndex1155 = pointerIndex1155[tokenId];
 
-        uint256 i = _pointerIndex1155;
+        uint256 i = 0;
         // cache
         uint256 premiumMax = vaultFactory.premiumMax();
         uint256 premiumDuration = vaultFactory.premiumDuration();
         while (true) {
-            DepositInfo1155 memory depositInfo = depositInfo1155[tokenId][i];
+            DepositInfo1155 memory depositInfo = depositInfo1155[tokenId][
+                _pointerIndex1155 + i
+            ];
 
             if (depositInfo.qty > amount) {
                 uint256 vTokenPremium = _getVTokenPremium(
@@ -597,7 +599,7 @@ contract NFTXVaultUpgradeableV3 is
             }
         }
 
-        uint256 finalArrayLength = i - _pointerIndex1155 + 1;
+        uint256 finalArrayLength = i + 1;
 
         if (finalArrayLength < premiums.length) {
             // change array length
