@@ -96,13 +96,12 @@ abstract contract ERC721PermitUpgradeable is
         if (spender == owner) revert ApprovalToCurrentOwner();
 
         if (AddressUpgradeable.isContract(owner)) {
-            require(
+            if (
                 IERC1271(owner).isValidSignature(
                     digest,
                     abi.encodePacked(r, s, v)
-                ) == 0x1626ba7e,
-                "Unauthorized"
-            );
+                ) != 0x1626ba7e
+            ) revert Unauthorized();
         } else {
             address recoveredAddress = ecrecover(digest, v, r, s);
             if (recoveredAddress == address(0)) revert InvalidSignature();

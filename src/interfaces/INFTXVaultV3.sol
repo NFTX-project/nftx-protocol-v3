@@ -121,6 +121,9 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     error NotManager();
     error Paused();
     error TooManyItems();
+    error ETHSent();
+    error CantRescueAssetToken();
+    error ZeroAmount();
 
     // =============================================================
     //                           INIT

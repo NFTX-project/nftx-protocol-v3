@@ -303,7 +303,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         Position storage position = positions[positionId];
 
         uint256 positionVTokenShareBalance = position.vTokenShareBalance;
-        require(positionVTokenShareBalance >= vTokenShares);
+        if (positionVTokenShareBalance < vTokenShares)
+            revert InsufficientVTokenShares();
 
         uint256 vaultId = position.vaultId;
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
@@ -491,7 +492,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 vaultId,
         uint256 wethAmount
     ) external override returns (bool rewardsDistributed) {
-        require(msg.sender == nftxVaultFactory.feeDistributor());
+        if (msg.sender != nftxVaultFactory.feeDistributor())
+            revert SenderNotFeeDistributor();
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
         if (_vaultGlobal.totalVTokenShares == 0) {
@@ -696,7 +698,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         onlyOwnerIfPaused(4);
 
         // only allow for positions created with just vTokens
-        require(position.timelockedUntil == 0);
+        if (position.timelockedUntil > 0)
+            revert PositionNotCreatedWithVTokens();
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
 
@@ -729,7 +732,8 @@ contract NFTXInventoryStakingV3Upgradeable is
                 (amount * _vaultGlobal.totalVTokenShares) /
                 preVTokenBalance;
         }
-        require(vTokenShares > 0);
+        if (vTokenShares == 0) revert ZeroVTokenShares();
+
         _vaultGlobal.totalVTokenShares = _totalVTokenShares + vTokenShares;
     }
 
