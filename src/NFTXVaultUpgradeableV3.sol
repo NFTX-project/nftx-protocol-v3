@@ -630,6 +630,31 @@ contract NFTXVaultUpgradeableV3 is
     //                        INTERNAL HELPERS
     // =============================================================
 
+    function _flashFee(
+        address /** token */,
+        uint256 amount
+    ) internal view override returns (uint256) {
+        (uint256 mintFee, uint256 redeemFee, uint256 swapFee) = vaultFees();
+
+        uint256 maxFee = mintFee;
+        if (redeemFee > maxFee) {
+            maxFee = redeemFee;
+        }
+        if (swapFee > maxFee) {
+            maxFee = swapFee;
+        }
+
+        return (amount * maxFee) / BASE;
+    }
+
+    function _flashFeeReceiver() internal view override returns (address) {
+        return
+            address(
+                INFTXFeeDistributorV3(vaultFactory.feeDistributor())
+                    .inventoryStaking()
+            );
+    }
+
     // We set a hook to the eligibility module (if it exists) after redeems in case anything needs to be modified.
     function _afterRedeemHook(uint256[] memory tokenIds) internal {
         INFTXEligibility _eligibilityStorage = eligibilityStorage;
