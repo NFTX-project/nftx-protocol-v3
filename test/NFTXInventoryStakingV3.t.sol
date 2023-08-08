@@ -161,6 +161,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             uint256 nonce,
             uint256 vaultId,
             uint256 timelockedUntil,
+            ,
             uint256 vTokenShareBalance,
             uint256 wethFeesPerVTokenShareSnapshotX128,
             uint256 wethOwed
@@ -219,6 +220,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             uint256 nonce,
             uint256 vaultId,
             uint256 timelockedUntil,
+            ,
             uint256 vTokenShareBalance,
             uint256 wethFeesPerVTokenShareSnapshotX128,
             uint256 wethOwed
@@ -282,6 +284,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             uint256 nonce,
             uint256 vaultId,
             uint256 timelockedUntil,
+            ,
             uint256 vTokenShareBalance,
             uint256 wethFeesPerVTokenShareSnapshotX128,
             uint256 wethOwed
@@ -364,6 +367,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             uint256 nonce,
             uint256 vaultId,
             uint256 timelockedUntil,
+            ,
             uint256 vTokenShareBalance,
             uint256 wethFeesPerVTokenShareSnapshotX128,
             uint256 wethOwed
@@ -434,6 +438,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             uint256 nonce,
             uint256 vaultId,
             uint256 timelockedUntil,
+            ,
             uint256 vTokenShareBalance,
             uint256 wethFeesPerVTokenShareSnapshotX128,
             uint256 wethOwed
@@ -509,6 +514,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             uint256 nonce,
             uint256 vaultId,
             uint256 timelockedUntil,
+            ,
             uint256 vTokenShareBalance,
             uint256 wethFeesPerVTokenShareSnapshotX128,
             uint256 wethOwed
@@ -579,6 +585,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             uint256 nonce,
             uint256 vaultId,
             uint256 timelockedUntil,
+            ,
             uint256 vTokenShareBalance,
             uint256 wethFeesPerVTokenShareSnapshotX128,
             uint256 wethOwed
@@ -752,6 +759,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             ,
             ,
             ,
+            ,
             uint256 vTokenShareBalance,
             uint256 preWethFeesPerVTokenShareSnapshotX128,
             uint256 preWethOwed
@@ -773,6 +781,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.collectWethFees(positionIds);
 
         (
+            ,
             ,
             ,
             ,
@@ -814,9 +823,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             childPositionIds[1]
         );
 
-        (, , uint256 parentTimelockedUntil, , , ) = inventoryStaking.positions(
-            parentPositionId
-        );
+        (, , uint256 parentTimelockedUntil, , , , ) = inventoryStaking
+            .positions(parentPositionId);
         // jumping into the future, so it doesn't throw timelocked error
         vm.warp(parentTimelockedUntil + 1);
 
@@ -836,9 +844,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
     function test_combinePositions_RevertsIfChildPositionTimelocked() external {
         uint256 parentPositionId = _mintXNFTWithTimelock(1);
-        (, , uint256 parentTimelockedUntil, , , ) = inventoryStaking.positions(
-            parentPositionId
-        );
+        (, , uint256 parentTimelockedUntil, , , , ) = inventoryStaking
+            .positions(parentPositionId);
         vm.warp(parentTimelockedUntil + 1);
 
         uint256[] memory childPositionIds = new uint256[](1);
@@ -885,7 +892,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             false,
             false
         );
-        (, , uint256 childTimelockedUntil, , , ) = inventoryStaking.positions(
+        (, , uint256 childTimelockedUntil, , , , ) = inventoryStaking.positions(
             childPositionIds[0]
         );
         vm.warp(childTimelockedUntil + 1);
@@ -904,7 +911,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         childPositionIds[0] = _mintXNFT(1);
         childPositionIds[1] = parentPositionId;
 
-        (, , uint256 childTimelockedUntil, , , ) = inventoryStaking.positions(
+        (, , uint256 childTimelockedUntil, , , , ) = inventoryStaking.positions(
             childPositionIds[0]
         );
         vm.warp(childTimelockedUntil + 1);
@@ -930,6 +937,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
                 ,
                 ,
                 ,
+                ,
                 uint256 preParentVTokenShareBalance,
                 uint256 preParentWethFeesPerVTokenShareSnapshotX128,
                 uint256 preParentWethOwed
@@ -938,11 +946,13 @@ contract NFTXInventoryStakingV3Tests is TestBase {
                 ,
                 ,
                 ,
+                ,
                 uint256 preChildAVTokenShareBalance,
                 uint256 preChildAWethFeesPerVTokenShareSnapshotX128,
                 uint256 preChildAWethOwed
             ) = inventoryStaking.positions(childPositionIds[0]);
             (
+                ,
                 ,
                 ,
                 ,
@@ -983,6 +993,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             ,
             ,
             ,
+            ,
             uint256 postParentVTokenShareBalance,
             uint256 postParentWethFeesPerVTokenShareSnapshotX128,
             uint256 postParentWethOwed
@@ -991,11 +1002,13 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             ,
             ,
             ,
+            ,
             uint256 postChildAVTokenShareBalance,
             ,
             uint256 postChildAWethOwed
         ) = inventoryStaking.positions(childPositionIds[0]);
         (
+            ,
             ,
             ,
             ,
@@ -1043,7 +1056,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 positionId = _mintXNFT(1);
         uint256[] memory nftIds;
 
-        (, , , uint256 vTokenShareBalance, , ) = inventoryStaking.positions(
+        (, , , , uint256 vTokenShareBalance, , ) = inventoryStaking.positions(
             positionId
         );
 
@@ -1173,6 +1186,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
             ,
             ,
             timelockedUntil,
+            ,
             wd.preVTokenShareBalance,
             wd.preWethFeesPerVTokenShareSnapshotX128,
             wd.preWethOwed
@@ -1493,7 +1507,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         _distributeWethRewards(3 ether);
         // minting new position then combining, so that position.wethOwed is non zero
         uint256 newPositionId = _mintXNFT(1);
-        (, , uint256 timelockedUntil, , , ) = inventoryStaking.positions(
+        (, , uint256 timelockedUntil, , , , ) = inventoryStaking.positions(
             newPositionId
         );
         // jump to future when timelock is over
@@ -1545,6 +1559,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         )
     {
         (
+            ,
             ,
             ,
             ,
