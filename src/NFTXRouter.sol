@@ -246,6 +246,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         uint256 _timelockedUntil = positionManager.lockedUntil(
             params.positionId
         );
+        uint256 _timelock = positionManager.timelock(params.positionId);
         if (block.timestamp <= _timelockedUntil) {
             if (vTokenAmt > 0) {
                 // Eg: lpTimelock = 10 days, vTokenAmt = 100, penalty% = 5%
@@ -255,7 +256,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 // penaltyAmt = (100 * 5%) * 2 / 10 = 1
                 uint256 vTokenPenalty = ((_timelockedUntil - block.timestamp) *
                     vTokenAmt *
-                    earlyWithdrawPenaltyInWei) / (lpTimelock * 1 ether);
+                    earlyWithdrawPenaltyInWei) / (_timelock * 1 ether);
 
                 // distribute this penalty
                 {
@@ -665,9 +666,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         uint256 vTokenBalance = vToken.balanceOf(address(this));
         if (params.nftIds.length > 0) {
             // vault fees not charged, so instead add timelock to the minted LP NFT
+            uint256 _lpTimelock = lpTimelock;
             positionManager.setLockedUntil(
                 positionId,
-                block.timestamp + lpTimelock
+                block.timestamp + _lpTimelock,
+                _lpTimelock
             );
 
             if (vTokenBalance > 0) {
@@ -694,9 +697,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         } else {
             // if forcing timelock requested
             if (params.forceTimelock) {
+                uint256 _lpTimelock = lpTimelock;
                 positionManager.setLockedUntil(
                     positionId,
-                    block.timestamp + lpTimelock
+                    block.timestamp + _lpTimelock,
+                    _lpTimelock
                 );
             }
 
@@ -785,9 +790,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         uint256 vTokenBalance = vToken.balanceOf(address(this));
         if (params.nftIds.length > 0) {
             // vault fees not charged, so instead update timelock of the position NFT
+            uint256 _lpTimelock = lpTimelock;
             positionManager.setLockedUntil(
                 params.positionId,
-                block.timestamp + lpTimelock
+                block.timestamp + _lpTimelock,
+                _lpTimelock
             );
 
             if (vTokenBalance > 0) {
@@ -814,9 +821,11 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         } else {
             // if forcing timelock requested
             if (params.forceTimelock) {
+                uint256 _lpTimelock = lpTimelock;
                 positionManager.setLockedUntil(
                     params.positionId,
-                    block.timestamp + lpTimelock
+                    block.timestamp + _lpTimelock,
+                    _lpTimelock
                 );
             }
 
