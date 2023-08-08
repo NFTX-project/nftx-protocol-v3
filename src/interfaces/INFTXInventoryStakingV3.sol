@@ -19,6 +19,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 vaultId;
         // timestamp at which the timelock expires
         uint256 timelockedUntil;
+        // position timelocked if created with vTokens. Can't early withdraw in this case
+        uint256 vTokenTimelockedUntil;
         // shares balance is used to track position's ownership of total vToken balance
         uint256 vTokenShareBalance;
         // used to evaluate weth fees accumulated per vTokenShare since this snapshot
@@ -63,6 +65,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
             uint256 nonce,
             uint256 vaultId,
             uint256 timelockedUntil,
+            uint256 vTokenTimelockedUntil,
             uint256 vTokenShareBalance,
             uint256 wethFeesPerVTokenShareSnapshotX128,
             uint256 wethOwed

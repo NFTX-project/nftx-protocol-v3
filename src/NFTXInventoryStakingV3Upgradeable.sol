@@ -52,6 +52,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     // =============================================================
 
     uint256 public constant override MINIMUM_LIQUIDITY = 1_000;
+    uint256 private constant VTOKEN_TIMELOCK = 1 hours;
 
     IWETH9 public immutable override WETH;
     IPermitAllowanceTransfer public immutable override PERMIT2;
@@ -227,6 +228,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             nonce: 0,
             vaultId: vaultId,
             timelockedUntil: _getTimelockedUntil(vaultId),
+            vTokenTimelockedUntil: 0,
             vTokenShareBalance: vTokenShares,
             wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
                 .globalWethFeesPerVTokenShareX128,
@@ -304,6 +306,9 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 positionVTokenShareBalance = position.vTokenShareBalance;
         require(positionVTokenShareBalance >= vTokenShares);
+
+        if (block.timestamp <= position.vTokenTimelockedUntil)
+            revert Timelocked();
 
         uint256 vaultId = position.vaultId;
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
@@ -394,8 +399,10 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[parentVaultId];
 
-        if (block.timestamp <= parentPosition.timelockedUntil)
-            revert Timelocked();
+        if (
+            block.timestamp <= parentPosition.timelockedUntil ||
+            block.timestamp <= parentPosition.vTokenTimelockedUntil
+        ) revert Timelocked();
 
         // weth owed for the parent position
         uint256 netWethOwed = _calcWethOwed(
@@ -412,8 +419,10 @@ contract NFTXInventoryStakingV3Upgradeable is
                 revert NotPositionOwner();
 
             Position storage childPosition = positions[childPositionIds[i]];
-            if (block.timestamp <= childPosition.timelockedUntil)
-                revert Timelocked();
+            if (
+                block.timestamp <= childPosition.timelockedUntil ||
+                block.timestamp <= childPosition.vTokenTimelockedUntil
+            ) revert Timelocked();
             if (childPosition.vaultId != parentVaultId)
                 revert VaultIdMismatch();
 
@@ -676,6 +685,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             nonce: 0,
             vaultId: vaultId,
             timelockedUntil: forceTimelock ? block.timestamp + timelock : 0,
+            vTokenTimelockedUntil: block.timestamp + VTOKEN_TIMELOCK,
             vTokenShareBalance: vTokenShares,
             wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
                 .globalWethFeesPerVTokenShareX128,
@@ -709,6 +719,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         if (forceTimelock) {
             position.timelockedUntil = block.timestamp + timelock;
         }
+        position.vTokenTimelockedUntil = block.timestamp + VTOKEN_TIMELOCK;
 
         emit IncreasePosition(vaultId, positionId, amount);
     }
