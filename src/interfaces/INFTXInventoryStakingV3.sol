@@ -126,6 +126,7 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     error VaultIdMismatch();
     error ParentChildSame();
     error InsufficientVTokens();
+    error ZeroAddress();
 
     // =============================================================
     //                           INIT
@@ -203,11 +204,13 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
      * @param positionId The position id to withdraw vault tokens from
      * @param vTokenShares Amount of vault token shares to burn
      * @param nftIds NFT tokenIds to redeem with the vault tokens withdrawn. If array is empty then only vault tokens transferred. Redeem fees (in ETH from msg.value) only paid for positions which were minted with vTokens
+     * @param vTokenPremiumLimit The max net premium in vTokens the user is willing to pay to redeem nftIds, else tx reverts
      */
     function withdraw(
         uint256 positionId,
         uint256 vTokenShares,
-        uint256[] calldata nftIds
+        uint256[] calldata nftIds,
+        uint256 vTokenPremiumLimit
     ) external payable;
 
     /**

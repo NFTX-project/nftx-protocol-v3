@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity =0.8.15;
 
 // inheriting
 import {OwnableUpgradeable} from "@src/custom/OwnableUpgradeable.sol";
@@ -70,6 +70,8 @@ contract NFTXVaultUpgradeableV3 is
 
     bool public override allowAllItems;
     bool public override enableMint;
+    bool public override enableRedeem;
+    bool public override enableSwap;
 
     EnumerableSetUpgradeable.UintSet internal _holdings;
     // tokenId => qty
@@ -167,9 +169,11 @@ contract NFTXVaultUpgradeableV3 is
         uint256[] calldata idsOut,
         address to,
         uint256 wethAmount,
+        uint256 vTokenPremiumLimit,
         bool forceFees
     ) public payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(2);
+        if (!enableRedeem) revert RedeemDisabled();
 
         uint256 ethOrWethAmt;
         if (wethAmount > 0) {
@@ -180,13 +184,18 @@ contract NFTXVaultUpgradeableV3 is
             ethOrWethAmt = msg.value;
         }
 
-        uint256 count = idsOut.length;
+        uint256 totalVaultFee;
+        {
+            uint256 count = idsOut.length;
 
-        // burn from the sender.
-        _burn(msg.sender, BASE * count);
+            // burn from the sender.
+            _burn(msg.sender, BASE * count);
 
-        (, uint256 redeemFee, ) = vaultFees();
-        uint256 totalVaultFee = (redeemFee * count);
+            {
+                (, uint256 redeemFee, ) = vaultFees();
+                totalVaultFee = (redeemFee * count);
+            }
+        }
 
         // Withdraw from vault.
         INFTXVaultFactoryV3 _vaultFactory = vaultFactory;
@@ -199,6 +208,9 @@ contract NFTXVaultUpgradeableV3 is
         ) = _withdrawNFTsTo(idsOut, to, deductFees, _vaultFactory);
 
         if (deductFees) {
+            if (netVTokenPremium > vTokenPremiumLimit)
+                revert PremiumLimitExceeded();
+
             ethFees = _chargeAndDistributeFeesForRedeem(
                 ethOrWethAmt,
                 msg.value > 0,
@@ -225,9 +237,11 @@ contract NFTXVaultUpgradeableV3 is
         uint256[] calldata idsOut,
         address depositor,
         address to,
+        uint256 vTokenPremiumLimit,
         bool forceFees
     ) public payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(3);
+        if (!enableSwap) revert SwapDisabled();
 
         {
             uint256 count;
@@ -258,6 +272,9 @@ contract NFTXVaultUpgradeableV3 is
             ) = _withdrawNFTsTo(idsOut, to, deductFees, _vaultFactory);
 
             if (deductFees) {
+                if (netVTokenPremium > vTokenPremiumLimit)
+                    revert PremiumLimitExceeded();
+
                 ethFees = _chargeAndDistributeFeesForRedeem(
                     msg.value,
                     true,
@@ -322,6 +339,8 @@ contract NFTXVaultUpgradeableV3 is
     ) public override {
         _onlyPrivileged();
         enableMint = enableMint_;
+        enableRedeem = enableRedeem_;
+        enableSwap = enableSwap_;
 
         emit EnableMintUpdated(enableMint_);
         emit EnableRedeemUpdated(enableRedeem_);
@@ -373,21 +392,6 @@ contract NFTXVaultUpgradeableV3 is
         return _eligibility;
     }
 
-    // // This function allows for the manager to set their own arbitrary eligibility contract.
-    // // Once eligiblity is set, it cannot be unset or changed.
-    // Disabled for launch.
-    // function setEligibilityStorage(address _newEligibility) public {
-    //     onlyPrivileged();
-    //     require(
-    //         address(eligibilityStorage) == address(0),
-    //         "NFTXVault: eligibility already set"
-    //     );
-    //     eligibilityStorage = INFTXEligibility(_newEligibility);
-    //     // Toggle this to let the contract know to check eligibility now.
-    //     allowAllItems = false;
-    //     emit CustomEligibilityDeployed(address(_newEligibility));
-    // }
-
     /**
      * @inheritdoc INFTXVaultV3
      */
@@ -417,11 +421,7 @@ contract NFTXVaultUpgradeableV3 is
             IERC20Upgradeable(token).safeTransfer(msg.sender, balance);
         } else if (tt == TokenType.ERC721) {
             for (uint256 i; i < ids.length; ++i) {
-                IERC721Upgradeable(token).safeTransferFrom(
-                    address(this),
-                    msg.sender,
-                    ids[i]
-                );
+                _transferERC721(token, msg.sender, ids[i]);
             }
         } else {
             IERC1155Upgradeable(token).safeBatchTransferFrom(

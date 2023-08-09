@@ -33,10 +33,6 @@ contract UniswapV3FactoryUpgradeable is
 
         rewardTierCardinality = rewardTierCardinality_;
 
-        // feeAmountTickSpacing[500] = 10;
-        // emit FeeAmountEnabled(500, 10);
-        // feeAmountTickSpacing[3000] = 60;
-        // emit FeeAmountEnabled(3000, 60);
         feeAmountTickSpacing[10000] = 200;
         emit FeeAmountEnabled(10000, 200);
     }
