@@ -23,6 +23,8 @@ interface IUniswapV3Factory {
     /// @param tickSpacing The minimum number of ticks between initialized ticks for pools created with the given fee
     event FeeAmountEnabled(uint24 indexed fee, int24 indexed tickSpacing);
 
+    error InvalidRewardTierCardinality();
+
     /// @notice Returns the current owner of the factory
     /// @dev Can be changed by the current owner via setOwner
     /// @return The address of the factory owner
