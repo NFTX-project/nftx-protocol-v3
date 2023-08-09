@@ -568,7 +568,7 @@ contract NFTXInventoryStakingV3Upgradeable is
      */
     function pricePerShareVToken(
         uint256 vaultId
-    ) public view override returns (uint256) {
+    ) external view override returns (uint256) {
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
         address vToken = nftxVaultFactory.vault(vaultId);
 
