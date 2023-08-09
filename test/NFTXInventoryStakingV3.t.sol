@@ -1040,7 +1040,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         hoax(makeAddr("nonOwner"));
         vm.expectRevert(PausableUpgradeable.Paused.selector);
-        inventoryStaking.withdraw(1, 1 ether, nftIds);
+        inventoryStaking.withdraw(1, 1 ether, nftIds, MAX_VTOKEN_PREMIUM_LIMIT);
     }
 
     function test_withdraw_RevertsForNonPositionOwner() external {
@@ -1049,7 +1049,12 @@ contract NFTXInventoryStakingV3Tests is TestBase {
 
         hoax(makeAddr("nonPositionOwner"));
         vm.expectRevert(INFTXInventoryStakingV3.NotPositionOwner.selector);
-        inventoryStaking.withdraw(positionId, 1 ether, nftIds);
+        inventoryStaking.withdraw(
+            positionId,
+            1 ether,
+            nftIds,
+            MAX_VTOKEN_PREMIUM_LIMIT
+        );
     }
 
     function test_withdraw_RevertsIfSharesMoreThanBalanceRequested() external {
@@ -1061,7 +1066,12 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         );
 
         vm.expectRevert();
-        inventoryStaking.withdraw(positionId, vTokenShareBalance + 1, nftIds);
+        inventoryStaking.withdraw(
+            positionId,
+            vTokenShareBalance + 1,
+            nftIds,
+            MAX_VTOKEN_PREMIUM_LIMIT
+        );
     }
 
     struct WithdrawData {
@@ -1103,7 +1113,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 expectedWethAmount = _calcWethOwed(
             wd.globalWethFeesPerVTokenShareX128,
             wd.preWethFeesPerVTokenShareSnapshotX128,
-            wd.vTokenSharesToWithdraw
+            wd.preVTokenShareBalance
         ) + wd.preWethOwed;
         uint256 expectedVTokenAmount = (wd.preNetVTokenBalance *
             wd.vTokenSharesToWithdraw) / wd.preTotalVTokenShares;
@@ -1123,7 +1133,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.withdraw(
             positionId,
             wd.vTokenSharesToWithdraw,
-            nftIds
+            nftIds,
+            MAX_VTOKEN_PREMIUM_LIMIT
         );
 
         uint256 postWethBalance = weth.balanceOf(address(this));
@@ -1213,7 +1224,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 expectedWethAmount = _calcWethOwed(
             wd.globalWethFeesPerVTokenShareX128,
             wd.preWethFeesPerVTokenShareSnapshotX128,
-            wd.vTokenSharesToWithdraw
+            wd.preVTokenShareBalance
         ) + wd.preWethOwed;
         uint256 expectedVTokenAmount = (wd.preNetVTokenBalance *
             wd.vTokenSharesToWithdraw) / wd.preTotalVTokenShares;
@@ -1241,7 +1252,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.withdraw(
             positionId,
             wd.vTokenSharesToWithdraw,
-            nftIds
+            nftIds,
+            MAX_VTOKEN_PREMIUM_LIMIT
         );
 
         uint256 postWethBalance = weth.balanceOf(address(this));
@@ -1323,7 +1335,12 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         (uint256 vTokenShareBalance, , ) = _getPosition(positionId);
 
         vm.expectRevert(INFTXInventoryStakingV3.InsufficientVTokens.selector);
-        inventoryStaking.withdraw(positionId, vTokenShareBalance, nftIds);
+        inventoryStaking.withdraw(
+            positionId,
+            vTokenShareBalance,
+            nftIds,
+            MAX_VTOKEN_PREMIUM_LIMIT
+        );
     }
 
     function test_withdraw_ToNFTs_Success_WithResidue() external {
@@ -1358,7 +1375,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 expectedWethAmount = _calcWethOwed(
             wd.globalWethFeesPerVTokenShareX128,
             wd.preWethFeesPerVTokenShareSnapshotX128,
-            wd.vTokenSharesToWithdraw
+            wd.preVTokenShareBalance
         ) + wd.preWethOwed;
 
         uint256 expectedVTokenResidue = ((nftQty *
@@ -1374,7 +1391,8 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         inventoryStaking.withdraw(
             positionId,
             wd.vTokenSharesToWithdraw,
-            tokenIdsToRedeem
+            tokenIdsToRedeem,
+            MAX_VTOKEN_PREMIUM_LIMIT
         );
 
         uint256 postWethBalance = weth.balanceOf(address(this));
