@@ -895,6 +895,7 @@ contract NFTXRouterTests is TestBase {
             INFTXRouter.BuyNFTsParams({
                 vaultId: VAULT_ID,
                 nftIds: nftIds,
+                vTokenPremiumLimit: MAX_VTOKEN_PREMIUM_LIMIT,
                 deadline: block.timestamp,
                 fee: DEFAULT_FEE_TIER,
                 sqrtPriceLimitX96: 0
@@ -957,6 +958,7 @@ contract NFTXRouterTests is TestBase {
             INFTXRouter.BuyNFTsParams({
                 vaultId: VAULT_ID_1155,
                 nftIds: nftIds,
+                vTokenPremiumLimit: MAX_VTOKEN_PREMIUM_LIMIT,
                 deadline: block.timestamp,
                 fee: DEFAULT_FEE_TIER,
                 sqrtPriceLimitX96: 0
@@ -1001,6 +1003,7 @@ contract NFTXRouterTests is TestBase {
                 positionId: _positionId,
                 vaultId: VAULT_ID,
                 nftIds: _nftIds,
+                vTokenPremiumLimit: MAX_VTOKEN_PREMIUM_LIMIT,
                 liquidity: _getLiquidity(_positionId),
                 amount0Min: 0,
                 amount1Min: 0,
@@ -1052,6 +1055,7 @@ contract NFTXRouterTests is TestBase {
                 positionId: positionId,
                 vaultId: VAULT_ID,
                 nftIds: nftIds,
+                vTokenPremiumLimit: MAX_VTOKEN_PREMIUM_LIMIT,
                 liquidity: liquidity,
                 amount0Min: 0,
                 amount1Min: 0,
@@ -1100,6 +1104,7 @@ contract NFTXRouterTests is TestBase {
                 positionId: positionId,
                 vaultId: VAULT_ID,
                 nftIds: new uint256[](0),
+                vTokenPremiumLimit: MAX_VTOKEN_PREMIUM_LIMIT,
                 liquidity: liquidity,
                 amount0Min: 0,
                 amount1Min: 0,
@@ -1138,6 +1143,7 @@ contract NFTXRouterTests is TestBase {
                 positionId: _positionId,
                 vaultId: VAULT_ID_1155,
                 nftIds: emptyIds,
+                vTokenPremiumLimit: MAX_VTOKEN_PREMIUM_LIMIT,
                 liquidity: _getLiquidity(_positionId),
                 amount0Min: 0,
                 amount1Min: 0,
@@ -1192,6 +1198,7 @@ contract NFTXRouterTests is TestBase {
                 positionId: positionId,
                 vaultId: VAULT_ID_1155,
                 nftIds: nftIds,
+                vTokenPremiumLimit: MAX_VTOKEN_PREMIUM_LIMIT,
                 liquidity: liquidity,
                 amount0Min: 0,
                 amount1Min: 0,

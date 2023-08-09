@@ -72,7 +72,13 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
 
         hoax(makeAddr("nonOwner"));
         vm.expectRevert(MarketplaceUniversalRouterZap.ZapPaused.selector);
-        marketplaceZap.swap721(VAULT_ID, idsIn, idsOut, payable(this));
+        marketplaceZap.swap721(
+            VAULT_ID,
+            idsIn,
+            idsOut,
+            MAX_VTOKEN_PREMIUM_LIMIT,
+            payable(this)
+        );
     }
 
     function test_swap721_Success() external {
@@ -98,6 +104,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
             VAULT_ID,
             idsIn,
             idsOut,
+            MAX_VTOKEN_PREMIUM_LIMIT,
             payable(this)
         );
 
@@ -125,6 +132,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
             idsOut,
             executeCallData,
             payable(this),
+            MAX_VTOKEN_PREMIUM_LIMIT,
             true
         );
     }
@@ -162,7 +170,14 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
         // double ETH value here to check if refund working as well
         marketplaceZap.buyNFTsWithETH{
             value: expectedETHFees * 2 + wethRequired
-        }(VAULT_ID, idsOut, executeCallData, payable(this), true);
+        }(
+            VAULT_ID,
+            idsOut,
+            executeCallData,
+            payable(this),
+            MAX_VTOKEN_PREMIUM_LIMIT,
+            true
+        );
 
         uint256 ethPaid = prevETHBal - address(this).balance;
         assertGt(ethPaid, expectedETHFees + wethRequired);
@@ -235,6 +250,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
                 amountIn: tokenInRequiredForETHFees,
                 vaultId: VAULT_ID,
                 idsOut: idsOut,
+                vTokenPremiumLimit: MAX_VTOKEN_PREMIUM_LIMIT,
                 executeToWETHCallData: executeToWETHCallData,
                 executeToVTokenCallData: executeToVTokenCallData,
                 to: payable(this),
@@ -314,6 +330,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
                 amountIn: tokenInRequiredForETHFees,
                 vaultId: VAULT_ID,
                 idsOut: idsOut,
+                vTokenPremiumLimit: MAX_VTOKEN_PREMIUM_LIMIT,
                 executeToWETHCallData: executeToWETHCallData,
                 executeToVTokenCallData: executeToVTokenCallData,
                 to: payable(from),
@@ -393,6 +410,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
             idsIn,
             amounts,
             idsOut,
+            MAX_VTOKEN_PREMIUM_LIMIT,
             payable(this)
         );
     }
@@ -425,6 +443,7 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
             idsIn,
             amounts,
             idsOut,
+            MAX_VTOKEN_PREMIUM_LIMIT,
             payable(this)
         );
 
