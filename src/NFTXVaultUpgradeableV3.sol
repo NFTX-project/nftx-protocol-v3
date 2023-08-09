@@ -521,17 +521,19 @@ contract NFTXVaultUpgradeableV3 is
     function getVTokenPremium721(
         uint256 tokenId
     ) external view override returns (uint256 premium, address depositor) {
-        TokenDepositInfo memory depositInfo = tokenDepositInfo[tokenId];
-        depositor = depositInfo.depositor;
+        if (_holdings.contains(tokenId)) {
+            TokenDepositInfo memory depositInfo = tokenDepositInfo[tokenId];
+            depositor = depositInfo.depositor;
 
-        uint256 premiumMax = vaultFactory.premiumMax();
-        uint256 premiumDuration = vaultFactory.premiumDuration();
+            uint256 premiumMax = vaultFactory.premiumMax();
+            uint256 premiumDuration = vaultFactory.premiumDuration();
 
-        premium = _getVTokenPremium(
-            depositInfo.timestamp,
-            premiumMax,
-            premiumDuration
-        );
+            premium = _getVTokenPremium(
+                depositInfo.timestamp,
+                premiumMax,
+                premiumDuration
+            );
+        }
     }
 
     /**
