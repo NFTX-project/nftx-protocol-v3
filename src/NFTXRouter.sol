@@ -77,7 +77,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         nftxVaultFactory = nftxVaultFactory_;
         PERMIT2 = PERMIT2_;
 
-        if(lpTimelock_ == 0) revert ZeroLPTimelock();
+        if (lpTimelock_ == 0) revert ZeroLPTimelock();
         lpTimelock = lpTimelock_;
 
         if (earlyWithdrawPenaltyInWei_ > 1 ether)
@@ -478,7 +478,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
      * @inheritdoc INFTXRouter
      */
     function setLpTimelock(uint256 lpTimelock_) external override onlyOwner {
-        if(lpTimelock_ == 0) revert ZeroLPTimelock();
+        if (lpTimelock_ == 0) revert ZeroLPTimelock();
 
         lpTimelock = lpTimelock_;
     }
@@ -663,10 +663,10 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         );
 
         emit AddLiquidity(
+            positionId,
             params.vaultId,
             params.vTokensAmount,
             params.nftIds,
-            positionId,
             pool
         );
     }
@@ -709,6 +709,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.positionId,
             params.vaultId,
             params.forceTimelock
+        );
+
+        emit IncreaseLiquidity(
+            params.positionId,
+            params.vaultId,
+            params.vTokensAmount,
+            params.nftIds
         );
     }
 

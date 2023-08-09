@@ -218,6 +218,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
         if(twapInterval_ == 0) revert ZeroTwapInterval();
 
         twapInterval = twapInterval_;
+
+        emit NewTwapInterval(twapInterval_);
     }
 
     /**
@@ -227,6 +229,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
         uint256 premiumDuration_
     ) external override onlyOwner {
         premiumDuration = premiumDuration_;
+
+        emit NewPremiumDuration(premiumDuration_);
     }
 
     /**
@@ -234,6 +238,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
      */
     function setPremiumMax(uint256 premiumMax_) external override onlyOwner {
         premiumMax = premiumMax_;
+
+        emit NewPremiumMax(premiumMax_);
     }
 
     /**
@@ -245,6 +251,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
         if(depositorPremiumShare_ > MAX_DEPOSITOR_PREMIUM_SHARE) revert DepositorPremiumShareExceedsLimit();
 
         depositorPremiumShare = depositorPremiumShare_;
+
+        emit NewDepositorPremiumShare(depositorPremiumShare_);
     }
 
     // =============================================================

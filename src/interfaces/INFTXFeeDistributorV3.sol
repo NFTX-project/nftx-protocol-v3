@@ -63,6 +63,8 @@ interface INFTXFeeDistributorV3 {
 
     event UpdateTreasuryAddress(address newTreasury);
     event PauseDistribution(bool paused);
+    event NewRewardFeeTier(uint24 rewardFeeTier);
+    event NewNFTXRouter(address nftxRouter);
 
     // =============================================================
     //                            ERRORS
@@ -95,9 +97,7 @@ interface INFTXFeeDistributorV3 {
     //                        ONLY OWNER WRITE
     // =============================================================
 
-    function setReceivers(
-        FeeReceiver[] memory feeReceivers_
-    ) external;
+    function setReceivers(FeeReceiver[] memory feeReceivers_) external;
 
     /**
      * @notice Updating reward fee tier here won't change cardinality for existing UniV3 pools already deployed with `rewardFeeTier_`. That has to be increased externally for each pool.

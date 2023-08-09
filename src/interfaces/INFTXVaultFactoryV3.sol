@@ -68,6 +68,10 @@ interface INFTXVaultFactoryV3 is IBeacon {
         uint256 redeemFee,
         uint256 swapFee
     );
+    event NewPremiumMax(uint256 premiumMax);
+    event NewPremiumDuration(uint256 premiumDuration);
+    event NewDepositorPremiumShare(uint256 depositorPremiumShare);
+    event NewTwapInterval(uint32 twapInterval);
 
     // =============================================================
     //                            ERRORS

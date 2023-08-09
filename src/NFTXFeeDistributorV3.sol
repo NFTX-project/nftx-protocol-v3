@@ -196,6 +196,8 @@ contract NFTXFeeDistributorV3 is
         require(ammFactory.feeAmountTickSpacing(rewardFeeTier_) > 0);
 
         rewardFeeTier = rewardFeeTier_;
+
+        emit NewRewardFeeTier(rewardFeeTier_);
     }
 
     /**
@@ -217,6 +219,8 @@ contract NFTXFeeDistributorV3 is
         if (address(nftxRouter_) == address(0)) revert ZeroAddress();
 
         nftxRouter = nftxRouter_;
+
+        emit NewNFTXRouter(address(nftxRouter_));
     }
 
     /**
