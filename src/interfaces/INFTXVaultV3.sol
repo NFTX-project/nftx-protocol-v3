@@ -59,6 +59,10 @@ interface INFTXVaultV3 is IERC20Upgradeable {
 
     function enableMint() external view returns (bool);
 
+    function enableRedeem() external view returns (bool);
+
+    function enableSwap() external view returns (bool);
+
     function tokenDepositInfo(
         uint256 tokenId
     ) external view returns (uint48 timestamp, address depositor);
@@ -110,6 +114,8 @@ interface INFTXVaultV3 is IERC20Upgradeable {
 
     error ZeroAddress();
     error MintingDisabled();
+    error RedeemDisabled();
+    error SwapDisabled();
     error InsufficientETHSent();
     error TransferAmountIsZero();
     error TokenLengthMismatch();

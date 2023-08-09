@@ -70,6 +70,8 @@ contract NFTXVaultUpgradeableV3 is
 
     bool public override allowAllItems;
     bool public override enableMint;
+    bool public override enableRedeem;
+    bool public override enableSwap;
 
     EnumerableSetUpgradeable.UintSet internal _holdings;
     // tokenId => qty
@@ -170,6 +172,7 @@ contract NFTXVaultUpgradeableV3 is
         bool forceFees
     ) public payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(2);
+        if (!enableRedeem) revert RedeemDisabled();
 
         uint256 ethOrWethAmt;
         if (wethAmount > 0) {
@@ -228,6 +231,7 @@ contract NFTXVaultUpgradeableV3 is
         bool forceFees
     ) public payable override nonReentrant returns (uint256 ethFees) {
         _onlyOwnerIfPaused(3);
+        if (!enableSwap) revert SwapDisabled();
 
         {
             uint256 count;
@@ -322,6 +326,8 @@ contract NFTXVaultUpgradeableV3 is
     ) public override {
         _onlyPrivileged();
         enableMint = enableMint_;
+        enableRedeem = enableRedeem_;
+        enableSwap = enableSwap_;
 
         emit EnableMintUpdated(enableMint_);
         emit EnableRedeemUpdated(enableRedeem_);
