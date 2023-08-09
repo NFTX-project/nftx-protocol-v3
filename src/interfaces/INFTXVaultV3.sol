@@ -127,6 +127,8 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     error NotManager();
     error Paused();
     error TooManyItems();
+    error IdNotFound();
+    error NFTInventoryExceeded();
     error HoldingsUpdationFailed();
     error InvalidToken();
     error PremiumLimitExceeded();

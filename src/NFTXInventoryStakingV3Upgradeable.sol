@@ -781,7 +781,10 @@ contract NFTXInventoryStakingV3Upgradeable is
         // cache
         uint256 _totalVTokenShares = _vaultGlobal.totalVTokenShares;
         if (_totalVTokenShares == 0) {
-            vTokenShares = amount - MINIMUM_LIQUIDITY;
+            if (amount < MINIMUM_LIQUIDITY) revert LiquidityBelowMinimum();
+            unchecked {
+                vTokenShares = amount - MINIMUM_LIQUIDITY;
+            }
             // permanently locked to avoid front-running attack
             _totalVTokenShares = MINIMUM_LIQUIDITY;
         } else {

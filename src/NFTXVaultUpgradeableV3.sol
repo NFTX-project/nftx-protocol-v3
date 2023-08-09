@@ -578,7 +578,10 @@ contract NFTXVaultUpgradeableV3 is
         // cache
         uint256 premiumMax = vaultFactory.premiumMax();
         uint256 premiumDuration = vaultFactory.premiumDuration();
+        uint256 _tokenPositionLength = depositInfo1155[tokenId].length;
         while (true) {
+            if (_tokenPositionLength <= i) revert NFTInventoryExceeded();
+
             DepositInfo1155 memory depositInfo = depositInfo1155[tokenId][i];
 
             if (depositInfo.qty > amount) {
@@ -761,6 +764,7 @@ contract NFTXVaultUpgradeableV3 is
             if (_is1155) {
                 {
                     uint256 _qty1155 = _quantity1155[tokenId];
+                    if (_qty1155 == 0) revert IdNotFound();
                     _quantity1155[tokenId] = _qty1155 - 1;
                     // updated _quantity1155 is 0 now, so remove from holdings
                     if (_qty1155 == 1) {

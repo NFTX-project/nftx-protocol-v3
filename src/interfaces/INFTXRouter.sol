@@ -76,6 +76,8 @@ interface INFTXRouter {
     // =============================================================
 
     error InvalidEarlyWithdrawPenalty();
+    error InsufficientVTokens();
+    error ETHValueLowerThanMin();
     error NoETHFundsNeeded();
     error NotPositionOwner();
     error ZeroLPTimelock();

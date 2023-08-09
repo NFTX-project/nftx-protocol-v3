@@ -232,24 +232,27 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             })
         );
 
-        // collect vtokens & weth from removing liquidity + earned fees
-        (uint256 amount0, uint256 amount1) = positionManager.collect(
-            INonfungiblePositionManager.CollectParams({
-                tokenId: params.positionId,
-                recipient: address(this),
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
-            })
-        );
+        INFTXVaultV3 vToken;
+        uint256 vTokenAmt;
+        uint256 wethAmt;
+        {
+            // collect vtokens & weth from removing liquidity + earned fees
+            (uint256 amount0, uint256 amount1) = positionManager.collect(
+                INonfungiblePositionManager.CollectParams({
+                    tokenId: params.positionId,
+                    recipient: address(this),
+                    amount0Max: type(uint128).max,
+                    amount1Max: type(uint128).max
+                })
+            );
 
-        INFTXVaultV3 vToken = INFTXVaultV3(
-            nftxVaultFactory.vault(params.vaultId)
-        );
+            vToken = INFTXVaultV3(nftxVaultFactory.vault(params.vaultId));
 
-        bool _isVToken0 = isVToken0(address(vToken));
-        (uint256 vTokenAmt, uint256 wethAmt) = _isVToken0
-            ? (amount0, amount1)
-            : (amount1, amount0);
+            bool _isVToken0 = isVToken0(address(vToken));
+            (vTokenAmt, wethAmt) = _isVToken0
+                ? (amount0, amount1)
+                : (amount1, amount0);
+        }
 
         // checking timelock penalty
         uint256 _timelockedUntil = positionManager.lockedUntil(
@@ -309,6 +312,10 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             if (chargeFees) {
                 TransferLib.unSafeMaxApprove(WETH, address(vToken), wethAmt);
             }
+
+            uint256 vTokenBurned = params.nftIds.length * 1 ether;
+            if (vTokenAmt < vTokenBurned) revert InsufficientVTokens();
+
             uint256 wethFees = vToken.redeem(
                 params.nftIds,
                 msg.sender,
@@ -317,8 +324,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 chargeFees
             );
             wethAmt -= wethFees;
-
-            uint256 vTokenBurned = params.nftIds.length * 1 ether;
 
             // if more vTokens collected than burned
             uint256 vTokenResidue = vTokenAmt - vTokenBurned;
@@ -621,6 +626,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 deadline: params.deadline
             });
 
+        // mint position with vtoken and ETH
+        if (msg.value < params.wethMin) revert ETHValueLowerThanMin();
         (
             mintParams.token0,
             mintParams.token1,
@@ -685,6 +692,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.vTokensAmount
         );
 
+        if (msg.value < params.wethMin) revert ETHValueLowerThanMin();
         (
             uint256 amount0Desired,
             uint256 amount1Desired,
