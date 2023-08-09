@@ -9,6 +9,7 @@ import {ERC1155HolderUpgradeable, ERC1155ReceiverUpgradeable, IERC165Upgradeable
 // libs
 import {Base64} from "base64-sol/base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {SafeCast} from "@uni-core/libraries/SafeCast.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {FixedPoint128} from "@uni-core/libraries/FixedPoint128.sol";
@@ -155,7 +156,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             PERMIT2.transferFrom(
                 msg.sender,
                 address(this),
-                uint160(amount),
+                SafeCast.toUint160(amount),
                 address(vToken)
             );
         } else {
@@ -278,7 +279,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             PERMIT2.transferFrom(
                 msg.sender,
                 address(this),
-                uint160(amount),
+                SafeCast.toUint160(amount),
                 address(vToken)
             );
         } else {

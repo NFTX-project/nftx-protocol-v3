@@ -7,6 +7,7 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 // libs
+import {SafeCast} from "@uni-core/libraries/SafeCast.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {PoolAddress} from "@uni-periphery/libraries/PoolAddress.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -143,7 +144,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             PERMIT2.transferFrom(
                 msg.sender,
                 address(this),
-                uint160(params.vTokensAmount),
+                SafeCast.toUint160(params.vTokensAmount),
                 address(vToken)
             );
         }
@@ -203,7 +204,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             PERMIT2.transferFrom(
                 msg.sender,
                 address(this),
-                uint160(params.vTokensAmount),
+                SafeCast.toUint160(params.vTokensAmount),
                 address(vToken)
             );
         }
