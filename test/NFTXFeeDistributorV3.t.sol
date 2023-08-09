@@ -76,8 +76,8 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         _mintPosition(1);
 
         // Remove all receivers
-        feeDistributor.removeReceiver(0);
-        feeDistributor.removeReceiver(0);
+        INFTXFeeDistributorV3.FeeReceiver[] memory feeReceivers;
+        feeDistributor.setReceivers(feeReceivers);
         assertEq(feeDistributor.allocTotal(), 0);
 
         uint256 preTreasuryWethBalance = weth.balanceOf(TREASURY);
@@ -95,7 +95,14 @@ contract NFTXFeeDistributorV3Tests is TestBase {
 
     function test_feeDistribution_whenZeroLiquidity() external {
         // remove inventory staking from receiver
-        feeDistributor.removeReceiver(1);
+        INFTXFeeDistributorV3.FeeReceiver[]
+            memory feeReceivers = new INFTXFeeDistributorV3.FeeReceiver[](1);
+        feeReceivers[0] = INFTXFeeDistributorV3.FeeReceiver({
+            receiver: address(0),
+            allocPoint: 1 ether,
+            receiverType: INFTXFeeDistributorV3.ReceiverType.POOL
+        });
+        feeDistributor.setReceivers(feeReceivers);
 
         // deploy pool, but not provide any liquidity
         positionManager.createAndInitializePoolIfNecessary(
@@ -134,12 +141,28 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         address receiverAddress = makeAddr("receiverAddress");
 
         // add remaining types of receivers as well
-        feeDistributor.addReceiver(
-            receiverAddress,
-            addressAllocPoint,
-            INFTXFeeDistributorV3.ReceiverType.ADDRESS
-        );
-        feeDistributor.changeReceiverAlloc(1, inventoryAllocPoint);
+        {
+            INFTXFeeDistributorV3.FeeReceiver[]
+                memory feeReceivers = new INFTXFeeDistributorV3.FeeReceiver[](
+                    3
+                );
+            feeReceivers[0] = INFTXFeeDistributorV3.FeeReceiver({
+                receiver: address(0),
+                allocPoint: poolAllocPoint,
+                receiverType: INFTXFeeDistributorV3.ReceiverType.POOL
+            });
+            feeReceivers[1] = INFTXFeeDistributorV3.FeeReceiver({
+                receiver: address(inventoryStaking),
+                allocPoint: inventoryAllocPoint,
+                receiverType: INFTXFeeDistributorV3.ReceiverType.INVENTORY
+            });
+            feeReceivers[2] = INFTXFeeDistributorV3.FeeReceiver({
+                receiver: receiverAddress,
+                allocPoint: addressAllocPoint,
+                receiverType: INFTXFeeDistributorV3.ReceiverType.ADDRESS
+            });
+            feeDistributor.setReceivers(feeReceivers);
+        }
 
         uint256 mintQty = 5;
 
@@ -158,7 +181,14 @@ contract NFTXFeeDistributorV3Tests is TestBase {
             // stake vTokens so that inventoryStaking has stakers to distribute to
             (uint256 mintedVTokens, ) = _mintVToken(1);
             vtoken.approve(address(inventoryStaking), type(uint256).max);
-            inventoryStaking.deposit(0, mintedVTokens, address(this), "", false, false);
+            inventoryStaking.deposit(
+                0,
+                mintedVTokens,
+                address(this),
+                "",
+                false,
+                false
+            );
 
             (uint256 totalVTokenShares, ) = inventoryStaking.vaultGlobal(0);
             console.log("totalVTokenShares", totalVTokenShares);
@@ -238,203 +268,6 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         console.log("NFT received", nftReceived);
         // ethReceived = ethDeposited + poolWethFees + swapped 0.9999..99 vToken into ETH
         console.log("ETH received", ethReceived);
-    }
-
-    // FeeDistributor#addReceiver
-
-    function test_addReceiver_RevertsForNonOwner() external {
-        address newReceiver = makeAddr("newReceiver");
-
-        hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
-        feeDistributor.addReceiver(
-            newReceiver,
-            0.2 ether,
-            INFTXFeeDistributorV3.ReceiverType.ADDRESS
-        );
-    }
-
-    function test_addReceiver_Success() external {
-        address newReceiver = makeAddr("newReceiver");
-        uint256 allocPoint = 0.2 ether;
-
-        uint256 prevAllocTotal = feeDistributor.allocTotal();
-
-        vm.expectEmit(false, false, false, true);
-        emit AddFeeReceiver(newReceiver, allocPoint);
-        feeDistributor.addReceiver(
-            newReceiver,
-            allocPoint,
-            INFTXFeeDistributorV3.ReceiverType.ADDRESS
-        );
-
-        uint256 postAllocTotal = feeDistributor.allocTotal();
-        (
-            address _receiver,
-            uint256 _allocPoint,
-            INFTXFeeDistributorV3.ReceiverType _receiverType
-        ) = feeDistributor.feeReceivers(2);
-
-        assertEq(postAllocTotal, prevAllocTotal + allocPoint);
-        assertEq(_receiver, newReceiver);
-        assertEq(_allocPoint, allocPoint);
-        assertEq(
-            uint8(_receiverType),
-            uint8(INFTXFeeDistributorV3.ReceiverType.ADDRESS)
-        );
-    }
-
-    // FeeDistributor#changeReceiverAlloc
-
-    function test_changeReceiverAlloc_RevertsForNonOwner() external {
-        uint256 receiverId = 0;
-        uint256 newAllocPoint = 0.5 ether;
-
-        hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
-        feeDistributor.changeReceiverAlloc(receiverId, newAllocPoint);
-    }
-
-    function test_changeReceiverAlloc_RevertsForIdOutOfBounds() external {
-        uint256 receiverId = 10;
-        uint256 newAllocPoint = 0.5 ether;
-
-        vm.expectRevert(INFTXFeeDistributorV3.IdOutOfBounds.selector);
-        feeDistributor.changeReceiverAlloc(receiverId, newAllocPoint);
-    }
-
-    function test_changeReceiverAlloc_Success() external {
-        uint256 receiverId = 0;
-        uint256 newAllocPoint = 0.5 ether;
-
-        uint256 prevAllocTotal = feeDistributor.allocTotal();
-        (
-            address preReceiver,
-            uint256 preAllocPoint,
-            INFTXFeeDistributorV3.ReceiverType preReceiverType
-        ) = feeDistributor.feeReceivers(receiverId);
-
-        assertTrue(preAllocPoint != newAllocPoint);
-
-        vm.expectEmit(false, false, false, true);
-        emit UpdateFeeReceiverAlloc(preReceiver, newAllocPoint);
-        feeDistributor.changeReceiverAlloc(receiverId, newAllocPoint);
-
-        uint256 postAllocTotal = feeDistributor.allocTotal();
-        (
-            address postReceiver,
-            uint256 postAllocPoint,
-            INFTXFeeDistributorV3.ReceiverType postReceiverType
-        ) = feeDistributor.feeReceivers(receiverId);
-
-        assertEq(
-            postAllocTotal,
-            prevAllocTotal - preAllocPoint + newAllocPoint
-        );
-        assertEq(postAllocPoint, newAllocPoint);
-        assertEq(postReceiver, preReceiver);
-        assertEq(uint8(postReceiverType), uint8(preReceiverType));
-    }
-
-    // FeeDistributor#changeReceiverAddress
-
-    function test_changeReceiverAddress_RevertsForNonOwner() external {
-        uint256 receiverId = 0;
-        address newReceiver = makeAddr("newReceiver");
-
-        hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
-        feeDistributor.changeReceiverAddress(
-            receiverId,
-            newReceiver,
-            INFTXFeeDistributorV3.ReceiverType.ADDRESS
-        );
-    }
-
-    function test_changeReceiverAddress_RevertsForIdOutOfBounds() external {
-        uint256 receiverId = 10;
-        address newReceiver = makeAddr("newReceiver");
-
-        vm.expectRevert(INFTXFeeDistributorV3.IdOutOfBounds.selector);
-        feeDistributor.changeReceiverAddress(
-            receiverId,
-            newReceiver,
-            INFTXFeeDistributorV3.ReceiverType.ADDRESS
-        );
-    }
-
-    function test_changeReceiverAddress_Success() external {
-        uint256 receiverId = 0;
-        address newReceiver = makeAddr("newReceiver");
-        INFTXFeeDistributorV3.ReceiverType newReceiverType = INFTXFeeDistributorV3
-                .ReceiverType
-                .ADDRESS;
-
-        uint256 prevAllocTotal = feeDistributor.allocTotal();
-        (
-            address preReceiver,
-            uint256 preAllocPoint,
-            INFTXFeeDistributorV3.ReceiverType preReceiverType
-        ) = feeDistributor.feeReceivers(receiverId);
-
-        assertTrue(preReceiver != newReceiver);
-        assertTrue(uint8(preReceiverType) != uint8(newReceiverType));
-
-        vm.expectEmit(false, false, false, true);
-        emit UpdateFeeReceiverAddress(preReceiver, newReceiver);
-        feeDistributor.changeReceiverAddress(
-            receiverId,
-            newReceiver,
-            newReceiverType
-        );
-
-        uint256 postAllocTotal = feeDistributor.allocTotal();
-        (
-            address postReceiver,
-            uint256 postAllocPoint,
-            INFTXFeeDistributorV3.ReceiverType postReceiverType
-        ) = feeDistributor.feeReceivers(receiverId);
-
-        assertEq(postReceiver, newReceiver);
-        assertEq(uint8(postReceiverType), uint8(newReceiverType));
-        assertEq(postAllocPoint, preAllocPoint);
-        assertEq(postAllocTotal, prevAllocTotal);
-    }
-
-    // FeeDistributor#changeReceiverAddress
-
-    function test_removeReceiver_RevertsForNonOwner() external {
-        uint256 receiverId = 0;
-
-        hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
-        feeDistributor.removeReceiver(receiverId);
-    }
-
-    function test_removeReceiver_RevertsForIdOutOfBounds() external {
-        uint256 receiverId = 10;
-
-        vm.expectRevert(INFTXFeeDistributorV3.IdOutOfBounds.selector);
-        feeDistributor.removeReceiver(receiverId);
-    }
-
-    function test_removeReceiver_Success() external {
-        uint256 receiverId = 1;
-
-        uint256 prevAllocTotal = feeDistributor.allocTotal();
-        (address preReceiver, uint256 preAllocPoint, ) = feeDistributor
-            .feeReceivers(receiverId);
-
-        vm.expectEmit(false, false, false, true);
-        emit RemoveFeeReceiver(preReceiver);
-        feeDistributor.removeReceiver(receiverId);
-
-        uint256 postAllocTotal = feeDistributor.allocTotal();
-
-        assertEq(postAllocTotal, prevAllocTotal - preAllocPoint);
-
-        vm.expectRevert();
-        feeDistributor.feeReceivers(receiverId);
     }
 
     // FeeDistributor#setTreasuryAddress
