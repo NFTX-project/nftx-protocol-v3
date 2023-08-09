@@ -391,12 +391,10 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             wethReceived += msg.value;
         }
         // distributing vault fees with the wethReceived
-        uint256 nftCount;
-        if (params.nftAmounts.length > 0) {
-            nftCount = _sum1155Ids(params.nftIds, params.nftAmounts);
-        } else {
-            nftCount = params.nftIds.length;
-        }
+        uint256 nftCount = !vToken.is1155()
+            ? params.nftIds.length
+            : _sum1155Ids(params.nftIds, params.nftAmounts);
+
         uint256 wethFees = _ethMintFees(vToken, nftCount);
         _distributeVaultFees(params.vaultId, wethFees, true);
         uint256 wethRemaining = wethReceived - wethFees; // if underflow, then revert desired
