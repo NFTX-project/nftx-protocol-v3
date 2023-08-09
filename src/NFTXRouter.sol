@@ -292,6 +292,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
         // No NFTs to redeem, directly withdraw vTokens
         if (params.nftIds.length == 0 && vTokenAmt > 0) {
+            if (msg.value > 0) revert NoETHFundsNeeded();
             vToken.transfer(msg.sender, vTokenAmt);
         } else {
             // if withdrawn WETH is insufficient to pay for vault fees, user sends ETH (can be excess, as refunded back) along with the transaction
