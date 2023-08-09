@@ -777,4 +777,6 @@ contract NFTXInventoryStakingV3Upgradeable is
     ) internal override returns (uint256) {
         return uint256(positions[tokenId].nonce++);
     }
+
+    receive() external payable {}
 }
