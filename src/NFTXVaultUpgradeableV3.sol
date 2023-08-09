@@ -379,21 +379,6 @@ contract NFTXVaultUpgradeableV3 is
         return _eligibility;
     }
 
-    // // This function allows for the manager to set their own arbitrary eligibility contract.
-    // // Once eligiblity is set, it cannot be unset or changed.
-    // Disabled for launch.
-    // function setEligibilityStorage(address _newEligibility) public {
-    //     onlyPrivileged();
-    //     require(
-    //         address(eligibilityStorage) == address(0),
-    //         "NFTXVault: eligibility already set"
-    //     );
-    //     eligibilityStorage = INFTXEligibility(_newEligibility);
-    //     // Toggle this to let the contract know to check eligibility now.
-    //     allowAllItems = false;
-    //     emit CustomEligibilityDeployed(address(_newEligibility));
-    // }
-
     /**
      * @inheritdoc INFTXVaultV3
      */
