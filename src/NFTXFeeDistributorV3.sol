@@ -69,6 +69,11 @@ contract NFTXFeeDistributorV3 is
         INFTXRouter nftxRouter_,
         address treasury_
     ) {
+        if (address(nftxVaultFactory_) == address(0)) revert ZeroAddress();
+        if (address(ammFactory_) == address(0)) revert ZeroAddress();
+        if (address(inventoryStaking_) == address(0)) revert ZeroAddress();
+        if (address(nftxRouter_) == address(0)) revert ZeroAddress();
+
         nftxVaultFactory = nftxVaultFactory_;
         ammFactory = ammFactory_;
         inventoryStaking = inventoryStaking_;
@@ -197,7 +202,7 @@ contract NFTXFeeDistributorV3 is
      * @inheritdoc INFTXFeeDistributorV3
      */
     function setTreasuryAddress(address treasury_) external override onlyOwner {
-        if (treasury_ == address(0)) revert AddressIsZero();
+        if (treasury_ == address(0)) revert ZeroAddress();
 
         treasury = treasury_;
         emit UpdateTreasuryAddress(treasury_);
@@ -209,6 +214,8 @@ contract NFTXFeeDistributorV3 is
     function setNFTXRouter(
         INFTXRouter nftxRouter_
     ) external override onlyOwner {
+        if (address(nftxRouter_) == address(0)) revert ZeroAddress();
+
         nftxRouter = nftxRouter_;
     }
 

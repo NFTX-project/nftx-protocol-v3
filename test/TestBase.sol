@@ -152,6 +152,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             nftxRouter,
             TREASURY
         );
+
         factory.setFeeDistributor(address(feeDistributor));
         vaultFactory.setFeeDistributor(address(feeDistributor));
 

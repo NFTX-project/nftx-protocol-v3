@@ -69,7 +69,7 @@ interface INFTXFeeDistributorV3 {
     // =============================================================
 
     error IdOutOfBounds();
-    error AddressIsZero();
+    error ZeroAddress();
 
     // =============================================================
     //                     PUBLIC / EXTERNAL WRITE
