@@ -5,6 +5,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
+import {SafeCast} from "@uni-core/libraries/SafeCast.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -165,6 +166,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256 vaultId,
         uint256[] calldata idsIn,
         uint256[] calldata idsOut,
+        uint256 vTokenPremiumLimit,
         address payable to
     ) external payable onlyOwnerIfPaused {
         // Transfer tokens from the message sender to the vault
@@ -178,6 +180,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             idsOut,
             msg.sender,
             to,
+            vTokenPremiumLimit,
             true
         );
 
@@ -202,6 +205,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256[] calldata idsOut,
         bytes calldata executeCallData,
         address payable to,
+        uint256 vTokenPremiumLimit,
         bool deductRoyalty
     ) external payable onlyOwnerIfPaused {
         // Wrap ETH into WETH for our contract
@@ -221,6 +225,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             idsOut,
             to,
             wethLeft,
+            vTokenPremiumLimit,
             true
         );
 
@@ -241,6 +246,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256 amountIn; // Input ERC20 amount
         uint256 vaultId; // The ID of the NFTX vault
         uint256[] idsOut; // An array of any token IDs to be redeemed
+        uint256 vTokenPremiumLimit;
         bytes executeToWETHCallData; // Encoded calldata for "ERC20 to WETH swap" for Universal Router's `execute` function
         bytes executeToVTokenCallData; // Encoded calldata for "WETH to vToken swap" for Universal Router's `execute` function
         address payable to; // The recipient of the token IDs from the tx
@@ -284,7 +290,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         PERMIT2.transferFrom(
             msg.sender,
             address(this),
-            uint160(params.amountIn),
+            SafeCast.toUint160(params.amountIn),
             address(params.tokenIn)
         );
 
@@ -357,6 +363,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256[] calldata idsIn,
         uint256[] calldata amounts,
         uint256[] calldata idsOut,
+        uint256 vTokenPremiumLimit,
         address payable to
     ) external payable onlyOwnerIfPaused {
         address vault = nftxVaultFactory.vault(vaultId);
@@ -379,6 +386,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             idsOut,
             msg.sender,
             to,
+            vTokenPremiumLimit,
             true
         );
 
@@ -450,6 +458,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             params.idsOut,
             params.to,
             wethLeft,
+            params.vTokenPremiumLimit,
             true
         );
 

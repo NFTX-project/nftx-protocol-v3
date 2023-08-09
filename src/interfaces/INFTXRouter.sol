@@ -46,18 +46,25 @@ interface INFTXRouter {
     // =============================================================
 
     event AddLiquidity(
+        uint256 indexed positionId,
         uint256 vaultId,
         uint256 vTokensAmount,
         uint256[] nftIds,
-        uint256 positionId,
         address pool
     );
 
     event RemoveLiquidity(
-        uint256 positionId,
+        uint256 indexed positionId,
         uint256 vaultId,
         uint256 vTokenAmt,
         uint256 wethAmt
+    );
+
+    event IncreaseLiquidity(
+        uint256 indexed positionId,
+        uint256 vaultId,
+        uint256 vTokensAmount,
+        uint256[] nftIds
     );
 
     event SellNFTs(uint256 nftCount, uint256 ethReceived);
@@ -69,6 +76,8 @@ interface INFTXRouter {
     // =============================================================
 
     error InvalidEarlyWithdrawPenalty();
+    error NotPositionOwner();
+    error ZeroLPTimelock();
 
     // =============================================================
     //                     PUBLIC / EXTERNAL WRITE
@@ -161,6 +170,8 @@ interface INFTXRouter {
         uint256 vaultId;
         // array of nft ids to redeem with the vTokens (can be empty to just receive vTokens)
         uint256[] nftIds;
+        // The max net premium in vTokens the user is willing to pay to redeem nftIds, else tx reverts
+        uint256 vTokenPremiumLimit;
         // the liquidity amount to burn and withdraw
         uint128 liquidity;
         // Minimum amount of token0 to be withdrawn
@@ -207,6 +218,8 @@ interface INFTXRouter {
         uint256 vaultId;
         // array of nft ids to buy
         uint256[] nftIds;
+        // The max net premium in vTokens the user is willing to pay to redeem nftIds, else tx reverts
+        uint256 vTokenPremiumLimit;
         // deadline after which the tx fails
         uint256 deadline;
         // the fee tier to execute the swap through

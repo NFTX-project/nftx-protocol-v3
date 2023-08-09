@@ -7,6 +7,7 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 // libs
+import {SafeCast} from "@uni-core/libraries/SafeCast.sol";
 import {TransferLib} from "@src/lib/TransferLib.sol";
 import {PoolAddress} from "@uni-periphery/libraries/PoolAddress.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -76,6 +77,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         quoter = quoter_;
         nftxVaultFactory = nftxVaultFactory_;
         PERMIT2 = PERMIT2_;
+
+        if (lpTimelock_ == 0) revert ZeroLPTimelock();
         lpTimelock = lpTimelock_;
 
         if (earlyWithdrawPenaltyInWei_ > 1 ether)
@@ -141,7 +144,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             PERMIT2.transferFrom(
                 msg.sender,
                 address(this),
-                uint160(params.vTokensAmount),
+                SafeCast.toUint160(params.vTokensAmount),
                 address(vToken)
             );
         }
@@ -155,6 +158,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function increaseLiquidity(
         IncreaseLiquidityParams calldata params
     ) external payable override {
+        if (positionManager.ownerOf(params.positionId) != msg.sender)
+            revert NotPositionOwner();
+
         INFTXVaultV3 vToken = INFTXVaultV3(
             nftxVaultFactory.vault(params.vaultId)
         );
@@ -198,7 +204,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             PERMIT2.transferFrom(
                 msg.sender,
                 address(this),
-                uint160(params.vTokensAmount),
+                SafeCast.toUint160(params.vTokensAmount),
                 address(vToken)
             );
         }
@@ -212,6 +218,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function removeLiquidity(
         RemoveLiquidityParams calldata params
     ) external payable override {
+        if (positionManager.ownerOf(params.positionId) != msg.sender)
+            revert NotPositionOwner();
+
         // decrease liquidity of the position (this contract is excluded from the timelocks)
         positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
@@ -303,6 +312,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 params.nftIds,
                 msg.sender,
                 wethAmt,
+                params.vTokenPremiumLimit,
                 chargeFees
             );
             wethAmt -= wethFees;
@@ -433,6 +443,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.nftIds,
             msg.sender,
             wethLeft,
+            params.vTokenPremiumLimit,
             true
         );
 
@@ -468,6 +479,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
      * @inheritdoc INFTXRouter
      */
     function setLpTimelock(uint256 lpTimelock_) external override onlyOwner {
+        if (lpTimelock_ == 0) revert ZeroLPTimelock();
+
         lpTimelock = lpTimelock_;
     }
 
@@ -583,43 +596,12 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         AddLiquidityParams calldata params,
         INFTXVaultV3 vToken
     ) internal returns (uint256 positionId) {
-        uint256 vTokensAmount = params.vTokensAmount;
-
-        if (params.nftIds.length > 0) {
-            address assetAddress = vToken.assetAddress();
-
-            if (params.nftAmounts.length == 0) {
-                // tranfer NFTs from user to the vault
-                TransferLib.transferFromERC721(
-                    assetAddress,
-                    address(vToken),
-                    params.nftIds
-                );
-            } else {
-                IERC1155(assetAddress).safeBatchTransferFrom(
-                    msg.sender,
-                    address(this),
-                    params.nftIds,
-                    params.nftAmounts,
-                    ""
-                );
-
-                IERC1155(assetAddress).setApprovalForAll(address(vToken), true);
-            }
-
-            // vault won't charge mintFees here as this contract is on exclude list
-            vTokensAmount += vToken.mint(
-                params.nftIds,
-                params.nftAmounts,
-                msg.sender,
-                address(this)
-            );
-        }
-
-        TransferLib.unSafeMaxApprove(
-            address(vToken),
-            address(positionManager),
-            vTokensAmount
+        (uint256 vTokensAmount, bool _isVToken0) = _pullAndMintVTokens(
+            vToken,
+            params.nftIds,
+            params.nftAmounts,
+            params.nftAmounts.length == 0,
+            params.vTokensAmount
         );
 
         // creating struct first to avoid stack too deep. Variables not yet defined are set later
@@ -638,10 +620,30 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 deadline: params.deadline
             });
 
-        bool _isVToken0 = isVToken0(address(vToken));
-        (mintParams.token0, mintParams.token1) = _isVToken0
-            ? (address(vToken), WETH)
-            : (WETH, address(vToken));
+        (
+            mintParams.token0,
+            mintParams.token1,
+            mintParams.amount0Desired,
+            mintParams.amount1Desired,
+            mintParams.amount0Min,
+            mintParams.amount1Min
+        ) = _isVToken0
+            ? (
+                address(vToken),
+                WETH,
+                vTokensAmount,
+                msg.value,
+                params.vTokenMin,
+                params.wethMin
+            )
+            : (
+                WETH,
+                address(vToken),
+                msg.value,
+                vTokensAmount,
+                params.wethMin,
+                params.vTokenMin
+            );
 
         address pool = positionManager.createAndInitializePoolIfNecessary(
             mintParams.token0,
@@ -651,69 +653,21 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         );
 
         // mint position with vtoken and ETH
-        (
-            mintParams.amount0Desired,
-            mintParams.amount1Desired,
-            mintParams.amount0Min,
-            mintParams.amount1Min
-        ) = _isVToken0
-            ? (vTokensAmount, msg.value, params.vTokenMin, params.wethMin)
-            : (msg.value, vTokensAmount, params.wethMin, params.vTokenMin);
-
         (positionId, , , ) = positionManager.mint{value: msg.value}(mintParams);
 
-        uint256 vTokenBalance = vToken.balanceOf(address(this));
-        if (params.nftIds.length > 0) {
-            // vault fees not charged, so instead add timelock to the minted LP NFT
-            positionManager.setLockedUntil(
-                positionId,
-                block.timestamp + lpTimelock
-            );
-
-            if (vTokenBalance > 0) {
-                if (vTokenBalance > vTokenDustThreshold) {
-                    // stake vTokens left in the inventory
-                    TransferLib.unSafeMaxApprove(
-                        address(vToken),
-                        address(inventoryStaking),
-                        vTokenBalance
-                    );
-
-                    inventoryStaking.deposit(
-                        params.vaultId,
-                        vTokenBalance,
-                        msg.sender,
-                        "",
-                        false,
-                        true // forceTimelock as we minted the vTokens with NFTs
-                    );
-                } else {
-                    vToken.transfer(msg.sender, vTokenBalance);
-                }
-            }
-        } else {
-            // if forcing timelock requested
-            if (params.forceTimelock) {
-                positionManager.setLockedUntil(
-                    positionId,
-                    block.timestamp + lpTimelock
-                );
-            }
-
-            // refund vTokens dust (if any left)
-            if (vTokenBalance > 0) {
-                vToken.transfer(msg.sender, vTokenBalance);
-            }
-        }
-
-        // refund extra ETH
-        positionManager.refundETH(msg.sender);
+        _postAddLiq(
+            vToken,
+            params.nftIds,
+            positionId,
+            params.vaultId,
+            params.forceTimelock
+        );
 
         emit AddLiquidity(
+            positionId,
             params.vaultId,
             params.vTokensAmount,
             params.nftIds,
-            positionId,
             pool
         );
     }
@@ -722,46 +676,14 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         IncreaseLiquidityParams calldata params,
         INFTXVaultV3 vToken
     ) internal {
-        uint256 vTokensAmount = params.vTokensAmount;
-
-        if (params.nftIds.length > 0) {
-            address assetAddress = vToken.assetAddress();
-
-            if (params.nftAmounts.length == 0) {
-                // tranfer NFTs from user to the vault
-                TransferLib.transferFromERC721(
-                    assetAddress,
-                    address(vToken),
-                    params.nftIds
-                );
-            } else {
-                IERC1155(assetAddress).safeBatchTransferFrom(
-                    msg.sender,
-                    address(this),
-                    params.nftIds,
-                    params.nftAmounts,
-                    ""
-                );
-
-                IERC1155(assetAddress).setApprovalForAll(address(vToken), true);
-            }
-
-            // vault won't charge mintFees here as this contract is on exclude list
-            vTokensAmount += vToken.mint(
-                params.nftIds,
-                params.nftAmounts,
-                msg.sender,
-                address(this)
-            );
-        }
-
-        TransferLib.unSafeMaxApprove(
-            address(vToken),
-            address(positionManager),
-            vTokensAmount
+        (uint256 vTokensAmount, bool _isVToken0) = _pullAndMintVTokens(
+            vToken,
+            params.nftIds,
+            params.nftAmounts,
+            params.nftAmounts.length == 0,
+            params.vTokensAmount
         );
 
-        bool _isVToken0 = isVToken0(address(vToken));
         (
             uint256 amount0Desired,
             uint256 amount1Desired,
@@ -782,11 +704,83 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             })
         );
 
+        _postAddLiq(
+            vToken,
+            params.nftIds,
+            params.positionId,
+            params.vaultId,
+            params.forceTimelock
+        );
+
+        emit IncreaseLiquidity(
+            params.positionId,
+            params.vaultId,
+            params.vTokensAmount,
+            params.nftIds
+        );
+    }
+
+    function _pullAndMintVTokens(
+        INFTXVaultV3 vToken,
+        uint256[] calldata nftIds,
+        uint256[] calldata nftAmounts,
+        bool is721,
+        uint256 currentVTokensAmount
+    ) internal returns (uint256 vTokensAmount, bool _isVToken0) {
+        vTokensAmount = currentVTokensAmount;
+
+        if (nftIds.length > 0) {
+            address assetAddress = vToken.assetAddress();
+
+            if (is721) {
+                // tranfer NFTs from user to the vault
+                TransferLib.transferFromERC721(
+                    assetAddress,
+                    address(vToken),
+                    nftIds
+                );
+            } else {
+                IERC1155(assetAddress).safeBatchTransferFrom(
+                    msg.sender,
+                    address(this),
+                    nftIds,
+                    nftAmounts,
+                    ""
+                );
+
+                IERC1155(assetAddress).setApprovalForAll(address(vToken), true);
+            }
+
+            // vault won't charge mintFees here as this contract is on exclude list
+            vTokensAmount += vToken.mint(
+                nftIds,
+                nftAmounts,
+                msg.sender,
+                address(this)
+            );
+        }
+
+        TransferLib.unSafeMaxApprove(
+            address(vToken),
+            address(positionManager),
+            vTokensAmount
+        );
+
+        _isVToken0 = isVToken0(address(vToken));
+    }
+
+    function _postAddLiq(
+        INFTXVaultV3 vToken,
+        uint256[] calldata nftIds,
+        uint256 positionId,
+        uint256 vaultId,
+        bool forceTimelock
+    ) internal {
         uint256 vTokenBalance = vToken.balanceOf(address(this));
-        if (params.nftIds.length > 0) {
+        if (nftIds.length > 0) {
             // vault fees not charged, so instead update timelock of the position NFT
             positionManager.setLockedUntil(
-                params.positionId,
+                positionId,
                 block.timestamp + lpTimelock
             );
 
@@ -800,7 +794,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                     );
 
                     inventoryStaking.deposit(
-                        params.vaultId,
+                        vaultId,
                         vTokenBalance,
                         msg.sender,
                         "",
@@ -813,9 +807,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             }
         } else {
             // if forcing timelock requested
-            if (params.forceTimelock) {
+            if (forceTimelock) {
                 positionManager.setLockedUntil(
-                    params.positionId,
+                    positionId,
                     block.timestamp + lpTimelock
                 );
             }
