@@ -65,7 +65,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     // =============================================================
 
     /// @dev The ID of the next token that will be minted. Skips 0
-    uint256 private _nextId = 1;
+    uint256 private _nextId;
 
     /// @dev timelock in seconds
     uint256 public override timelock;
@@ -110,6 +110,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
         timelockExcludeList = timelockExcludeList_;
         descriptor = descriptor_;
+
+        _nextId = 1;
     }
 
     // =============================================================
