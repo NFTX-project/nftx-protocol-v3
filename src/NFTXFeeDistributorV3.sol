@@ -248,7 +248,7 @@ contract NFTXFeeDistributorV3 is
         if (feeReceiver.receiverType == ReceiverType.INVENTORY) {
             TransferLib.unSafeMaxApprove(
                 address(WETH),
-                feeReceiver.receiver,
+                address(inventoryStaking),
                 wethAmountToSend
             );
 
