@@ -1100,7 +1100,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 expectedWethAmount = _calcWethOwed(
             wd.globalWethFeesPerVTokenShareX128,
             wd.preWethFeesPerVTokenShareSnapshotX128,
-            wd.vTokenSharesToWithdraw
+            wd.preVTokenShareBalance
         ) + wd.preWethOwed;
         uint256 expectedVTokenAmount = (wd.preNetVTokenBalance *
             wd.vTokenSharesToWithdraw) / wd.preTotalVTokenShares;
@@ -1210,7 +1210,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 expectedWethAmount = _calcWethOwed(
             wd.globalWethFeesPerVTokenShareX128,
             wd.preWethFeesPerVTokenShareSnapshotX128,
-            wd.vTokenSharesToWithdraw
+            wd.preVTokenShareBalance
         ) + wd.preWethOwed;
         uint256 expectedVTokenAmount = (wd.preNetVTokenBalance *
             wd.vTokenSharesToWithdraw) / wd.preTotalVTokenShares;
@@ -1361,7 +1361,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 expectedWethAmount = _calcWethOwed(
             wd.globalWethFeesPerVTokenShareX128,
             wd.preWethFeesPerVTokenShareSnapshotX128,
-            wd.vTokenSharesToWithdraw
+            wd.preVTokenShareBalance
         ) + wd.preWethOwed;
 
         uint256 expectedVTokenResidue = ((nftQty *
