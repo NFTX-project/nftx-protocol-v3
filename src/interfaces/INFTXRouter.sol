@@ -70,6 +70,7 @@ interface INFTXRouter {
 
     error InvalidEarlyWithdrawPenalty();
     error NotPositionOwner();
+    error ZeroLPTimelock();
 
     // =============================================================
     //                     PUBLIC / EXTERNAL WRITE

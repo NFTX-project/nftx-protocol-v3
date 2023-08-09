@@ -540,6 +540,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     function setDescriptor(
         InventoryStakingDescriptor descriptor_
     ) external override onlyOwner {
+        if (address(descriptor_) == address(0)) revert ZeroAddress();
+
         descriptor = descriptor_;
     }
 
