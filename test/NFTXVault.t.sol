@@ -277,6 +277,7 @@ contract NFTXVaultTests is TestBase {
             tokenIds,
             address(this),
             0,
+            MAX_VTOKEN_PREMIUM_LIMIT,
             false
         );
 
@@ -321,6 +322,7 @@ contract NFTXVaultTests is TestBase {
             tokenIds,
             address(this),
             0,
+            MAX_VTOKEN_PREMIUM_LIMIT,
             false
         );
 
@@ -362,6 +364,7 @@ contract NFTXVaultTests is TestBase {
             tokenIds,
             address(this),
             0,
+            MAX_VTOKEN_PREMIUM_LIMIT,
             false
         );
 
@@ -400,6 +403,7 @@ contract NFTXVaultTests is TestBase {
             tokenIds,
             address(this),
             0,
+            MAX_VTOKEN_PREMIUM_LIMIT,
             false
         );
 
@@ -472,6 +476,7 @@ contract NFTXVaultTests is TestBase {
             rd.tokenIds,
             address(this),
             0,
+            MAX_VTOKEN_PREMIUM_LIMIT,
             false
         );
 
@@ -523,6 +528,7 @@ contract NFTXVaultTests is TestBase {
             specificIds,
             address(this),
             address(this),
+            MAX_VTOKEN_PREMIUM_LIMIT,
             false
         );
 
@@ -573,6 +579,7 @@ contract NFTXVaultTests is TestBase {
             specificIds,
             address(this),
             address(this),
+            MAX_VTOKEN_PREMIUM_LIMIT,
             false
         );
 
@@ -620,6 +627,7 @@ contract NFTXVaultTests is TestBase {
             specificIds,
             address(this),
             address(this),
+            MAX_VTOKEN_PREMIUM_LIMIT,
             false
         );
 
@@ -661,6 +669,7 @@ contract NFTXVaultTests is TestBase {
             specificIds,
             address(this),
             address(this),
+            MAX_VTOKEN_PREMIUM_LIMIT,
             false
         );
 

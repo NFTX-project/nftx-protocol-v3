@@ -239,8 +239,12 @@ contract InventoryStakingDescriptor {
         }
 
         afterDecimals = afterDecimal.toString();
-        for (uint256 i; i < leadingZeroes; ++i) {
+        for (uint256 i; i < leadingZeroes; ) {
             afterDecimals = string.concat("0", afterDecimals);
+
+            unchecked {
+                ++i;
+            }
         }
     }
 }
