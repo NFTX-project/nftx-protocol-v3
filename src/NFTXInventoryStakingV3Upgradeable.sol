@@ -310,59 +310,70 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
 
-        Position storage position = positions[positionId];
-
-        {
-            uint256 positionVTokenShareBalance = position.vTokenShareBalance;
-            require(positionVTokenShareBalance >= vTokenShares);
-        }
-
-        VaultGlobal storage _vaultGlobal;
         address vToken;
+        uint256 vTokenOwed;
+        uint256 wethOwed;
+        uint256 _timelockedUntil;
         {
-            uint256 vaultId = position.vaultId;
-            _vaultGlobal = vaultGlobal[vaultId];
-            vToken = nftxVaultFactory.vault(vaultId);
+            Position storage position = positions[positionId];
+
+            VaultGlobal storage _vaultGlobal;
+            {
+                uint256 vaultId = position.vaultId;
+                _vaultGlobal = vaultGlobal[vaultId];
+                vToken = nftxVaultFactory.vault(vaultId);
+            }
+
+            // cache
+            uint256 _totalVTokenShares = _vaultGlobal.totalVTokenShares;
+            // withdraw vTokens corresponding to the vTokenShares requested
+            vTokenOwed =
+                (IERC20(vToken).balanceOf(address(this)) * vTokenShares) /
+                _totalVTokenShares;
+
+            {
+                // cache
+                uint256 _globalWethFeesPerVTokenShareX128 = _vaultGlobal
+                    .globalWethFeesPerVTokenShareX128;
+                // withdraw all the weth fees accrued
+                {
+                    uint256 positionVTokenShareBalance = position
+                        .vTokenShareBalance;
+                    require(positionVTokenShareBalance >= vTokenShares);
+
+                    wethOwed =
+                        _calcWethOwed(
+                            _globalWethFeesPerVTokenShareX128,
+                            position.wethFeesPerVTokenShareSnapshotX128,
+                            positionVTokenShareBalance
+                        ) +
+                        position.wethOwed;
+                }
+                position
+                    .wethFeesPerVTokenShareSnapshotX128 = _globalWethFeesPerVTokenShareX128;
+                position.wethOwed = 0;
+            }
+
+            // cache
+            _timelockedUntil = position.timelockedUntil;
+
+            if (block.timestamp <= _timelockedUntil) {
+                // Eg: timelock = 10 days, vTokenOwed = 100, penalty% = 5%
+                // Case 1: Instant withdraw, with 10 days left
+                // penaltyAmt = 100 * 5% = 5
+                // Case 2: With 2 days timelock left
+                // penaltyAmt = (100 * 5%) * 2 / 10 = 1
+                uint256 vTokenPenalty = ((_timelockedUntil - block.timestamp) *
+                    vTokenOwed *
+                    earlyWithdrawPenaltyInWei) / (timelock * BASE);
+                vTokenOwed -= vTokenPenalty;
+            }
+
+            // in case of penalty, more shares are burned than the corresponding vToken balance
+            // resulting in an increase of `pricePerShareVToken`, hence the penalty collected is distributed amongst other stakers
+            _vaultGlobal.totalVTokenShares = _totalVTokenShares - vTokenShares;
+            position.vTokenShareBalance -= vTokenShares;
         }
-
-        // cache
-        uint256 _totalVTokenShares = _vaultGlobal.totalVTokenShares;
-        // withdraw vTokens corresponding to the vTokenShares requested
-        uint256 vTokenOwed = (IERC20(vToken).balanceOf(address(this)) *
-            vTokenShares) / _totalVTokenShares;
-
-        // cache
-        uint256 _globalWethFeesPerVTokenShareX128 = _vaultGlobal
-            .globalWethFeesPerVTokenShareX128;
-        // withdraw all the weth fees accrued
-        uint256 wethOwed = _calcWethOwed(
-            _globalWethFeesPerVTokenShareX128,
-            position.wethFeesPerVTokenShareSnapshotX128,
-            positionVTokenShareBalance
-        ) + position.wethOwed;
-        position
-            .wethFeesPerVTokenShareSnapshotX128 = _globalWethFeesPerVTokenShareX128;
-        position.wethOwed = 0;
-
-        // cache
-        uint256 _timelockedUntil = position.timelockedUntil;
-
-        if (block.timestamp <= _timelockedUntil) {
-            // Eg: timelock = 10 days, vTokenOwed = 100, penalty% = 5%
-            // Case 1: Instant withdraw, with 10 days left
-            // penaltyAmt = 100 * 5% = 5
-            // Case 2: With 2 days timelock left
-            // penaltyAmt = (100 * 5%) * 2 / 10 = 1
-            uint256 vTokenPenalty = ((_timelockedUntil - block.timestamp) *
-                vTokenOwed *
-                earlyWithdrawPenaltyInWei) / (timelock * BASE);
-            vTokenOwed -= vTokenPenalty;
-        }
-
-        // in case of penalty, more shares are burned than the corresponding vToken balance
-        // resulting in an increase of `pricePerShareVToken`, hence the penalty collected is distributed amongst other stakers
-        _vaultGlobal.totalVTokenShares = _totalVTokenShares - vTokenShares;
-        position.vTokenShareBalance -= vTokenShares;
 
         uint256 nftCount = nftIds.length;
         if (nftCount > 0) {
@@ -482,7 +493,8 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         uint256 totalWethOwed;
         uint256 wethOwed;
-        for (uint256 i; i < positionIds.length; ) {
+        uint256 len = positionIds.length;
+        for (uint256 i; i < len; ) {
             if (ownerOf(positionIds[i]) != msg.sender)
                 revert NotPositionOwner();
 

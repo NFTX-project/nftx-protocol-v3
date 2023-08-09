@@ -246,9 +246,14 @@ contract NFTXVaultUpgradeableV3 is
         {
             uint256 count;
             if (is1155) {
-                for (uint256 i; i < idsIn.length; ++i) {
+                uint256 len = idsIn.length;
+                for (uint256 i; i < len; ) {
                     if (amounts[i] == 0) revert TransferAmountIsZero();
                     count += amounts[i];
+
+                    unchecked {
+                        ++i;
+                    }
                 }
             } else {
                 count = idsIn.length;
@@ -420,8 +425,13 @@ contract NFTXVaultUpgradeableV3 is
             uint256 balance = IERC20Upgradeable(token).balanceOf(address(this));
             IERC20Upgradeable(token).safeTransfer(msg.sender, balance);
         } else if (tt == TokenType.ERC721) {
-            for (uint256 i; i < ids.length; ++i) {
+            uint256 len = ids.length;
+            for (uint256 i; i < len; ) {
                 _transferERC721(token, msg.sender, ids[i]);
+
+                unchecked {
+                    ++i;
+                }
             }
         } else {
             IERC1155Upgradeable(token).safeBatchTransferFrom(
@@ -495,8 +505,12 @@ contract NFTXVaultUpgradeableV3 is
     function allHoldings() external view override returns (uint256[] memory) {
         uint256 len = _holdings.length();
         uint256[] memory idArray = new uint256[](len);
-        for (uint256 i; i < len; ++i) {
+        for (uint256 i; i < len; ) {
             idArray[i] = _holdings.at(i);
+
+            unchecked {
+                ++i;
+            }
         }
         return idArray;
     }
@@ -650,7 +664,8 @@ contract NFTXVaultUpgradeableV3 is
 
         if (!is1155) {
             address _assetAddress = assetAddress;
-            for (uint256 i; i < tokenIds.length; ++i) {
+            uint256 len = tokenIds.length;
+            for (uint256 i; i < len; ) {
                 uint256 tokenId = tokenIds[i];
                 // We may already own the NFT here so we check in order:
                 // Does the vault own it?
@@ -664,8 +679,12 @@ contract NFTXVaultUpgradeableV3 is
                     timestamp: uint48(block.timestamp),
                     depositor: depositor
                 });
+
+                unchecked {
+                    ++i;
+                }
             }
-            return tokenIds.length;
+            return len;
         } else {
             // This is technically a check, so placing it before the effect.
             IERC1155Upgradeable(assetAddress).safeBatchTransferFrom(
@@ -677,7 +696,8 @@ contract NFTXVaultUpgradeableV3 is
             );
 
             uint256 count;
-            for (uint256 i; i < tokenIds.length; ++i) {
+            uint256 len = tokenIds.length;
+            for (uint256 i; i < len; ) {
                 uint256 tokenId = tokenIds[i];
                 uint256 amount = amounts[i];
 
@@ -696,6 +716,10 @@ contract NFTXVaultUpgradeableV3 is
                         timestamp: uint48(block.timestamp)
                     })
                 );
+
+                unchecked {
+                    ++i;
+                }
             }
             return count;
         }
@@ -729,15 +753,18 @@ contract NFTXVaultUpgradeableV3 is
             depositors = new address[](specificIds.length);
         }
 
-        for (uint256 i; i < specificIds.length; ++i) {
+        uint256 len = specificIds.length;
+        for (uint256 i; i < len; ) {
             uint256 tokenId = specificIds[i];
 
             if (_is1155) {
-                uint256 _qty1155 = _quantity1155[tokenId];
-                _quantity1155[tokenId] = _qty1155 - 1;
-                // updated _quantity1155 is 0 now, so remove from holdings
-                if (_qty1155 == 1) {
-                    _holdings.remove(tokenId);
+                {
+                    uint256 _qty1155 = _quantity1155[tokenId];
+                    _quantity1155[tokenId] = _qty1155 - 1;
+                    // updated _quantity1155 is 0 now, so remove from holdings
+                    if (_qty1155 == 1) {
+                        _holdings.remove(tokenId);
+                    }
                 }
 
                 IERC1155Upgradeable(_assetAddress).safeTransferFrom(
@@ -791,6 +818,10 @@ contract NFTXVaultUpgradeableV3 is
 
                 _holdings.remove(tokenId);
                 _transferERC721(_assetAddress, to, tokenId);
+            }
+
+            unchecked {
+                ++i;
             }
         }
         _afterRedeemHook(specificIds);
@@ -862,7 +893,8 @@ contract NFTXVaultUpgradeableV3 is
             }
 
             uint256 sumWethPremium;
-            for (uint256 i; i < vTokenPremiums.length; ) {
+            uint256 len = vTokenPremiums.length;
+            for (uint256 i; i < len; ) {
                 if (vTokenPremiums[i] > 0) {
                     uint256 wethPremium = (netETHPremiumForDepositors *
                         vTokenPremiums[i]) / netVTokenPremium;

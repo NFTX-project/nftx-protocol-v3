@@ -15,7 +15,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
     event UpdateFeeReceiverAlloc(address receiver, uint256 allocPoint);
     event UpdateFeeReceiverAddress(address oldReceiver, address newReceiver);
     event RemoveFeeReceiver(address receiver);
-    event UpdateTreasuryAddress(address newTreasury);
+    event UpdateTreasuryAddress(address oldTreasury, address newTreasury);
     event PauseDistribution(bool paused);
 
     // UniswapV3FactoryUpgradeable#setFeeDistributor
@@ -295,7 +295,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         assertTrue(preTreasury != newTreasury);
 
         vm.expectEmit(false, false, false, true);
-        emit UpdateTreasuryAddress(newTreasury);
+        emit UpdateTreasuryAddress(preTreasury, newTreasury);
         feeDistributor.setTreasuryAddress(newTreasury);
 
         address postTreasury = feeDistributor.treasury();
