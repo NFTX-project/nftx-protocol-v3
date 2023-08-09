@@ -73,6 +73,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
     uint256[] emptyIds;
     uint256[] emptyAmounts;
+    uint256 constant MAX_VTOKEN_PREMIUM_LIMIT = type(uint256).max;
 
     function setUp() public virtual {
         // to prevent underflow during calculations involving block.timestamp

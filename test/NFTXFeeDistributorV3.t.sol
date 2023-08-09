@@ -255,6 +255,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
                 positionId: positionId,
                 vaultId: VAULT_ID,
                 nftIds: nftIds,
+                vTokenPremiumLimit: MAX_VTOKEN_PREMIUM_LIMIT,
                 liquidity: liquidity,
                 amount0Min: 0,
                 amount1Min: 0,
