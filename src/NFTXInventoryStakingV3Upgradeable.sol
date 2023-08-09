@@ -60,12 +60,16 @@ contract NFTXInventoryStakingV3Upgradeable is
     // "constants": only set during initialization
     ITimelockExcludeList public override timelockExcludeList;
 
+    uint256 constant MAX_TIMELOCK = 14 days;
+    uint256 constant MAX_EARLY_WITHDRAW_PENALTY = 1 ether;
+    uint256 constant BASE = 1 ether;
+
     // =============================================================
     //                          VARIABLES
     // =============================================================
 
     /// @dev The ID of the next token that will be minted. Skips 0
-    uint256 private _nextId = 1;
+    uint256 private _nextId;
 
     /// @dev timelock in seconds
     uint256 public override timelock;
@@ -103,13 +107,15 @@ contract NFTXInventoryStakingV3Upgradeable is
         __ERC721PermitUpgradeable_init("NFTX Inventory Staking", "xNFT", "1");
         __Pausable_init();
 
-        if (timelock_ > 14 days) revert TimelockTooLong();
-        if (earlyWithdrawPenaltyInWei_ > 1 ether)
+        if (timelock_ > MAX_TIMELOCK) revert TimelockTooLong();
+        if (earlyWithdrawPenaltyInWei_ > MAX_EARLY_WITHDRAW_PENALTY)
             revert InvalidEarlyWithdrawPenalty();
         timelock = timelock_;
         earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
         timelockExcludeList = timelockExcludeList_;
         descriptor = descriptor_;
+
+        _nextId = 1;
     }
 
     // =============================================================
@@ -246,6 +252,8 @@ contract NFTXInventoryStakingV3Upgradeable is
         bool viaPermit2,
         bool forceTimelock
     ) external {
+        if (ownerOf(positionId) != msg.sender) revert NotPositionOwner();
+
         Position storage position = positions[positionId];
 
         uint256 vaultId = position.vaultId;
@@ -294,7 +302,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     function withdraw(
         uint256 positionId,
         uint256 vTokenShares,
-        uint256[] calldata nftIds
+        uint256[] calldata nftIds,
+        uint256 vTokenPremiumLimit
     ) external payable override {
         onlyOwnerIfPaused(2);
 
@@ -302,12 +311,18 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         Position storage position = positions[positionId];
 
-        uint256 positionVTokenShareBalance = position.vTokenShareBalance;
-        require(positionVTokenShareBalance >= vTokenShares);
+        {
+            uint256 positionVTokenShareBalance = position.vTokenShareBalance;
+            require(positionVTokenShareBalance >= vTokenShares);
+        }
 
-        uint256 vaultId = position.vaultId;
-        VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
-        address vToken = nftxVaultFactory.vault(vaultId);
+        VaultGlobal storage _vaultGlobal;
+        address vToken;
+        {
+            uint256 vaultId = position.vaultId;
+            _vaultGlobal = vaultGlobal[vaultId];
+            vToken = nftxVaultFactory.vault(vaultId);
+        }
 
         // withdraw vTokens corresponding to the vTokenShares requested
         uint256 vTokenOwed = (IERC20(vToken).balanceOf(address(this)) *
@@ -334,7 +349,7 @@ contract NFTXInventoryStakingV3Upgradeable is
             // penaltyAmt = (100 * 5%) * 2 / 10 = 1
             uint256 vTokenPenalty = ((_timelockedUntil - block.timestamp) *
                 vTokenOwed *
-                earlyWithdrawPenaltyInWei) / (timelock * 1 ether);
+                earlyWithdrawPenaltyInWei) / (timelock * BASE);
             vTokenOwed -= vTokenPenalty;
         }
 
@@ -346,31 +361,27 @@ contract NFTXInventoryStakingV3Upgradeable is
         uint256 nftCount = nftIds.length;
         if (nftCount > 0) {
             // check if we have sufficient vTokens
-            uint256 requiredVTokens = nftCount * 1 ether;
+            uint256 requiredVTokens = nftCount * BASE;
             if (vTokenOwed < requiredVTokens) revert InsufficientVTokens();
 
             {
-                address vault = nftxVaultFactory.vault(vaultId);
-
-                INFTXVaultV3(vault).redeem{value: msg.value}(
+                INFTXVaultV3(vToken).redeem{value: msg.value}(
                     nftIds,
                     msg.sender,
                     0,
+                    vTokenPremiumLimit,
                     _timelockedUntil == 0 // forcing fees for positions which never were under timelock (or else they can bypass redeem fees as deposit was made in vTokens)
                 );
 
                 // send vToken residue
                 uint256 vTokenResidue = vTokenOwed - requiredVTokens;
                 if (vTokenResidue > 0) {
-                    IERC20(vault).transfer(msg.sender, vTokenResidue);
+                    IERC20(vToken).transfer(msg.sender, vTokenResidue);
                 }
             }
         } else {
             // transfer tokens to the user
-            IERC20(nftxVaultFactory.vault(vaultId)).transfer(
-                msg.sender,
-                vTokenOwed
-            );
+            IERC20(vToken).transfer(msg.sender, vTokenOwed);
         }
         WETH.transfer(msg.sender, wethOwed);
 
@@ -515,7 +526,7 @@ contract NFTXInventoryStakingV3Upgradeable is
      * @inheritdoc INFTXInventoryStakingV3
      */
     function setTimelock(uint256 timelock_) external override onlyOwner {
-        if (timelock_ > 14 days) revert TimelockTooLong();
+        if (timelock_ > MAX_TIMELOCK) revert TimelockTooLong();
 
         timelock = timelock_;
         emit UpdateTimelock(timelock_);
@@ -527,7 +538,7 @@ contract NFTXInventoryStakingV3Upgradeable is
     function setEarlyWithdrawPenalty(
         uint256 earlyWithdrawPenaltyInWei_
     ) external override onlyOwner {
-        if (earlyWithdrawPenaltyInWei_ > 1 ether)
+        if (earlyWithdrawPenaltyInWei_ > MAX_EARLY_WITHDRAW_PENALTY)
             revert InvalidEarlyWithdrawPenalty();
 
         earlyWithdrawPenaltyInWei = earlyWithdrawPenaltyInWei_;
@@ -540,6 +551,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     function setDescriptor(
         InventoryStakingDescriptor descriptor_
     ) external override onlyOwner {
+        if (address(descriptor_) == address(0)) revert ZeroAddress();
+
         descriptor = descriptor_;
     }
 
@@ -557,7 +570,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         address vToken = nftxVaultFactory.vault(vaultId);
 
         return
-            (IERC20(vToken).balanceOf(address(this)) * 1 ether) /
+            (IERC20(vToken).balanceOf(address(this)) * BASE) /
             _vaultGlobal.totalVTokenShares;
     }
 
@@ -582,7 +595,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         bytes4 interfaceId
     )
         public
-        pure
+        view
         override(
             ERC1155ReceiverUpgradeable,
             ERC721EnumerableUpgradeable,
@@ -592,7 +605,8 @@ contract NFTXInventoryStakingV3Upgradeable is
     {
         return
             interfaceId == type(ERC721PermitUpgradeable).interfaceId ||
-            interfaceId == type(ERC1155ReceiverUpgradeable).interfaceId;
+            interfaceId == type(ERC1155ReceiverUpgradeable).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     function tokenURI(

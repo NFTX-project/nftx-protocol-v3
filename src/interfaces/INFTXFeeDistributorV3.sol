@@ -63,11 +63,6 @@ interface INFTXFeeDistributorV3 {
 
     event UpdateTreasuryAddress(address newTreasury);
     event PauseDistribution(bool paused);
-
-    event AddFeeReceiver(address receiver, uint256 allocPoint);
-    event UpdateFeeReceiverAlloc(address receiver, uint256 allocPoint);
-    event UpdateFeeReceiverAddress(address oldReceiver, address newReceiver);
-    event RemoveFeeReceiver(address receiver);
     event NewRewardFeeTier(uint24 rewardFeeTier);
     event NewNFTXRouter(address nftxRouter);
 
@@ -76,7 +71,7 @@ interface INFTXFeeDistributorV3 {
     // =============================================================
 
     error IdOutOfBounds();
-    error AddressIsZero();
+    error ZeroAddress();
 
     // =============================================================
     //                     PUBLIC / EXTERNAL WRITE
@@ -102,24 +97,7 @@ interface INFTXFeeDistributorV3 {
     //                        ONLY OWNER WRITE
     // =============================================================
 
-    function addReceiver(
-        address receiver,
-        uint256 allocPoint,
-        ReceiverType receiverType
-    ) external;
-
-    function changeReceiverAlloc(
-        uint256 receiverId,
-        uint256 allocPoint
-    ) external;
-
-    function changeReceiverAddress(
-        uint256 receiverId,
-        address receiver,
-        ReceiverType receiverType
-    ) external;
-
-    function removeReceiver(uint256 receiverId) external;
+    function setReceivers(FeeReceiver[] memory feeReceivers_) external;
 
     /**
      * @notice Updating reward fee tier here won't change cardinality for existing UniV3 pools already deployed with `rewardFeeTier_`. That has to be increased externally for each pool.

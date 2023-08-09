@@ -165,6 +165,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256 vaultId,
         uint256[] calldata idsIn,
         uint256[] calldata idsOut,
+        uint256 vTokenPremiumLimit,
         address payable to
     ) external payable onlyOwnerIfPaused {
         // Transfer tokens from the message sender to the vault
@@ -178,6 +179,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             idsOut,
             msg.sender,
             to,
+            vTokenPremiumLimit,
             true
         );
 
@@ -202,6 +204,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256[] calldata idsOut,
         bytes calldata executeCallData,
         address payable to,
+        uint256 vTokenPremiumLimit,
         bool deductRoyalty
     ) external payable onlyOwnerIfPaused {
         // Wrap ETH into WETH for our contract
@@ -221,6 +224,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             idsOut,
             to,
             wethLeft,
+            vTokenPremiumLimit,
             true
         );
 
@@ -241,6 +245,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256 amountIn; // Input ERC20 amount
         uint256 vaultId; // The ID of the NFTX vault
         uint256[] idsOut; // An array of any token IDs to be redeemed
+        uint256 vTokenPremiumLimit;
         bytes executeToWETHCallData; // Encoded calldata for "ERC20 to WETH swap" for Universal Router's `execute` function
         bytes executeToVTokenCallData; // Encoded calldata for "WETH to vToken swap" for Universal Router's `execute` function
         address payable to; // The recipient of the token IDs from the tx
@@ -357,6 +362,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256[] calldata idsIn,
         uint256[] calldata amounts,
         uint256[] calldata idsOut,
+        uint256 vTokenPremiumLimit,
         address payable to
     ) external payable onlyOwnerIfPaused {
         address vault = nftxVaultFactory.vault(vaultId);
@@ -379,6 +385,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             idsOut,
             msg.sender,
             to,
+            vTokenPremiumLimit,
             true
         );
 
@@ -450,6 +457,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             params.idsOut,
             params.to,
             wethLeft,
+            params.vTokenPremiumLimit,
             true
         );
 
