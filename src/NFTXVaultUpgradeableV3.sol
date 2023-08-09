@@ -861,18 +861,14 @@ contract NFTXVaultUpgradeableV3 is
                 WETH.transferFrom(msg.sender, address(this), ethAmount);
             }
 
-            WETH.transfer(
-                address(feeDistributor),
-                ethAmount - netETHPremiumForDepositors
-            );
-            feeDistributor.distribute(vaultId);
-
+            uint256 sumWethPremium;
             for (uint256 i; i < vTokenPremiums.length; ) {
                 if (vTokenPremiums[i] > 0) {
                     uint256 wethPremium = (netETHPremiumForDepositors *
                         vTokenPremiums[i]) / netVTokenPremium;
 
                     WETH.transfer(depositors[i], wethPremium);
+                    sumWethPremium += wethPremium;
 
                     emit PremiumShared(depositors[i], wethPremium);
                 }
@@ -881,6 +877,9 @@ contract NFTXVaultUpgradeableV3 is
                     ++i;
                 }
             }
+
+            WETH.transfer(address(feeDistributor), ethAmount - sumWethPremium);
+            feeDistributor.distribute(vaultId);
         }
     }
 
