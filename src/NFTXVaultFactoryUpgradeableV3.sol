@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity =0.8.15;
 
 // inheriting
 import {UpgradeableBeacon} from "@src/custom/proxy/UpgradeableBeacon.sol";
@@ -27,6 +27,11 @@ contract NFTXVaultFactoryUpgradeableV3 is
     PausableUpgradeable,
     UpgradeableBeacon
 {
+    // =============================================================
+    //                            CONSTANTS
+    // =============================================================
+    uint256 MAX_DEPOSITOR_PREMIUM_SHARE = 1 ether;
+
     // =============================================================
     //                            VARIABLES
     // =============================================================
@@ -69,6 +74,9 @@ contract NFTXVaultFactoryUpgradeableV3 is
         // We use a beacon proxy so that every child contract follows the same implementation code.
         __UpgradeableBeacon__init(vaultImpl);
         setFactoryFees(0.1 ether, 0.1 ether, 0.1 ether);
+
+        if(twapInterval_ == 0) revert ZeroTwapInterval();
+        if(depositorPremiumShare_ > MAX_DEPOSITOR_PREMIUM_SHARE) revert DepositorPremiumShareExceedsLimit();
 
         twapInterval = twapInterval_;
         premiumDuration = premiumDuration_;
@@ -207,7 +215,11 @@ contract NFTXVaultFactoryUpgradeableV3 is
      * @inheritdoc INFTXVaultFactoryV3
      */
     function setTwapInterval(uint32 twapInterval_) external override onlyOwner {
+        if(twapInterval_ == 0) revert ZeroTwapInterval();
+
         twapInterval = twapInterval_;
+
+        emit NewTwapInterval(twapInterval_);
     }
 
     /**
@@ -217,6 +229,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
         uint256 premiumDuration_
     ) external override onlyOwner {
         premiumDuration = premiumDuration_;
+
+        emit NewPremiumDuration(premiumDuration_);
     }
 
     /**
@@ -224,6 +238,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
      */
     function setPremiumMax(uint256 premiumMax_) external override onlyOwner {
         premiumMax = premiumMax_;
+
+        emit NewPremiumMax(premiumMax_);
     }
 
     /**
@@ -232,7 +248,11 @@ contract NFTXVaultFactoryUpgradeableV3 is
     function setDepositorPremiumShare(
         uint256 depositorPremiumShare_
     ) external override onlyOwner {
+        if(depositorPremiumShare_ > MAX_DEPOSITOR_PREMIUM_SHARE) revert DepositorPremiumShareExceedsLimit();
+
         depositorPremiumShare = depositorPremiumShare_;
+
+        emit NewDepositorPremiumShare(depositorPremiumShare_);
     }
 
     // =============================================================
