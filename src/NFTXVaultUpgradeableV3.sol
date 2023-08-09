@@ -173,7 +173,7 @@ contract NFTXVaultUpgradeableV3 is
 
         uint256 ethOrWethAmt;
         if (wethAmount > 0) {
-            require(msg.value == 0);
+            if (msg.value > 0) revert ETHSent();
 
             ethOrWethAmt = wethAmount;
         } else {
@@ -410,7 +410,7 @@ contract NFTXVaultUpgradeableV3 is
         uint256[] calldata ids,
         uint256[] calldata amounts
     ) external onlyOwner {
-        require(address(token) != assetAddress);
+        if (address(token) == assetAddress) revert CantRescueAssetToken();
 
         if (tt == TokenType.ERC20) {
             uint256 balance = IERC20Upgradeable(token).balanceOf(address(this));
@@ -550,7 +550,7 @@ contract NFTXVaultUpgradeableV3 is
             address[] memory depositors
         )
     {
-        require(amount > 0);
+        if (amount == 0) revert ZeroAmount();
 
         // max possible array lengths
         premiums = new uint256[](amount);

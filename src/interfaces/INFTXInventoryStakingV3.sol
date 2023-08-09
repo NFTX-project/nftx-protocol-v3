@@ -126,6 +126,10 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     error VaultIdMismatch();
     error ParentChildSame();
     error InsufficientVTokens();
+    error InsufficientVTokenShares();
+    error SenderNotFeeDistributor();
+    error PositionNotCreatedWithVTokens();
+    error ZeroVTokenShares();
 
     // =============================================================
     //                           INIT

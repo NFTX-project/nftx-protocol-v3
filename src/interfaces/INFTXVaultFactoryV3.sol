@@ -77,6 +77,7 @@ interface INFTXVaultFactoryV3 is IBeacon {
     error VaultImplementationNotSet();
     error FeeExceedsLimit();
     error CallerIsNotVault();
+    error ZeroAddress();
 
     // =============================================================
     //                           INIT

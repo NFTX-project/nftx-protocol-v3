@@ -75,6 +75,8 @@ interface INFTXFeeDistributorV3 {
 
     error IdOutOfBounds();
     error AddressIsZero();
+    error SenderNotNFTXRouter();
+    error FeeTierNotEnabled();
 
     // =============================================================
     //                     PUBLIC / EXTERNAL WRITE

@@ -177,7 +177,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
     function setFeeDistributor(
         address feeDistributor_
     ) external override onlyOwner {
-        require(feeDistributor_ != address(0));
+        if (feeDistributor_ == address(0)) revert ZeroAddress();
+
         emit NewFeeDistributor(feeDistributor, feeDistributor_);
         feeDistributor = feeDistributor_;
     }
