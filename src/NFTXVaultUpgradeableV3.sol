@@ -566,65 +566,67 @@ contract NFTXVaultUpgradeableV3 is
             address[] memory depositors
         )
     {
-        require(amount > 0);
+        if (_holdings.contains(tokenId)) {
+            if (amount == 0) revert ZeroAmountRequested();
 
-        // max possible array lengths
-        premiums = new uint256[](amount);
-        depositors = new address[](amount);
+            // max possible array lengths
+            premiums = new uint256[](amount);
+            depositors = new address[](amount);
 
-        uint256 _pointerIndex1155 = pointerIndex1155[tokenId];
+            uint256 _pointerIndex1155 = pointerIndex1155[tokenId];
 
-        uint256 i = 0;
-        // cache
-        uint256 premiumMax = vaultFactory.premiumMax();
-        uint256 premiumDuration = vaultFactory.premiumDuration();
-        uint256 _tokenPositionLength = depositInfo1155[tokenId].length;
-        while (true) {
-            if (_tokenPositionLength <= i) revert NFTInventoryExceeded();
+            uint256 i = 0;
+            // cache
+            uint256 premiumMax = vaultFactory.premiumMax();
+            uint256 premiumDuration = vaultFactory.premiumDuration();
+            uint256 _tokenPositionLength = depositInfo1155[tokenId].length;
+            while (true) {
+                if (_tokenPositionLength <= i) revert NFTInventoryExceeded();
 
-            DepositInfo1155 memory depositInfo = depositInfo1155[tokenId][
-                _pointerIndex1155 + i
-            ];
+                DepositInfo1155 memory depositInfo = depositInfo1155[tokenId][
+                    _pointerIndex1155 + i
+                ];
 
-            if (depositInfo.qty > amount) {
-                uint256 vTokenPremium = _getVTokenPremium(
-                    depositInfo.timestamp,
-                    premiumMax,
-                    premiumDuration
-                ) * amount;
-                netPremium += vTokenPremium;
+                if (depositInfo.qty > amount) {
+                    uint256 vTokenPremium = _getVTokenPremium(
+                        depositInfo.timestamp,
+                        premiumMax,
+                        premiumDuration
+                    ) * amount;
+                    netPremium += vTokenPremium;
 
-                premiums[i] = vTokenPremium;
-                depositors[i] = depositInfo.depositor;
+                    premiums[i] = vTokenPremium;
+                    depositors[i] = depositInfo.depositor;
 
-                // end loop
-                break;
-            } else {
-                amount -= depositInfo.qty;
+                    // end loop
+                    break;
+                } else {
+                    amount -= depositInfo.qty;
 
-                uint256 vTokenPremium = _getVTokenPremium(
-                    depositInfo.timestamp,
-                    premiumMax,
-                    premiumDuration
-                ) * depositInfo.qty;
-                netPremium += vTokenPremium;
+                    uint256 vTokenPremium = _getVTokenPremium(
+                        depositInfo.timestamp,
+                        premiumMax,
+                        premiumDuration
+                    ) * depositInfo.qty;
+                    netPremium += vTokenPremium;
 
-                premiums[i] = vTokenPremium;
-                depositors[i] = depositInfo.depositor;
+                    premiums[i] = vTokenPremium;
+                    depositors[i] = depositInfo.depositor;
 
-                unchecked {
-                    ++i;
+                    unchecked {
+                        ++i;
+                    }
                 }
             }
-        }
 
-        uint256 finalArrayLength = i + 1;
+            uint256 finalArrayLength = i + 1;
 
-        if (finalArrayLength < premiums.length) {
-            // change array length
-            assembly {
-                mstore(premiums, finalArrayLength)
-                mstore(depositors, finalArrayLength)
+            if (finalArrayLength < premiums.length) {
+                // change array length
+                assembly {
+                    mstore(premiums, finalArrayLength)
+                    mstore(depositors, finalArrayLength)
+                }
             }
         }
     }

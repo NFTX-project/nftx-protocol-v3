@@ -132,6 +132,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     error HoldingsUpdationFailed();
     error InvalidToken();
     error PremiumLimitExceeded();
+    error ZeroAmountRequested();
 
     // =============================================================
     //                           INIT
