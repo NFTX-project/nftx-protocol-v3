@@ -581,7 +581,8 @@ contract NFTXVaultUpgradeableV3 is
             uint256 premiumDuration = vaultFactory.premiumDuration();
             uint256 _tokenPositionLength = depositInfo1155[tokenId].length;
             while (true) {
-                if (_tokenPositionLength <= i) revert NFTInventoryExceeded();
+                if (_tokenPositionLength <= _pointerIndex1155 + i)
+                    revert NFTInventoryExceeded();
 
                 DepositInfo1155 memory depositInfo = depositInfo1155[tokenId][
                     _pointerIndex1155 + i
