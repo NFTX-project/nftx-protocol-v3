@@ -196,7 +196,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         {
             address assetAddress = INFTXVaultV3(vToken).assetAddress();
 
-            if (amounts.length == 0) {
+            if (!INFTXVaultV3(vToken).is1155()) {
                 // tranfer NFTs from user to the vault
                 TransferLib.transferFromERC721(
                     assetAddress,

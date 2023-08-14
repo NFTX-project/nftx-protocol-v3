@@ -355,7 +355,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         );
         address assetAddress = INFTXVaultV3(address(vToken)).assetAddress();
 
-        if (params.nftAmounts.length == 0) {
+        if (!vToken.is1155()) {
             // tranfer NFTs from user to the vault
             TransferLib.transferFromERC721(
                 assetAddress,
@@ -610,7 +610,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vToken,
             params.nftIds,
             params.nftAmounts,
-            params.nftAmounts.length == 0,
+            !vToken.is1155(),
             params.vTokensAmount
         );
 
@@ -692,7 +692,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             vToken,
             params.nftIds,
             params.nftAmounts,
-            params.nftAmounts.length == 0,
+            !vToken.is1155(),
             params.vTokensAmount
         );
 
