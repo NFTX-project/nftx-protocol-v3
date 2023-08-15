@@ -224,26 +224,30 @@ contract NFTXInventoryStakingV3Upgradeable is
             );
         }
 
-        VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
-
         _mint(recipient, (positionId = _nextId++));
 
-        uint256 vTokenShares = _mintVTokenShares(
-            _vaultGlobal,
-            amount,
-            preVTokenBalance
-        );
+        {
+            VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
 
-        positions[positionId] = Position({
-            nonce: 0,
-            vaultId: vaultId,
-            timelockedUntil: _getTimelockedUntil(vaultId),
-            vTokenTimelockedUntil: 0,
-            vTokenShareBalance: vTokenShares,
-            wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
-                .globalWethFeesPerVTokenShareX128,
-            wethOwed: 0
-        });
+            uint256 vTokenShares = _mintVTokenShares(
+                _vaultGlobal,
+                amount,
+                preVTokenBalance
+            );
+
+            uint256 _timelock = timelock;
+            positions[positionId] = Position({
+                nonce: 0,
+                vaultId: vaultId,
+                timelockedUntil: _getTimelockedUntil(vaultId, _timelock),
+                timelock: _timelock,
+                vTokenTimelockedUntil: 0,
+                vTokenShareBalance: vTokenShares,
+                wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
+                    .globalWethFeesPerVTokenShareX128,
+                wethOwed: 0
+            });
+        }
 
         emit DepositWithNFT(vaultId, positionId, tokenIds, amounts);
     }
@@ -373,7 +377,7 @@ contract NFTXInventoryStakingV3Upgradeable is
                 // penaltyAmt = (100 * 5%) * 2 / 10 = 1
                 uint256 vTokenPenalty = ((_timelockedUntil - block.timestamp) *
                     vTokenOwed *
-                    earlyWithdrawPenaltyInWei) / (timelock * BASE);
+                    earlyWithdrawPenaltyInWei) / (position.timelock * BASE);
                 vTokenOwed -= vTokenPenalty;
             }
 
@@ -733,10 +737,12 @@ contract NFTXInventoryStakingV3Upgradeable is
             preVTokenBalance
         );
 
+        uint256 _timelock = timelock;
         positions[positionId] = Position({
             nonce: 0,
             vaultId: vaultId,
-            timelockedUntil: forceTimelock ? block.timestamp + timelock : 0,
+            timelockedUntil: forceTimelock ? block.timestamp + _timelock : 0,
+            timelock: _timelock,
             vTokenTimelockedUntil: block.timestamp + VTOKEN_TIMELOCK,
             vTokenShareBalance: vTokenShares,
             wethFeesPerVTokenShareSnapshotX128: _vaultGlobal
@@ -782,7 +788,9 @@ contract NFTXInventoryStakingV3Upgradeable is
             _mintVTokenShares(_vaultGlobal, amount, preVTokenBalance);
 
         if (forceTimelock) {
-            position.timelockedUntil = block.timestamp + timelock;
+            uint256 _timelock = timelock;
+            position.timelockedUntil = block.timestamp + _timelock;
+            position.timelock = _timelock;
         }
         position.vTokenTimelockedUntil = block.timestamp + VTOKEN_TIMELOCK;
 
@@ -811,12 +819,13 @@ contract NFTXInventoryStakingV3Upgradeable is
     }
 
     function _getTimelockedUntil(
-        uint256 vaultId
+        uint256 vaultId,
+        uint256 _timelock
     ) internal view returns (uint256) {
         return
             timelockExcludeList.isExcluded(msg.sender, vaultId)
                 ? 0
-                : block.timestamp + timelock;
+                : block.timestamp + _timelock;
     }
 
     function _calcWethOwed(
