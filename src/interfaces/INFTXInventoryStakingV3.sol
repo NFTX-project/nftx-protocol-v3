@@ -19,6 +19,10 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
         uint256 vaultId;
         // timestamp at which the timelock expires
         uint256 timelockedUntil;
+        // net timelock for position
+        uint256 timelock;
+        // position timelocked if created with vTokens. Can't early withdraw in this case
+        uint256 vTokenTimelockedUntil;
         // shares balance is used to track position's ownership of total vToken balance
         uint256 vTokenShareBalance;
         // used to evaluate weth fees accumulated per vTokenShare since this snapshot
@@ -63,6 +67,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
             uint256 nonce,
             uint256 vaultId,
             uint256 timelockedUntil,
+            uint256 timelock,
+            uint256 vTokenTimelockedUntil,
             uint256 vTokenShareBalance,
             uint256 wethFeesPerVTokenShareSnapshotX128,
             uint256 wethOwed
@@ -126,6 +132,8 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     error VaultIdMismatch();
     error ParentChildSame();
     error InsufficientVTokens();
+    error LiquidityBelowMinimum();
+    error ZeroAddress();
     error InsufficientVTokenShares();
     error SenderNotFeeDistributor();
     error PositionNotCreatedWithVTokens();
@@ -207,11 +215,13 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
      * @param positionId The position id to withdraw vault tokens from
      * @param vTokenShares Amount of vault token shares to burn
      * @param nftIds NFT tokenIds to redeem with the vault tokens withdrawn. If array is empty then only vault tokens transferred. Redeem fees (in ETH from msg.value) only paid for positions which were minted with vTokens
+     * @param vTokenPremiumLimit The max net premium in vTokens the user is willing to pay to redeem nftIds, else tx reverts
      */
     function withdraw(
         uint256 positionId,
         uint256 vTokenShares,
-        uint256[] calldata nftIds
+        uint256[] calldata nftIds,
+        uint256 vTokenPremiumLimit
     ) external payable;
 
     /**

@@ -41,6 +41,9 @@ contract NFTXFeeDistributorV3 is
     INFTXInventoryStakingV3 public immutable override inventoryStaking;
     IERC20 public immutable override WETH;
 
+    uint256 constant POOL_DEFAULT_ALLOC = 0.8 ether; // 80%
+    uint256 constant INVENTORY_DEFAULT_ALLOC = 0.2 ether; // 20%
+
     // =============================================================
     //                           VARIABLES
     // =============================================================
@@ -66,6 +69,11 @@ contract NFTXFeeDistributorV3 is
         INFTXRouter nftxRouter_,
         address treasury_
     ) {
+        if (address(nftxVaultFactory_) == address(0)) revert ZeroAddress();
+        if (address(ammFactory_) == address(0)) revert ZeroAddress();
+        if (address(inventoryStaking_) == address(0)) revert ZeroAddress();
+        if (address(nftxRouter_) == address(0)) revert ZeroAddress();
+
         nftxVaultFactory = nftxVaultFactory_;
         ammFactory = ammFactory_;
         inventoryStaking = inventoryStaking_;
@@ -75,14 +83,18 @@ contract NFTXFeeDistributorV3 is
 
         rewardFeeTier = 10_000;
 
-        // set 80% allocation to liquidity providers
-        _addReceiver(address(0), 0.8 ether, ReceiverType.POOL);
-        // set 20% allocation to inventory staking
-        _addReceiver(
-            address(inventoryStaking_),
-            0.2 ether,
-            ReceiverType.INVENTORY
-        );
+        FeeReceiver[] memory feeReceivers_ = new FeeReceiver[](2);
+        feeReceivers_[0] = FeeReceiver({
+            receiver: address(0),
+            allocPoint: POOL_DEFAULT_ALLOC,
+            receiverType: ReceiverType.POOL
+        });
+        feeReceivers_[1] = FeeReceiver({
+            receiver: address(inventoryStaking_),
+            allocPoint: INVENTORY_DEFAULT_ALLOC,
+            receiverType: ReceiverType.INVENTORY
+        });
+        setReceivers(feeReceivers_);
     }
 
     // =============================================================
@@ -103,7 +115,8 @@ contract NFTXFeeDistributorV3 is
         }
 
         uint256 leftover;
-        for (uint256 i; i < feeReceivers.length; ) {
+        uint256 len = feeReceivers.length;
+        for (uint256 i; i < len; ) {
             FeeReceiver storage feeReceiver = feeReceivers[i];
 
             uint256 wethAmountToSend = leftover +
@@ -116,7 +129,7 @@ contract NFTXFeeDistributorV3 is
                 vaultId,
                 vault
             );
-            leftover += tokenSent ? 0 : wethAmountToSend;
+            leftover = tokenSent ? 0 : leftover + wethAmountToSend;
 
             unchecked {
                 ++i;
@@ -143,7 +156,7 @@ contract NFTXFeeDistributorV3 is
             IERC20(vToken).transfer(pool, vTokenAmount);
             IUniswapV3Pool(pool).distributeRewards(
                 vTokenAmount,
-                true // isVToken0
+                address(vToken) < address(WETH) // isVToken0
             );
         } else {
             // distribute to inventory stakers if pool doesn't have liquidity
@@ -155,65 +168,23 @@ contract NFTXFeeDistributorV3 is
     //                        ONLY OWNER WRITE
     // =============================================================
 
-    /**
-     * @inheritdoc INFTXFeeDistributorV3
-     */
-    function addReceiver(
-        address receiver,
-        uint256 allocPoint,
-        ReceiverType receiverType
-    ) external override onlyOwner {
-        _addReceiver(receiver, allocPoint, receiverType);
-    }
+    function setReceivers(
+        FeeReceiver[] memory feeReceivers_
+    ) public override onlyOwner {
+        delete feeReceivers;
 
-    /**
-     * @inheritdoc INFTXFeeDistributorV3
-     */
-    function changeReceiverAlloc(
-        uint256 receiverId,
-        uint256 allocPoint
-    ) external override onlyOwner {
-        if (receiverId >= feeReceivers.length) revert IdOutOfBounds();
+        uint256 _allocTotal;
+        uint256 len = feeReceivers_.length;
+        for (uint256 i; i < len; ) {
+            feeReceivers.push(feeReceivers_[i]);
+            _allocTotal += feeReceivers_[i].allocPoint;
 
-        FeeReceiver storage feeReceiver = feeReceivers[receiverId];
-        allocTotal -= feeReceiver.allocPoint;
-        feeReceiver.allocPoint = allocPoint;
-        allocTotal += allocPoint;
+            unchecked {
+                ++i;
+            }
+        }
 
-        emit UpdateFeeReceiverAlloc(feeReceiver.receiver, allocPoint);
-    }
-
-    /**
-     * @inheritdoc INFTXFeeDistributorV3
-     */
-    function changeReceiverAddress(
-        uint256 receiverId,
-        address receiver,
-        ReceiverType receiverType
-    ) external override onlyOwner {
-        if (receiverId >= feeReceivers.length) revert IdOutOfBounds();
-
-        FeeReceiver storage feeReceiver = feeReceivers[receiverId];
-        address oldReceiver = feeReceiver.receiver;
-        feeReceiver.receiver = receiver;
-        feeReceiver.receiverType = receiverType;
-
-        emit UpdateFeeReceiverAddress(oldReceiver, receiver);
-    }
-
-    /**
-     * @inheritdoc INFTXFeeDistributorV3
-     */
-    function removeReceiver(uint256 receiverId) external override onlyOwner {
-        uint256 arrLength = feeReceivers.length;
-        if (receiverId >= arrLength) revert IdOutOfBounds();
-
-        emit RemoveFeeReceiver(feeReceivers[receiverId].receiver);
-
-        allocTotal -= feeReceivers[receiverId].allocPoint;
-        // Copy the last element to what is being removed and remove the last element.
-        feeReceivers[receiverId] = feeReceivers[arrLength - 1];
-        feeReceivers.pop();
+        allocTotal = _allocTotal;
     }
 
     /**
@@ -227,16 +198,19 @@ contract NFTXFeeDistributorV3 is
             revert FeeTierNotEnabled();
 
         rewardFeeTier = rewardFeeTier_;
+
+        emit NewRewardFeeTier(rewardFeeTier_);
     }
 
     /**
      * @inheritdoc INFTXFeeDistributorV3
      */
     function setTreasuryAddress(address treasury_) external override onlyOwner {
-        if (treasury_ == address(0)) revert AddressIsZero();
+        if (treasury_ == address(0)) revert ZeroAddress();
+
+        emit UpdateTreasuryAddress(treasury, treasury_);
 
         treasury = treasury_;
-        emit UpdateTreasuryAddress(treasury_);
     }
 
     /**
@@ -245,7 +219,11 @@ contract NFTXFeeDistributorV3 is
     function setNFTXRouter(
         INFTXRouter nftxRouter_
     ) external override onlyOwner {
+        if (address(nftxRouter_) == address(0)) revert ZeroAddress();
+
         nftxRouter = nftxRouter_;
+
+        emit NewNFTXRouter(address(nftxRouter_));
     }
 
     /**
@@ -268,21 +246,6 @@ contract NFTXFeeDistributorV3 is
     //                      INTERNAL / PRIVATE
     // =============================================================
 
-    function _addReceiver(
-        address receiver,
-        uint256 allocPoint,
-        ReceiverType receiverType
-    ) internal {
-        FeeReceiver memory feeReceiver = FeeReceiver({
-            receiver: receiver,
-            allocPoint: allocPoint,
-            receiverType: receiverType
-        });
-        feeReceivers.push(feeReceiver);
-        allocTotal += allocPoint;
-        emit AddFeeReceiver(receiver, allocPoint);
-    }
-
     function _sendForReceiver(
         FeeReceiver storage feeReceiver,
         uint256 wethAmountToSend,
@@ -292,7 +255,7 @@ contract NFTXFeeDistributorV3 is
         if (feeReceiver.receiverType == ReceiverType.INVENTORY) {
             TransferLib.unSafeMaxApprove(
                 address(WETH),
-                feeReceiver.receiver,
+                address(inventoryStaking),
                 wethAmountToSend
             );
 

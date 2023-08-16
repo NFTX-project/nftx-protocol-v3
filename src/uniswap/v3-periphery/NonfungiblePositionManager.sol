@@ -74,6 +74,8 @@ contract NonfungiblePositionManager is
 
     // token ID => timestamp
     mapping(uint256 => uint256) public override lockedUntil;
+    // token ID => timelock
+    mapping(uint256 => uint256) public override timelock;
 
     mapping(address => bool) public override timelockExcluded;
 
@@ -493,7 +495,8 @@ contract NonfungiblePositionManager is
 
     function setLockedUntil(
         uint256 tokenId,
-        uint256 timestamp
+        uint256 lockedUntil_,
+        uint256 timelock_
     ) external override {
         require(
             msg.sender ==
@@ -504,7 +507,8 @@ contract NonfungiblePositionManager is
                 )
         );
 
-        lockedUntil[tokenId] = timestamp;
+        lockedUntil[tokenId] = lockedUntil_;
+        timelock[tokenId] = timelock_;
     }
 
     function setTimelockExcluded(

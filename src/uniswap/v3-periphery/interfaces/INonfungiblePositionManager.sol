@@ -61,11 +61,18 @@ interface INonfungiblePositionManager is
     /// @notice Returns the timestamp, till when the position is timelocked for
     function lockedUntil(uint256 tokenId) external view returns (uint256);
 
+    /// @notice Net timelock for position
+    function timelock(uint256 tokenId) external view returns (uint256);
+
     /// @notice Check if a particular address is excluded from timelock and hence can withdraw from the position early
     function timelockExcluded(address addr) external view returns (bool);
 
     /// @dev Only callable by NFTXRouter
-    function setLockedUntil(uint256 tokenId, uint256 timestamp) external;
+    function setLockedUntil(
+        uint256 tokenId,
+        uint256 lockedUntil,
+        uint256 timelock
+    ) external;
 
     function setTimelockExcluded(address addr, bool isExcluded) external;
 
