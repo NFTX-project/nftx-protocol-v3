@@ -83,6 +83,7 @@ interface INFTXVaultFactoryV3 is IBeacon {
     error CallerIsNotVault();
     error ZeroTwapInterval();
     error DepositorPremiumShareExceedsLimit();
+    error ZeroAddress();
 
     // =============================================================
     //                           INIT

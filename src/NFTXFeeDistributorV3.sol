@@ -149,7 +149,7 @@ contract NFTXFeeDistributorV3 is
         address vToken,
         uint256 vTokenAmount
     ) external {
-        require(msg.sender == address(nftxRouter));
+        if (msg.sender != address(nftxRouter)) revert SenderNotNFTXRouter();
 
         uint256 liquidity = IUniswapV3Pool(pool).liquidity();
         if (liquidity > 0) {
@@ -194,7 +194,8 @@ contract NFTXFeeDistributorV3 is
         uint24 rewardFeeTier_
     ) external override onlyOwner {
         // check if feeTier enabled
-        require(ammFactory.feeAmountTickSpacing(rewardFeeTier_) > 0);
+        if (ammFactory.feeAmountTickSpacing(rewardFeeTier_) == 0)
+            revert FeeTierNotEnabled();
 
         rewardFeeTier = rewardFeeTier_;
 

@@ -134,6 +134,10 @@ interface INFTXInventoryStakingV3 is IERC721Upgradeable {
     error InsufficientVTokens();
     error LiquidityBelowMinimum();
     error ZeroAddress();
+    error InsufficientVTokenShares();
+    error SenderNotFeeDistributor();
+    error PositionNotCreatedWithVTokens();
+    error ZeroVTokenShares();
 
     // =============================================================
     //                           INIT
