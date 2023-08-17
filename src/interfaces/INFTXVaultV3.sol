@@ -87,7 +87,6 @@ interface INFTXVaultV3 is IERC20Upgradeable {
 
     event ManagerSet(address manager);
     event EligibilityDeployed(uint256 moduleIndex, address eligibilityAddr);
-    // event CustomEligibilityDeployed(address eligibilityAddr);
 
     event EnableMintUpdated(bool enabled);
     event EnableRedeemUpdated(bool enabled);
@@ -102,6 +101,7 @@ interface INFTXVaultV3 is IERC20Upgradeable {
         address to
     );
     event PremiumShared(address depositor, uint256 wethPremium);
+    event FeesDistributed(uint256 wethFees);
     event VaultShutdown(
         address assetAddress,
         uint256 numItems,

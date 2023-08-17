@@ -264,6 +264,9 @@ contract NFTXFeeDistributorV3 is
                 vaultId,
                 wethAmountToSend
             );
+            if (pulledTokens) {
+                emit WethDistributedToInventory(vaultId, wethAmountToSend);
+            }
 
             tokenSent = pulledTokens;
         } else if (feeReceiver.receiverType == ReceiverType.POOL) {
@@ -281,6 +284,7 @@ contract NFTXFeeDistributorV3 is
                         wethAmountToSend,
                         address(vault) > address(WETH) // !isVToken0
                     );
+                    emit WethDistributedToPool(vaultId, wethAmountToSend);
 
                     tokenSent = true;
                 }
