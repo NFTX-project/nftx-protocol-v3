@@ -59,11 +59,13 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     /// @param ethReceived The amount of ETH received in the sell
     /// @param to The user affected by the event
     /// @param netRoyaltyAmount The royalty amount sent
+    /// @param wethFees Vault fees paid
     event Sell(
         uint256 count,
         uint256 ethReceived,
         address to,
-        uint256 netRoyaltyAmount
+        uint256 netRoyaltyAmount,
+        uint256 wethFees
     );
 
     /// @param ethSpent The amount of ETH spent in the swap
@@ -142,7 +144,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         address payable to,
         bool deductRoyalty
     ) external onlyOwnerIfPaused {
-        // Mint
+        // Mint (vault fees not deducted here, as zap is on exclusion list)
         (address vault, address assetAddress) = _mint721(vaultId, idsIn);
 
         // swap vTokens to WETH
@@ -167,7 +169,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _wethToETHResidue(to, wethAmount);
 
         // Emit our sale event
-        emit Sell(idsIn.length, wethAmount, to, netRoyaltyAmount);
+        emit Sell(idsIn.length, wethAmount, to, netRoyaltyAmount, wethFees);
     }
 
     /**
@@ -231,7 +233,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         uint256 wethLeft = msg.value - wethSpent;
 
-        // redeem NFTs
+        // redeem NFTs. Forcing to deduct vault fees
         TransferLib.unSafeMaxApprove(address(WETH), vault, wethLeft);
         uint256 wethFees = INFTXVaultV3(vault).redeem(
             idsOut,
@@ -332,7 +334,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         address payable to,
         bool deductRoyalty
     ) external onlyOwnerIfPaused {
-        // Mint
+        // Mint (vault fees not deducted here, as zap is on exclusion list)
         (address vault, address assetAddress) = _mint1155(
             vaultId,
             idsIn,
@@ -368,7 +370,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _wethToETHResidue(to, wethAmount);
 
         // Emit our sale event
-        emit Sell(totalAmount, wethAmount, to, netRoyaltyAmount);
+        emit Sell(totalAmount, wethAmount, to, netRoyaltyAmount, wethFees);
     }
 
     /**
