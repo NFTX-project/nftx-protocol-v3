@@ -159,7 +159,7 @@ contract NFTXVaultUpgradeableV3 is
 
         _refundETH(msg.value, ethFees);
 
-        emit Minted(tokenIds, amounts, to);
+        emit Minted(tokenIds, amounts, to, depositor);
     }
 
     /**
@@ -295,7 +295,7 @@ contract NFTXVaultUpgradeableV3 is
 
         _refundETH(msg.value, ethFees);
 
-        emit Swapped(idsIn, amounts, idsOut, to);
+        emit Swapped(idsIn, amounts, idsOut, to, depositor);
     }
 
     /**

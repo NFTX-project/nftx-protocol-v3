@@ -92,13 +92,19 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     event EnableRedeemUpdated(bool enabled);
     event EnableSwapUpdated(bool enabled);
 
-    event Minted(uint256[] nftIds, uint256[] amounts, address to);
+    event Minted(
+        uint256[] nftIds,
+        uint256[] amounts,
+        address to,
+        address depositor
+    );
     event Redeemed(uint256[] specificIds, address to);
     event Swapped(
         uint256[] nftIds,
         uint256[] amounts,
         uint256[] specificIds,
-        address to
+        address to,
+        address depositor
     );
     event PremiumShared(address depositor, uint256 wethPremium);
     event FeesDistributed(uint256 wethFees);
