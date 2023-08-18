@@ -58,7 +58,15 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     /// @param count The number of tokens affected by the event
     /// @param ethReceived The amount of ETH received in the sell
     /// @param to The user affected by the event
-    event Sell(uint256 count, uint256 ethReceived, address to);
+    /// @param netRoyaltyAmount The royalty amount sent
+    /// @param wethFees Vault fees paid
+    event Sell(
+        uint256 count,
+        uint256 ethReceived,
+        address to,
+        uint256 netRoyaltyAmount,
+        uint256 wethFees
+    );
 
     /// @param ethSpent The amount of ETH spent in the swap
     /// @param to The user affected by the event
@@ -75,7 +83,13 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     /// @param nftIds The nftIds bought
     /// @param ethSpent The amount of ETH spent in the buy
     /// @param to The user affected by the event
-    event Buy(uint256[] nftIds, uint256 ethSpent, address to);
+    /// @param netRoyaltyAmount The royalty amount sent
+    event Buy(
+        uint256[] nftIds,
+        uint256 ethSpent,
+        address to,
+        uint256 netRoyaltyAmount
+    );
 
     /// @notice Emitted when dust is returned after a transaction.
     /// @param ethAmount Amount of ETH returned to user
@@ -130,7 +144,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         address payable to,
         bool deductRoyalty
     ) external onlyOwnerIfPaused {
-        // Mint
+        // Mint (vault fees not deducted here, as zap is on exclusion list)
         (address vault, address assetAddress) = _mint721(vaultId, idsIn);
 
         // swap vTokens to WETH
@@ -155,7 +169,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _wethToETHResidue(to, wethAmount);
 
         // Emit our sale event
-        emit Sell(idsIn.length, wethAmount, to);
+        emit Sell(idsIn.length, wethAmount, to, netRoyaltyAmount, wethFees);
     }
 
     /**
@@ -219,7 +233,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         uint256 wethLeft = msg.value - wethSpent;
 
-        // redeem NFTs
+        // redeem NFTs. Forcing to deduct vault fees
         TransferLib.unSafeMaxApprove(address(WETH), vault, wethLeft);
         uint256 wethFees = INFTXVaultV3(vault).redeem(
             idsOut,
@@ -238,7 +252,12 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         // transfer vToken dust and remaining WETH balance
         _transferDust(vault, true);
 
-        emit Buy(idsOut, wethSpent + wethFees + netRoyaltyAmount, to);
+        emit Buy(
+            idsOut,
+            wethSpent + wethFees + netRoyaltyAmount,
+            to,
+            netRoyaltyAmount
+        );
     }
 
     struct BuyNFTsWithERC20Params {
@@ -315,7 +334,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         address payable to,
         bool deductRoyalty
     ) external onlyOwnerIfPaused {
-        // Mint
+        // Mint (vault fees not deducted here, as zap is on exclusion list)
         (address vault, address assetAddress) = _mint1155(
             vaultId,
             idsIn,
@@ -351,7 +370,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _wethToETHResidue(to, wethAmount);
 
         // Emit our sale event
-        emit Sell(totalAmount, wethAmount, to);
+        emit Sell(totalAmount, wethAmount, to, netRoyaltyAmount, wethFees);
     }
 
     /**
@@ -478,7 +497,8 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         emit Buy(
             params.idsOut,
             wethSpent + wethFees + netRoyaltyAmount,
-            params.to
+            params.to,
+            netRoyaltyAmount
         );
     }
 

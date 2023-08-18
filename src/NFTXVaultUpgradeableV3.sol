@@ -159,7 +159,7 @@ contract NFTXVaultUpgradeableV3 is
 
         _refundETH(msg.value, ethFees);
 
-        emit Minted(tokenIds, amounts, to);
+        emit Minted(tokenIds, amounts, to, depositor);
     }
 
     /**
@@ -295,7 +295,7 @@ contract NFTXVaultUpgradeableV3 is
 
         _refundETH(msg.value, ethFees);
 
-        emit Swapped(idsIn, amounts, idsOut, to);
+        emit Swapped(idsIn, amounts, idsOut, to, depositor);
     }
 
     /**
@@ -887,6 +887,9 @@ contract NFTXVaultUpgradeableV3 is
 
             WETH.deposit{value: ethAmount}();
             WETH.transfer(address(feeDistributor), ethAmount);
+
+            emit FeesDistributed(ethAmount);
+
             feeDistributor.distribute(vaultId);
         }
     }
@@ -946,7 +949,11 @@ contract NFTXVaultUpgradeableV3 is
                 }
             }
 
-            WETH.transfer(address(feeDistributor), ethAmount - sumWethPremium);
+            uint256 feeToDistribute = ethAmount - sumWethPremium;
+            WETH.transfer(address(feeDistributor), feeToDistribute);
+
+            emit FeesDistributed(feeToDistribute);
+
             feeDistributor.distribute(vaultId);
         }
     }

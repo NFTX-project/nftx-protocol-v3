@@ -352,10 +352,6 @@ contract NFTXInventoryStakingV3Upgradeable is
                     .globalWethFeesPerVTokenShareX128;
                 // withdraw all the weth fees accrued
                 {
-                    uint256 positionVTokenShareBalance = position
-                        .vTokenShareBalance;
-                    require(positionVTokenShareBalance >= vTokenShares);
-
                     wethOwed =
                         _calcWethOwed(
                             _globalWethFeesPerVTokenShareX128,

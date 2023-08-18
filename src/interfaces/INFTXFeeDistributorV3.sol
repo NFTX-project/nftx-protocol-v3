@@ -65,6 +65,8 @@ interface INFTXFeeDistributorV3 {
     event PauseDistribution(bool paused);
     event NewRewardFeeTier(uint24 rewardFeeTier);
     event NewNFTXRouter(address nftxRouter);
+    event WethDistributedToInventory(uint256 vaultId, uint256 amount);
+    event WethDistributedToPool(uint256 vaultId, uint256 amount);
 
     // =============================================================
     //                            ERRORS
