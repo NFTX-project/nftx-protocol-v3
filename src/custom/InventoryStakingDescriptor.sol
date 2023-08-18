@@ -27,7 +27,7 @@ contract InventoryStakingDescriptor {
         uint256 vTokenBalance,
         uint256 wethBalance,
         uint256 timelockLeft
-    ) external pure returns (string memory) {
+    ) public pure returns (string memory) {
         return
             string.concat(
                 '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">',
@@ -44,6 +44,58 @@ contract InventoryStakingDescriptor {
                 '<rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)"/>',
                 infoTags(tokenId, vaultId, timelockLeft),
                 "</svg>"
+            );
+    }
+
+    function tokenURI(
+        uint256 tokenId,
+        uint256 vaultId,
+        address vToken,
+        string calldata vTokenSymbol,
+        uint256 vTokenBalance,
+        uint256 wethBalance,
+        uint256 timelockedUntil
+    ) external view returns (string memory) {
+        string memory image = Base64.encode(
+            bytes(
+                renderSVG(
+                    tokenId,
+                    vaultId,
+                    vToken,
+                    vTokenSymbol,
+                    vTokenBalance,
+                    wethBalance,
+                    block.timestamp > timelockedUntil
+                        ? 0
+                        : timelockedUntil - block.timestamp
+                )
+            )
+        );
+
+        return
+            string.concat(
+                "data:application/json;base64,",
+                Base64.encode(
+                    bytes(
+                        string.concat(
+                            '{"name":"',
+                            string.concat(
+                                "x",
+                                vTokenSymbol,
+                                " #",
+                                tokenId.toString()
+                            ),
+                            '", "description":"',
+                            "xNFT representing inventory staking position on NFTX",
+                            '", "image": "',
+                            "data:image/svg+xml;base64,",
+                            image,
+                            '", "attributes": [{"trait_type": "VaultId", "value": "',
+                            vaultId.toString(),
+                            '"}]}'
+                        )
+                    )
+                )
             );
     }
 

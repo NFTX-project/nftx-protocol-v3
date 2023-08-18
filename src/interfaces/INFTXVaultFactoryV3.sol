@@ -84,6 +84,8 @@ interface INFTXVaultFactoryV3 is IBeacon {
     error ZeroTwapInterval();
     error DepositorPremiumShareExceedsLimit();
     error ZeroAddress();
+    error ZeroAmountRequested();
+    error NFTInventoryExceeded();
 
     // =============================================================
     //                           INIT
@@ -166,4 +168,39 @@ interface INFTXVaultFactoryV3 is IBeacon {
     function vault(uint256 vaultId) external view returns (address);
 
     function getTwapX96(address pool) external view returns (uint256 priceX96);
+
+    /**
+     * @notice Get vToken premium corresponding for a tokenId in the vault
+     *
+     * @param tokenId token id to calculate the premium for
+     * @return premium Premium in vTokens
+     * @return depositor Depositor that receives a share of this premium
+     */
+    function getVTokenPremium721(
+        uint256 vaultId,
+        uint256 tokenId
+    ) external view returns (uint256 premium, address depositor);
+
+    /**
+     * @notice Get vToken premium corresponding for a tokenId in the vault
+     *
+     * @param tokenId token id to calculate the premium for
+     * @param amount ERC1155 amount of tokenId to redeem
+     *
+     * @return netPremium Net premium in vTokens
+     * @return premiums Premiums corresponding to each depositor
+     * @return depositors Depositors that receive a share from the `premiums`
+     */
+    function getVTokenPremium1155(
+        uint256 vaultId,
+        uint256 tokenId,
+        uint256 amount
+    )
+        external
+        view
+        returns (
+            uint256 netPremium,
+            uint256[] memory premiums,
+            address[] memory depositors
+        );
 }

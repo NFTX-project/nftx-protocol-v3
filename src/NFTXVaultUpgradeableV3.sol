@@ -525,111 +525,17 @@ contract NFTXVaultUpgradeableV3 is
     /**
      * @inheritdoc INFTXVaultV3
      */
+    function holdingsContains(
+        uint256 tokenId
+    ) external view override returns (bool) {
+        return _holdings.contains(tokenId);
+    }
+
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
     function version() external pure override returns (string memory) {
         return "v3.0.0";
-    }
-
-    /**
-     * @inheritdoc INFTXVaultV3
-     */
-    function getVTokenPremium721(
-        uint256 tokenId
-    ) external view override returns (uint256 premium, address depositor) {
-        if (_holdings.contains(tokenId)) {
-            TokenDepositInfo memory depositInfo = tokenDepositInfo[tokenId];
-            depositor = depositInfo.depositor;
-
-            uint256 premiumMax = vaultFactory.premiumMax();
-            uint256 premiumDuration = vaultFactory.premiumDuration();
-
-            premium = _getVTokenPremium(
-                depositInfo.timestamp,
-                premiumMax,
-                premiumDuration
-            );
-        }
-    }
-
-    /**
-     * @inheritdoc INFTXVaultV3
-     */
-    function getVTokenPremium1155(
-        uint256 tokenId,
-        uint256 amount
-    )
-        external
-        view
-        override
-        returns (
-            uint256 netPremium,
-            uint256[] memory premiums,
-            address[] memory depositors
-        )
-    {
-        if (_holdings.contains(tokenId)) {
-            if (amount == 0) revert ZeroAmountRequested();
-
-            // max possible array lengths
-            premiums = new uint256[](amount);
-            depositors = new address[](amount);
-
-            uint256 _pointerIndex1155 = pointerIndex1155[tokenId];
-
-            uint256 i = 0;
-            // cache
-            uint256 premiumMax = vaultFactory.premiumMax();
-            uint256 premiumDuration = vaultFactory.premiumDuration();
-            uint256 _tokenPositionLength = depositInfo1155[tokenId].length;
-            while (true) {
-                if (_tokenPositionLength <= _pointerIndex1155 + i)
-                    revert NFTInventoryExceeded();
-
-                DepositInfo1155 memory depositInfo = depositInfo1155[tokenId][
-                    _pointerIndex1155 + i
-                ];
-
-                if (depositInfo.qty > amount) {
-                    uint256 vTokenPremium = _getVTokenPremium(
-                        depositInfo.timestamp,
-                        premiumMax,
-                        premiumDuration
-                    ) * amount;
-                    netPremium += vTokenPremium;
-
-                    premiums[i] = vTokenPremium;
-                    depositors[i] = depositInfo.depositor;
-
-                    // end loop
-                    break;
-                } else {
-                    amount -= depositInfo.qty;
-
-                    uint256 vTokenPremium = _getVTokenPremium(
-                        depositInfo.timestamp,
-                        premiumMax,
-                        premiumDuration
-                    ) * depositInfo.qty;
-                    netPremium += vTokenPremium;
-
-                    premiums[i] = vTokenPremium;
-                    depositors[i] = depositInfo.depositor;
-
-                    unchecked {
-                        ++i;
-                    }
-                }
-            }
-
-            uint256 finalArrayLength = i + 1;
-
-            if (finalArrayLength < premiums.length) {
-                // change array length
-                assembly {
-                    mstore(premiums, finalArrayLength)
-                    mstore(depositors, finalArrayLength)
-                }
-            }
-        }
     }
 
     /**

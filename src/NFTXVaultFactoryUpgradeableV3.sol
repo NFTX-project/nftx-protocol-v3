@@ -9,12 +9,14 @@ import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
+import {ExponentialPremium} from "@src/lib/ExponentialPremium.sol";
 
 // contracts
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {NFTXVaultUpgradeableV3} from "@src/NFTXVaultUpgradeableV3.sol";
 
 // interfaces
+import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IUniswapV3PoolDerivedState} from "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol";
 
@@ -75,8 +77,9 @@ contract NFTXVaultFactoryUpgradeableV3 is
         __UpgradeableBeacon__init(vaultImpl);
         setFactoryFees(0.1 ether, 0.1 ether, 0.1 ether);
 
-        if(twapInterval_ == 0) revert ZeroTwapInterval();
-        if(depositorPremiumShare_ > MAX_DEPOSITOR_PREMIUM_SHARE) revert DepositorPremiumShareExceedsLimit();
+        if (twapInterval_ == 0) revert ZeroTwapInterval();
+        if (depositorPremiumShare_ > MAX_DEPOSITOR_PREMIUM_SHARE)
+            revert DepositorPremiumShareExceedsLimit();
 
         twapInterval = twapInterval_;
         premiumDuration = premiumDuration_;
@@ -216,7 +219,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
      * @inheritdoc INFTXVaultFactoryV3
      */
     function setTwapInterval(uint32 twapInterval_) external override onlyOwner {
-        if(twapInterval_ == 0) revert ZeroTwapInterval();
+        if (twapInterval_ == 0) revert ZeroTwapInterval();
 
         twapInterval = twapInterval_;
 
@@ -249,7 +252,8 @@ contract NFTXVaultFactoryUpgradeableV3 is
     function setDepositorPremiumShare(
         uint256 depositorPremiumShare_
     ) external override onlyOwner {
-        if(depositorPremiumShare_ > MAX_DEPOSITOR_PREMIUM_SHARE) revert DepositorPremiumShareExceedsLimit();
+        if (depositorPremiumShare_ > MAX_DEPOSITOR_PREMIUM_SHARE)
+            revert DepositorPremiumShareExceedsLimit();
 
         depositorPremiumShare = depositorPremiumShare_;
 
@@ -285,6 +289,109 @@ contract NFTXVaultFactoryUpgradeableV3 is
             uint256(factoryRedeemFee),
             uint256(factorySwapFee)
         );
+    }
+
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
+    function getVTokenPremium721(
+        uint256 vaultId,
+        uint256 tokenId
+    ) external view override returns (uint256 premium, address depositor) {
+        INFTXVaultV3 _vault = INFTXVaultV3(_vaults[vaultId]);
+
+        if (_vault.holdingsContains(tokenId)) {
+            uint48 timestamp;
+            (timestamp, depositor) = _vault.tokenDepositInfo(tokenId);
+
+            premium = _getVTokenPremium(timestamp, premiumMax, premiumDuration);
+        }
+    }
+
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
+    function getVTokenPremium1155(
+        uint256 vaultId,
+        uint256 tokenId,
+        uint256 amount
+    )
+        external
+        view
+        override
+        returns (
+            uint256 netPremium,
+            uint256[] memory premiums,
+            address[] memory depositors
+        )
+    {
+        INFTXVaultV3 _vault = INFTXVaultV3(_vaults[vaultId]);
+
+        if (_vault.holdingsContains(tokenId)) {
+            if (amount == 0) revert ZeroAmountRequested();
+
+            // max possible array lengths
+            premiums = new uint256[](amount);
+            depositors = new address[](amount);
+
+            uint256 _pointerIndex1155 = _vault.pointerIndex1155(tokenId);
+
+            uint256 i = 0;
+            // cache
+            uint256 _premiumMax = premiumMax;
+            uint256 _premiumDuration = premiumDuration;
+            uint256 _tokenPositionLength = _vault.depositInfo1155Length(
+                tokenId
+            );
+            while (true) {
+                if (_tokenPositionLength <= _pointerIndex1155 + i)
+                    revert NFTInventoryExceeded();
+
+                (uint256 qty, address depositor, uint48 timestamp) = _vault
+                    .depositInfo1155(tokenId, _pointerIndex1155 + i);
+
+                if (qty > amount) {
+                    uint256 vTokenPremium = _getVTokenPremium(
+                        timestamp,
+                        _premiumMax,
+                        _premiumDuration
+                    ) * amount;
+                    netPremium += vTokenPremium;
+
+                    premiums[i] = vTokenPremium;
+                    depositors[i] = depositor;
+
+                    // end loop
+                    break;
+                } else {
+                    amount -= qty;
+
+                    uint256 vTokenPremium = _getVTokenPremium(
+                        timestamp,
+                        _premiumMax,
+                        _premiumDuration
+                    ) * qty;
+                    netPremium += vTokenPremium;
+
+                    premiums[i] = vTokenPremium;
+                    depositors[i] = depositor;
+
+                    unchecked {
+                        ++i;
+                    }
+                }
+            }
+
+            uint256 finalArrayLength = i + 1;
+
+            if (finalArrayLength < premiums.length) {
+                // change array length
+                assembly {
+                    mstore(premiums, finalArrayLength)
+                    mstore(depositors, finalArrayLength)
+                }
+            }
+        }
     }
 
     /**
@@ -417,5 +524,18 @@ contract NFTXVaultFactoryUpgradeableV3 is
         // Owner for administrative functions.
         NFTXVaultUpgradeableV3(newBeaconProxy).transferOwnership(owner());
         return newBeaconProxy;
+    }
+
+    function _getVTokenPremium(
+        uint48 timestamp,
+        uint256 _premiumMax,
+        uint256 _premiumDuration
+    ) internal view returns (uint256) {
+        return
+            ExponentialPremium.getPremium(
+                timestamp,
+                _premiumMax,
+                _premiumDuration
+            );
     }
 }
