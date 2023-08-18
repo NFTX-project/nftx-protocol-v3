@@ -12,6 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const vaultFactory = await deployments.get("NFTXVaultFactoryUpgradeableV3");
   const uniV3Factory = await deployments.get("UniswapV3FactoryUpgradeable");
+  const positionManager = await deployments.get("NonfungiblePositionManager");
   const inventoryStaking = await deployments.get(
     "NFTXInventoryStakingV3Upgradeable"
   );
@@ -56,6 +57,32 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     true
   );
   console.log("Fee exclusion set for CreateVaultZap");
+
+  const migratorZap = await deploy("MigratorZap", {
+    from: deployer,
+    args: [
+      config.WETH,
+      config.v2Inventory,
+      config.sushiRouter,
+      positionManager.address,
+      vaultFactory.address,
+      inventoryStaking.address,
+    ],
+    log: true,
+  });
+
+  console.log("Setting fee exclusion for MigratorZap in V3...");
+  await execute(
+    "NFTXVaultFactoryUpgradeableV3",
+    { from: deployer },
+    "setFeeExclusion",
+    migratorZap.address,
+    true
+  );
+  console.log("Fee exclusion set for MigratorZap in V3");
+  console.warn(
+    "[NOTE!] Set fee exclusion for MigratorZap in V2 of the protocol"
+  );
 };
 export default func;
 func.tags = ["Zaps"];

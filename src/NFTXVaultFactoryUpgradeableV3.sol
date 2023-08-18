@@ -32,7 +32,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
     // =============================================================
     //                            CONSTANTS
     // =============================================================
-    uint256 MAX_DEPOSITOR_PREMIUM_SHARE = 1 ether;
+    uint256 constant MAX_DEPOSITOR_PREMIUM_SHARE = 1 ether;
 
     // =============================================================
     //                            VARIABLES

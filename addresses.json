@@ -1,18 +1,18 @@
 {
   "goerli": {
-    "CreateVaultZap": "0x3045AeD8a3206a98e7f54a9B6b88F078b2ddfa71",
-    "MarketplaceUniversalRouterZap": "0x11F9ce2C92ed333115D1cB1078a1F7bbfa7De0D5",
-    "NFTXFeeDistributorV3": "0x9ff54bEF882943AB1109d7A40b68C42fcd09fbAD",
-    "NFTXInventoryStakingV3Upgradeable": "0x2d5c9C71B3D97A030d8E84a5cd1d1b778e1b26c5",
-    "NFTXRouter": "0x423c4EF234c4321F44613f0D33E45727A95286aF",
-    "nftxUniversalRouter": "0x375e894364bEBed5388115A6BbEEfb9290C610de",
-    "NFTXVaultFactoryUpgradeableV3": "0x903aA6C8c82214d717D9919431724D00c82A382a",
-    "NonfungiblePositionManager": "0xdC69Df04C9D9026bAF9205460995F517e3b13F88",
+    "CreateVaultZap": "0xB2a0BdDe41bF7F54bD5a03D3f38b2958d0e52BA5",
+    "MarketplaceUniversalRouterZap": "0x1609Ea421c5168eDC4225727dd230Fa5AbAc646d",
+    "NFTXFeeDistributorV3": "0x17Ee4Acc187FBE2077F744598d4090f4386C560c",
+    "NFTXInventoryStakingV3Upgradeable": "0xEf771a17e6970d8B4b208a76e94F175277554230",
+    "NFTXRouter": "0x3b79692Eb189a68E513ad5628A419950E5773e35",
+    "nftxUniversalRouter": "0xF7c4FC5C2e30258e1E4d1197fc63aeDE371508f3",
+    "NFTXVaultFactoryUpgradeableV3": "0x1d552A0e6c2f680872C4a88b1e7def05F1858dF0",
+    "NonfungiblePositionManager": "0xaEC6537206e8e590603399c714c39947680f1181",
     "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",
-    "QuoterV2": "0x35A25566CCBa05f51B23FF1c9C8f6074f70F754F",
-    "SwapRouter": "0x300fC76C0649d2ed2d68ac6ed92cde66Eae17d33",
-    "TickLens": "0x9aC764f2623A79dab805df9fFd9f1296655d0C23",
-    "UniswapV3FactoryUpgradeable": "0xAaB56871c2F33Fe49441D5A797bEA1587555e8DC",
+    "QuoterV2": "0xBb473dbEF3363b5d7CDD5f12429Fd1C5F0c10499",
+    "SwapRouter": "0x2E77A788fc66c5312354aaE0df1dC1895ce556f8",
+    "TickLens": "0x32A7703773cBc265cf79D49340F656837169FEcD",
+    "UniswapV3FactoryUpgradeable": "0xf25081B098c5929A26F562aa2502795fE89BC73f",
     "WETH": "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
   }
 }
