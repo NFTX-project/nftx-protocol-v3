@@ -21,10 +21,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           methodName: "__NFTXVaultFactory_init",
           args: [
             vaultImpl.address,
-            20 * 60, // twapInterval = 20 mins
-            10 * 60 * 60, // premiumDuration = 10 hrs
-            utils.parseEther("5"), // premiumMax = 5 ether
-            utils.parseEther("0.30"), // depositorPremiumShare = 0.30 ether
+            config.twapInterval,
+            config.premiumDuration,
+            config.premiumMax,
+            config.depositorPremiumShare,
           ],
         },
       },
