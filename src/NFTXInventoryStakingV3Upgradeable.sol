@@ -672,46 +672,15 @@ contract NFTXInventoryStakingV3Upgradeable is
 
         string memory vTokenSymbol = IERC20Metadata(vToken).symbol();
 
-        string memory image = Base64.encode(
-            bytes(
-                descriptor.renderSVG(
-                    tokenId,
-                    position.vaultId,
-                    vToken,
-                    vTokenSymbol,
-                    vTokenBalance,
-                    wethBalance(tokenId),
-                    block.timestamp > position.timelockedUntil
-                        ? 0
-                        : position.timelockedUntil - block.timestamp
-                )
-            )
-        );
-
         return
-            string.concat(
-                "data:application/json;base64,",
-                Base64.encode(
-                    bytes(
-                        string.concat(
-                            '{"name":"',
-                            string.concat(
-                                "x",
-                                vTokenSymbol,
-                                " #",
-                                tokenId.toString()
-                            ),
-                            '", "description":"',
-                            "xNFT representing inventory staking position on NFTX",
-                            '", "image": "',
-                            "data:image/svg+xml;base64,",
-                            image,
-                            '", "attributes": [{"trait_type": "VaultId", "value": "',
-                            position.vaultId.toString(),
-                            '"}]}'
-                        )
-                    )
-                )
+            descriptor.tokenURI(
+                tokenId,
+                position.vaultId,
+                vToken,
+                vTokenSymbol,
+                vTokenBalance,
+                wethBalance(tokenId),
+                position.timelockedUntil
             );
     }
 
