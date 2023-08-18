@@ -134,11 +134,9 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     error Paused();
     error TooManyItems();
     error IdNotFound();
-    error NFTInventoryExceeded();
     error HoldingsUpdationFailed();
     error InvalidToken();
     error PremiumLimitExceeded();
-    error ZeroAmountRequested();
     error ETHSent();
     error CantRescueAssetToken();
 
@@ -308,6 +306,8 @@ interface INFTXVaultV3 is IERC20Upgradeable {
 
     function totalHoldings() external view returns (uint256);
 
+    function holdingsContains(uint256 tokenId) external view returns (bool);
+
     /**
      * @notice Vault Fees in terms of vault tokens
      */
@@ -319,39 +319,6 @@ interface INFTXVaultV3 is IERC20Upgradeable {
     function allValidNFTs(
         uint256[] calldata tokenIds
     ) external view returns (bool);
-
-    /**
-     * @notice Get vToken premium corresponding for a tokenId in the vault
-     *
-     * @param tokenId token id to calculate the premium for
-     * @return premium Premium in vTokens
-     * @return depositor Depositor that receives a share of this premium
-     */
-    function getVTokenPremium721(
-        uint256 tokenId
-    ) external view returns (uint256 premium, address depositor);
-
-    /**
-     * @notice Get vToken premium corresponding for a tokenId in the vault
-     *
-     * @param tokenId token id to calculate the premium for
-     * @param amount ERC1155 amount of tokenId to redeem
-     *
-     * @return netPremium Net premium in vTokens
-     * @return premiums Premiums corresponding to each depositor
-     * @return depositors Depositors that receive a share from the `premiums`
-     */
-    function getVTokenPremium1155(
-        uint256 tokenId,
-        uint256 amount
-    )
-        external
-        view
-        returns (
-            uint256 netPremium,
-            uint256[] memory premiums,
-            address[] memory depositors
-        );
 
     /**
      * @notice Calculate ETH amount corresponding to a given vToken amount, calculated via TWAP from the NFTX AMM
