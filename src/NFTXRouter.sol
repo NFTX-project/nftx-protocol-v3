@@ -158,9 +158,6 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function increaseLiquidity(
         IncreaseLiquidityParams calldata params
     ) external payable override {
-        if (positionManager.ownerOf(params.positionId) != msg.sender)
-            revert NotPositionOwner();
-
         INFTXVaultV3 vToken = INFTXVaultV3(
             nftxVaultFactory.vault(params.vaultId)
         );
@@ -689,6 +686,9 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         IncreaseLiquidityParams calldata params,
         INFTXVaultV3 vToken
     ) internal {
+        if (positionManager.ownerOf(params.positionId) != msg.sender)
+            revert NotPositionOwner();
+
         (uint256 vTokensAmount, bool _isVToken0) = _pullAndMintVTokens(
             vToken,
             params.nftIds,

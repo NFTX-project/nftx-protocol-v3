@@ -706,6 +706,8 @@ contract NFTXRouterTests is TestBase {
     // increaseLiquidityWithPermit2
 
     function testIncreaseLiquidityWithPermit2_withVTokens() external {
+        startHoax(from);
+
         uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
         uint256 preTimelock = positionManager.lockedUntil(positionId);
 
@@ -715,9 +717,7 @@ contract NFTXRouterTests is TestBase {
         uint256 preLiquidity = _getLiquidity(positionId);
 
         uint256 qty = 5;
-        (uint256 mintedVTokens, ) = _mintVToken(qty);
-        vtoken.transfer(from, mintedVTokens);
-        startHoax(from);
+        (uint256 mintedVTokens, ) = _mintVToken(qty, from, from);
 
         bytes memory encodedPermit2 = _getEncodedPermit2(
             address(vtoken),
@@ -759,6 +759,8 @@ contract NFTXRouterTests is TestBase {
     }
 
     function testIncreaseLiquidityWithPermit2_withNFTs_and_VTokens() external {
+        startHoax(from);
+
         uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
         // after timelock ended
         vm.warp(positionManager.lockedUntil(positionId) + 1);
@@ -770,10 +772,8 @@ contract NFTXRouterTests is TestBase {
 
         uint256 qty = 5;
 
-        (uint256 mintedVTokens, ) = _mintVToken(qty);
-        vtoken.transfer(from, mintedVTokens);
+        (uint256 mintedVTokens, ) = _mintVToken(qty, from, from);
 
-        startHoax(from);
         uint256[] memory tokenIds = nft.mint(qty);
 
         bytes memory encodedPermit2 = _getEncodedPermit2(
