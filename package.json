@@ -38,5 +38,8 @@
     "ts-node": "^10.8.0",
     "typechain": "^5.1.1",
     "typescript": "^4.7.2"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-verify": "^1.1.1"
   }
 }

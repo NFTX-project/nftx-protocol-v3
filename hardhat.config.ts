@@ -13,6 +13,7 @@ import "hardhat-abi-exporter";
 import "hardhat-tracer";
 import "@nomicfoundation/hardhat-foundry";
 import "hardhat-contract-sizer";
+import "@nomicfoundation/hardhat-verify";
 
 const DEFAULT_COMPILER_SETTINGS = {
   version: "0.8.15",
@@ -147,6 +148,11 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
+  },
+  etherscan: {
+    apiKey: {
+      goerli: process.env.ETHERSCAN_API_KEY!,
+    },
   },
 };
 
