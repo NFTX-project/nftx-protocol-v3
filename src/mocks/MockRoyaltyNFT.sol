@@ -5,7 +5,10 @@ import {ERC721Royalty, ERC721} from "@openzeppelin/contracts/token/ERC721/extens
 contract MockRoyaltyNFT is ERC721Royalty {
     uint256 public nextTokenId;
 
-    constructor() ERC721("RoyaltyV2", "RV2") {
+    constructor(
+        string memory name_,
+        string memory symbol_
+    ) ERC721(name_, symbol_) {
         _setDefaultRoyalty(msg.sender, 500);
     }
 

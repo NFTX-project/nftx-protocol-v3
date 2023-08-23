@@ -8,6 +8,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await getNamedAccounts();
 
   const nft = await deploy("MockRoyaltyNFT", {
+    args: ["CryptoPunks", "CryptoPunks"],
+    from: deployer,
+    log: true,
+  });
+  await deploy("MockRoyaltyNFT", {
+    args: ["Milady Maker", "Milady Maker"],
+    from: deployer,
+    log: true,
+  });
+  await deploy("MockRoyaltyNFT", {
+    args: ["BoredApe", "BoredApe"],
     from: deployer,
     log: true,
   });
