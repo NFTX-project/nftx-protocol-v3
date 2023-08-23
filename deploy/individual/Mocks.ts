@@ -11,6 +11,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     log: true,
   });
+
+  const nft1155 = await deploy("MockRoyalty1155", {
+    from: deployer,
+    log: true,
+  });
 };
 export default func;
 func.tags = ["Mocks"];
