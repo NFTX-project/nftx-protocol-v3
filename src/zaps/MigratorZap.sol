@@ -55,6 +55,7 @@ contract MigratorZap {
 
     uint256 private constant DEADLINE =
         0xf000000000000000000000000000000000000000000000000000000000000000;
+    uint256 private constant DUST_THRESHOLD = 0.005 ether;
 
     IWETH9 public immutable WETH;
     INFTXVaultFactoryV2 public immutable v2NFTXFactory;
@@ -367,7 +368,7 @@ contract MigratorZap {
         vTokenV2Balance = vTokenV2Balance % 1 ether;
 
         // sell fractional portion for WETH
-        if (vTokenV2Balance > 0) {
+        if (vTokenV2Balance > DUST_THRESHOLD) {
             address[] memory path = new address[](2);
             path[0] = vTokenV2;
             path[1] = address(WETH);
@@ -384,6 +385,9 @@ contract MigratorZap {
                 address(this),
                 block.timestamp
             )[path.length - 1];
+        } else if (vTokenV2Balance > 0) {
+            // send back the vTokens as not worth the swap gas fees
+            IERC20(vTokenV2).transfer(msg.sender, vTokenV2Balance);
         }
 
         // mint v3 vault tokens with the nfts received
