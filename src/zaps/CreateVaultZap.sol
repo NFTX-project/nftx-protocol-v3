@@ -249,7 +249,7 @@ contract CreateVaultZap is ERC1155Holder {
             params.vaultFees.swapFee
         );
 
-        vault.setManager(msg.sender);
+        vault.finalizeVault();
 
         // send any extra ETH sent
         uint256 remainingETH = address(this).balance;
