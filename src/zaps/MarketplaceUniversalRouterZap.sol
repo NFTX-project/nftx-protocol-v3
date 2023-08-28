@@ -61,6 +61,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     /// @param netRoyaltyAmount The royalty amount sent
     /// @param wethFees Vault fees paid
     event Sell(
+        uint256 vaultId,
         uint256 count,
         uint256 ethReceived,
         address to,
@@ -70,9 +71,16 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
     /// @param ethSpent The amount of ETH spent in the swap
     /// @param to The user affected by the event
-    event Swap(uint256[] idsIn, uint256[] idsOut, uint256 ethSpent, address to);
+    event Swap(
+        uint256 vaultId,
+        uint256[] idsIn,
+        uint256[] idsOut,
+        uint256 ethSpent,
+        address to
+    );
 
     event Swap(
+        uint256 vaultId,
         uint256[] idsIn,
         uint256[] amounts,
         uint256[] idsOut,
@@ -85,6 +93,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     /// @param to The user affected by the event
     /// @param netRoyaltyAmount The royalty amount sent
     event Buy(
+        uint256 vaultId,
         uint256[] nftIds,
         uint256 ethSpent,
         address to,
@@ -169,7 +178,14 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _wethToETHResidue(to, wethAmount);
 
         // Emit our sale event
-        emit Sell(idsIn.length, wethAmount, to, netRoyaltyAmount, wethFees);
+        emit Sell(
+            vaultId,
+            idsIn.length,
+            wethAmount,
+            to,
+            netRoyaltyAmount,
+            wethFees
+        );
     }
 
     /**
@@ -201,7 +217,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         // send back remaining ETH
         _sendETHResidue(to);
 
-        emit Swap(idsIn, idsOut, ethFees, to);
+        emit Swap(vaultId, idsIn, idsOut, ethFees, to);
     }
 
     /**
@@ -253,6 +269,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _transferDust(vault, true);
 
         emit Buy(
+            vaultId,
             idsOut,
             wethSpent + wethFees + netRoyaltyAmount,
             to,
@@ -370,7 +387,14 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _wethToETHResidue(to, wethAmount);
 
         // Emit our sale event
-        emit Sell(totalAmount, wethAmount, to, netRoyaltyAmount, wethFees);
+        emit Sell(
+            vaultId,
+            totalAmount,
+            wethAmount,
+            to,
+            netRoyaltyAmount,
+            wethFees
+        );
     }
 
     /**
@@ -412,7 +436,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         // send back remaining ETH
         _sendETHResidue(to);
 
-        emit Swap(idsIn, amounts, idsOut, ethFees, to);
+        emit Swap(vaultId, idsIn, amounts, idsOut, ethFees, to);
     }
 
     // =============================================================
@@ -495,6 +519,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _transferDust(vault, true);
 
         emit Buy(
+            params.vaultId,
             params.idsOut,
             wethSpent + wethFees + netRoyaltyAmount,
             params.to,
