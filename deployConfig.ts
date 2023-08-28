@@ -29,6 +29,7 @@ const config: {
     REWARD_TIER_CARDINALITY: string;
     permit2: string;
     nftxUniversalRouter: string;
+    v2VaultFactory: string;
     v2Inventory: string;
     sushiRouter: string;
     twapInterval: number;
@@ -48,6 +49,7 @@ const config: {
     REWARD_TIER_CARDINALITY: "75",
     permit2: "0x000000000022d473030f116ddee9f6b43ac78ba3",
     nftxUniversalRouter: "0xF7c4FC5C2e30258e1E4d1197fc63aeDE371508f3", // NOTE: update this if new UniswapV3Factory deployed.
+    v2VaultFactory: "0x1478bEB5D18B23d2bA90FcEe91d66460AC585e6b",
     v2Inventory: "0x6e91A3f27cE6753f47C66B76B03E6A7bFdDB605B",
     sushiRouter: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
     ...commonConfig,
@@ -58,6 +60,7 @@ const config: {
     REWARD_TIER_CARDINALITY: "102",
     permit2: "0x000000000022d473030f116ddee9f6b43ac78ba3",
     nftxUniversalRouter: "0x000000000000000000000000000000000000dEaD", // FIXME: set valid address
+    v2VaultFactory: "0xBE86f647b167567525cCAAfcd6f881F1Ee558216",
     v2Inventory: "0x3E135c3E981fAe3383A5aE0d323860a34CfAB893",
     sushiRouter: "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
     ...commonConfig,
@@ -68,6 +71,7 @@ const config: {
     REWARD_TIER_CARDINALITY: "75",
     permit2: "0x000000000022d473030f116ddee9f6b43ac78ba3",
     nftxUniversalRouter: "0x000000000000000000000000000000000000dEaD", // FIXME: set valid address
+    v2VaultFactory: "0xE77b89FEc41A7b7dC74eb33602e82F0672FbB33C",
     v2Inventory: "0x1A2C03ABD4Af7C87d8b4d5aD39b56fa98E8C4Cc6",
     sushiRouter: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
     ...commonConfig,

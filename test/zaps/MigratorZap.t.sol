@@ -71,6 +71,7 @@ contract MigratorZapTests is TestBase {
 
         migratorZap = new MigratorZap(
             IWETH9(WETH),
+            v2NFTXFactory,
             v2Inventory,
             sushiRouter,
             positionManager,
@@ -154,7 +155,6 @@ contract MigratorZapTests is TestBase {
         IERC20(xMILADY).approve(address(migratorZap), shares);
         uint256 xNFTId = migratorZap.v2InventoryToXNFT(
             vaultIdV2,
-            V2_MILADY_VTOKEN,
             shares,
             idsToRedeem,
             false, // is1155
@@ -293,7 +293,10 @@ contract MigratorZapTests is TestBase {
         uint256 tickDistance = _getTickDistance(fee);
 
         if (vToken < WETH) {
-            currentSqrtP = TickHelpers.encodeSqrtRatioX96(currentNFTPrice, 1 ether);
+            currentSqrtP = TickHelpers.encodeSqrtRatioX96(
+                currentNFTPrice,
+                1 ether
+            );
             // price = amount1 / amount0 = 1.0001^tick => tick ∝ price
             tickLower = TickHelpers.getTickForAmounts(
                 lowerNFTPrice,
@@ -306,7 +309,10 @@ contract MigratorZapTests is TestBase {
                 tickDistance
             );
         } else {
-            currentSqrtP = TickHelpers.encodeSqrtRatioX96(1 ether, currentNFTPrice);
+            currentSqrtP = TickHelpers.encodeSqrtRatioX96(
+                1 ether,
+                currentNFTPrice
+            );
             tickLower = TickHelpers.getTickForAmounts(
                 1 ether,
                 upperNFTPrice,
