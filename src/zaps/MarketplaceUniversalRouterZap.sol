@@ -118,6 +118,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     error ZapPaused();
     error SwapFailed();
     error UnableToSendETH();
+    error WrongVaultType();
     error NotEnoughFundsForRedeem();
     error ZeroAddress();
 
@@ -431,6 +432,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         address payable to
     ) external payable onlyOwnerIfPaused {
         address vault = nftxVaultFactory.vault(vaultId);
+        if (!INFTXVaultV3(vault).is1155()) revert WrongVaultType();
 
         address assetAddress = INFTXVaultV3(vault).assetAddress();
         IERC1155(assetAddress).safeBatchTransferFrom(
@@ -573,6 +575,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         uint256[] calldata amounts
     ) internal returns (address vault, address assetAddress) {
         vault = nftxVaultFactory.vault(vaultId);
+        if (!INFTXVaultV3(vault).is1155()) revert WrongVaultType();
 
         assetAddress = INFTXVaultV3(vault).assetAddress();
         IERC1155(assetAddress).safeBatchTransferFrom(
