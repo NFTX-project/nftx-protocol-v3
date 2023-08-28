@@ -669,10 +669,12 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             for (uint256 i; i < idsIn.length; ) {
                 (address receiver, uint256 royaltyAmount) = IERC2981(nft)
                     .royaltyInfo(idsIn[i], salePrice);
-                netRoyaltyAmount += royaltyAmount * amounts[i];
 
-                if (royaltyAmount > 0) {
-                    WETH.transfer(receiver, royaltyAmount);
+                uint256 royaltyToPay = royaltyAmount * amounts[i];
+                netRoyaltyAmount += royaltyToPay;
+
+                if (royaltyToPay > 0) {
+                    WETH.transfer(receiver, royaltyToPay);
                 }
 
                 unchecked {
