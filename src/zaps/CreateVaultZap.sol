@@ -224,7 +224,7 @@ contract CreateVaultZap is ERC1155Holder {
                         msg.sender,
                         "",
                         false,
-                        true // forceTimelock as we minted the vTokens with NFTs
+                        false // as twap doesn't exist so no mint fee would be charged by the vault at this instant, if transacted manually
                     );
                 } else {
                     // dust amount worthless for the user, so send to InventoryStaking as reward for future stakers
