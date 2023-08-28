@@ -62,6 +62,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     args: [
       config.WETH,
+      config.v2VaultFactory,
       config.v2Inventory,
       config.sushiRouter,
       positionManager.address,
