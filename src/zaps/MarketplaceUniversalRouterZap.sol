@@ -382,6 +382,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
                 assetAddress,
                 idsIn,
                 amounts,
+                totalAmount,
                 wethAmount
             );
         }
@@ -693,11 +694,12 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         address nft,
         uint256[] calldata idsIn,
         uint256[] calldata amounts,
+        uint256 totalAmount,
         uint256 netWethAmount
     ) internal returns (uint256 netRoyaltyAmount) {
         bool success = IERC2981(nft).supportsInterface(_INTERFACE_ID_ERC2981);
         if (success) {
-            uint256 salePrice = netWethAmount / idsIn.length;
+            uint256 salePrice = netWethAmount / totalAmount;
 
             for (uint256 i; i < idsIn.length; ) {
                 (address receiver, uint256 royaltyAmount) = IERC2981(nft)
