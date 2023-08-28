@@ -417,7 +417,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         IWETH9(WETH).withdraw(wethRemaining);
         TransferLib.transferETH(msg.sender, wethRemaining);
 
-        emit SellNFTs(params.nftIds.length, wethRemaining);
+        emit SellNFTs(nftCount, wethRemaining);
     }
 
     /**

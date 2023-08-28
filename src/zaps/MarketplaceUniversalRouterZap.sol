@@ -38,6 +38,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     address public immutable inventoryStaking;
 
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
+    uint256 constant BASE = 10 ** 18;
 
     // =============================================================
     //                           VARIABLES
@@ -61,6 +62,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     /// @param netRoyaltyAmount The royalty amount sent
     /// @param wethFees Vault fees paid
     event Sell(
+        uint256 vaultId,
         uint256 count,
         uint256 ethReceived,
         address to,
@@ -70,9 +72,16 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
     /// @param ethSpent The amount of ETH spent in the swap
     /// @param to The user affected by the event
-    event Swap(uint256[] idsIn, uint256[] idsOut, uint256 ethSpent, address to);
+    event Swap(
+        uint256 vaultId,
+        uint256[] idsIn,
+        uint256[] idsOut,
+        uint256 ethSpent,
+        address to
+    );
 
     event Swap(
+        uint256 vaultId,
         uint256[] idsIn,
         uint256[] amounts,
         uint256[] idsOut,
@@ -85,6 +94,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     /// @param to The user affected by the event
     /// @param netRoyaltyAmount The royalty amount sent
     event Buy(
+        uint256 vaultId,
         uint256[] nftIds,
         uint256 ethSpent,
         address to,
@@ -97,6 +107,10 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     /// @param to The user affected by the event
     event DustReturned(uint256 ethAmount, uint256 vTokenAmount, address to);
 
+    event Paused(bool status);
+    event NewUniversalRouter(address universalRouter);
+    event NewDustThreshold(uint256 dustThreshold);
+
     // =============================================================
     //                            ERRORS
     // =============================================================
@@ -105,6 +119,8 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     error SwapFailed();
     error UnableToSendETH();
     error WrongVaultType();
+    error NotEnoughFundsForRedeem();
+    error ZeroAddress();
 
     // =============================================================
     //                           INIT
@@ -170,7 +186,14 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _wethToETHResidue(to, wethAmount);
 
         // Emit our sale event
-        emit Sell(idsIn.length, wethAmount, to, netRoyaltyAmount, wethFees);
+        emit Sell(
+            vaultId,
+            idsIn.length,
+            wethAmount,
+            to,
+            netRoyaltyAmount,
+            wethFees
+        );
     }
 
     /**
@@ -188,10 +211,10 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         (address vault, ) = _transferSender721ToVault(vaultId, idsIn);
 
         // Swap our tokens. Forcing to deduct vault fees
-        uint256[] memory emptyIds;
+        uint256[] memory emptyAmounts;
         uint256 ethFees = INFTXVaultV3(vault).swap{value: msg.value}(
             idsIn,
-            emptyIds,
+            emptyAmounts,
             idsOut,
             msg.sender,
             to,
@@ -202,7 +225,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         // send back remaining ETH
         _sendETHResidue(to);
 
-        emit Swap(idsIn, idsOut, ethFees, to);
+        emit Swap(vaultId, idsIn, idsOut, ethFees, to);
     }
 
     /**
@@ -227,10 +250,20 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         WETH.deposit{value: msg.value}();
 
         // swap WETH to vTokens
-        uint256 iniWETHBal = WETH.balanceOf(address(this));
         address vault = nftxVaultFactory.vault(vaultId);
-        _swapTokens(address(WETH), vault, executeCallData);
-        uint256 wethSpent = iniWETHBal - WETH.balanceOf(address(this));
+        uint256 wethSpent;
+        uint256 vTokenAmount;
+        {
+            uint256 iniWETHBal = WETH.balanceOf(address(this));
+            (vTokenAmount, ) = _swapTokens(
+                address(WETH),
+                vault,
+                executeCallData
+            );
+            if (vTokenAmount < idsOut.length * BASE)
+                revert NotEnoughFundsForRedeem();
+            wethSpent = iniWETHBal - WETH.balanceOf(address(this));
+        }
 
         uint256 wethLeft = msg.value - wethSpent;
 
@@ -244,6 +277,9 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             true
         );
 
+        // the (1 - idsOut.length * BASE / vTokenAmount) share of wethSpent is not spend,
+        // but swapped to vTokens and returned to the caller via _transferDust() below
+        wethSpent = (wethSpent * idsOut.length * BASE) / vTokenAmount;
         uint256 netRoyaltyAmount;
         if (deductRoyalty) {
             address assetAddress = INFTXVaultV3(vault).assetAddress();
@@ -254,6 +290,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _transferDust(vault, true);
 
         emit Buy(
+            vaultId,
             idsOut,
             wethSpent + wethFees + netRoyaltyAmount,
             to,
@@ -361,6 +398,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
                 assetAddress,
                 idsIn,
                 amounts,
+                totalAmount,
                 wethAmount
             );
         }
@@ -371,7 +409,14 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _wethToETHResidue(to, wethAmount);
 
         // Emit our sale event
-        emit Sell(totalAmount, wethAmount, to, netRoyaltyAmount, wethFees);
+        emit Sell(
+            vaultId,
+            totalAmount,
+            wethAmount,
+            to,
+            netRoyaltyAmount,
+            wethFees
+        );
     }
 
     /**
@@ -414,7 +459,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         // send back remaining ETH
         _sendETHResidue(to);
 
-        emit Swap(idsIn, amounts, idsOut, ethFees, to);
+        emit Swap(vaultId, idsIn, amounts, idsOut, ethFees, to);
     }
 
     // =============================================================
@@ -440,14 +485,17 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
     function pause(bool paused_) external onlyOwner {
         paused = paused_;
+        emit Paused(paused_);
     }
 
     function setUniversalRouter(address universalRouter_) external onlyOwner {
         universalRouter = universalRouter_;
+        emit NewUniversalRouter(universalRouter_);
     }
 
     function setDustThreshold(uint256 dustThreshold_) external onlyOwner {
         dustThreshold = dustThreshold_;
+        emit NewDustThreshold(dustThreshold_);
     }
 
     // =============================================================
@@ -497,6 +545,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         _transferDust(vault, true);
 
         emit Buy(
+            params.vaultId,
             params.idsOut,
             wethSpent + wethFees + netRoyaltyAmount,
             params.to,
@@ -516,8 +565,8 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         (vault, assetAddress) = _transferSender721ToVault(vaultId, ids);
 
         // Mint our tokens from the vault to this contract
-        uint256[] memory emptyIds;
-        INFTXVaultV3(vault).mint(ids, emptyIds, msg.sender, address(this));
+        uint256[] memory emptyAmounts;
+        INFTXVaultV3(vault).mint(ids, emptyAmounts, msg.sender, address(this));
     }
 
     function _mint1155(
@@ -663,19 +712,22 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         address nft,
         uint256[] calldata idsIn,
         uint256[] calldata amounts,
+        uint256 totalAmount,
         uint256 netWethAmount
     ) internal returns (uint256 netRoyaltyAmount) {
         bool success = IERC2981(nft).supportsInterface(_INTERFACE_ID_ERC2981);
         if (success) {
-            uint256 salePrice = netWethAmount / idsIn.length;
+            uint256 salePrice = netWethAmount / totalAmount;
 
             for (uint256 i; i < idsIn.length; ) {
                 (address receiver, uint256 royaltyAmount) = IERC2981(nft)
                     .royaltyInfo(idsIn[i], salePrice);
-                netRoyaltyAmount += royaltyAmount * amounts[i];
 
-                if (royaltyAmount > 0) {
-                    WETH.transfer(receiver, royaltyAmount);
+                uint256 royaltyToPay = royaltyAmount * amounts[i];
+                netRoyaltyAmount += royaltyToPay;
+
+                if (royaltyToPay > 0) {
+                    WETH.transfer(receiver, royaltyToPay);
                 }
 
                 unchecked {
@@ -701,6 +753,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     }
 
     function _sendETHResidue(address to) internal {
+        if (to == address(0)) revert ZeroAddress();
         // sending entire ETH balance (hence accounting for the unused msg.value)
         (bool success, ) = payable(to).call{value: address(this).balance}("");
         if (!success) revert UnableToSendETH();
