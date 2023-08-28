@@ -8,6 +8,8 @@ library TransferLib {
 
     address internal constant CRYPTO_PUNKS =
         0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
+    address internal constant CRYPTO_KITTIES =
+        0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
 
     // Errors
     error UnableToSendETH();
@@ -78,7 +80,7 @@ library TransferLib {
     ) private {
         bytes memory data;
 
-        if (assetAddr != CRYPTO_PUNKS) {
+        if (assetAddr != CRYPTO_PUNKS && assetAddr != CRYPTO_KITTIES) {
             // We push to the vault to avoid an unneeded transfer.
             data = abi.encodeWithSignature(
                 "safeTransferFrom(address,address,uint256)",
@@ -86,7 +88,7 @@ library TransferLib {
                 to,
                 tokenId
             );
-        } else {
+        } else if (assetAddr == CRYPTO_PUNKS) {
             // Fix here for frontrun attack.
             bytes memory punkIndexToAddress = abi.encodeWithSignature(
                 "punkIndexToAddress(uint256)",
@@ -99,6 +101,14 @@ library TransferLib {
 
             if (!checkSuccess || nftOwner != msg.sender) revert NotNFTOwner();
             data = abi.encodeWithSignature("buyPunk(uint256)", tokenId);
+        } else {
+            // CRYPTO_KITTIES
+            data = abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)",
+                msg.sender,
+                address(this),
+                tokenId
+            );
         }
 
         (bool success, bytes memory resultData) = address(assetAddr).call(data);
