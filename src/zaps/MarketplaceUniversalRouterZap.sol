@@ -117,6 +117,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     error ZapPaused();
     error SwapFailed();
     error UnableToSendETH();
+    error ZeroAddress();
 
     // =============================================================
     //                           INIT
@@ -730,6 +731,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     }
 
     function _sendETHResidue(address to) internal {
+        if (to == address(0)) revert ZeroAddress();
         // sending entire ETH balance (hence accounting for the unused msg.value)
         (bool success, ) = payable(to).call{value: address(this).balance}("");
         if (!success) revert UnableToSendETH();
