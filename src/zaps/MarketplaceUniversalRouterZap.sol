@@ -118,6 +118,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     error ZapPaused();
     error SwapFailed();
     error UnableToSendETH();
+    error InsufficientWethForVaultFees();
     error WrongVaultType();
     error NotEnoughFundsForRedeem();
     error ZeroAddress();
@@ -173,6 +174,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // distributing vault fees with the weth received
         uint256 wethFees = _ethMintFees(INFTXVaultV3(vault), idsIn.length);
+        if (wethFees < wethAmount) revert InsufficientWethForVaultFees();
         _distributeVaultFees(vaultId, wethFees, true);
 
         uint256 netRoyaltyAmount;
@@ -180,7 +182,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             netRoyaltyAmount = _deductRoyalty(assetAddress, idsIn, wethAmount);
         }
 
-        wethAmount -= (wethFees + netRoyaltyAmount); // if underflow, then revert desired
+        wethAmount -= (wethFees + netRoyaltyAmount);
 
         // convert WETH to ETH and send remaining ETH to `to`
         _wethToETHResidue(to, wethAmount);
@@ -390,6 +392,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // distributing vault fees with the weth received
         uint256 wethFees = _ethMintFees(INFTXVaultV3(vault), totalAmount);
+        if (wethFees < wethAmount) revert InsufficientWethForVaultFees();
         _distributeVaultFees(vaultId, wethFees, true);
 
         uint256 netRoyaltyAmount;
