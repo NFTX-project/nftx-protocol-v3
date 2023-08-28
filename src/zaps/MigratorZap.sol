@@ -5,6 +5,7 @@ import {TransferLib} from "@src/lib/TransferLib.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {INFTXVaultV2} from "@src/v2/interfaces/INFTXVaultV2.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
@@ -349,8 +350,15 @@ contract MigratorZap {
         uint256[] memory idsRedeemed = INFTXVaultV2(vTokenV2).redeemTo(
             vTokenV2Balance / 1 ether,
             idsToRedeem,
-            vTokenV3
+            is1155 ? address(this) : vTokenV3
         );
+        if (is1155) {
+            IERC1155(INFTXVaultV3(vTokenV3).assetAddress()).setApprovalForAll(
+                vTokenV3,
+                true
+            );
+        }
+
         // fractional portion of vToken would be left
         vTokenV2Balance = vTokenV2Balance % 1 ether;
 
