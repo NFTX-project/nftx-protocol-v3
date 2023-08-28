@@ -10,6 +10,7 @@ import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import {IUniswapV2Router02} from "@src/interfaces/external/IUniswapV2Router02.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
+import {INFTXVaultFactoryV2} from "@src/v2/interfaces/INFTXVaultFactoryV2.sol";
 import {INFTXInventoryStakingV2} from "@src/v2/interfaces/INFTXInventoryStakingV2.sol";
 import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
@@ -55,6 +56,7 @@ contract MigratorZap {
         0xf000000000000000000000000000000000000000000000000000000000000000;
 
     IWETH9 public immutable WETH;
+    INFTXVaultFactoryV2 public immutable v2NFTXFactory;
     INFTXInventoryStakingV2 public immutable v2Inventory;
     IUniswapV2Router02 public immutable sushiRouter;
     INonfungiblePositionManager public immutable positionManager;
@@ -73,6 +75,7 @@ contract MigratorZap {
 
     constructor(
         IWETH9 WETH_,
+        INFTXVaultFactoryV2 v2NFTXFactory_,
         INFTXInventoryStakingV2 v2Inventory_,
         IUniswapV2Router02 sushiRouter_,
         INonfungiblePositionManager positionManager_,
@@ -80,6 +83,7 @@ contract MigratorZap {
         INFTXInventoryStakingV3 v3Inventory_
     ) {
         WETH = WETH_;
+        v2NFTXFactory = v2NFTXFactory_;
         v2Inventory = v2Inventory_;
         sushiRouter = sushiRouter_;
         positionManager = positionManager_;
@@ -187,7 +191,6 @@ contract MigratorZap {
      */
     function v2InventoryToXNFT(
         uint256 vaultIdV2,
-        address vTokenV2,
         uint256 shares,
         uint256[] calldata idsToRedeem,
         bool is1155,
@@ -198,6 +201,7 @@ contract MigratorZap {
         IERC20(xToken).transferFrom(msg.sender, address(this), shares);
 
         v2Inventory.withdraw(vaultIdV2, shares);
+        address vTokenV2 = v2NFTXFactory.vault(vaultIdV2);
         uint256 vTokenV2Balance = IERC20(vTokenV2).balanceOf(address(this));
 
         (
