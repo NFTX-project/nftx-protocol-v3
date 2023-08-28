@@ -38,6 +38,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     address public immutable inventoryStaking;
 
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
+    uint256 constant BASE = 10 ** 18;
 
     // =============================================================
     //                           VARIABLES
@@ -117,6 +118,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     error ZapPaused();
     error SwapFailed();
     error UnableToSendETH();
+    error NotEnoughFundsForRedeem();
     error ZeroAddress();
 
     // =============================================================
@@ -247,10 +249,20 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         WETH.deposit{value: msg.value}();
 
         // swap WETH to vTokens
-        uint256 iniWETHBal = WETH.balanceOf(address(this));
         address vault = nftxVaultFactory.vault(vaultId);
-        _swapTokens(address(WETH), vault, executeCallData);
-        uint256 wethSpent = iniWETHBal - WETH.balanceOf(address(this));
+        uint256 wethSpent;
+        uint256 vTokenAmount;
+        {
+            uint256 iniWETHBal = WETH.balanceOf(address(this));
+            (vTokenAmount, ) = _swapTokens(
+                address(WETH),
+                vault,
+                executeCallData
+            );
+            if (vTokenAmount < idsOut.length * BASE)
+                revert NotEnoughFundsForRedeem();
+            wethSpent = iniWETHBal - WETH.balanceOf(address(this));
+        }
 
         uint256 wethLeft = msg.value - wethSpent;
 
@@ -264,6 +276,9 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
             true
         );
 
+        // the (1 - idsOut.length * BASE / vTokenAmount) share of wethSpent is not spend,
+        // but swapped to vTokens and returned to the caller via _transferDust() below
+        wethSpent = (wethSpent * idsOut.length * BASE) / vTokenAmount;
         uint256 netRoyaltyAmount;
         if (deductRoyalty) {
             address assetAddress = INFTXVaultV3(vault).assetAddress();
