@@ -1,7 +1,7 @@
 {
   "goerli": {
-    "CreateVaultZap": "0xB2a0BdDe41bF7F54bD5a03D3f38b2958d0e52BA5",
-    "MarketplaceUniversalRouterZap": "0x1609Ea421c5168eDC4225727dd230Fa5AbAc646d",
+    "CreateVaultZap": "0x040fE06ABc3c099772DEe413dE138937bf053543",
+    "MarketplaceUniversalRouterZap": "0x156c755fc749f150DfF307520063F9B85d012d2c",
     "NFTXFeeDistributorV3": "0x17Ee4Acc187FBE2077F744598d4090f4386C560c",
     "NFTXInventoryStakingV3Upgradeable": "0xEf771a17e6970d8B4b208a76e94F175277554230",
     "NFTXRouter": "0x3b79692Eb189a68E513ad5628A419950E5773e35",
