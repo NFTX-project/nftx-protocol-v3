@@ -106,6 +106,10 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
     /// @param to The user affected by the event
     event DustReturned(uint256 ethAmount, uint256 vTokenAmount, address to);
 
+    event Paused(bool status);
+    event NewUniversalRouter(address universalRouter);
+    event NewDustThreshold(uint256 dustThreshold);
+
     // =============================================================
     //                            ERRORS
     // =============================================================
@@ -203,10 +207,10 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         (address vault, ) = _transferSender721ToVault(vaultId, idsIn);
 
         // Swap our tokens. Forcing to deduct vault fees
-        uint256[] memory emptyIds;
+        uint256[] memory emptyAmounts;
         uint256 ethFees = INFTXVaultV3(vault).swap{value: msg.value}(
             idsIn,
-            emptyIds,
+            emptyAmounts,
             idsOut,
             msg.sender,
             to,
@@ -462,14 +466,17 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
     function pause(bool paused_) external onlyOwner {
         paused = paused_;
+        emit Paused(paused_);
     }
 
     function setUniversalRouter(address universalRouter_) external onlyOwner {
         universalRouter = universalRouter_;
+        emit NewUniversalRouter(universalRouter_);
     }
 
     function setDustThreshold(uint256 dustThreshold_) external onlyOwner {
         dustThreshold = dustThreshold_;
+        emit NewDustThreshold(dustThreshold_);
     }
 
     // =============================================================
@@ -539,8 +546,8 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         (vault, assetAddress) = _transferSender721ToVault(vaultId, ids);
 
         // Mint our tokens from the vault to this contract
-        uint256[] memory emptyIds;
-        INFTXVaultV3(vault).mint(ids, emptyIds, msg.sender, address(this));
+        uint256[] memory emptyAmounts;
+        INFTXVaultV3(vault).mint(ids, emptyAmounts, msg.sender, address(this));
     }
 
     function _mint1155(
