@@ -1,8 +1,3 @@
-// SPDX-License-Identifier: MIT
-// Modified from ENS: https://github.com/ensdomains/ens-contracts/blob/master/contracts/ethregistrar/ExponentialPremiumPriceOracle.sol
-
-pragma solidity ^0.8.0;
-
 library ExponentialPremium {
     uint256 constant PRECISION = 1e18;
     uint256 constant bit1 = 999989423469314432; // 0.5 ^ 1/65536 * (10 ** 18)
@@ -21,37 +16,17 @@ library ExponentialPremium {
     uint256 constant bit14 = 917004043204671232;
     uint256 constant bit15 = 840896415253714560;
     uint256 constant bit16 = 707106781186547584;
-
-    // converting true exponential into individual steps
     uint256 constant timeStep = 1 hours;
-
-    /**
-     * @dev Returns the premium in internal base units.
-     */
-    function getPremium(
-        uint256 depositedAt,
-        uint256 startPremium,
-        uint256 premiumDuration
-    ) internal view returns (uint256) {
+    function getPremium(uint256 depositedAt, uint256 startPremium, uint256 premiumDuration) internal view returns (uint256) {
         uint256 elapsed = block.timestamp - depositedAt;
         uint256 premium = _decayedPremium(startPremium, elapsed);
-
         uint256 endValue = startPremium >> (premiumDuration / timeStep); // endValue = startPremium >> totalSteps
         if (premium >= endValue) {
             return premium - endValue;
         }
         return 0;
     }
-
-    /**
-     * @dev Returns the premium value at current time elapsed
-     * @param startPremium starting value
-     * @param elapsed time past since nft deposit
-     */
-    function _decayedPremium(
-        uint256 startPremium,
-        uint256 elapsed
-    ) internal pure returns (uint256) {
+    function _decayedPremium(uint256 startPremium, uint256 elapsed) internal pure returns (uint256) {
         uint256 stepsPast = (elapsed * PRECISION) / timeStep;
         uint256 intSteps = stepsPast / PRECISION;
         uint256 premium = startPremium >> intSteps;
@@ -60,11 +35,7 @@ library ExponentialPremium {
         uint256 totalPremium = _addFractionalPremium(fraction, premium);
         return totalPremium;
     }
-
-    function _addFractionalPremium(
-        uint256 fraction,
-        uint256 premium
-    ) internal pure returns (uint256) {
+    function _addFractionalPremium(uint256 fraction, uint256 premium) internal pure returns (uint256) {
         if (fraction & (1 << 0) != 0) {
             premium = (premium * bit1) / PRECISION;
         }

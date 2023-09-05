@@ -1,33 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity =0.8.15;
-
-import {Base64} from "base64-sol/base64.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {HexStrings} from "@uni-periphery/libraries/HexStrings.sol";
-
 contract InventoryStakingDescriptor {
     using Strings for uint256;
     using HexStrings for uint256;
-
-    // =============================================================
-    //                        CONSTANTS
-    // =============================================================
-
     string internal constant PREFIX = "x";
-
-    // =============================================================
-    //                        INTERNAL
-    // =============================================================
-
-    function renderSVG(
-        uint256 tokenId,
-        uint256 vaultId,
-        address vToken,
-        string calldata vTokenSymbol,
-        uint256 vTokenBalance,
-        uint256 wethBalance,
-        uint256 timelockLeft
-    ) public pure returns (string memory) {
+    function renderSVG(uint256 tokenId, uint256 vaultId, address vToken, string calldata vTokenSymbol, uint256 vTokenBalance, uint256 wethBalance, uint256 timelockLeft) public pure returns (string memory) {
         return
             string.concat(
                 '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">',
@@ -46,16 +21,7 @@ contract InventoryStakingDescriptor {
                 "</svg>"
             );
     }
-
-    function tokenURI(
-        uint256 tokenId,
-        uint256 vaultId,
-        address vToken,
-        string calldata vTokenSymbol,
-        uint256 vTokenBalance,
-        uint256 wethBalance,
-        uint256 timelockedUntil
-    ) external view returns (string memory) {
+    function tokenURI(uint256 tokenId, uint256 vaultId, address vToken, string calldata vTokenSymbol, uint256 vTokenBalance, uint256 wethBalance, uint256 timelockedUntil) external view returns (string memory) {
         string memory image = Base64.encode(
             bytes(
                 renderSVG(
@@ -71,7 +37,6 @@ contract InventoryStakingDescriptor {
                 )
             )
         );
-
         return
             string.concat(
                 "data:application/json;base64,",
@@ -98,15 +63,7 @@ contract InventoryStakingDescriptor {
                 )
             );
     }
-
-    // =============================================================
-    //                        PRIVATE
-    // =============================================================
-
-    function getDefs(
-        string memory color2,
-        string memory color3
-    ) private pure returns (string memory) {
+    function getDefs(string memory color2, string memory color3) private pure returns (string memory) {
         return
             string.concat(
                 "<defs>",
@@ -135,22 +92,10 @@ contract InventoryStakingDescriptor {
             );
     }
 
-    function text(
-        string memory x,
-        string memory y,
-        string memory fontWeight,
-        string memory fontSize
-    ) private pure returns (string memory) {
+    function text(string memory x, string memory y, string memory fontWeight, string memory fontSize) private pure returns (string memory) {
         return text(x, y, fontWeight, fontSize, false);
     }
-
-    function text(
-        string memory x,
-        string memory y,
-        string memory fontWeight,
-        string memory fontSize,
-        bool onlyMonospace
-    ) private pure returns (string memory) {
+    function text(string memory x, string memory y, string memory fontWeight, string memory fontSize, bool onlyMonospace) private pure returns (string memory) {
         return
             string.concat(
                 '<text y="',
@@ -166,32 +111,20 @@ contract InventoryStakingDescriptor {
                 'px">'
             );
     }
-
-    function tokenToColorHex(
-        uint256 token,
-        uint256 offset
-    ) private pure returns (string memory str) {
+    function tokenToColorHex(uint256 token, uint256 offset) private pure returns (string memory str) {
         return string((token >> offset).toHexStringNoPrefix(3));
     }
-
-    function balanceTag(
-        string memory y,
-        uint256 tokenBalance,
-        string memory tokenSymbol
-    ) private pure returns (string memory) {
+    function balanceTag(string memory y, uint256 tokenBalance, string memory tokenSymbol) private pure returns (string memory) {
         uint256 beforeDecimal = tokenBalance / 1 ether;
         string memory afterDecimals = getAfterDecimals(tokenBalance);
-
         uint256 leftPadding = 12;
         uint256 beforeDecimalFontSize = 20;
         uint256 afterDecimalFontSize = 16;
-
         uint256 width = leftPadding +
             ((getDigitsCount(beforeDecimal) + 1) * beforeDecimalFontSize) /
             2 +
             (bytes(afterDecimals).length * afterDecimalFontSize * 100) /
             100;
-
         return
             string.concat(
                 '<g style="transform:translate(29px, ',
@@ -216,12 +149,7 @@ contract InventoryStakingDescriptor {
                 "</tspan></text></g>"
             );
     }
-
-    function infoTag(
-        string memory y,
-        string memory label,
-        string memory value
-    ) private pure returns (string memory) {
+    function infoTag(string memory y, string memory label, string memory value) private pure returns (string memory) {
         return
             string.concat(
                 '<g style="transform:translate(29px, ',
@@ -235,12 +163,7 @@ contract InventoryStakingDescriptor {
                 "</text></g>"
             );
     }
-
-    function underlyingBalances(
-        string memory vTokenSymbol,
-        uint256 vTokenBalance,
-        uint256 wethBalance
-    ) private pure returns (string memory) {
+    function underlyingBalances(string memory vTokenSymbol, uint256 vTokenBalance, uint256 wethBalance) private pure returns (string memory) {
         return
             string.concat(
                 text("32", "160", "200", "16"),
@@ -249,12 +172,7 @@ contract InventoryStakingDescriptor {
                 balanceTag("220", wethBalance, "WETH")
             );
     }
-
-    function infoTags(
-        uint256 tokenId,
-        uint256 vaultId,
-        uint256 timelockLeft
-    ) private pure returns (string memory) {
+    function infoTags(uint256 tokenId, uint256 vaultId, uint256 timelockLeft) private pure returns (string memory) {
         return
             string.concat(
                 infoTag("384", "ID", tokenId.toString()),
@@ -268,7 +186,6 @@ contract InventoryStakingDescriptor {
                 )
             );
     }
-
     function getDigitsCount(uint256 num) private pure returns (uint256 count) {
         if (num == 0) return 1;
 
@@ -277,23 +194,17 @@ contract InventoryStakingDescriptor {
             num /= 10;
         }
     }
-
-    function getAfterDecimals(
-        uint256 tokenBalance
-    ) private pure returns (string memory afterDecimals) {
+    function getAfterDecimals(uint256 tokenBalance) private pure returns (string memory afterDecimals) {
         uint256 afterDecimal = (tokenBalance % 1 ether) / 10 ** (18 - 10); // show 10 decimals
-
         uint256 leadingZeroes;
         if (afterDecimal == 0) {
             leadingZeroes = 0;
         } else {
             leadingZeroes = 10 - getDigitsCount(afterDecimal);
         }
-
         afterDecimals = afterDecimal.toString();
         for (uint256 i; i < leadingZeroes; ) {
             afterDecimals = string.concat("0", afterDecimals);
-
             unchecked {
                 ++i;
             }
