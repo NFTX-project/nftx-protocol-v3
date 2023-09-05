@@ -7,7 +7,7 @@ import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC7
 
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
-import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/external/IPermitAllowanceTransfer.sol";
 import {InventoryStakingDescriptor} from "@src/custom/InventoryStakingDescriptor.sol";
 
 interface INFTXInventoryStakingV3 is IERC721Upgradeable {

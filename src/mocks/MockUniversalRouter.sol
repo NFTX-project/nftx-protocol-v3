@@ -3,7 +3,7 @@ pragma solidity =0.8.15;
 
 import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/external/IPermitAllowanceTransfer.sol";
 
 /// @notice A Router contract that uses Permit2 for allowance, and swaps between 2 tokens via UniV3 Pool
 contract MockUniversalRouter {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import {IPermitAllowanceTransfer as IAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {IPermitAllowanceTransfer as IAllowanceTransfer} from "@src/interfaces/external/IPermitAllowanceTransfer.sol";
 
 library Allowance {
     // note if the expiration passed is 0, then it the approval set to the block.timestamp

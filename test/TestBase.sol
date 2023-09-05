@@ -34,7 +34,7 @@ import {TimelockExcludeList} from "@src/TimelockExcludeList.sol";
 import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
-import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/external/IPermitAllowanceTransfer.sol";
 
 contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     UniswapV3FactoryUpgradeable factory;

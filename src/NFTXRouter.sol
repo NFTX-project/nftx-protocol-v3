@@ -23,7 +23,7 @@ import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
 import {ISwapRouter, SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
-import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/external/IPermitAllowanceTransfer.sol";
 import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungiblePositionManager.sol";
 
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";

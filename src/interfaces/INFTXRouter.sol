@@ -7,7 +7,7 @@ import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungibl
 import {SwapRouter} from "@uni-periphery/SwapRouter.sol";
 import {IQuoterV2} from "@uni-periphery/interfaces/IQuoterV2.sol";
 import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.sol";
-import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/external/IPermitAllowanceTransfer.sol";
 
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 

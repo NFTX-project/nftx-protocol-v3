@@ -3,7 +3,7 @@ pragma solidity =0.8.15;
 
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/external/IPermitAllowanceTransfer.sol";
 import {EIP712} from "./EIP712.sol";
 import {SignatureVerification} from "./SignatureVerification.sol";
 import {PermitHash} from "./PermitHash.sol";

@@ -15,7 +15,7 @@ import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
-import {IPermitAllowanceTransfer} from "@src/interfaces/IPermitAllowanceTransfer.sol";
+import {IPermitAllowanceTransfer} from "@src/interfaces/external/IPermitAllowanceTransfer.sol";
 
 /**
  * @title Marketplace Universal Router Zap
@@ -174,7 +174,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // distributing vault fees with the weth received
         uint256 wethFees = _ethMintFees(INFTXVaultV3(vault), idsIn.length);
-        if (wethFees < wethAmount) revert InsufficientWethForVaultFees();
+        if (wethAmount < wethFees) revert InsufficientWethForVaultFees();
         _distributeVaultFees(vaultId, wethFees, true);
 
         uint256 netRoyaltyAmount;
@@ -392,7 +392,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // distributing vault fees with the weth received
         uint256 wethFees = _ethMintFees(INFTXVaultV3(vault), totalAmount);
-        if (wethFees < wethAmount) revert InsufficientWethForVaultFees();
+        if (wethAmount < wethFees) revert InsufficientWethForVaultFees();
         _distributeVaultFees(vaultId, wethFees, true);
 
         uint256 netRoyaltyAmount;
