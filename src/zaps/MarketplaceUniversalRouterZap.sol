@@ -174,7 +174,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // distributing vault fees with the weth received
         uint256 wethFees = _ethMintFees(INFTXVaultV3(vault), idsIn.length);
-        if (wethFees < wethAmount) revert InsufficientWethForVaultFees();
+        if (wethAmount < wethFees) revert InsufficientWethForVaultFees();
         _distributeVaultFees(vaultId, wethFees, true);
 
         uint256 netRoyaltyAmount;
@@ -392,7 +392,7 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
 
         // distributing vault fees with the weth received
         uint256 wethFees = _ethMintFees(INFTXVaultV3(vault), totalAmount);
-        if (wethFees < wethAmount) revert InsufficientWethForVaultFees();
+        if (wethAmount < wethFees) revert InsufficientWethForVaultFees();
         _distributeVaultFees(vaultId, wethFees, true);
 
         uint256 netRoyaltyAmount;
