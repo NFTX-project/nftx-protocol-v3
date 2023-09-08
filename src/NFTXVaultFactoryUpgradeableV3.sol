@@ -320,7 +320,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
         view
         override
         returns (
-            uint256 netPremium,
+            uint256 totalPremium,
             uint256[] memory premiums,
             address[] memory depositors
         )
@@ -356,7 +356,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
                         _premiumMax,
                         _premiumDuration
                     ) * amount;
-                    netPremium += vTokenPremium;
+                    totalPremium += vTokenPremium;
 
                     premiums[i] = vTokenPremium;
                     depositors[i] = depositor;
@@ -371,7 +371,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
                         _premiumMax,
                         _premiumDuration
                     ) * qty;
-                    netPremium += vTokenPremium;
+                    totalPremium += vTokenPremium;
 
                     premiums[i] = vTokenPremium;
                     depositors[i] = depositor;

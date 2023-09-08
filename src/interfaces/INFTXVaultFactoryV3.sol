@@ -187,7 +187,7 @@ interface INFTXVaultFactoryV3 is IBeacon {
      * @param tokenId token id to calculate the premium for
      * @param amount ERC1155 amount of tokenId to redeem
      *
-     * @return netPremium Net premium in vTokens
+     * @return totalPremium Total premium in vTokens
      * @return premiums Premiums corresponding to each depositor
      * @return depositors Depositors that receive a share from the `premiums`
      */
@@ -199,7 +199,7 @@ interface INFTXVaultFactoryV3 is IBeacon {
         external
         view
         returns (
-            uint256 netPremium,
+            uint256 totalPremium,
             uint256[] memory premiums,
             address[] memory depositors
         );
