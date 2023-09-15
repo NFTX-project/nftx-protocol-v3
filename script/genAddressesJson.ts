@@ -18,39 +18,20 @@ const deploymentsList = [
 ];
 const deployConfigKeysList = ["nftxUniversalRouter", "permit2", "WETH"];
 
+const chains = ["sepolia", "goerli"];
+
 const main = async () => {
   console.log("Generating addresses.json...");
 
   let output: {
-    goerli: { [label: string]: string };
-  } = {
-    goerli: {},
-  };
+    [chain: string]: { [label: string]: string };
+  } = {};
 
-  // TODO: add for mainnet
-  for (var i = 0; i < deploymentsList.length; i++) {
-    const data = JSON.parse(
-      await fs.readFile(
-        `./deployments/goerli/${deploymentsList[i]}.json`,
-        "utf8"
-      )
-    ) as { address: string };
-
-    output.goerli[deploymentsList[i]] = data.address;
-  }
-  deployConfigKeysList.map((k) => {
-    // @ts-ignore
-    output.goerli[k] = deployConfig["goerli"][k];
-  });
-
-  // make output alphabetical
-  output.goerli = Object.keys(output.goerli)
-    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
-    .reduce((obj, key) => {
-      // @ts-ignore
-      obj[key] = output.goerli[key];
-      return obj;
-    }, {});
+  await Promise.all(
+    chains.map(async (chain) => {
+      output[chain] = await addressesForChain(chain);
+    })
+  );
 
   const formattedJson = prettier.format(JSON.stringify(output), {
     parser: "json",
@@ -59,4 +40,37 @@ const main = async () => {
   await fs.writeFile("./addresses.json", formattedJson);
 };
 
+const addressesForChain = async (chain: string) => {
+  let res: { [label: string]: string } = {};
+
+  for (var i = 0; i < deploymentsList.length; i++) {
+    try {
+      const data = JSON.parse(
+        await fs.readFile(
+          `./deployments/${chain}/${deploymentsList[i]}.json`,
+          "utf8"
+        )
+      ) as { address: string };
+
+      res[deploymentsList[i]] = data.address;
+    } catch (e) {
+      res[deploymentsList[i]] = "";
+    }
+  }
+  deployConfigKeysList.map((k) => {
+    // @ts-ignore
+    res[k] = deployConfig[chain][k];
+  });
+
+  // make output alphabetical
+  res = Object.keys(res)
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+    .reduce((obj, key) => {
+      // @ts-ignore
+      obj[key] = res[key];
+      return obj;
+    }, {});
+
+  return res;
+};
 main();

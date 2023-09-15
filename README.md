@@ -174,5 +174,5 @@ Note: Tags are defined in the deploy script at the end like: `func.tags = ["<tag
 How to verify the BeaconProxy (for Vaults):
 `source .env && forge verify-contract --chain-id 5 --num-of-optimizations 800 --watch --etherscan-api-key $ETHERSCAN_API_KEY --compiler-version v0.8.15+commit.e14f2714 0xffE5d77309efd6e9391Ac14D95f2035A1e138659 lib/openzeppelin-contracts/contracts/proxy/beacon/BeaconProxy.sol:BeaconProxy --constructor-args $(cast abi-encode "constructor(address,bytes)" 0x1d552A0e6c2f680872C4a88b1e7def05F1858dF0 "")`
 
-where `0xffE5d77309efd6e9391Ac14D95f2035A1e138659` = vault address\
+where `0xffE5d77309efd6e9391Ac14D95f2035A1e138659` = vault (proxy) address\
 and `0x1d552A0e6c2f680872C4a88b1e7def05F1858dF0` = vault factory

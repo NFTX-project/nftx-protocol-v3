@@ -1,4 +1,20 @@
 {
+  "sepolia": {
+    "CreateVaultZap": "0xA3A6a14abBbA041306a0D0F03cD674FAca13885f",
+    "MarketplaceUniversalRouterZap": "0x5Af324A8c90966Bef28386A67c6bE0A16aA03c19",
+    "NFTXFeeDistributorV3": "0x66EF5B4b6ee05639194844CE4867515665F14fED",
+    "NFTXInventoryStakingV3Upgradeable": "0xfBFf0635f7c5327FD138E1EBa72BD9877A6a7C1C",
+    "NFTXRouter": "0x7BdEb0d101502c72fE80B701f18059f3089C6c3C",
+    "nftxUniversalRouter": "0x12156cCA1958B6591CC49EaE03a5553458a4b424",
+    "NFTXVaultFactoryUpgradeableV3": "0x31C56CaF49125043e80B4d3C7f8734f949d8178C",
+    "NonfungiblePositionManager": "0x55BDc76262B1e6e791D0636A0bC61cee23CDFa87",
+    "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",
+    "QuoterV2": "0xb8EB27ca4715f7A04228c6F83935379D1f5AbABd",
+    "SwapRouter": "0xa7069da6a7e600e0348620484fD2B1f24E075d5f",
+    "TickLens": "0xA13E04fAEe08E784A44C27e9E77Ca7a02D45BFd7",
+    "UniswapV3FactoryUpgradeable": "0xDD2dce9C403f93c10af1846543870D065419E70b",
+    "WETH": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+  },
   "goerli": {
     "CreateVaultZap": "0x040fE06ABc3c099772DEe413dE138937bf053543",
     "MarketplaceUniversalRouterZap": "0x5A40C0288d23E83a23bb16C29B790F7e49e49ee6",
