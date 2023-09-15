@@ -1,6 +1,7 @@
 import { utils, BigNumber } from "ethers";
 
 const commonConfig: {
+  rewardFeeTier: number;
   twapInterval: number;
   premiumDuration: number;
   premiumMax: BigNumber;
@@ -11,6 +12,7 @@ const commonConfig: {
   lpEarlyWithdrawPenaltyInWei: BigNumber;
   nftxRouterVTokenDustThreshold: BigNumber;
 } = {
+  rewardFeeTier: 3_000, // 0.3%
   twapInterval: 20 * 60, // 20 mins
   premiumDuration: 10 * 60 * 60, // 10 hrs
   premiumMax: utils.parseEther("5"), // 5 ether = 5x premium
@@ -32,6 +34,7 @@ const config: {
     v2VaultFactory: string;
     v2Inventory: string;
     sushiRouter: string;
+    rewardFeeTier: number;
     twapInterval: number;
     premiumDuration: number;
     premiumMax: BigNumber;

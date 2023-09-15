@@ -151,7 +151,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             factory,
             inventoryStaking,
             nftxRouter,
-            TREASURY
+            TREASURY,
+            DEFAULT_FEE_TIER
         );
 
         factory.setFeeDistributor(address(feeDistributor));

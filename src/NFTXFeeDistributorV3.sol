@@ -67,7 +67,8 @@ contract NFTXFeeDistributorV3 is
         IUniswapV3Factory ammFactory_,
         INFTXInventoryStakingV3 inventoryStaking_,
         INFTXRouter nftxRouter_,
-        address treasury_
+        address treasury_,
+        uint24 rewardFeeTier_
     ) {
         if (address(nftxVaultFactory_) == address(0)) revert ZeroAddress();
         if (address(ammFactory_) == address(0)) revert ZeroAddress();
@@ -81,7 +82,9 @@ contract NFTXFeeDistributorV3 is
         nftxRouter = nftxRouter_;
         treasury = treasury_;
 
-        rewardFeeTier = 10_000;
+        if (ammFactory_.feeAmountTickSpacing(rewardFeeTier_) == 0)
+            revert FeeTierNotEnabled();
+        rewardFeeTier = rewardFeeTier_;
 
         FeeReceiver[] memory feeReceivers_ = new FeeReceiver[](2);
         feeReceivers_[0] = FeeReceiver({

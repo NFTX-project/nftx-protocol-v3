@@ -138,6 +138,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       inventoryStaking.address,
       nftxRouter.address,
       config.treasury,
+      config.rewardFeeTier,
     ],
     log: true,
   });
