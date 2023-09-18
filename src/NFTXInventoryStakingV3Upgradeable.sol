@@ -32,7 +32,7 @@ import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.s
  * @author @apoorvlathey
  *
  * @dev lockId's:
- * 0: deposit & depositWithPermit2
+ * 0: deposit
  * 1: depositWithNFT
  * 2: withdraw
  * 3: collectWethFees
