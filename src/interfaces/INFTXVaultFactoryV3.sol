@@ -167,6 +167,12 @@ interface INFTXVaultFactoryV3 is IBeacon {
 
     function vault(uint256 vaultId) external view returns (address);
 
+    function computeVaultAddress(
+        address assetAddress,
+        string memory name,
+        string memory symbol
+    ) external view returns (address);
+
     function getTwapX96(address pool) external view returns (uint256 priceX96);
 
     /**
