@@ -45,8 +45,6 @@ interface INFTXVaultFactoryV3 is IBeacon {
     // =============================================================
 
     event NewFeeDistributor(address oldDistributor, address newDistributor);
-    event NewZapContract(address oldZap, address newZap);
-    event UpdatedZapContract(address zap, bool excluded);
     event FeeExclusion(address feeExcluded, bool excluded);
     event NewEligibilityManager(address oldEligManager, address newEligManager);
     event NewVault(
