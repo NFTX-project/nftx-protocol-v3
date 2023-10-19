@@ -187,7 +187,7 @@ contract CreateVaultZap is ERC1155Holder {
 
                 uint256[] memory emptyIds;
                 // adding liquidity via vTokens so NFTXRouter won't put extra vTokens in an inventory position
-                nftxRouter.addLiquidity{value: msg.value}(
+                uint256 positionId = nftxRouter.addLiquidity{value: msg.value}(
                     INFTXRouter.AddLiquidityParams({
                         vaultId: vaultId,
                         vTokensAmount: vTokensBalance,
@@ -202,6 +202,11 @@ contract CreateVaultZap is ERC1155Holder {
                         deadline: params.liquidityParams.deadline,
                         forceTimelock: false
                     })
+                );
+                positionManager.safeTransferFrom(
+                    address(this),
+                    msg.sender,
+                    positionId
                 );
 
                 // update with any dust left

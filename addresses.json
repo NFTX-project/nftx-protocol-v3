@@ -1,6 +1,6 @@
 {
   "sepolia": {
-    "CreateVaultZap": "0xA3A6a14abBbA041306a0D0F03cD674FAca13885f",
+    "CreateVaultZap": "0x689B63f2Be36f65B24675eF02b664ceB824F662f",
     "MarketplaceUniversalRouterZap": "0x5Af324A8c90966Bef28386A67c6bE0A16aA03c19",
     "NFTXFeeDistributorV3": "0x66EF5B4b6ee05639194844CE4867515665F14fED",
     "NFTXInventoryStakingV3Upgradeable": "0xfBFf0635f7c5327FD138E1EBa72BD9877A6a7C1C",
@@ -16,7 +16,7 @@
     "WETH": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
   },
   "goerli": {
-    "CreateVaultZap": "0x040fE06ABc3c099772DEe413dE138937bf053543",
+    "CreateVaultZap": "0xFE60863328735aE7EB289cAB99B37235add768Fa",
     "MarketplaceUniversalRouterZap": "0x5A40C0288d23E83a23bb16C29B790F7e49e49ee6",
     "NFTXFeeDistributorV3": "0x17Ee4Acc187FBE2077F744598d4090f4386C560c",
     "NFTXInventoryStakingV3Upgradeable": "0xEf771a17e6970d8B4b208a76e94F175277554230",
