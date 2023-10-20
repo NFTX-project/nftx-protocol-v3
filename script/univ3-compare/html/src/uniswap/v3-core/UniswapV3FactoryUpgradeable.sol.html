@@ -296,10 +296,10 @@ span { display: inline-block; }
 <body class="f9 b9">
 <pre>
 <span class="bold">diff --git a/src/uniswap/v3-core/UniswapV3Factory.sol b/src/uniswap/v3-core/UniswapV3FactoryUpgradeable.sol
-index 7120b07..4a54a05 100644</span>
+index 7120b07..4a66c54 100644</span>
 <span class="bold">--- a/src/uniswap/v3-core/UniswapV3Factory.sol</span>
 <span class="bold">+++ b/src/uniswap/v3-core/UniswapV3FactoryUpgradeable.sol</span>
-<span class="f6">@@ -1,81 +1,111 @@</span>
+<span class="f6">@@ -1,81 +1,108 @@</span>
  // SPDX-License-Identifier: BUSL-1.1
 <span class="f1">-pragma solidity =0.8.12;</span>
 <span class="f2">+pragma solidity =0.8.15;</span>
@@ -344,17 +344,14 @@ index 7120b07..4a54a05 100644</span>
 <span class="f2">+        uint16 rewardTierCardinality_</span>
 <span class="f2">+    ) external initializer {</span>
 <span class="f2">+        __UniswapV3PoolDeployerUpgradeable_init(beaconImplementation_);</span>
+<span class="f2">+</span>
+<span class="f2">+        if (rewardTierCardinality_ &lt;= 1) revert InvalidRewardTierCardinality();</span>
+<span class="f2">+        rewardTierCardinality = rewardTierCardinality_;</span>
  
 <span class="f1">-        feeAmountTickSpacing[500] = 10;</span>
 <span class="f1">-        emit FeeAmountEnabled(500, 10);</span>
 <span class="f1">-        feeAmountTickSpacing[3000] = 60;</span>
 <span class="f1">-        emit FeeAmountEnabled(3000, 60);</span>
-<span class="f2">+        rewardTierCardinality = rewardTierCardinality_;</span>
-<span class="f2">+</span>
-<span class="f2">+        // feeAmountTickSpacing[500] = 10;</span>
-<span class="f2">+        // emit FeeAmountEnabled(500, 10);</span>
-<span class="f2">+        // feeAmountTickSpacing[3000] = 60;</span>
-<span class="f2">+        // emit FeeAmountEnabled(3000, 60);</span>
          feeAmountTickSpacing[10000] = 200;
          emit FeeAmountEnabled(10000, 200);
      }
@@ -381,9 +378,7 @@ index 7120b07..4a54a05 100644</span>
 <span class="f2">+            token1,</span>
 <span class="f2">+            fee,</span>
 <span class="f2">+            tickSpacing,</span>
-<span class="f2">+            INFTXFeeDistributorV3(feeDistributor).rewardFeeTier() == fee</span>
-<span class="f2">+                ? rewardTierCardinality</span>
-<span class="f2">+                : 1</span>
+<span class="f2">+            rewardTierCardinality</span>
 <span class="f2">+        );</span>
          getPool[token0][token1][fee] = pool;
          // populate mapping in the reverse direction, deliberate choice to avoid the cost of comparing addresses
@@ -405,6 +400,8 @@ index 7120b07..4a54a05 100644</span>
 <span class="f2">+    function setRewardTierCardinality(</span>
 <span class="f2">+        uint16 rewardTierCardinality_</span>
 <span class="f2">+    ) external override onlyOwner {</span>
+<span class="f2">+        if (rewardTierCardinality_ &lt;= 1) revert InvalidRewardTierCardinality();</span>
+<span class="f2">+</span>
 <span class="f2">+        rewardTierCardinality = rewardTierCardinality_;</span>
      }
  

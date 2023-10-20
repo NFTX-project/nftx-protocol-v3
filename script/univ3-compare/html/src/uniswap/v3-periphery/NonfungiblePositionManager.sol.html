@@ -296,10 +296,10 @@ span { display: inline-block; }
 <body class="f9 b9">
 <pre>
 <span class="bold">diff --git a/src/uniswap/v3-periphery/NonfungiblePositionManager.sol b/src/uniswap/v3-periphery/NonfungiblePositionManager.sol
-index 6f42448..f3f02a2 100644</span>
+index 6f42448..3fb4f72 100644</span>
 <span class="bold">--- a/src/uniswap/v3-periphery/NonfungiblePositionManager.sol</span>
 <span class="bold">+++ b/src/uniswap/v3-periphery/NonfungiblePositionManager.sol</span>
-<span class="f6">@@ -1,503 +1,540 @@</span>
+<span class="f6">@@ -1,503 +1,544 @@</span>
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity =0.8.15;
  pragma abicoder v2;
@@ -376,6 +376,8 @@ index 6f42448..f3f02a2 100644</span>
  
 <span class="f2">+    // token ID =&gt; timestamp</span>
 <span class="f2">+    mapping(uint256 =&gt; uint256) public override lockedUntil;</span>
+<span class="f2">+    // token ID =&gt; timelock</span>
+<span class="f2">+    mapping(uint256 =&gt; uint256) public override timelock;</span>
 <span class="f2">+</span>
 <span class="f2">+    mapping(address =&gt; bool) public override timelockExcluded;</span>
 <span class="f2">+</span>
@@ -796,7 +798,8 @@ index 6f42448..f3f02a2 100644</span>
  
 <span class="f2">+    function setLockedUntil(</span>
 <span class="f2">+        uint256 tokenId,</span>
-<span class="f2">+        uint256 timestamp</span>
+<span class="f2">+        uint256 lockedUntil_,</span>
+<span class="f2">+        uint256 timelock_</span>
 <span class="f2">+    ) external override {</span>
 <span class="f2">+        require(</span>
 <span class="f2">+            msg.sender ==</span>
@@ -807,7 +810,8 @@ index 6f42448..f3f02a2 100644</span>
 <span class="f2">+                )</span>
 <span class="f2">+        );</span>
 <span class="f2">+</span>
-<span class="f2">+        lockedUntil[tokenId] = timestamp;</span>
+<span class="f2">+        lockedUntil[tokenId] = lockedUntil_;</span>
+<span class="f2">+        timelock[tokenId] = timelock_;</span>
 <span class="f2">+    }</span>
 <span class="f2">+</span>
 <span class="f2">+    function setTimelockExcluded(</span>
