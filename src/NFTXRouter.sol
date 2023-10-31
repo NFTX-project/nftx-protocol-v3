@@ -44,6 +44,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
 
     address public immutable override WETH;
     IPermitAllowanceTransfer public immutable override PERMIT2;
+    uint256 constant BASE_VTOKEN_TIMELOCK = 1 hours;
 
     INonfungiblePositionManager public immutable override positionManager;
     SwapRouter public immutable override router;
@@ -829,6 +830,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                     positionId,
                     block.timestamp + _lpTimelock,
                     _lpTimelock
+                );
+            } else {
+                // set timelock of the position NFT to 1 hour, to prevent instant redeem via increaseLiquidity
+                positionManager.setLockedUntil(
+                    positionId,
+                    block.timestamp + BASE_VTOKEN_TIMELOCK,
+                    BASE_VTOKEN_TIMELOCK
                 );
             }
 
