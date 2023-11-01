@@ -311,7 +311,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
                 vTokenMin: 0,
                 wethMin: 0,
                 deadline: block.timestamp,
-                forceTimelock: false
+                forceTimelock: false,
+                recipient: address(this)
             })
         );
 
@@ -494,7 +495,8 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
                 vTokenMin: 0,
                 wethMin: 0,
                 deadline: block.timestamp,
-                forceTimelock: false
+                forceTimelock: false,
+                recipient: address(this)
             })
         );
 

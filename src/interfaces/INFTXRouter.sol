@@ -50,7 +50,8 @@ interface INFTXRouter {
         uint256 vaultId,
         uint256 vTokensAmount,
         uint256[] nftIds,
-        address pool
+        address pool,
+        address recipient
     );
 
     event RemoveLiquidity(
@@ -109,6 +110,8 @@ interface INFTXRouter {
         uint256 deadline;
         // Forcefully apply timelock to the position
         bool forceTimelock;
+        // Recipient address that receives the LP NFT
+        address recipient;
     }
 
     /**

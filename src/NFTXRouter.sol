@@ -625,7 +625,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 amount1Desired: 0,
                 amount0Min: 0,
                 amount1Min: 0,
-                recipient: msg.sender,
+                recipient: params.recipient,
                 deadline: params.deadline
             });
 
@@ -671,7 +671,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.nftIds,
             positionId,
             params.vaultId,
-            params.forceTimelock
+            params.forceTimelock,
+            params.recipient
         );
 
         emit AddLiquidity(
@@ -679,7 +680,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.vaultId,
             params.vTokensAmount,
             params.nftIds,
-            pool
+            pool,
+            params.recipient
         );
     }
 
@@ -724,7 +726,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.nftIds,
             params.positionId,
             params.vaultId,
-            params.forceTimelock
+            params.forceTimelock,
+            msg.sender
         );
 
         emit IncreaseLiquidity(
@@ -789,7 +792,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         uint256[] calldata nftIds,
         uint256 positionId,
         uint256 vaultId,
-        bool forceTimelock
+        bool forceTimelock,
+        address recipient
     ) internal {
         uint256 vTokenBalance = vToken.balanceOf(address(this));
         if (nftIds.length > 0) {
@@ -813,13 +817,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                     inventoryStaking.deposit(
                         vaultId,
                         vTokenBalance,
-                        msg.sender,
+                        recipient,
                         "",
                         false,
                         true // forceTimelock as we minted the vTokens with NFTs
                     );
                 } else {
-                    vToken.transfer(msg.sender, vTokenBalance);
+                    vToken.transfer(recipient, vTokenBalance);
                 }
             }
         } else {
