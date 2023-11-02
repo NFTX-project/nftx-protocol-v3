@@ -112,7 +112,8 @@ contract NFTXRouterTests is TestBase {
                     vTokenMin: 0,
                     wethMin: 0,
                     deadline: block.timestamp,
-                    forceTimelock: false
+                    forceTimelock: false,
+                    recipient: address(this)
                 })
             );
 
@@ -201,7 +202,8 @@ contract NFTXRouterTests is TestBase {
                     vTokenMin: 0,
                     wethMin: 0,
                     deadline: block.timestamp,
-                    forceTimelock: false
+                    forceTimelock: false,
+                    recipient: address(this)
                 })
             );
 
@@ -364,7 +366,8 @@ contract NFTXRouterTests is TestBase {
                     vTokenMin: 0,
                     wethMin: 0,
                     deadline: block.timestamp,
-                    forceTimelock: false
+                    forceTimelock: false,
+                    recipient: from
                 }),
                 encodedPermit2
             );
@@ -460,7 +463,8 @@ contract NFTXRouterTests is TestBase {
                     vTokenMin: 0,
                     wethMin: 0,
                     deadline: block.timestamp,
-                    forceTimelock: false
+                    forceTimelock: false,
+                    recipient: from
                 }),
                 encodedPermit2
             );
@@ -711,9 +715,10 @@ contract NFTXRouterTests is TestBase {
     // increaseLiquidityWithPermit2
 
     function testIncreaseLiquidityWithPermit2_withVTokens() external {
-        startHoax(from);
-
         uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+        positionManager.safeTransferFrom(address(this), from, positionId);
+
+        startHoax(from);
 
         uint256 prePositionNFTBalance = positionManager.balanceOf(
             address(this)
@@ -762,9 +767,11 @@ contract NFTXRouterTests is TestBase {
     }
 
     function testIncreaseLiquidityWithPermit2_withNFTs_and_VTokens() external {
+        uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+        positionManager.safeTransferFrom(address(this), from, positionId);
+
         startHoax(from);
 
-        uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
         // after timelock ended
         vm.warp(positionManager.lockedUntil(positionId) + 1);
 

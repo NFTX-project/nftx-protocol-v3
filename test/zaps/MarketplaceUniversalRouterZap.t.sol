@@ -538,7 +538,8 @@ contract MarketplaceUniversalRouterZapTests is TestBase {
                 vTokenMin: 0,
                 wethMin: 0,
                 deadline: block.timestamp,
-                forceTimelock: false
+                forceTimelock: false,
+                recipient: address(this)
             })
         );
     }
