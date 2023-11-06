@@ -12,6 +12,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const vaultFactory = await deployments.get("NFTXVaultFactoryUpgradeableV3");
   const positionManager = await deployments.get("NonfungiblePositionManager");
+  const inventoryStaking = await deployments.get(
+    "NFTXInventoryStakingV3Upgradeable"
+  );
   const router = await deployments.get("SwapRouter");
   const quoter = await deployments.get("QuoterV2");
 
@@ -23,7 +26,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       quoter.address,
       vaultFactory.address,
       config.permit2,
-      2 * 24 * 60 * 60, // lpTimelock = 2 days
+      config.lpTimelock,
+      config.lpEarlyWithdrawPenaltyInWei,
+      config.nftxRouterVTokenDustThreshold,
+      inventoryStaking.address,
     ],
     log: true,
   });
