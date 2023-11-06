@@ -225,7 +225,7 @@ contract CreateVaultZap is ERC1155Holder {
                         msg.sender,
                         "",
                         false,
-                        false // as twap doesn't exist so no mint fee would be charged by the vault at this instant, if transacted manually
+                        true // setting true here to allow withdrawal into NFTs without redeem fees
                     );
                 } else {
                     // dust amount worthless for the user, so send to InventoryStaking as reward for future stakers
