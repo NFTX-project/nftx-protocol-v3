@@ -32,8 +32,8 @@ contract CreateVaultZapTests is TestBase {
         uint256[] memory tokenIds = nft.mint(qty);
         nft.setApprovalForAll(address(createVaultZap), true);
 
-        uint256 vaultId = createVaultZap.createVault{value: 10 ether}(
-            CreateVaultZap.CreateVaultParams({
+        CreateVaultZap.CreateVaultParams memory params = CreateVaultZap
+            .CreateVaultParams({
                 vaultInfo: CreateVaultZap.VaultInfo({
                     assetAddress: address(nft),
                     is1155: false,
@@ -62,14 +62,33 @@ contract CreateVaultZapTests is TestBase {
                     wethMin: 0,
                     deadline: block.timestamp
                 })
-            })
-        );
+            });
+
+        uint256 vaultId = createVaultZap.createVault{value: 10 ether}(params);
 
         vm.warp(block.timestamp + 1);
         address vault = vaultFactory.vault(vaultId);
         uint256 vTokenTWAP = INFTXVaultV3(vault).vTokenToETH(1 ether);
         console.log("vTokenTWAP", vTokenTWAP);
         assertGt(vTokenTWAP, 0);
+
+        (int24 tickLower, int24 tickUpper) = _getTicks(1);
+        console.log("tickLower:");
+        console.logInt(int256(tickLower));
+        console.log("tickUpper:");
+        console.logInt(int256(tickUpper));
+
+        console.log(
+            "lowerNFTPriceInETH param",
+            params.liquidityParams.lowerNFTPriceInETH
+        );
+        console.log("position lowerPrice", _tickToPriceInETH(tickLower));
+
+        console.log(
+            "upperNFTPriceInETH param",
+            params.liquidityParams.upperNFTPriceInETH
+        );
+        console.log("position upperPrice", _tickToPriceInETH(tickUpper));
     }
 
     function test_createVault_InfiniteRange_Success() external {
@@ -77,8 +96,8 @@ contract CreateVaultZapTests is TestBase {
         uint256[] memory tokenIds = nft.mint(qty);
         nft.setApprovalForAll(address(createVaultZap), true);
 
-        uint256 vaultId = createVaultZap.createVault{value: 10 ether}(
-            CreateVaultZap.CreateVaultParams({
+        CreateVaultZap.CreateVaultParams memory params = CreateVaultZap
+            .CreateVaultParams({
                 vaultInfo: CreateVaultZap.VaultInfo({
                     assetAddress: address(nft),
                     is1155: false,
@@ -100,24 +119,39 @@ contract CreateVaultZapTests is TestBase {
                 }),
                 liquidityParams: CreateVaultZap.LiquidityParams({
                     lowerNFTPriceInETH: 1,
-                    upperNFTPriceInETH: (type(uint256).max / (1 << 142)),
+                    upperNFTPriceInETH: (type(uint256).max / (1 << 142)), // 20769187434139310514121985316880383
                     fee: DEFAULT_FEE_TIER,
                     currentNFTPriceInETH: 4 ether,
                     vTokenMin: 0,
                     wethMin: 0,
                     deadline: block.timestamp
                 })
-            })
-        );
+            });
+        uint256 vaultId = createVaultZap.createVault{value: 10 ether}(params);
 
         vm.warp(block.timestamp + 1);
         address vault = vaultFactory.vault(vaultId);
         uint256 vTokenTWAP = INFTXVaultV3(vault).vTokenToETH(1 ether);
         console.log("vTokenTWAP", vTokenTWAP);
         assertGt(vTokenTWAP, 0);
+
         (int24 tickLower, int24 tickUpper) = _getTicks(1);
+        console.log("tickLower:");
         console.logInt(int256(tickLower));
+        console.log("tickUpper:");
         console.logInt(int256(tickUpper));
+
+        console.log(
+            "lowerNFTPriceInETH param",
+            params.liquidityParams.lowerNFTPriceInETH
+        );
+        console.log("position lowerPrice", _tickToPriceInETH(tickLower));
+
+        console.log(
+            "upperNFTPriceInETH param",
+            params.liquidityParams.upperNFTPriceInETH
+        );
+        console.log("position upperPrice", _tickToPriceInETH(tickUpper));
     }
 
     function test_calcTicks() external view {
@@ -159,5 +193,14 @@ contract CreateVaultZapTests is TestBase {
         );
         console.log("tickLower:");
         console.logInt(int256(tickLower));
+    }
+
+    function _tickToPriceInETH(int24 tick) internal pure returns (uint256) {
+        return
+            FullMath.mulDiv(
+                TickMath.getSqrtRatioAtTick(tick),
+                TickMath.getSqrtRatioAtTick(tick),
+                1 << 192
+            ) * 1 ether;
     }
 }
