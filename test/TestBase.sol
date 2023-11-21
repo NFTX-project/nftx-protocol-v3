@@ -568,6 +568,14 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         );
     }
 
+    function _getTicks(
+        uint256 positionId
+    ) internal view returns (int24 tickLower, int24 tickUpper) {
+        (, , , , , tickLower, tickUpper, , , , , ) = positionManager.positions(
+            positionId
+        );
+    }
+
     function _getAccumulatedFees(
         uint256 positionId
     ) internal returns (uint256 vTokenFees, uint256 wethFees) {
