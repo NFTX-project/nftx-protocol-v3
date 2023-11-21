@@ -100,11 +100,7 @@ contract CreateVaultZapTests is TestBase {
                 }),
                 liquidityParams: CreateVaultZap.LiquidityParams({
                     lowerNFTPriceInETH: 1,
-                    upperNFTPriceInETH: FullMath.mulDiv(
-                        TickMath.MAX_SQRT_RATIO,
-                        TickMath.MAX_SQRT_RATIO,
-                        2 << 192
-                    ) * 1 ether,
+                    upperNFTPriceInETH: (type(uint256).max / (1 << 142)),
                     fee: DEFAULT_FEE_TIER,
                     currentNFTPriceInETH: 4 ether,
                     vTokenMin: 0,
@@ -128,12 +124,12 @@ contract CreateVaultZapTests is TestBase {
         uint256 tickDistance = 200;
 
         // Max possible value without overflow
-        uint256 upperNFTPriceInETH = (type(uint256).max / (1 << 192)); // 18446744073709551615 or 18.446744073709551615 ETH
+        uint256 upperNFTPriceInETH = (type(uint256).max / (1 << 142));
         console.log("upperNFTPriceInETH", upperNFTPriceInETH);
 
         uint256 sqrtP = Babylonian.sqrt(
-            (upperNFTPriceInETH * (2 ** 192)) / 1 ether // replacing "<< 192" with "2 ** 192" to revert on overflow
-        );
+            (upperNFTPriceInETH * (2 ** 142)) / 1 ether // replacing "<<" with "2 **" to revert on overflow
+        ) * 2 ** 25;
         console.log("upperSqrtP", uint256(sqrtP));
 
         int24 tickUpper = TickHelpers.getTickForAmounts(
@@ -150,7 +146,11 @@ contract CreateVaultZapTests is TestBase {
         );
 
         uint256 lowerNFTPriceInETH = 1;
-        sqrtP = Babylonian.sqrt((lowerNFTPriceInETH << 192) / 1 ether);
+        sqrtP =
+            Babylonian.sqrt(
+                (upperNFTPriceInETH * (2 ** 142)) / 1 ether // replacing "<<" with "2 **" to revert on overflow
+            ) *
+            2 ** 25;
         console.log("lowerSqrtP", uint256(sqrtP));
         int24 tickLower = TickHelpers.getTickForAmounts(
             lowerNFTPriceInETH,
