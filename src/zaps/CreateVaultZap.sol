@@ -234,6 +234,12 @@ contract CreateVaultZap is ERC1155Holder {
             }
         }
 
+        vault.setFees(
+            params.vaultFees.mintFee,
+            params.vaultFees.redeemFee,
+            params.vaultFees.swapFee
+        );
+
         // If vault features other than default (all enabled) requested
         // if all enabled, then packed bits = `111` => `7` in uint256
         if (params.vaultFeaturesFlag < 7) {
@@ -242,15 +248,13 @@ contract CreateVaultZap is ERC1155Holder {
                 _getBoolean(params.vaultFeaturesFlag, 1),
                 _getBoolean(params.vaultFeaturesFlag, 0)
             );
+
+            // allow msg.sender to manage & finalize the vault later
+            vault.setManager(msg.sender);
+        } else {
+            // if all features are enabled, then finalize the vault in the same transaction
+            vault.finalizeVault();
         }
-
-        vault.setFees(
-            params.vaultFees.mintFee,
-            params.vaultFees.redeemFee,
-            params.vaultFees.swapFee
-        );
-
-        vault.finalizeVault();
 
         // send any extra ETH sent
         uint256 remainingETH = address(this).balance;
