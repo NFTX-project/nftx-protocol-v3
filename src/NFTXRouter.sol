@@ -2,7 +2,7 @@
 pragma solidity =0.8.15;
 
 // inheriting
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@src/custom/Pausable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
@@ -35,12 +35,17 @@ import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
  * @notice Router to facilitate vault tokens minting/burning + addition/removal of concentrated liquidity
  * @dev This router must be excluded from the vault fees, as vault fees handled via custom logic here. Also should be excluded from timelocks on NonfungiblePositionManager.
  */
-contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
+contract NFTXRouter is INFTXRouter, Pausable, ERC721Holder, ERC1155Holder {
     using SafeERC20 for IERC20;
 
     // =============================================================
     //                           CONSTANTS
     // =============================================================
+    uint256 internal constant PAUSE_ADDLIQ = 0;
+    uint256 internal constant PAUSE_INCREASELIQ = 1;
+    uint256 internal constant PAUSE_REMOVELIQ = 2;
+    uint256 internal constant PAUSE_SELLNFTS = 3;
+    uint256 internal constant PAUSE_BUYNFTS = 4;
 
     address public immutable override WETH;
     IPermitAllowanceTransfer public immutable override PERMIT2;
@@ -216,6 +221,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function removeLiquidity(
         RemoveLiquidityParams calldata params
     ) external payable override {
+        onlyOwnerIfPaused(PAUSE_REMOVELIQ);
+
         if (positionManager.ownerOf(params.positionId) != msg.sender)
             revert NotPositionOwner();
 
@@ -349,6 +356,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function sellNFTs(
         SellNFTsParams calldata params
     ) external payable override returns (uint256 wethReceived) {
+        onlyOwnerIfPaused(PAUSE_SELLNFTS);
+
         INFTXVaultV3 vToken = INFTXVaultV3(
             nftxVaultFactory.vault(params.vaultId)
         );
@@ -425,6 +434,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
      * @inheritdoc INFTXRouter
      */
     function buyNFTs(BuyNFTsParams calldata params) external payable override {
+        onlyOwnerIfPaused(PAUSE_BUYNFTS);
+
         INFTXVaultV3 vToken = INFTXVaultV3(
             nftxVaultFactory.vault(params.vaultId)
         );
@@ -605,6 +616,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         AddLiquidityParams calldata params,
         INFTXVaultV3 vToken
     ) internal returns (uint256 positionId) {
+        onlyOwnerIfPaused(PAUSE_ADDLIQ);
+
         (uint256 vTokensAmount, bool _isVToken0) = _pullAndMintVTokens(
             vToken,
             params.nftIds,
@@ -689,6 +702,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         IncreaseLiquidityParams calldata params,
         INFTXVaultV3 vToken
     ) internal {
+        onlyOwnerIfPaused(PAUSE_INCREASELIQ);
+
         if (positionManager.ownerOf(params.positionId) != msg.sender)
             revert NotPositionOwner();
 
