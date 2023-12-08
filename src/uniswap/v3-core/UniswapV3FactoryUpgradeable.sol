@@ -38,8 +38,6 @@ contract UniswapV3FactoryUpgradeable is
         emit FeeAmountEnabled(3_000, 60);
         feeAmountTickSpacing[10_000] = 200;
         emit FeeAmountEnabled(10_000, 200);
-        feeAmountTickSpacing[30_000] = 600;
-        emit FeeAmountEnabled(30_000, 600);
     }
 
     /// @inheritdoc IUniswapV3Factory
