@@ -21,6 +21,7 @@ import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
 import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {INFTXEligibility} from "@src/interfaces/INFTXEligibility.sol";
+import {IDelegateRegistry} from "@src/interfaces/IDelegateRegistry.sol";
 import {IERC20Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin-upgradeable/contracts/token/ERC721/IERC721Upgradeable.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
@@ -52,6 +53,8 @@ contract NFTXVaultUpgradeableV3 is
     address constant CRYPTO_PUNKS = 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
     address constant CRYPTO_KITTIES =
         0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
+    IDelegateRegistry constant DELEGATE_REGISTRY =
+        IDelegateRegistry(0x00000000000000447e69651d841bD8D104Bed493);
 
     // "constants": only set during initialization
 
@@ -128,6 +131,8 @@ contract NFTXVaultUpgradeableV3 is
             true /*enableRedeem*/,
             true /*enableSwap*/
         );
+
+        DELEGATE_REGISTRY.delegateAll(owner(), bytes32(""), true);
     }
 
     // =============================================================

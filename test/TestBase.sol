@@ -24,6 +24,7 @@ import {MockNFT} from "@mocks/MockNFT.sol";
 import {Mock1155} from "@mocks/Mock1155.sol";
 import {MockUniversalRouter} from "@mocks/MockUniversalRouter.sol";
 import {MockPermit2} from "@mocks/permit2/MockPermit2.sol";
+import {MockDelegateRegistry} from "@mocks/MockDelegateRegistry.sol";
 
 import {NFTXVaultUpgradeableV3, INFTXVaultV3} from "@src/NFTXVaultUpgradeableV3.sol";
 import {NFTXVaultFactoryUpgradeableV3} from "@src/NFTXVaultFactoryUpgradeableV3.sol";
@@ -35,6 +36,7 @@ import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 import {MarketplaceUniversalRouterZap} from "@src/zaps/MarketplaceUniversalRouterZap.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/external/IPermitAllowanceTransfer.sol";
+import {IDelegateRegistry} from "@src/interfaces/IDelegateRegistry.sol";
 
 contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     UniswapV3FactoryUpgradeable factory;
@@ -75,9 +77,15 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     uint256[] emptyAmounts;
     uint256 constant MAX_VTOKEN_PREMIUM_LIMIT = type(uint256).max;
 
+    IDelegateRegistry constant DELEGATE_REGISTRY =
+        IDelegateRegistry(0x00000000000000447e69651d841bD8D104Bed493);
+
     function setUp() public virtual {
         // to prevent underflow during calculations involving block.timestamp
         vm.warp(100 days);
+
+        MockDelegateRegistry delegateRegistry = new MockDelegateRegistry();
+        vm.etch(address(DELEGATE_REGISTRY), address(delegateRegistry).code);
 
         weth = new MockWETH();
 

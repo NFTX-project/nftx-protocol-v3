@@ -148,14 +148,18 @@ contract NFTXVaultTests is TestBase {
         uint256 qty = 5;
         (uint256 mintFee, , ) = vtoken.vaultFees();
 
-        uint256 exactETHPaid = (mintFee * qty * currentNFTPrice) / 1 ether;
-        uint256 expectedETHPaid = _valueWithError(exactETHPaid);
+        uint256 exactETHPaid = vtoken.vTokenToETH(mintFee * qty);
 
-        uint256 prevETHBal = address(this).balance;
+        // uint256 exactETHPaid = (mintFee * qty * currentNFTPrice) / 1 ether;
+        uint256 expectedETHPaid = _valueWithError(exactETHPaid);
 
         uint256[] memory tokenIds = nft.mint(qty);
         nft.setApprovalForAll(address(vtoken), true);
         uint256[] memory amounts = new uint256[](0);
+
+        uint256 prevETHBal = address(this).balance;
+
+        uint256 gasBefore = gasleft();
 
         // double ETH value here to check if refund working as well
         vtoken.mint{value: expectedETHPaid * 2}(
@@ -165,7 +169,14 @@ contract NFTXVaultTests is TestBase {
             address(this)
         );
 
+        uint256 gasAfter = gasleft();
+        console.log("gasUsed", gasBefore - gasAfter);
+
+        console.log("expectedETHPaid", expectedETHPaid);
+        console.log("exactETHPaid", exactETHPaid);
+
         uint256 ethPaid = prevETHBal - address(this).balance;
+        console.log("ethPaid", ethPaid);
         assertGt(ethPaid, expectedETHPaid);
         assertLe(ethPaid, exactETHPaid);
 
@@ -267,7 +278,7 @@ contract NFTXVaultTests is TestBase {
         vm.warp(block.timestamp + vaultFactory.premiumDuration() + 1);
 
         (, uint256 redeemFee, ) = vtoken.vaultFees();
-        uint256 exactETHPaid = (redeemFee * qty * currentNFTPrice) / 1 ether;
+        uint256 exactETHPaid = vtoken.vTokenToETH(redeemFee * qty);
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
 
         uint256 prevETHBal = address(this).balance;
@@ -516,7 +527,7 @@ contract NFTXVaultTests is TestBase {
         uint256[] memory amounts = new uint256[](0);
 
         (, , uint256 swapFee) = vtoken.vaultFees();
-        uint256 exactETHPaid = (swapFee * qty * currentNFTPrice) / 1 ether;
+        uint256 exactETHPaid = vtoken.vTokenToETH(swapFee * qty);
         uint256 expectedETHPaid = _valueWithError(exactETHPaid);
 
         uint256 prevETHBal = address(this).balance;
