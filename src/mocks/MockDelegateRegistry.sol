@@ -7,7 +7,5 @@ contract MockDelegateRegistry is IDelegateRegistry {
         address to,
         bytes32 rights,
         bool enable
-    ) external payable override returns (bytes32 delegationHash) {
-        return bytes32(0);
-    }
+    ) external payable override returns (bytes32 delegationHash) {}
 }
