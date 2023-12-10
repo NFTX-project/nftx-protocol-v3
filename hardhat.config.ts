@@ -116,7 +116,7 @@ const config: HardhatUserConfig = {
       ],
     },
     goerli: {
-      url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_GOERLI_API_KEY}`,
+      url: `https://rpc.nftx.xyz`,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
       timeout: 60000,
     },
@@ -126,7 +126,7 @@ const config: HardhatUserConfig = {
       timeout: 60000,
     },
     mainnet: {
-      url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_MAINNET_API_KEY}`,
+      url: `https://rpc.nftx.xyz`,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
       timeout: 60000,
     },

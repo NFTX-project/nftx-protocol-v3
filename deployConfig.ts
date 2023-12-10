@@ -82,7 +82,7 @@ const config: {
     WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     REWARD_TIER_CARDINALITY: "102",
     permit2: "0x000000000022d473030f116ddee9f6b43ac78ba3",
-    nftxUniversalRouter: "0x000000000000000000000000000000000000dEaD", // FIXME: set valid address
+    nftxUniversalRouter: "0x250d62a67254A46c0De472d2c9215E1d890cC90f", // NOTE: update this if new UniswapV3Factory deployed.
     v2VaultFactory: "0xBE86f647b167567525cCAAfcd6f881F1Ee558216",
     v2Inventory: "0x3E135c3E981fAe3383A5aE0d323860a34CfAB893",
     sushiRouter: "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
