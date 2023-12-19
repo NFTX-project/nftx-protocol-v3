@@ -279,20 +279,25 @@ contract NonfungiblePositionManager is
 
         ) = pool.positions(positionKey);
 
-        position.tokensOwed0 += uint128(
-            FullMath.mulDiv(
-                feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,
-                position.liquidity,
-                FixedPoint128.Q128
-            )
-        );
-        position.tokensOwed1 += uint128(
-            FullMath.mulDiv(
-                feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,
-                position.liquidity,
-                FixedPoint128.Q128
-            )
-        );
+        // underflow expected here
+        unchecked {
+            position.tokensOwed0 += uint128(
+                FullMath.mulDiv(
+                    feeGrowthInside0LastX128 -
+                        position.feeGrowthInside0LastX128,
+                    position.liquidity,
+                    FixedPoint128.Q128
+                )
+            );
+            position.tokensOwed1 += uint128(
+                FullMath.mulDiv(
+                    feeGrowthInside1LastX128 -
+                        position.feeGrowthInside1LastX128,
+                    position.liquidity,
+                    FixedPoint128.Q128
+                )
+            );
+        }
 
         position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
@@ -352,26 +357,29 @@ contract NonfungiblePositionManager is
 
         ) = pool.positions(positionKey);
 
-        position.tokensOwed0 +=
-            uint128(amount0) +
-            uint128(
-                FullMath.mulDiv(
-                    feeGrowthInside0LastX128 -
-                        position.feeGrowthInside0LastX128,
-                    positionLiquidity,
-                    FixedPoint128.Q128
-                )
-            );
-        position.tokensOwed1 +=
-            uint128(amount1) +
-            uint128(
-                FullMath.mulDiv(
-                    feeGrowthInside1LastX128 -
-                        position.feeGrowthInside1LastX128,
-                    positionLiquidity,
-                    FixedPoint128.Q128
-                )
-            );
+        // underflow expected here
+        unchecked {
+            position.tokensOwed0 +=
+                uint128(amount0) +
+                uint128(
+                    FullMath.mulDiv(
+                        feeGrowthInside0LastX128 -
+                            position.feeGrowthInside0LastX128,
+                        positionLiquidity,
+                        FixedPoint128.Q128
+                    )
+                );
+            position.tokensOwed1 +=
+                uint128(amount1) +
+                uint128(
+                    FullMath.mulDiv(
+                        feeGrowthInside1LastX128 -
+                            position.feeGrowthInside1LastX128,
+                        positionLiquidity,
+                        FixedPoint128.Q128
+                    )
+                );
+        }
 
         position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
@@ -432,22 +440,25 @@ contract NonfungiblePositionManager is
                     )
                 );
 
-            tokensOwed0 += uint128(
-                FullMath.mulDiv(
-                    feeGrowthInside0LastX128 -
-                        position.feeGrowthInside0LastX128,
-                    position.liquidity,
-                    FixedPoint128.Q128
-                )
-            );
-            tokensOwed1 += uint128(
-                FullMath.mulDiv(
-                    feeGrowthInside1LastX128 -
-                        position.feeGrowthInside1LastX128,
-                    position.liquidity,
-                    FixedPoint128.Q128
-                )
-            );
+            // underflow expected here
+            unchecked {
+                tokensOwed0 += uint128(
+                    FullMath.mulDiv(
+                        feeGrowthInside0LastX128 -
+                            position.feeGrowthInside0LastX128,
+                        position.liquidity,
+                        FixedPoint128.Q128
+                    )
+                );
+                tokensOwed1 += uint128(
+                    FullMath.mulDiv(
+                        feeGrowthInside1LastX128 -
+                            position.feeGrowthInside1LastX128,
+                        position.liquidity,
+                        FixedPoint128.Q128
+                    )
+                );
+            }
 
             position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
             position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
