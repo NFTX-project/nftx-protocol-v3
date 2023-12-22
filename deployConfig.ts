@@ -44,6 +44,7 @@ const config: {
     lpTimelock: number;
     lpEarlyWithdrawPenaltyInWei: BigNumber;
     nftxRouterVTokenDustThreshold: BigNumber;
+    multisig?: string;
   };
 } = {
   goerli: {
@@ -86,6 +87,7 @@ const config: {
     v2VaultFactory: "0xBE86f647b167567525cCAAfcd6f881F1Ee558216",
     v2Inventory: "0x3E135c3E981fAe3383A5aE0d323860a34CfAB893",
     sushiRouter: "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
+    multisig: "0xaA29881aAc939A025A3ab58024D7dd46200fB93D",
   },
   arbitrum: {
     ...commonConfig,

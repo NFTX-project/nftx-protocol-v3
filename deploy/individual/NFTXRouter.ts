@@ -45,6 +45,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   );
   console.log("Fee exclusion set for NFTXRouter");
 
+  console.log("Setting timelock exclusion on positionManager...");
+  await execute(
+    "NonfungiblePositionManager",
+    { from: deployer },
+    "setTimelockExcluded",
+    nftxRouter.address,
+    true
+  );
+  console.log("Fee exclusion set for NFTXRouter");
+
   // ==
   console.log("Setting NFTXRouter in FeeDistributor...");
   await execute(
