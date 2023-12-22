@@ -34,27 +34,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       console.log(`Ownership of ${name} transferred`);
     })
   );
-
-  // `changeProxyAdmin`:
-
-  await Promise.all(
-    [
-      "NFTXInventoryStakingV3Upgradeable",
-      "NFTXVaultFactoryUpgradeable",
-      "UniswapV3FactoryUpgradeable",
-    ].map(async (name) => {
-      console.log(`Changing proxy admin of ${name}...`);
-      const proxy = await deployments.get(name);
-      await execute(
-        "DefaultProxyAdmin",
-        { from: deployer },
-        "changeProxyAdmin",
-        proxy.address,
-        config.multisig
-      );
-      console.log(`Proxy admin of ${name} changed`);
-    })
-  );
 };
 export default func;
 func.tags = ["TransferOwnership"];
