@@ -45,15 +45,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   // NFTXRouter has in-built fee handling
-  // console.log("Setting fee exclusion for NFTXRouter...");
-  // await execute(
-  //   "NFTXVaultFactoryUpgradeableV3",
-  //   { from: deployer },
-  //   "setFeeExclusion",
-  //   nftxRouter.address,
-  //   true
-  // );
-  // console.log("Fee exclusion set for NFTXRouter");
+  console.log("Setting fee exclusion for NFTXRouter...");
+  await execute(
+    "NFTXVaultFactoryUpgradeableV3",
+    { from: deployer },
+    "setFeeExclusion",
+    nftxRouter.address,
+    true
+  );
+  console.log("Fee exclusion set for NFTXRouter");
 
   console.log(
     "Setting timelock exclusion for NFTXRouter on positionManager..."
@@ -66,6 +66,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     true
   );
   console.log("Timelock exclusion set for NFTXRouter on positionManager");
+
+  // ==
+  console.log("Setting NFTXRouter in FeeDistributor...");
+  await execute(
+    "NFTXFeeDistributorV3",
+    { from: deployer },
+    "setNFTXRouter",
+    nftxRouter.address
+  );
+  console.log("NFTXRouter set in FeeDistributor");
 
   const createVaultZap = await deploy("CreateVaultZap", {
     from: deployer,
