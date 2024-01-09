@@ -6,6 +6,7 @@ import deployConfig from "../deployConfig";
 const deploymentsList = [
   "CreateVaultZap",
   "MarketplaceUniversalRouterZap",
+  "MigratorZap",
   "NFTXFeeDistributorV3",
   "NFTXInventoryStakingV3Upgradeable",
   "NFTXRouter",

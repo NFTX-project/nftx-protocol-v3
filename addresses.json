@@ -2,6 +2,7 @@
   "mainnet": {
     "CreateVaultZap": "0x56dab32697B4A313f353DA0CE42B5113eD8E6f74",
     "MarketplaceUniversalRouterZap": "0x293A0c49c85F1D8851C665Ac3cE1f1DC2a79bE3d",
+    "MigratorZap": "0x946EcA3fD23778Ccf96f4E8D4d1EF114A56b3f51",
     "NFTXFeeDistributorV3": "0xF4d96C5094FCD9eC24E612585e723b58F89e21fe",
     "NFTXInventoryStakingV3Upgradeable": "0x889f313e2a3FDC1c9a45bC6020A8a18749CD6152",
     "NFTXRouter": "0x70A741A12262d4b5Ff45C0179c783a380EebE42a",
@@ -18,6 +19,7 @@
   "goerli": {
     "CreateVaultZap": "0xd58A1627bF1C2F8C724A9493A979C0369ab17AaB",
     "MarketplaceUniversalRouterZap": "0x0be2D766Eef4b6a72F1fAe2e49619F013d647B8A",
+    "MigratorZap": "0x89523D0Abae946322c1f15788b24Ef1653aA67c1",
     "NFTXFeeDistributorV3": "0x17Ee4Acc187FBE2077F744598d4090f4386C560c",
     "NFTXInventoryStakingV3Upgradeable": "0xEf771a17e6970d8B4b208a76e94F175277554230",
     "NFTXRouter": "0xb95e2Fb1eDA32BbFbDaE2463BB3E64bb3E1E41D5",
@@ -34,6 +36,7 @@
   "sepolia": {
     "CreateVaultZap": "0xD80b916470F8e79FD8d09874cb159CbB8D13d8da",
     "MarketplaceUniversalRouterZap": "0xd88a3B9D0Fb2d39ec8394CfFD983aFBB2D4a6410",
+    "MigratorZap": "0x802aaAE9395aA5f7F414B237D1bb13d4f58f43c7",
     "NFTXFeeDistributorV3": "0x66EF5B4b6ee05639194844CE4867515665F14fED",
     "NFTXInventoryStakingV3Upgradeable": "0xfBFf0635f7c5327FD138E1EBa72BD9877A6a7C1C",
     "NFTXRouter": "0x441b7DE4340AAa5aA86dB4DA43d9Badf7B2DAA66",
