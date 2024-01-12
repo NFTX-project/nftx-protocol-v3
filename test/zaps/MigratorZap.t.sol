@@ -107,8 +107,6 @@ contract MigratorZapTests is TestBase {
             DEADLINE,
             alicePrivateKey
         );
-        // empty array = random redeem
-        uint256[] memory idsToRedeem;
         address vTokenV3 = vaultFactory.vault(vaultIdV3);
         (int24 tickLower, int24 tickUpper, uint160 currentSqrtP) = _getTicks(
             vTokenV3,
@@ -123,7 +121,6 @@ contract MigratorZapTests is TestBase {
                 sushiPair: MILADY_WETH_SLP,
                 lpAmount: liquidityToMigrate,
                 vTokenV2: V2_MILADY_VTOKEN,
-                idsToRedeem: idsToRedeem,
                 is1155: false,
                 permitSig: permitSig,
                 vaultIdV3: vaultIdV3,
@@ -146,8 +143,6 @@ contract MigratorZapTests is TestBase {
     function test_v2InventoryToXNFT_Success() external {
         uint256 vaultIdV2 = INFTXVaultV2(V2_MILADY_VTOKEN).vaultId();
         uint256 shares = IERC20(xMILADY).balanceOf(xMILADY_Holder);
-        // empty array = random redeem
-        uint256[] memory idsToRedeem;
 
         vm.startPrank(xMILADY_Holder);
         vm.warp(v2Inventory.timelockUntil(vaultIdV2, xMILADY_Holder) + 1);
@@ -156,7 +151,6 @@ contract MigratorZapTests is TestBase {
         uint256 xNFTId = migratorZap.v2InventoryToXNFT(
             vaultIdV2,
             shares,
-            idsToRedeem,
             false, // is1155
             vaultIdV3,
             0
@@ -170,8 +164,6 @@ contract MigratorZapTests is TestBase {
 
     function test_v2VaultToXNFT() external {
         uint256 amount = IERC20(V2_MILADY_VTOKEN).balanceOf(MILADY_Holder);
-        // empty array = random redeem
-        uint256[] memory idsToRedeem;
 
         startHoax(MILADY_Holder);
 
@@ -179,7 +171,6 @@ contract MigratorZapTests is TestBase {
         uint256 xNFTId = migratorZap.v2VaultToXNFT(
             V2_MILADY_VTOKEN,
             amount,
-            idsToRedeem,
             false, // is1155
             vaultIdV3,
             0
