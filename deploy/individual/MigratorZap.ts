@@ -31,13 +31,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   console.log("Setting fee exclusion for MigratorZap in V3...");
-  await execute(
-    "NFTXVaultFactoryUpgradeableV3",
-    { from: deployer },
-    "setFeeExclusion",
-    migratorZap.address,
-    true
-  );
+  // TODO: query if the deployer is the owner of the vault factory, and only then execute. Else just log because the owner will be the dao multisig in that case.
+  // await execute(
+  //   "NFTXVaultFactoryUpgradeableV3",
+  //   { from: deployer },
+  //   "setFeeExclusion",
+  //   migratorZap.address,
+  //   true
+  // );
   console.log("Fee exclusion set for MigratorZap in V3");
   console.warn(
     "[NOTE!] Set fee exclusion for MigratorZap in V2 of the protocol"
