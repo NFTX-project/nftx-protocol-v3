@@ -7,6 +7,7 @@ const deploymentsList = [
   "CreateVaultZap",
   "MarketplaceUniversalRouterZap",
   "MigratorZap",
+  "NFTXEligibilityManager",
   "NFTXFeeDistributorV3",
   "NFTXInventoryStakingV3Upgradeable",
   "NFTXRouter",

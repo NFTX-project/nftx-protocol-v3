@@ -41,6 +41,50 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
 
+  const NFTXEligibilityManager = await deploy("NFTXEligibilityManager", {
+    from: deployer,
+    proxy: {
+      proxyContract: "OpenZeppelinTransparentProxy",
+      execute: {
+        init: {
+          methodName: "__NFTXEligibilityManager_init",
+          args: [],
+        },
+      },
+    },
+    log: true,
+  });
+  console.log("Setting eligibilityManager in VaultFactory...");
+  await execute(
+    "NFTXVaultFactoryUpgradeableV3",
+    { from: deployer },
+    "setEligibilityManager",
+    NFTXEligibilityManager.address
+  );
+  console.log("Set eligibilityManager in VaultFactory");
+
+  // Deploy various eligibility modules in this order
+  const eligibilityModules = [
+    "NFTXListEligibility",
+    "NFTXRangeEligibility",
+    "NFTXGen0KittyEligibility",
+    "NFTXENSMerkleEligibility",
+  ];
+
+  for (let i = 0; i < eligibilityModules.length; ++i) {
+    const eligibilityModule = await deploy(eligibilityModules[i], {
+      from: deployer,
+      log: true,
+    });
+
+    await execute(
+      "NFTXEligibilityManager",
+      { from: deployer },
+      "addModule",
+      eligibilityModule.address
+    );
+  }
+
   const timelockExcludeList = await deploy("TimelockExcludeList", {
     from: deployer,
     log: true,
