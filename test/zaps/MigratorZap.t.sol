@@ -107,8 +107,6 @@ contract MigratorZapTests is TestBase {
             DEADLINE,
             alicePrivateKey
         );
-        // empty array = random redeem
-        uint256[] memory idsToRedeem;
         address vTokenV3 = vaultFactory.vault(vaultIdV3);
         (int24 tickLower, int24 tickUpper, uint160 currentSqrtP) = _getTicks(
             vTokenV3,
@@ -123,7 +121,6 @@ contract MigratorZapTests is TestBase {
                 sushiPair: MILADY_WETH_SLP,
                 lpAmount: liquidityToMigrate,
                 vTokenV2: V2_MILADY_VTOKEN,
-                idsToRedeem: idsToRedeem,
                 is1155: false,
                 permitSig: permitSig,
                 vaultIdV3: vaultIdV3,
@@ -146,8 +143,6 @@ contract MigratorZapTests is TestBase {
     function test_v2InventoryToXNFT_Success() external {
         uint256 vaultIdV2 = INFTXVaultV2(V2_MILADY_VTOKEN).vaultId();
         uint256 shares = IERC20(xMILADY).balanceOf(xMILADY_Holder);
-        // empty array = random redeem
-        uint256[] memory idsToRedeem;
 
         vm.startPrank(xMILADY_Holder);
         vm.warp(v2Inventory.timelockUntil(vaultIdV2, xMILADY_Holder) + 1);
@@ -156,7 +151,6 @@ contract MigratorZapTests is TestBase {
         uint256 xNFTId = migratorZap.v2InventoryToXNFT(
             vaultIdV2,
             shares,
-            idsToRedeem,
             false, // is1155
             vaultIdV3,
             0
@@ -168,10 +162,63 @@ contract MigratorZapTests is TestBase {
         assertEq(inventoryStaking.ownerOf(xNFTId), xMILADY_Holder);
     }
 
+    // test that the Zap buys up extra wei of vTokens to redeem a whole more NFT
+    function test_v2InventoryToXNFT_RoundUp_Success() external {
+        address user = makeAddr("user");
+
+        // Transfer 2 MILADY to the user
+        hoax(MILADY_Holder);
+        IERC20(V2_MILADY_VTOKEN).transfer(user, 2 ether);
+
+        // Send some ETH to the Zap, to allow buying extra vTokens
+        (bool success, ) = address(migratorZap).call{value: 1 ether}("");
+        require(success, "Error: sending ETH");
+
+        startHoax(user);
+
+        // Create an xMILADY position with 1.999... vTokens so on redemption we get back 1.999... vTokens and the Zap rounds it up
+        uint256 vaultIdV2 = INFTXVaultV2(V2_MILADY_VTOKEN).vaultId();
+        uint256 vTokensToStake = 2 ether - 1; // 1 wei less than 2 vTokens
+
+        IERC20(V2_MILADY_VTOKEN).approve(address(v2Inventory), vTokensToStake);
+        v2Inventory.deposit(vaultIdV2, vTokensToStake);
+
+        // jump into the future so the migratorZap can pull xTokens from the user's address
+        uint256 timelockedUntil = v2Inventory.timelockUntil(vaultIdV2, user);
+        vm.warp(timelockedUntil + 1);
+
+        uint256 xMILADYBalance = IERC20(xMILADY).balanceOf(user);
+        assertGt(xMILADYBalance, 0);
+
+        // Approve the Zap to take the xMILADY
+        IERC20(xMILADY).approve(address(migratorZap), xMILADYBalance);
+
+        // Migrate V2 xMILADY to V3 XNFT
+        uint256 xNFTId = migratorZap.v2InventoryToXNFT(
+            vaultIdV2,
+            xMILADYBalance,
+            false, // is1155
+            vaultIdV3,
+            0
+        );
+
+        uint256 finalBalance = IERC20(xMILADY).balanceOf(user);
+        assertEq(finalBalance, 0);
+
+        assertEq(inventoryStaking.ownerOf(xNFTId), user);
+
+        (, , , , , uint256 vTokenShareBalance, , ) = inventoryStaking.positions(
+            xNFTId
+        );
+
+        // Without rounding up, the 0.999... from the 1.999... vTokens unstaked would have been sold off to WETH, and the inventory position would had just 1 vToken staked
+        // so checking here that the rounding up worked and we actually staked 2 vTokens instead.
+        // deducting `MINIMUM_LIQUIDITY` (= 1_000) from the vTokenShareBalance because the totalSupply is 0.
+        assertEq(vTokenShareBalance, 2 ether - 1_000);
+    }
+
     function test_v2VaultToXNFT() external {
         uint256 amount = IERC20(V2_MILADY_VTOKEN).balanceOf(MILADY_Holder);
-        // empty array = random redeem
-        uint256[] memory idsToRedeem;
 
         startHoax(MILADY_Holder);
 
@@ -179,7 +226,6 @@ contract MigratorZapTests is TestBase {
         uint256 xNFTId = migratorZap.v2VaultToXNFT(
             V2_MILADY_VTOKEN,
             amount,
-            idsToRedeem,
             false, // is1155
             vaultIdV3,
             0
