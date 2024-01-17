@@ -16,11 +16,6 @@
     "verify:arbitrum": "hardhat --network arbitrum etherscan-verify",
     "gen:addresses": "ts-node ./script/genAddressesJson.ts"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "./script/preCommitGenAddresses.sh"
-    }
-  },
   "devDependencies": {
     "@ethersproject/units": "^5.7.0",
     "@nomicfoundation/hardhat-foundry": "^1.0.0",
