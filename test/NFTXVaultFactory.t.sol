@@ -65,4 +65,28 @@ contract NFTXVaultFactoryTests is TestBase {
         vaultFactory.setPremiumMax(newPremiumMax);
         assertEq(vaultFactory.premiumMax(), newPremiumMax);
     }
+
+    // NFTXVaultFactory#getVTokenPremium1155
+    function test_getVTokenPremium1155_Success() external {
+        uint256 qty = 1;
+
+        uint256[] memory tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        tokenIds[0] = nft1155.mint(qty);
+        amounts[0] = qty;
+
+        nft1155.setApprovalForAll(address(vtoken1155), true);
+
+        vtoken1155.mint(tokenIds, amounts, address(this), address(this));
+
+        (uint256 vTokenPremium, , ) = vaultFactory.getVTokenPremium1155(
+            VAULT_ID_1155,
+            tokenIds[0],
+            qty
+        );
+
+        console.log("vTokenPremium: %s", vTokenPremium);
+        assertGt(vTokenPremium, 0);
+    }
 }

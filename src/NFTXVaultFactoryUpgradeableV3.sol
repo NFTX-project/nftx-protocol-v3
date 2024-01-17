@@ -352,7 +352,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
                 (uint256 qty, address depositor, uint48 timestamp) = _vault
                     .depositInfo1155(tokenId, _pointerIndex1155 + i);
 
-                if (qty > amount) {
+                if (qty >= amount) {
                     uint256 vTokenPremium = _getVTokenPremium(
                         timestamp,
                         _premiumMax,
