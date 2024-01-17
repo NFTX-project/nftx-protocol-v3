@@ -16,6 +16,11 @@
     "verify:arbitrum": "hardhat --network arbitrum etherscan-verify",
     "gen:addresses": "ts-node ./script/genAddressesJson.ts"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "./script/preCommitGenAddresses.sh"
+    }
+  },
   "devDependencies": {
     "@ethersproject/units": "^5.7.0",
     "@nomicfoundation/hardhat-foundry": "^1.0.0",
@@ -34,7 +39,7 @@
     "hardhat-deploy": "^0.11.22",
     "hardhat-deploy-ethers": "0.3.0-beta.13",
     "hardhat-tracer": "^1.0.0-alpha.6",
-    "husky": "^8.0.0",
+    "husky": "^8.0.3",
     "prettier": "^2.4.1",
     "prettier-plugin-solidity": "^1.0.0-beta.18",
     "ts-node": "^10.8.0",
