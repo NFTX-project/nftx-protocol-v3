@@ -77,11 +77,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       log: true,
     });
 
+    console.log(
+      `Adding eligibility module ${eligibilityModules[i]} to NFTXEligibilityManager...`
+    );
     await execute(
       "NFTXEligibilityManager",
       { from: deployer },
       "addModule",
       eligibilityModule.address
+    );
+    console.log(
+      `Added eligibility module ${eligibilityModules[i]} to NFTXEligibilityManager`
     );
   }
 

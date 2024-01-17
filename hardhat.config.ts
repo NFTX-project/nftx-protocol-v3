@@ -116,7 +116,7 @@ const config: HardhatUserConfig = {
       ],
     },
     goerli: {
-      url: `https://rpc.nftx.xyz`,
+      url: process.env.GOERLI_RPC_URL!,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
       timeout: 60000,
     },
