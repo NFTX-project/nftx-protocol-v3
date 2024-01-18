@@ -16,6 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     proxy: {
       proxyContract: "OpenZeppelinTransparentProxy",
+      owner: config.multisig,
       execute: {
         init: {
           methodName: "__NFTXVaultFactory_init",
