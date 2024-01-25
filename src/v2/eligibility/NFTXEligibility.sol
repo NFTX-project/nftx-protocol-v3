@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import {Initializable} from "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
+import {Initializable} from "@src/v2/custom/Initializable.sol";
 import {INFTXEligibility} from "@src/interfaces/INFTXEligibility.sol";
 
 // This is a contract meant to be inherited and overriden to implement eligibility modules.
