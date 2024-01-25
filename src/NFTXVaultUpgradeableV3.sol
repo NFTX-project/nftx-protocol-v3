@@ -120,7 +120,7 @@ contract NFTXVaultUpgradeableV3 is
         if (assetAddress_ == address(0)) revert ZeroAddress();
         assetAddress = assetAddress_;
         vaultFactory = INFTXVaultFactoryV3(msg.sender);
-        vaultId = vaultFactory.numVaults();
+        vaultId = INFTXVaultFactoryV3(msg.sender).numVaults();
         is1155 = is1155_;
         allowAllItems = allowAllItems_;
 
@@ -132,7 +132,12 @@ contract NFTXVaultUpgradeableV3 is
             true /*enableSwap*/
         );
 
-        DELEGATE_REGISTRY.delegateAll(owner(), bytes32(""), true);
+        DELEGATE_REGISTRY.delegateAll(
+            // Set NFTXVaultFactory's owner (DAO) as the delegate.
+            OwnableUpgradeable(msg.sender).owner(),
+            bytes32(""),
+            true
+        );
     }
 
     // =============================================================
@@ -409,6 +414,18 @@ contract NFTXVaultUpgradeableV3 is
         _onlyPrivileged();
         manager = manager_;
         emit ManagerSet(manager_);
+    }
+
+    /**
+     * @inheritdoc INFTXVaultV3
+     */
+    function updateDelegate() external {
+        _onlyPrivileged();
+        DELEGATE_REGISTRY.delegateAll(
+            OwnableUpgradeable(address(vaultFactory)).owner(),
+            bytes32(""),
+            true
+        );
     }
 
     // =============================================================

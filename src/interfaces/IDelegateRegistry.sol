@@ -8,4 +8,10 @@ interface IDelegateRegistry {
         bytes32 rights,
         bool enable
     ) external payable returns (bytes32 delegationHash);
+
+    function checkDelegateForAll(
+        address to,
+        address from,
+        bytes32 rights
+    ) external view returns (bool valid);
 }
