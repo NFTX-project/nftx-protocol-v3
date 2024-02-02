@@ -28,6 +28,11 @@ import {MockDelegateRegistry} from "@mocks/MockDelegateRegistry.sol";
 
 import {NFTXVaultUpgradeableV3, INFTXVaultV3} from "@src/NFTXVaultUpgradeableV3.sol";
 import {NFTXVaultFactoryUpgradeableV3} from "@src/NFTXVaultFactoryUpgradeableV3.sol";
+import {NFTXEligibilityManager} from "@src/v2/NFTXEligibilityManager.sol";
+import {NFTXListEligibility} from "@src/v2/eligibility/NFTXListEligibility.sol";
+import {NFTXRangeEligibility} from "@src/v2/eligibility/NFTXRangeEligibility.sol";
+import {NFTXGen0KittyEligibility} from "@src/v2/eligibility/NFTXGen0KittyEligibility.sol";
+import {NFTXENSMerkleEligibility} from "@src/v2/eligibility/NFTXENSMerkleEligibility.sol";
 import {InventoryStakingDescriptor} from "@src/custom/InventoryStakingDescriptor.sol";
 import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
@@ -57,6 +62,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     NFTXFeeDistributorV3 feeDistributor;
     NFTXVaultUpgradeableV3 vaultImpl;
     NFTXVaultFactoryUpgradeableV3 vaultFactory;
+    NFTXEligibilityManager eligibilityManager;
     NFTXRouter nftxRouter;
     InventoryStakingDescriptor inventoryDescriptor;
     NFTXInventoryStakingV3Upgradeable inventoryStaking;
@@ -67,6 +73,7 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     uint256 constant VAULT_ID = 0;
     uint256 constant VAULT_ID_1155 = 1;
     uint256 constant LP_TIMELOCK = 2 days;
+    uint256 constant RANGE_MODULE_INDEX = 1; // eligibility manager
 
     uint16 constant REWARD_TIER_CARDINALITY = 102; // considering 20 min interval with 1 block every 12 seconds on ETH Mainnet
 
@@ -121,6 +128,13 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             5 ether, // premiumMax_
             0.30 ether // depositorPremiumShare_
         );
+        eligibilityManager = new NFTXEligibilityManager();
+        eligibilityManager.__NFTXEligibilityManager_init();
+        vaultFactory.setEligibilityManager(address(eligibilityManager));
+        eligibilityManager.addModule(address(new NFTXListEligibility()));
+        eligibilityManager.addModule(address(new NFTXRangeEligibility()));
+        eligibilityManager.addModule(address(new NFTXGen0KittyEligibility()));
+        eligibilityManager.addModule(address(new NFTXENSMerkleEligibility()));
 
         permit2 = new MockPermit2();
 
@@ -555,6 +569,310 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             qty,
             "NFT balance didn't decrease"
         );
+    }
+
+    function _calcExpectedMintETHFees(
+        uint256 qty,
+        uint256 currentNFTPrice
+    ) internal view returns (uint256 expectedETHPaid) {
+        (uint256 mintFee, , ) = vtoken.vaultFees();
+
+        uint256 exactETHPaid = (mintFee * qty * currentNFTPrice) / 1 ether;
+
+        expectedETHPaid = _valueWithError(exactETHPaid);
+    }
+
+    function _twap721AndCalcMintETHFees(
+        uint256 qty,
+        uint256 currentNFTPrice
+    ) internal returns (uint256 exactETHPaid, uint256 expectedETHPaid) {
+        _mintPositionWithTwap(currentNFTPrice);
+
+        (uint256 mintFee, , ) = vtoken.vaultFees();
+
+        // exactETHPaid = (mintFee * qty * currentNFTPrice) / 1 ether;
+        exactETHPaid = vtoken.vTokenToETH(mintFee * qty);
+        expectedETHPaid = _valueWithError(exactETHPaid);
+    }
+
+    function _twap1155AndCalcMintETHFees(
+        uint256 qty,
+        uint256 currentNFTPrice
+    ) internal returns (uint256 exactETHPaid, uint256 expectedETHPaid) {
+        _mintPositionWithTwap1155(currentNFTPrice);
+
+        (uint256 mintFee, , ) = vtoken1155.vaultFees();
+
+        // exactETHPaid = (mintFee * qty * currentNFTPrice) / 1 ether;
+        exactETHPaid = vtoken1155.vTokenToETH(mintFee * qty);
+        expectedETHPaid = _valueWithError(exactETHPaid);
+    }
+
+    function _twap721AndCalcRedeemETHFees(
+        uint256 qty,
+        uint256 currentNFTPrice
+    )
+        internal
+        returns (
+            uint256[] memory idsOut,
+            uint256 exactETHPaid,
+            uint256 expectedETHPaid
+        )
+    {
+        _mintPositionWithTwap(currentNFTPrice);
+        (, idsOut) = _mintVToken(qty);
+
+        (, uint256 redeemFee, ) = vtoken.vaultFees();
+
+        exactETHPaid = vtoken.vTokenToETH(redeemFee * qty);
+        expectedETHPaid = _valueWithError(exactETHPaid);
+
+        // jump to time such that no premium applicable
+        vm.warp(block.timestamp + vaultFactory.premiumDuration() + 1);
+    }
+
+    function _twap1155AndCalcRedeemETHFees(
+        uint256 qty,
+        uint256 currentNFTPrice
+    )
+        internal
+        returns (
+            uint256[] memory idsOut,
+            uint256 exactETHPaid,
+            uint256 expectedETHPaid
+        )
+    {
+        _mintPositionWithTwap1155(currentNFTPrice);
+        (, idsOut) = _mintVTokenFor1155(qty);
+
+        (, uint256 redeemFee, ) = vtoken1155.vaultFees();
+        exactETHPaid = vtoken1155.vTokenToETH(redeemFee * qty);
+        expectedETHPaid = _valueWithError(exactETHPaid);
+
+        // jump to time such that no premium applicable
+        vm.warp(block.timestamp + vaultFactory.premiumDuration() + 1);
+    }
+
+    function _twap721AndCalcRedeemETHFeesWithPremium(
+        uint256 qty,
+        uint256 currentNFTPrice
+    )
+        internal
+        returns (
+            address depositor,
+            uint256[] memory idsOut,
+            uint256 exactETHPaid,
+            uint256 expectedETHPaid,
+            uint256 expectedDepositorShare
+        )
+    {
+        _mintPositionWithTwap(currentNFTPrice);
+
+        // have a separate depositor address that receives share of premium
+        depositor = makeAddr("depositor");
+        startHoax(depositor);
+
+        uint256 mintedVTokens;
+        (mintedVTokens, idsOut) = _mintVToken({
+            qty: qty,
+            depositor: depositor,
+            receiver: depositor
+        });
+        vtoken.transfer(address(this), mintedVTokens);
+        vm.stopPrank();
+
+        (, uint256 redeemFee, ) = vtoken.vaultFees();
+
+        exactETHPaid =
+            vtoken.vTokenToETH((redeemFee + vaultFactory.premiumMax()) * qty);
+        expectedETHPaid = _valueWithError(exactETHPaid);
+
+        expectedDepositorShare =
+            (exactETHPaid * vaultFactory.depositorPremiumShare()) /
+            1 ether;
+    }
+
+    function _twap1155AndCalcRedeemETHFeesWithPremium(
+        uint256 qty,
+        uint256 currentNFTPrice
+    )
+        internal
+        returns (
+            address depositor,
+            uint256[] memory idsOut,
+            uint256 exactETHPaid,
+            uint256 expectedETHPaid,
+            uint256 expectedDepositorShare
+        )
+    {
+        _mintPositionWithTwap1155(currentNFTPrice);
+
+        // have a separate depositor address that receives share of premium
+        depositor = makeAddr("depositor");
+        startHoax(depositor);
+
+        (uint256 mintedVTokens, uint256[] memory idsIn) = _mintVTokenFor1155({
+            qty: qty,
+            depositor: depositor,
+            receiver: depositor
+        });
+        vtoken1155.transfer(address(this), mintedVTokens);
+        vm.stopPrank();
+
+        // decreasing idsOut length for withdrawal so that same pointerIndex remains
+        qty -= 1;
+        idsOut = new uint256[](qty);
+        for (uint256 i; i < qty; i++) {
+            idsOut[i] = idsIn[i];
+        }
+
+        (, uint256 redeemFee, ) = vtoken1155.vaultFees();
+
+        exactETHPaid =
+            vtoken1155.vTokenToETH((redeemFee + vaultFactory.premiumMax()) * qty);
+        expectedETHPaid = _valueWithError(exactETHPaid);
+
+        expectedDepositorShare =
+            (exactETHPaid * vaultFactory.depositorPremiumShare()) /
+            1 ether;
+    }
+
+    function _twap721AndCalcSwapETHFees(
+        uint256 qty,
+        uint256 currentNFTPrice
+    )
+        internal
+        returns (
+            uint256[] memory idsOut,
+            uint256[] memory idsIn,
+            uint256 exactETHPaid,
+            uint256 expectedETHPaid
+        )
+    {
+        _mintPositionWithTwap(currentNFTPrice);
+        (, idsOut) = _mintVToken(qty);
+
+        (, , uint256 swapFee) = vtoken.vaultFees();
+
+        exactETHPaid = vtoken.vTokenToETH(swapFee * qty);
+        expectedETHPaid = _valueWithError(exactETHPaid);
+
+        // jump to time such that no premium applicable
+        vm.warp(block.timestamp + vaultFactory.premiumDuration() + 1);
+
+        idsIn = nft.mint(qty);
+    }
+
+    function _twap1155AndCalcSwapETHFees(
+        uint256 qty,
+        uint256 currentNFTPrice
+    )
+        internal
+        returns (
+            uint256[] memory idsOut,
+            uint256[] memory idsIn,
+            uint256[] memory amountsIn,
+            uint256 exactETHPaid,
+            uint256 expectedETHPaid
+        )
+    {
+        _mintPositionWithTwap1155(currentNFTPrice);
+        (, idsOut) = _mintVTokenFor1155(qty);
+
+        (, , uint256 swapFee) = vtoken1155.vaultFees();
+
+        exactETHPaid = vtoken1155.vTokenToETH(swapFee * qty);
+        expectedETHPaid = _valueWithError(exactETHPaid);
+
+        // jump to time such that no premium applicable
+        vm.warp(block.timestamp + vaultFactory.premiumDuration() + 1);
+
+        idsIn = new uint256[](1);
+        amountsIn = new uint256[](1);
+
+        idsIn[0] = nft1155.mint(qty);
+        amountsIn[0] = qty;
+    }
+
+    function _twap721AndCalcSwapETHFeesWithPremium(
+        uint256 qty,
+        uint256 currentNFTPrice
+    )
+        internal
+        returns (
+            address depositor,
+            uint256[] memory idsOut,
+            uint256[] memory idsIn,
+            uint256 exactETHPaid,
+            uint256 expectedETHPaid,
+            uint256 expectedDepositorShare
+        )
+    {
+        _mintPositionWithTwap(currentNFTPrice);
+        // have a separate depositor address that receives share of premium
+        depositor = makeAddr("depositor");
+        startHoax(depositor);
+        (, idsOut) = _mintVToken({
+            qty: qty,
+            depositor: depositor,
+            receiver: depositor
+        });
+        vm.stopPrank();
+
+        (, , uint256 swapFee) = vtoken.vaultFees();
+
+        exactETHPaid =
+            vtoken.vTokenToETH((swapFee + vaultFactory.premiumMax()) * qty);
+        expectedETHPaid = _valueWithError(exactETHPaid);
+
+        expectedDepositorShare =
+            (exactETHPaid * vaultFactory.depositorPremiumShare()) /
+            1 ether;
+
+        idsIn = nft.mint(qty);
+    }
+
+    function _twap1155AndCalcSwapETHFeesWithPremium(
+        uint256 qty,
+        uint256 currentNFTPrice
+    )
+        internal
+        returns (
+            address depositor,
+            uint256[] memory idsOut,
+            uint256[] memory idsIn,
+            uint256[] memory amountsIn,
+            uint256 exactETHPaid,
+            uint256 expectedETHPaid,
+            uint256 expectedDepositorShare
+        )
+    {
+        _mintPositionWithTwap1155(currentNFTPrice);
+        // have a separate depositor address that receives share of premium
+        depositor = makeAddr("depositor");
+        startHoax(depositor);
+        (, idsOut) = _mintVTokenFor1155({
+            qty: qty,
+            depositor: depositor,
+            receiver: depositor
+        });
+        vm.stopPrank();
+
+        (, , uint256 swapFee) = vtoken1155.vaultFees();
+
+        exactETHPaid =
+            vtoken1155.vTokenToETH((swapFee + vaultFactory.premiumMax()) * qty);
+        expectedETHPaid = _valueWithError(exactETHPaid);
+
+        expectedDepositorShare =
+            (exactETHPaid * vaultFactory.depositorPremiumShare()) /
+            1 ether;
+
+        idsIn = new uint256[](1);
+        amountsIn = new uint256[](1);
+
+        idsIn[0] = nft1155.mint(qty);
+        amountsIn[0] = qty;
     }
 
     // the actual value can be off by few decimals so accounting for 0.3% error.
