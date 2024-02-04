@@ -7,5 +7,6 @@ solc = "0.8.15"
 optimizer = true
 optimizer_runs = 380
 bytecode_hash = 'none'
+memory_limit = 3355443200 # 3350mb
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

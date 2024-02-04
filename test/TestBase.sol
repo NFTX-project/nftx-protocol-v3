@@ -121,13 +121,13 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         vaultImpl = new NFTXVaultUpgradeableV3(IWETH9(address(weth)));
         vaultFactory = new NFTXVaultFactoryUpgradeableV3();
-        vaultFactory.__NFTXVaultFactory_init(
-            address(vaultImpl),
-            20 minutes, // twapInterval_
-            10 hours, // premiumDuration_
-            5 ether, // premiumMax_
-            0.30 ether // depositorPremiumShare_
-        );
+        vaultFactory.__NFTXVaultFactory_init({
+            vaultImpl: address(vaultImpl),
+            twapInterval_: 20 minutes,
+            premiumDuration_: 10 hours,
+            premiumMax_: 5 ether,
+            depositorPremiumShare_: 0.30 ether
+        });
         eligibilityManager = new NFTXEligibilityManager();
         eligibilityManager.__NFTXEligibilityManager_init();
         vaultFactory.setEligibilityManager(address(eligibilityManager));
@@ -683,8 +683,9 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         (, uint256 redeemFee, ) = vtoken.vaultFees();
 
-        exactETHPaid =
-            vtoken.vTokenToETH((redeemFee + vaultFactory.premiumMax()) * qty);
+        exactETHPaid = vtoken.vTokenToETH(
+            (redeemFee + vaultFactory.premiumMax()) * qty
+        );
         expectedETHPaid = _valueWithError(exactETHPaid);
 
         expectedDepositorShare =
@@ -728,8 +729,9 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         (, uint256 redeemFee, ) = vtoken1155.vaultFees();
 
-        exactETHPaid =
-            vtoken1155.vTokenToETH((redeemFee + vaultFactory.premiumMax()) * qty);
+        exactETHPaid = vtoken1155.vTokenToETH(
+            (redeemFee + vaultFactory.premiumMax()) * qty
+        );
         expectedETHPaid = _valueWithError(exactETHPaid);
 
         expectedDepositorShare =
@@ -821,8 +823,9 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         (, , uint256 swapFee) = vtoken.vaultFees();
 
-        exactETHPaid =
-            vtoken.vTokenToETH((swapFee + vaultFactory.premiumMax()) * qty);
+        exactETHPaid = vtoken.vTokenToETH(
+            (swapFee + vaultFactory.premiumMax()) * qty
+        );
         expectedETHPaid = _valueWithError(exactETHPaid);
 
         expectedDepositorShare =
@@ -860,8 +863,9 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
 
         (, , uint256 swapFee) = vtoken1155.vaultFees();
 
-        exactETHPaid =
-            vtoken1155.vTokenToETH((swapFee + vaultFactory.premiumMax()) * qty);
+        exactETHPaid = vtoken1155.vTokenToETH(
+            (swapFee + vaultFactory.premiumMax()) * qty
+        );
         expectedETHPaid = _valueWithError(exactETHPaid);
 
         expectedDepositorShare =
