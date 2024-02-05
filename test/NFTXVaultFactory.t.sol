@@ -15,6 +15,7 @@ import {Create2BeaconProxy} from "@src/custom/proxy/Create2BeaconProxy.sol";
 import {FullMath} from "@uni-core/libraries/FullMath.sol";
 import {FixedPoint96} from "@uni-core/libraries/FixedPoint96.sol";
 import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
+import {UpgradeableBeacon} from "@src/custom/proxy/UpgradeableBeacon.sol";
 
 import {TestBase} from "@test/TestBase.sol";
 
@@ -849,7 +850,7 @@ contract NFTXVaultFactoryTests is TestBase {
         );
 
         address expectedVaultAddress = Create2Upgradeable.computeAddress(
-            keccak256(abi.encodePacked(assetAddress, name, symbol)),
+            keccak256(abi.encode(assetAddress, name, symbol)),
             keccak256(type(Create2BeaconProxy).creationCode),
             address(vaultFactory)
         );
@@ -927,7 +928,7 @@ contract NFTXVaultFactoryTests is TestBase {
         address newImplementation = makeAddr("newImplementation");
 
         vm.expectRevert(
-            "UpgradeableBeacon: new implementation is not a contract"
+            UpgradeableBeacon.ChildImplementationIsNotAContract.selector
         );
         vaultFactory.upgradeBeaconTo(newImplementation);
     }
