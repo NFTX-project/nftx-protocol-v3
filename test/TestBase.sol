@@ -99,14 +99,14 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         UniswapV3PoolUpgradeable poolImpl = new UniswapV3PoolUpgradeable();
 
         factory = new UniswapV3FactoryUpgradeable();
-        factory.__UniswapV3FactoryUpgradeable_init(
-            address(poolImpl),
-            REWARD_TIER_CARDINALITY
-        );
-        descriptor = new NonfungibleTokenPositionDescriptor(
-            address(weth),
-            0x5745544800000000000000000000000000000000000000000000000000000000 // "WETH"
-        );
+        factory.__UniswapV3FactoryUpgradeable_init({
+            beaconImplementation_: address(poolImpl),
+            rewardTierCardinality_: REWARD_TIER_CARDINALITY
+        });
+        descriptor = new NonfungibleTokenPositionDescriptor({
+            _WETH9: address(weth),
+            _nativeCurrencyLabelBytes: 0x5745544800000000000000000000000000000000000000000000000000000000 // "WETH"
+        });
 
         positionManager = new NonfungiblePositionManager(
             address(factory),
@@ -145,26 +145,28 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
             IPermitAllowanceTransfer(address(permit2)),
             vaultFactory
         );
-        inventoryStaking.__NFTXInventoryStaking_init(
-            2 days, // timelock
-            0.05 ether, // 5% penalty
-            ITimelockExcludeList(address(timelockExcludeList)),
-            inventoryDescriptor
-        );
+        inventoryStaking.__NFTXInventoryStaking_init({
+            timelock_: 2 days,
+            earlyWithdrawPenaltyInWei_: 0.05 ether, // 5%
+            timelockExcludeList_: ITimelockExcludeList(
+                address(timelockExcludeList)
+            ),
+            descriptor_: inventoryDescriptor
+        });
         vaultFactory.setFeeExclusion(address(inventoryStaking), true);
         inventoryStaking.setIsGuardian(address(this), true);
 
-        nftxRouter = new NFTXRouter(
-            positionManager,
-            router,
-            quoter,
-            vaultFactory,
-            IPermitAllowanceTransfer(address(permit2)),
-            LP_TIMELOCK,
-            0.05 ether, // 5% penalty
-            0.05 ether, // vTokenDustThreshold
-            inventoryStaking
-        );
+        nftxRouter = new NFTXRouter({
+            positionManager_: positionManager,
+            router_: router,
+            quoter_: quoter,
+            nftxVaultFactory_: vaultFactory,
+            PERMIT2_: IPermitAllowanceTransfer(address(permit2)),
+            lpTimelock_: LP_TIMELOCK,
+            earlyWithdrawPenaltyInWei_: 0.05 ether, // 5%
+            vTokenDustThreshold_: 0.05 ether,
+            inventoryStaking_: inventoryStaking
+        });
         vaultFactory.setFeeExclusion(address(nftxRouter), true);
         positionManager.setTimelockExcluded(address(nftxRouter), true);
 
@@ -180,21 +182,21 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
         factory.setFeeDistributor(address(feeDistributor));
         vaultFactory.setFeeDistributor(address(feeDistributor));
 
-        uint256 vaultId = vaultFactory.createVault(
-            "TEST",
-            "TST",
-            address(nft),
-            false, // is1155
-            true // allowAllItems
-        );
+        uint256 vaultId = vaultFactory.createVault({
+            name: "TEST",
+            symbol: "TST",
+            assetAddress: address(nft),
+            is1155: false,
+            allowAllItems: true
+        });
         vtoken = NFTXVaultUpgradeableV3(vaultFactory.vault(vaultId));
-        vaultFactory.createVault(
-            "TEST1155",
-            "TST1155",
-            address(nft1155),
-            true, // is1155
-            true // allowAllItems
-        );
+        vaultFactory.createVault({
+            name: "TEST1155",
+            symbol: "TST1155",
+            assetAddress: address(nft1155),
+            is1155: true,
+            allowAllItems: true
+        });
         vtoken1155 = INFTXVaultV3(vaultFactory.vault(vaultId + 1));
 
         // Zaps
@@ -232,7 +234,12 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     function _mintVToken(
         uint256 qty
     ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
-        return _mintVToken(qty, address(this), address(this));
+        return
+            _mintVToken({
+                qty: qty,
+                depositor: address(this),
+                receiver: address(this)
+            });
     }
 
     function _mintPosition(
@@ -344,13 +351,13 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     function _mintPositionWithTwap(
         uint256 currentNFTPrice
     ) internal returns (uint256 positionId) {
-        (, positionId, , , ) = _mintPosition(
-            10,
-            currentNFTPrice,
-            currentNFTPrice - 0.5 ether,
-            currentNFTPrice + 0.5 ether,
-            DEFAULT_FEE_TIER
-        );
+        (, positionId, , , ) = _mintPosition({
+            qty: 10,
+            currentNFTPrice: currentNFTPrice,
+            lowerNFTPrice: currentNFTPrice - 0.5 ether,
+            upperNFTPrice: currentNFTPrice + 0.5 ether,
+            fee: DEFAULT_FEE_TIER
+        });
         vm.warp(block.timestamp + vaultFactory.twapInterval());
     }
 
@@ -411,7 +418,12 @@ contract TestBase is TestExtend, ERC721Holder, ERC1155Holder {
     function _mintVTokenFor1155(
         uint256 qty
     ) internal returns (uint256 mintedVTokens, uint256[] memory tokenIds) {
-        return _mintVTokenFor1155(qty, address(this), address(this));
+        return
+            _mintVTokenFor1155({
+                qty: qty,
+                depositor: address(this),
+                receiver: address(this)
+            });
     }
 
     function _mintPosition1155(
