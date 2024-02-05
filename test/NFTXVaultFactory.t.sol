@@ -11,6 +11,10 @@ import {Create2Upgradeable} from "@openzeppelin-upgradeable/contracts/utils/Crea
 import {MockNFT} from "@mocks/MockNFT.sol";
 import {ExponentialPremium} from "@src/lib/ExponentialPremium.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {Create2BeaconProxy} from "@src/custom/proxy/Create2BeaconProxy.sol";
+import {FullMath} from "@uni-core/libraries/FullMath.sol";
+import {FixedPoint96} from "@uni-core/libraries/FixedPoint96.sol";
+import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 
 import {TestBase} from "@test/TestBase.sol";
 
@@ -45,6 +49,8 @@ contract NFTXVaultFactoryTests is TestBase {
     event NewPremiumDuration(uint256 premiumDuration);
     event NewPremiumMax(uint256 premiumMax);
     event NewDepositorPremiumShare(uint256 depositorPremiumShare);
+
+    event Upgraded(address indexed beaconImplementation);
 
     // NFTXVaultFactory#init
     function test_init_RevertsForZeroTwapInterval() external {
@@ -738,20 +744,27 @@ contract NFTXVaultFactoryTests is TestBase {
     address[] s_depositors;
 
     function test_getVTokenPremium1155_Success(
-        uint256[] memory depositAmounts,
+        uint256[1000] memory values,
+        uint256 depositCount,
         uint256 amount
     ) external {
-        vm.assume(depositAmounts.length > 0);
-        vm.assume(amount > 0);
+        amount = bound(amount, 1, 10_000);
+        depositCount = bound(depositCount, 1, values.length);
+
+        // To avoid "The `vm.assume` cheatcode rejected too many inputs (65536 allowed)"
+        // get 100 random values from depositAmounts, and then create a new array of length depositCount with those values
+        uint256[] memory depositAmounts = new uint256[](depositCount);
+        for (uint256 i; i < depositCount; i++) {
+            depositAmounts[i] = values[i];
+        }
 
         uint256 tokenId = nft1155.nextId();
         nft1155.setApprovalForAll(address(vtoken1155), true);
 
         uint256 totalDeposited;
         for (uint256 i; i < depositAmounts.length; i++) {
-            vm.assume(
-                depositAmounts[i] > 0 && depositAmounts[i] <= type(uint64).max
-            );
+            depositAmounts[i] = bound(depositAmounts[i], 1, type(uint64).max);
+
             totalDeposited += depositAmounts[i];
 
             nft1155.mint(tokenId, depositAmounts[i]);
@@ -823,11 +836,112 @@ contract NFTXVaultFactoryTests is TestBase {
             .getVTokenPremium1155(VAULT_ID_1155, s_tokenId, s_amount);
     }
 
-    // TODO: computeVaultAddress
-    // TODO: getTwapX96
+    // NFTXVaultFactory#computeVaultAddress
+    function test_computeVaultAddress_Success() external {
+        string memory name = "CryptoPunk";
+        string memory symbol = "PUNK";
+        address assetAddress = address(nft);
 
-    // TODO: UpgradeableBeacon#upgradeBeaconTo
-    // TODO: upgradeBeaconTo reverts for nonOwner
-    // TODO: upgradeBeaconTo reverts for nonContract
-    // TODO: upgradeBeaconTo success
+        address vaultAddress = vaultFactory.computeVaultAddress(
+            assetAddress,
+            name,
+            symbol
+        );
+
+        address expectedVaultAddress = Create2Upgradeable.computeAddress(
+            keccak256(abi.encodePacked(assetAddress, name, symbol)),
+            keccak256(type(Create2BeaconProxy).creationCode),
+            address(vaultFactory)
+        );
+
+        uint256 vaultId = vaultFactory.createVault({
+            name: name,
+            symbol: symbol,
+            assetAddress: assetAddress,
+            is1155: false,
+            allowAllItems: true
+        });
+        address actualVaultAddress = vaultFactory.vault(vaultId);
+
+        assertEq(vaultAddress, expectedVaultAddress);
+        assertEq(vaultAddress, actualVaultAddress);
+    }
+
+    // NFTXVaultFactory#getTwapX96
+    function test_getTwapX96(
+        uint256 currentNFTPrice,
+        uint256 waitForSecs
+    ) external {
+        // currentNFTPrice has to be min 10 wei to avoid lowerNFTPrice from being zero
+        vm.assume(
+            currentNFTPrice >= 10 && currentNFTPrice <= type(uint128).max
+        );
+        vm.assume(waitForSecs <= type(uint128).max);
+
+        uint256 lowerNFTPrice = (currentNFTPrice * 95) / 100;
+        uint256 upperNFTPrice = (currentNFTPrice * 105) / 100;
+
+        _mintPosition({
+            qty: 5,
+            currentNFTPrice: currentNFTPrice,
+            lowerNFTPrice: lowerNFTPrice,
+            upperNFTPrice: upperNFTPrice,
+            fee: DEFAULT_FEE_TIER
+        });
+
+        vm.warp(block.timestamp + waitForSecs);
+
+        address pool = nftxRouter.getPool(address(vtoken), DEFAULT_FEE_TIER);
+        uint256 twapX96 = vaultFactory.getTwapX96(pool);
+        uint256 price;
+        if (waitForSecs == 0) {
+            // for same block, twapX96A will be zero
+            assertEq(twapX96, 0);
+        } else {
+            assertGt(twapX96, 0, "twapX96A == 0");
+            // twap should get set instantly from the next second
+            if (nftxRouter.isVToken0(address(vtoken))) {
+                price = FullMath.mulDiv(1 ether, twapX96, FixedPoint96.Q96);
+            } else {
+                price = FullMath.mulDiv(1 ether, FixedPoint96.Q96, twapX96);
+            }
+            assertGt(price, 0);
+            assertGt(
+                price,
+                currentNFTPrice - 2 wei, // to account for any rounding errors
+                "!price"
+            );
+        }
+    }
+
+    // UpgradeableBeacon#upgradeBeaconTo
+    function test_upgradeBeaconTo_RevertsForNonOwner() external {
+        address newImplementation = makeAddr("newImplementation");
+
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert("Ownable: caller is not the owner");
+        vaultFactory.upgradeBeaconTo(newImplementation);
+    }
+
+    function test_upgradeBeaconTo_RevertsForNonContract() external {
+        address newImplementation = makeAddr("newImplementation");
+
+        vm.expectRevert(
+            "UpgradeableBeacon: new implementation is not a contract"
+        );
+        vaultFactory.upgradeBeaconTo(newImplementation);
+    }
+
+    function test_upgradeBeaconTo_Success() external {
+        NFTXVaultFactoryUpgradeableV3 newVaultFactory = new NFTXVaultFactoryUpgradeableV3();
+        address newImplementation = address(newVaultFactory);
+
+        address preImplementation = vaultFactory.implementation();
+        assertTrue(preImplementation != newImplementation);
+
+        vm.expectEmit(false, false, false, true);
+        emit Upgraded(newImplementation);
+        vaultFactory.upgradeBeaconTo(newImplementation);
+        assertEq(vaultFactory.implementation(), newImplementation);
+    }
 }
