@@ -877,7 +877,8 @@ contract NFTXVaultFactoryTests is TestBase {
         vm.assume(
             currentNFTPrice >= 10 && currentNFTPrice <= type(uint128).max
         );
-        vm.assume(waitForSecs <= type(uint128).max);
+        // vm.warp doesn't work as expected for very large values
+        vm.assume(waitForSecs <= 365 days);
 
         uint256 lowerNFTPrice = (currentNFTPrice * 95) / 100;
         uint256 upperNFTPrice = (currentNFTPrice * 105) / 100;
