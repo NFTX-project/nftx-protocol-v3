@@ -244,7 +244,7 @@ contract NFTXVaultFactoryTests is TestBase {
         uint64 newFactoryFees = 0.2 ether;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         vaultFactory.setFactoryFees({
             mintFee: newFactoryFees,
             redeemFee: newFactoryFees,
@@ -447,7 +447,7 @@ contract NFTXVaultFactoryTests is TestBase {
         address newFeeDistributor = makeAddr("newFeeDistributor");
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         vaultFactory.setFeeDistributor(newFeeDistributor);
     }
 
@@ -476,7 +476,7 @@ contract NFTXVaultFactoryTests is TestBase {
         bool excluded = true;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         vaultFactory.setFeeExclusion(excludedAddr, excluded);
     }
 
@@ -494,7 +494,7 @@ contract NFTXVaultFactoryTests is TestBase {
         address newEligibilityManager = makeAddr("newEligibilityManager");
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         vaultFactory.setEligibilityManager(newEligibilityManager);
     }
 
@@ -518,7 +518,7 @@ contract NFTXVaultFactoryTests is TestBase {
         uint32 newTwapInterval = 60 minutes;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         vaultFactory.setTwapInterval(newTwapInterval);
     }
 
@@ -546,7 +546,7 @@ contract NFTXVaultFactoryTests is TestBase {
         uint256 newPremiumDuration = 20 hours;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         vaultFactory.setPremiumDuration(newPremiumDuration);
     }
 
@@ -567,7 +567,7 @@ contract NFTXVaultFactoryTests is TestBase {
         uint256 newPremiumMax = 10 ether;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         vaultFactory.setPremiumMax(newPremiumMax);
     }
 
@@ -588,7 +588,7 @@ contract NFTXVaultFactoryTests is TestBase {
         uint256 newDepositorPremiumShare = 0.4 ether;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         vaultFactory.setDepositorPremiumShare(newDepositorPremiumShare);
     }
 
@@ -921,7 +921,7 @@ contract NFTXVaultFactoryTests is TestBase {
         address newImplementation = makeAddr("newImplementation");
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         vaultFactory.upgradeBeaconTo(newImplementation);
     }
 

@@ -2093,7 +2093,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 newTimelock = 10 days;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         inventoryStaking.setTimelock(newTimelock);
     }
 
@@ -2124,7 +2124,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         uint256 newEarlyWithdrawPenalty = 0.20 ether;
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         inventoryStaking.setEarlyWithdrawPenalty(newEarlyWithdrawPenalty);
     }
 
@@ -2161,7 +2161,7 @@ contract NFTXInventoryStakingV3Tests is TestBase {
         InventoryStakingDescriptor newDescriptor = new InventoryStakingDescriptor();
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         inventoryStaking.setDescriptor(newDescriptor);
     }
 
