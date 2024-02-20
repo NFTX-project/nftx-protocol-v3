@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
-import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
 import {NFTXVaultFactoryUpgradeableV3} from "@src/NFTXVaultFactoryUpgradeableV3.sol";
 import {NFTXVaultUpgradeableV3} from "@src/NFTXVaultUpgradeableV3.sol";
 
@@ -32,6 +31,9 @@ contract createVault_Unit_Test is NFTXVaultFactory_Unit_Test {
     }
 
     function test_RevertGiven_TheFeeDistributorIsNotSet() external {
+        // new deployment where fee distributor is not set yet
+        vaultFactory = new NFTXVaultFactoryUpgradeableV3();
+
         vm.expectRevert(INFTXVaultFactoryV3.FeeDistributorNotSet.selector);
         vaultFactory.createVault(
             name,
@@ -43,20 +45,6 @@ contract createVault_Unit_Test is NFTXVaultFactory_Unit_Test {
     }
 
     modifier givenTheFeeDistributorIsSet() {
-        // deploys & sets fee distributor to _vaultFactory
-        switchPrank(users.owner);
-        (
-            NFTXFeeDistributorV3 feeDistributor,
-            ,
-            ,
-            ,
-            NFTXVaultFactoryUpgradeableV3 _vaultFactory,
-
-        ) = deployFeeDistributor();
-        // update the vault factory
-        vaultFactory = _vaultFactory;
-
-         switchPrank(users.alice);
         _;
     }
 

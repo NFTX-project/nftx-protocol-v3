@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {NFTXVaultFactoryUpgradeableV3} from "@src/NFTXVaultFactoryUpgradeableV3.sol";
-import {NFTXVaultUpgradeableV3} from "@src/NFTXVaultUpgradeableV3.sol";
 
 import {NewTestBase} from "@test/NewTestBase.sol";
 
@@ -18,7 +17,9 @@ contract NFTXVaultFactory_Unit_Test is NewTestBase {
     function setUp() public virtual override {
         super.setUp();
 
-        vaultImpl = address(new NFTXVaultUpgradeableV3(weth));
-        vaultFactory = new NFTXVaultFactoryUpgradeableV3();
+        switchPrank(users.owner);
+        (, , , , vaultFactory, ) = deployFeeDistributor();
+        vaultImpl = vaultFactory.implementation();
+        switchPrank(users.alice);
     }
 }

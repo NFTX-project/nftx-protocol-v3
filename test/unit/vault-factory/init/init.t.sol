@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {UpgradeableBeacon} from "@src/custom/proxy/UpgradeableBeacon.sol";
 import {INFTXVaultFactoryV3} from "@src/interfaces/INFTXVaultFactoryV3.sol";
+import {NFTXVaultFactoryUpgradeableV3} from "@src/NFTXVaultFactoryUpgradeableV3.sol";
 
 import {NFTXVaultFactory_Unit_Test} from "../NFTXVaultFactory.t.sol";
 
@@ -15,8 +16,10 @@ contract NFTXVaultFactory_Init_Unit_Test is NFTXVaultFactory_Unit_Test {
     function setUp() public virtual override {
         super.setUp();
 
-        // this function should be called by the owner
+        // this contract should be initialized by the deployer(owner)
         switchPrank(users.owner);
+        // use uninitialized vault factory for these tests
+        vaultFactory = new NFTXVaultFactoryUpgradeableV3();
     }
 
     function test_RevertGiven_TheContractIsInitialized() external {
@@ -51,11 +54,11 @@ contract NFTXVaultFactory_Init_Unit_Test is NFTXVaultFactory_Unit_Test {
         vm.expectRevert(
             UpgradeableBeacon.ChildImplementationIsNotAContract.selector
         );
-        address nonContractImplementation = makeAddr(
-            "nonContractImplementation"
-        );
+
+        vaultImpl = makeAddr("nonContractImplementation");
+
         vaultFactory.__NFTXVaultFactory_init({
-            vaultImpl: nonContractImplementation,
+            vaultImpl: vaultImpl,
             twapInterval_: twapInterval,
             premiumDuration_: premiumDuration,
             premiumMax_: premiumMax,

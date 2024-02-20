@@ -1,0 +1,6 @@
+setFeeExclusion.t.sol
+├── when the caller is not the owner
+│   └── it should revert
+└── when the caller is the owner
+    ├── it should add the address to the fee exclusion list
+    └── it should emit {FeeExclusion} event

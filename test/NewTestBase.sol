@@ -53,6 +53,9 @@ contract NewTestBase is TestExtend, Constants, ERC721Holder, ERC1155Holder {
 
     address permit2;
 
+    uint256[] emptyIds;
+    uint256[] emptyAmounts;
+
     function setUp() public virtual {
         // to prevent underflow during calculations involving block.timestamp
         vm.warp(100 days);
@@ -115,6 +118,8 @@ contract NewTestBase is TestExtend, Constants, ERC721Holder, ERC1155Holder {
         eligibilityManager.addModule(address(new NFTXENSMerkleEligibility()));
     }
 
+    /// @dev Deploys a new vault factory and sets the eligibility manager.
+    /// @notice Fee Distributor is not set yet
     function deployVaultFactory()
         internal
         returns (NFTXVaultFactoryUpgradeableV3 vaultFactory)
@@ -277,5 +282,30 @@ contract NewTestBase is TestExtend, Constants, ERC721Holder, ERC1155Holder {
         );
 
         vaultFactory.setFeeExclusion(address(marketplaceZap), true);
+    }
+
+    function deployVToken721(
+        NFTXVaultFactoryUpgradeableV3 vaultFactory
+    ) internal returns (uint256 vaultId, NFTXVaultUpgradeableV3 vault) {
+        vaultId = vaultFactory.createVault({
+            name: "Test",
+            symbol: "TST",
+            assetAddress: address(nft721),
+            is1155: false,
+            allowAllItems: true
+        });
+        vault = NFTXVaultUpgradeableV3(vaultFactory.vault(vaultId));
+    }
+
+    function valueWithError(
+        uint256 value,
+        uint256 errorBps
+    ) internal pure returns (uint256) {
+        return (value * (10_000 - errorBps)) / 10_000;
+    }
+
+    // @dev the actual value can be off by few decimals so accounting for 0.3% error.
+    function valueWithError(uint256 value) internal pure returns (uint256) {
+        return valueWithError(value, 30);
     }
 }
