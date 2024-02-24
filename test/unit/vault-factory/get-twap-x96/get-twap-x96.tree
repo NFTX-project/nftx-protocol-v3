@@ -1,0 +1,13 @@
+getTwapX96.t.sol
+├── given the pool was just deployed
+│   └── it should return zero
+├── given the pool was deployed less than twap interval ago
+│   ├── given the pool had no transactions A
+│   │   └── it should return the twap of initial price for time period since the pool was deployed
+│   └── given the pool had add liquidity transaction A
+│       └── it should return the twap of initial price for time period since the pool was deployed
+└── given the pool was deployed more than twap interval ago
+    ├── given the pool had no transactions B
+    │   └── it should return the twap of initial price for twap interval
+    └── given the pool had add liquidity transaction B
+        └── it should return the twap of initial price for twap interval

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.8.15;
 
+import {TickHelpers} from "@src/lib/TickHelpers.sol";
+
 import {UniswapV3FactoryUpgradeable} from "@uni-core/UniswapV3FactoryUpgradeable.sol";
 import {UniswapV3PoolUpgradeable} from "@uni-core/UniswapV3PoolUpgradeable.sol";
 import {NonfungibleTokenPositionDescriptor} from "@uni-periphery/NonfungibleTokenPositionDescriptor.sol";
@@ -14,7 +16,7 @@ import {InventoryStakingDescriptor} from "@src/custom/InventoryStakingDescriptor
 import {ITimelockExcludeList} from "@src/interfaces/ITimelockExcludeList.sol";
 import {TimelockExcludeList} from "@src/TimelockExcludeList.sol";
 import {NFTXInventoryStakingV3Upgradeable} from "@src/NFTXInventoryStakingV3Upgradeable.sol";
-import {NFTXRouter} from "@src/NFTXRouter.sol";
+import {NFTXRouter, INFTXRouter} from "@src/NFTXRouter.sol";
 import {NFTXFeeDistributorV3} from "@src/NFTXFeeDistributorV3.sol";
 import {IPermitAllowanceTransfer} from "@src/interfaces/external/IPermitAllowanceTransfer.sol";
 import {NFTXEligibilityManager} from "@src/v2/NFTXEligibilityManager.sol";
@@ -297,6 +299,19 @@ contract NewTestBase is TestExtend, Constants, ERC721Holder, ERC1155Holder {
         vault = NFTXVaultUpgradeableV3(vaultFactory.vault(vaultId));
     }
 
+    function deployVToken1155(
+        NFTXVaultFactoryUpgradeableV3 vaultFactory
+    ) internal returns (uint256 vaultId, NFTXVaultUpgradeableV3 vault) {
+        vaultId = vaultFactory.createVault({
+            name: "Test",
+            symbol: "TST",
+            assetAddress: address(nft1155),
+            is1155: true,
+            allowAllItems: true
+        });
+        vault = NFTXVaultUpgradeableV3(vaultFactory.vault(vaultId));
+    }
+
     function valueWithError(
         uint256 value,
         uint256 errorBps
@@ -308,4 +323,66 @@ contract NewTestBase is TestExtend, Constants, ERC721Holder, ERC1155Holder {
     function valueWithError(uint256 value) internal pure returns (uint256) {
         return valueWithError(value, 30);
     }
+
+    function getTickDistance(
+        NFTXRouter nftxRouter,
+        uint24 feeTier
+    ) internal view returns (uint256 tickDistance) {
+        UniswapV3FactoryUpgradeable uniswapFactory = UniswapV3FactoryUpgradeable(
+                nftxRouter.positionManager().factory()
+            );
+        tickDistance = uint256(
+            uint24(uniswapFactory.feeAmountTickSpacing(feeTier))
+        );
+    }
+
+    function getTicks(
+        bool isVToken0,
+        uint256 tickDistance,
+        uint256 currentNFTPrice,
+        uint256 lowerNFTPrice,
+        uint256 upperNFTPrice
+    )
+        internal
+        pure
+        returns (uint160 currentSqrtPriceX96, int24 tickLower, int24 tickUpper)
+    {
+        if (isVToken0) {
+            currentSqrtPriceX96 = TickHelpers.encodeSqrtRatioX96(
+                currentNFTPrice,
+                1 ether
+            );
+
+            // price = amount1 / amount0 = 1.0001^tick => tick ∝ price
+            tickLower = TickHelpers.getTickForAmounts(
+                lowerNFTPrice,
+                1 ether,
+                tickDistance
+            );
+            tickUpper = TickHelpers.getTickForAmounts(
+                upperNFTPrice,
+                1 ether,
+                tickDistance
+            );
+        } else {
+            currentSqrtPriceX96 = TickHelpers.encodeSqrtRatioX96(
+                1 ether,
+                currentNFTPrice
+            );
+
+            tickLower = TickHelpers.getTickForAmounts(
+                1 ether,
+                upperNFTPrice,
+                tickDistance
+            );
+            tickUpper = TickHelpers.getTickForAmounts(
+                1 ether,
+                lowerNFTPrice,
+                tickDistance
+            );
+        }
+    }
+
+    // to receive the refunded ETH
+    receive() external payable {}
 }
