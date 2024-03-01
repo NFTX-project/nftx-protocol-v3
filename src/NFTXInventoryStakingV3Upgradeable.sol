@@ -556,7 +556,8 @@ contract NFTXInventoryStakingV3Upgradeable is
             revert SenderNotFeeDistributor();
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
-        if (_vaultGlobal.totalVTokenShares == 0) {
+        // avoid distributing rewards if only the locked liquidity or no liquidity is present
+        if (_vaultGlobal.totalVTokenShares <= MINIMUM_LIQUIDITY) {
             return false;
         }
         rewardsDistributed = true;
