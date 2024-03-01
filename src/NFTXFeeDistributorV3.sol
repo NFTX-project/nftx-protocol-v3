@@ -132,7 +132,7 @@ contract NFTXFeeDistributorV3 is
                 vaultId,
                 vault
             );
-            leftover = tokenSent ? 0 : leftover + wethAmountToSend;
+            leftover = tokenSent ? 0 : wethAmountToSend;
 
             unchecked {
                 ++i;
