@@ -1,17 +1,14 @@
 import { HardhatRuntimeEnvironment, Network } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { utils } from "ethers";
-import deployConfig from "../deployConfig";
+import { getConfig, getContract } from "./utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts, network } = hre;
-  const { deploy, execute } = deployments;
-
-  const { deployer } = await getNamedAccounts();
-  const config = deployConfig[network.name];
+  const { config, deployments, deploy, execute, deployer } = await getConfig(
+    hre
+  );
 
   const vaultFactory = await deployments.get("NFTXVaultFactoryUpgradeableV3");
-  const uniV3Factory = await deployments.get("UniswapV3FactoryUpgradeable");
+  const uniswapFactory = await deployments.get("UniswapV3FactoryUpgradeable");
   const positionManager = await deployments.get("NonfungiblePositionManager");
   const inventoryStaking = await deployments.get(
     "NFTXInventoryStakingV3Upgradeable"
@@ -30,33 +27,50 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
 
-  // MarketplaceZap has in-built fee handling
-  console.log("Setting fee exclusion for MarketplaceZap...");
-  await execute(
+  const vaultFactoryContract = await getContract(
+    hre,
     "NFTXVaultFactoryUpgradeableV3",
-    { from: deployer },
-    "setFeeExclusion",
-    marketplaceZap.address,
-    true
+    vaultFactory.address
   );
-  console.log("Fee exclusion set for MarketplaceZap");
+  const isMarketplaceZapExcludedFromFees =
+    await vaultFactoryContract.excludedFromFees(marketplaceZap.address);
+  if (!isMarketplaceZapExcludedFromFees) {
+    // MarketplaceZap has in-built fee handling
+    console.log("Setting fee exclusion for MarketplaceZap...");
+    await execute(
+      "NFTXVaultFactoryUpgradeableV3",
+      { from: deployer },
+      "setFeeExclusion",
+      marketplaceZap.address,
+      true
+    );
+    console.log("Fee exclusion set for MarketplaceZap");
+  }
 
   const createVaultZap = await deploy("CreateVaultZap", {
     from: deployer,
-    args: [nftxRouter.address, uniV3Factory.address, inventoryStaking.address],
+    args: [
+      nftxRouter.address,
+      uniswapFactory.address,
+      inventoryStaking.address,
+    ],
     log: true,
   });
 
-  // CreateVaultZap doesn't deduct fees
-  console.log("Setting fee exclusion for CreateVaultZap...");
-  await execute(
-    "NFTXVaultFactoryUpgradeableV3",
-    { from: deployer },
-    "setFeeExclusion",
-    createVaultZap.address,
-    true
-  );
-  console.log("Fee exclusion set for CreateVaultZap");
+  const isCreateVaultZapExcludedFromFees =
+    await vaultFactoryContract.excludedFromFees(createVaultZap.address);
+  if (!isCreateVaultZapExcludedFromFees) {
+    // CreateVaultZap doesn't deduct fees
+    console.log("Setting fee exclusion for CreateVaultZap...");
+    await execute(
+      "NFTXVaultFactoryUpgradeableV3",
+      { from: deployer },
+      "setFeeExclusion",
+      createVaultZap.address,
+      true
+    );
+    console.log("Fee exclusion set for CreateVaultZap");
+  }
 
   const migratorZap = await deploy("MigratorZap", {
     from: deployer,
@@ -72,15 +86,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
 
-  console.log("Setting fee exclusion for MigratorZap in V3...");
-  await execute(
-    "NFTXVaultFactoryUpgradeableV3",
-    { from: deployer },
-    "setFeeExclusion",
-    migratorZap.address,
-    true
-  );
-  console.log("Fee exclusion set for MigratorZap in V3");
+  const isMigratorZapExcludedFromFees =
+    await vaultFactoryContract.excludedFromFees(migratorZap.address);
+  if (!isMigratorZapExcludedFromFees) {
+    // MigratorZap doesn't deduct fees
+    console.log("Setting fee exclusion for MigratorZap in V3...");
+    await execute(
+      "NFTXVaultFactoryUpgradeableV3",
+      { from: deployer },
+      "setFeeExclusion",
+      migratorZap.address,
+      true
+    );
+    console.log("Fee exclusion set for MigratorZap in V3");
+  }
+
   console.warn(
     "[NOTE!] Set fee exclusion for MigratorZap in V2 of the protocol"
   );
