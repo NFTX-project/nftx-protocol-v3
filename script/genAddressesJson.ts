@@ -29,13 +29,19 @@ const main = async () => {
     [chain: string]: { [label: string]: string };
   } = {};
 
+  // as we are using Promise all here, so the order of the chains might not be maintained
   await Promise.all(
     chains.map(async (chain) => {
       output[chain] = await addressesForChain(chain);
     })
   );
 
-  const formattedJson = prettier.format(JSON.stringify(output), {
+  let orderedOutput: { [chain: string]: { [label: string]: string } } = {};
+  chains.forEach((chain) => {
+    orderedOutput[chain] = output[chain];
+  });
+
+  const formattedJson = prettier.format(JSON.stringify(orderedOutput), {
     parser: "json",
   });
 
