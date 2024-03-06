@@ -115,8 +115,8 @@ contract NFTXFeeDistributorV3 is
 
         uint256 wethBalance = WETH.balanceOf(address(this));
 
-        // TODO: cache allocTotal
-        if (allocTotal == 0) {
+        uint256 _allocTotal = allocTotal;
+        if (_allocTotal == 0) {
             WETH.transfer(treasury, wethBalance);
             return;
         }
@@ -128,7 +128,7 @@ contract NFTXFeeDistributorV3 is
 
             uint256 wethAmountToSend = leftover +
                 (wethBalance * feeReceiver.allocPoint) /
-                allocTotal;
+                _allocTotal;
 
             bool tokenSent = _sendForReceiver(
                 feeReceiver,
