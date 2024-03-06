@@ -2,7 +2,7 @@
 pragma solidity =0.8.15;
 
 // inheriting
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@src/custom/Pausable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // libs
@@ -27,7 +27,7 @@ import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
  */
 contract NFTXFeeDistributorV3 is
     INFTXFeeDistributorV3,
-    Ownable,
+    Pausable,
     ReentrancyGuard
 {
     using SafeERC20 for IERC20;
@@ -44,6 +44,9 @@ contract NFTXFeeDistributorV3 is
     uint256 constant POOL_DEFAULT_ALLOC = 0.8 ether; // 80%
     uint256 constant INVENTORY_DEFAULT_ALLOC = 0.2 ether; // 20%
 
+    uint256 constant DISTRIBUTE_LOCK_ID = 0;
+    uint256 constant DISTRIBUTE_VTOKENS_LOCK_ID = 1;
+
     // =============================================================
     //                           VARIABLES
     // =============================================================
@@ -55,8 +58,6 @@ contract NFTXFeeDistributorV3 is
     // Total of allocation points per feeReceiver.
     uint256 public override allocTotal;
     FeeReceiver[] public override feeReceivers;
-
-    bool public override distributionPaused;
 
     // =============================================================
     //                          CONSTRUCTOR
@@ -108,11 +109,14 @@ contract NFTXFeeDistributorV3 is
      * @inheritdoc INFTXFeeDistributorV3
      */
     function distribute(uint256 vaultId) external override nonReentrant {
+        onlyOwnerIfPaused(DISTRIBUTE_LOCK_ID);
+
         INFTXVaultV3 vault = INFTXVaultV3(nftxVaultFactory.vault(vaultId));
 
         uint256 wethBalance = WETH.balanceOf(address(this));
 
-        if (distributionPaused || allocTotal == 0) {
+        uint256 _allocTotal = allocTotal;
+        if (_allocTotal == 0) {
             WETH.transfer(treasury, wethBalance);
             return;
         }
@@ -124,7 +128,7 @@ contract NFTXFeeDistributorV3 is
 
             uint256 wethAmountToSend = leftover +
                 (wethBalance * feeReceiver.allocPoint) /
-                allocTotal;
+                _allocTotal;
 
             bool tokenSent = _sendForReceiver(
                 feeReceiver,
@@ -152,6 +156,8 @@ contract NFTXFeeDistributorV3 is
         address vToken,
         uint256 vTokenAmount
     ) external {
+        onlyOwnerIfPaused(DISTRIBUTE_VTOKENS_LOCK_ID);
+
         if (msg.sender != address(nftxRouter)) revert SenderNotNFTXRouter();
 
         uint256 liquidity = IUniswapV3Pool(pool).liquidity();
@@ -227,14 +233,6 @@ contract NFTXFeeDistributorV3 is
         nftxRouter = nftxRouter_;
 
         emit NewNFTXRouter(address(nftxRouter_));
-    }
-
-    /**
-     * @inheritdoc INFTXFeeDistributorV3
-     */
-    function pauseFeeDistribution(bool pause) external override onlyOwner {
-        distributionPaused = pause;
-        emit PauseDistribution(pause);
     }
 
     /**
