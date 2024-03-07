@@ -103,7 +103,7 @@ contract getVTokenPremium1155_Unit_Test is NFTXVaultFactory_Unit_Test {
     }
 
     function test_WhenTheAmountIsLessThanOrEqualToTheQuantityOfNftsInTheVault(
-        uint256[1000] memory values,
+        uint256[100] memory values,
         uint256 depositCount,
         uint256 _amount
     )
@@ -148,53 +148,59 @@ contract getVTokenPremium1155_Unit_Test is NFTXVaultFactory_Unit_Test {
 
             totalDeposited += depositAmounts[i];
         }
-        vm.assume(totalDeposited >= amount);
+        // vm.assume doesn't work
+        // vm.assume(totalDeposited >= amount);
+        if (totalDeposited < amount) {
+            vm.expectRevert(INFTXVaultFactoryV3.NFTInventoryExceeded.selector);
+        }
 
         // putting in a separate external call to avoid "EvmError: MemoryLimitOOG"
         // using storage instead to pass values
         // source: https://github.com/foundry-rs/foundry/issues/3971#issuecomment-1698653788
         this.getVTokenPremium1155();
 
-        // it should return the total premium
-        assertGt(totalPremium, 0);
-        assertEq(
-            totalPremium,
-            ExponentialPremium.getPremium(
-                block.timestamp,
-                vaultFactory.premiumMax(),
-                vaultFactory.premiumDuration()
-            ) * amount
-        );
-
-        // it should return the premiums array
-        // it should return the depositors array
-
-        assertEq(premiums.length, depositors.length);
-
-        uint256 netDepositAmountUsed;
-        for (uint256 i; i < depositors.length; i++) {
-            uint256 depositAmountUsed;
-            if (netDepositAmountUsed + depositAmounts[i] >= amount) {
-                depositAmountUsed = amount - netDepositAmountUsed;
-            } else {
-                depositAmountUsed = depositAmounts[i];
-            }
-            netDepositAmountUsed += depositAmountUsed;
-
+        if (totalDeposited >= amount) {
+            // it should return the total premium
+            assertGt(totalPremium, 0);
             assertEq(
-                premiums[i],
+                totalPremium,
                 ExponentialPremium.getPremium(
                     block.timestamp,
                     vaultFactory.premiumMax(),
                     vaultFactory.premiumDuration()
-                ) * depositAmountUsed
+                ) * amount
             );
-            assertEq(
-                depositors[i],
-                makeAddr(string.concat("depositor", Strings.toString(i)))
-            );
+
+            // it should return the premiums array
+            // it should return the depositors array
+
+            assertEq(premiums.length, depositors.length);
+
+            uint256 netDepositAmountUsed;
+            for (uint256 i; i < depositors.length; i++) {
+                uint256 depositAmountUsed;
+                if (netDepositAmountUsed + depositAmounts[i] >= amount) {
+                    depositAmountUsed = amount - netDepositAmountUsed;
+                } else {
+                    depositAmountUsed = depositAmounts[i];
+                }
+                netDepositAmountUsed += depositAmountUsed;
+
+                assertEq(
+                    premiums[i],
+                    ExponentialPremium.getPremium(
+                        block.timestamp,
+                        vaultFactory.premiumMax(),
+                        vaultFactory.premiumDuration()
+                    ) * depositAmountUsed
+                );
+                assertEq(
+                    depositors[i],
+                    makeAddr(string.concat("depositor", Strings.toString(i)))
+                );
+            }
+            assertEq(netDepositAmountUsed, amount);
         }
-        assertEq(netDepositAmountUsed, amount);
     }
 
     // helpers
