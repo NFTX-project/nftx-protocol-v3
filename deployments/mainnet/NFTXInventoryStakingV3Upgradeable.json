@@ -46,30 +46,19 @@
       "name": "Upgraded",
       "type": "event"
     },
-    {
-      "stateMutability": "payable",
-      "type": "fallback"
-    },
+    { "stateMutability": "payable", "type": "fallback" },
     {
       "inputs": [],
       "name": "admin",
       "outputs": [
-        {
-          "internalType": "address",
-          "name": "admin_",
-          "type": "address"
-        }
+        { "internalType": "address", "name": "admin_", "type": "address" }
       ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "newAdmin",
-          "type": "address"
-        }
+        { "internalType": "address", "name": "newAdmin", "type": "address" }
       ],
       "name": "changeAdmin",
       "outputs": [],
@@ -109,126 +98,35 @@
           "name": "newImplementation",
           "type": "address"
         },
-        {
-          "internalType": "bytes",
-          "name": "data",
-          "type": "bytes"
-        }
+        { "internalType": "bytes", "name": "data", "type": "bytes" }
       ],
       "name": "upgradeToAndCall",
       "outputs": [],
       "stateMutability": "payable",
       "type": "function"
     },
-    {
-      "stateMutability": "payable",
-      "type": "receive"
-    },
-    {
-      "inputs": [],
-      "name": "ApprovalToCurrentOwner",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "InsufficientVTokenShares",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "InsufficientVTokens",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "InvalidEarlyWithdrawPenalty",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "InvalidSignature",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "LiquidityBelowMinimum",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "NotGuardian",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "NotNFTOwner",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "NotPositionOwner",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "ParentChildSame",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "Paused",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "PermitExpired",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "PositionNotCreatedWithVTokens",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "SenderNotFeeDistributor",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "TimelockTooLong",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "Timelocked",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "UnableToSendETH",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "Unauthorized",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "VaultIdMismatch",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "ZeroAddress",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "ZeroVTokenShares",
-      "type": "error"
-    },
+    { "stateMutability": "payable", "type": "receive" },
+    { "inputs": [], "name": "ApprovalToCurrentOwner", "type": "error" },
+    { "inputs": [], "name": "InsufficientVTokenShares", "type": "error" },
+    { "inputs": [], "name": "InsufficientVTokens", "type": "error" },
+    { "inputs": [], "name": "InvalidEarlyWithdrawPenalty", "type": "error" },
+    { "inputs": [], "name": "InvalidSignature", "type": "error" },
+    { "inputs": [], "name": "LiquidityBelowMinimum", "type": "error" },
+    { "inputs": [], "name": "NotGuardian", "type": "error" },
+    { "inputs": [], "name": "NotNFTOwner", "type": "error" },
+    { "inputs": [], "name": "NotPositionOwner", "type": "error" },
+    { "inputs": [], "name": "ParentChildSame", "type": "error" },
+    { "inputs": [], "name": "Paused", "type": "error" },
+    { "inputs": [], "name": "PermitExpired", "type": "error" },
+    { "inputs": [], "name": "PositionNotCreatedWithVTokens", "type": "error" },
+    { "inputs": [], "name": "SenderNotFeeDistributor", "type": "error" },
+    { "inputs": [], "name": "TimelockTooLong", "type": "error" },
+    { "inputs": [], "name": "Timelocked", "type": "error" },
+    { "inputs": [], "name": "UnableToSendETH", "type": "error" },
+    { "inputs": [], "name": "Unauthorized", "type": "error" },
+    { "inputs": [], "name": "VaultIdMismatch", "type": "error" },
+    { "inputs": [], "name": "ZeroAddress", "type": "error" },
+    { "inputs": [], "name": "ZeroVTokenShares", "type": "error" },
     {
       "anonymous": false,
       "inputs": [
@@ -559,26 +457,14 @@
     {
       "inputs": [],
       "name": "DOMAIN_SEPARATOR",
-      "outputs": [
-        {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "MINIMUM_LIQUIDITY",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
@@ -598,13 +484,7 @@
     {
       "inputs": [],
       "name": "PERMIT_TYPEHASH",
-      "outputs": [
-        {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
       "stateMutability": "view",
       "type": "function"
     },
@@ -612,22 +492,14 @@
       "inputs": [],
       "name": "WETH",
       "outputs": [
-        {
-          "internalType": "contract IWETH9",
-          "name": "",
-          "type": "address"
-        }
+        { "internalType": "contract IWETH9", "name": "", "type": "address" }
       ],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "timelock_",
-          "type": "uint256"
-        },
+        { "internalType": "uint256", "name": "timelock_", "type": "uint256" },
         {
           "internalType": "uint256",
           "name": "earlyWithdrawPenaltyInWei_",
@@ -651,16 +523,8 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
+        { "internalType": "address", "name": "to", "type": "address" },
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
       ],
       "name": "approve",
       "outputs": [],
@@ -669,20 +533,10 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        }
+        { "internalType": "address", "name": "owner", "type": "address" }
       ],
       "name": "balanceOf",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
@@ -719,78 +573,34 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "vaultId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "recipient",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes",
-          "name": "encodedPermit2",
-          "type": "bytes"
-        },
-        {
-          "internalType": "bool",
-          "name": "viaPermit2",
-          "type": "bool"
-        },
-        {
-          "internalType": "bool",
-          "name": "forceTimelock",
-          "type": "bool"
-        }
+        { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
+        { "internalType": "uint256", "name": "amount", "type": "uint256" },
+        { "internalType": "address", "name": "recipient", "type": "address" },
+        { "internalType": "bytes", "name": "encodedPermit2", "type": "bytes" },
+        { "internalType": "bool", "name": "viaPermit2", "type": "bool" },
+        { "internalType": "bool", "name": "forceTimelock", "type": "bool" }
       ],
       "name": "deposit",
       "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "positionId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "positionId", "type": "uint256" }
       ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "vaultId",
-          "type": "uint256"
-        },
+        { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
         {
           "internalType": "uint256[]",
           "name": "tokenIds",
           "type": "uint256[]"
         },
-        {
-          "internalType": "uint256[]",
-          "name": "amounts",
-          "type": "uint256[]"
-        },
-        {
-          "internalType": "address",
-          "name": "recipient",
-          "type": "address"
-        }
+        { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" },
+        { "internalType": "address", "name": "recipient", "type": "address" }
       ],
       "name": "depositWithNFT",
       "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "positionId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "positionId", "type": "uint256" }
       ],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -811,62 +621,26 @@
     {
       "inputs": [],
       "name": "earlyWithdrawPenaltyInWei",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
       ],
       "name": "getApproved",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "positionId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bytes",
-          "name": "encodedPermit2",
-          "type": "bytes"
-        },
-        {
-          "internalType": "bool",
-          "name": "viaPermit2",
-          "type": "bool"
-        },
-        {
-          "internalType": "bool",
-          "name": "forceTimelock",
-          "type": "bool"
-        }
+        { "internalType": "uint256", "name": "positionId", "type": "uint256" },
+        { "internalType": "uint256", "name": "amount", "type": "uint256" },
+        { "internalType": "bytes", "name": "encodedPermit2", "type": "bytes" },
+        { "internalType": "bool", "name": "viaPermit2", "type": "bool" },
+        { "internalType": "bool", "name": "forceTimelock", "type": "bool" }
       ],
       "name": "increasePosition",
       "outputs": [],
@@ -875,76 +649,32 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "operator",
-          "type": "address"
-        }
+        { "internalType": "address", "name": "owner", "type": "address" },
+        { "internalType": "address", "name": "operator", "type": "address" }
       ],
       "name": "isApprovedForAll",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
+      "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
       "name": "isGuardian",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "name": "isPaused",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "name",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
+      "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
       "stateMutability": "view",
       "type": "function"
     },
@@ -963,89 +693,33 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256[]",
-          "name": "",
-          "type": "uint256[]"
-        },
-        {
-          "internalType": "uint256[]",
-          "name": "",
-          "type": "uint256[]"
-        },
-        {
-          "internalType": "bytes",
-          "name": "",
-          "type": "bytes"
-        }
+        { "internalType": "address", "name": "", "type": "address" },
+        { "internalType": "address", "name": "", "type": "address" },
+        { "internalType": "uint256[]", "name": "", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "", "type": "uint256[]" },
+        { "internalType": "bytes", "name": "", "type": "bytes" }
       ],
       "name": "onERC1155BatchReceived",
-      "outputs": [
-        {
-          "internalType": "bytes4",
-          "name": "",
-          "type": "bytes4"
-        }
-      ],
+      "outputs": [{ "internalType": "bytes4", "name": "", "type": "bytes4" }],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bytes",
-          "name": "",
-          "type": "bytes"
-        }
+        { "internalType": "address", "name": "", "type": "address" },
+        { "internalType": "address", "name": "", "type": "address" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "bytes", "name": "", "type": "bytes" }
       ],
       "name": "onERC1155Received",
-      "outputs": [
-        {
-          "internalType": "bytes4",
-          "name": "",
-          "type": "bytes4"
-        }
-      ],
+      "outputs": [{ "internalType": "bytes4", "name": "", "type": "bytes4" }],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "lockId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "lockId", "type": "uint256" }
       ],
       "name": "onlyOwnerIfPaused",
       "outputs": [],
@@ -1055,42 +729,22 @@
     {
       "inputs": [],
       "name": "owner",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
       ],
       "name": "ownerOf",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "lockId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "lockId", "type": "uint256" }
       ],
       "name": "pause",
       "outputs": [],
@@ -1099,36 +753,12 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "deadline",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint8",
-          "name": "v",
-          "type": "uint8"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "r",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "s",
-          "type": "bytes32"
-        }
+        { "internalType": "address", "name": "spender", "type": "address" },
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+        { "internalType": "uint256", "name": "deadline", "type": "uint256" },
+        { "internalType": "uint8", "name": "v", "type": "uint8" },
+        { "internalType": "bytes32", "name": "r", "type": "bytes32" },
+        { "internalType": "bytes32", "name": "s", "type": "bytes32" }
       ],
       "name": "permit",
       "outputs": [],
@@ -1136,35 +766,17 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "name": "positions",
       "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "vaultId",
-          "type": "uint256"
-        },
+        { "internalType": "uint256", "name": "nonce", "type": "uint256" },
+        { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
         {
           "internalType": "uint256",
           "name": "timelockedUntil",
           "type": "uint256"
         },
-        {
-          "internalType": "uint256",
-          "name": "timelock",
-          "type": "uint256"
-        },
+        { "internalType": "uint256", "name": "timelock", "type": "uint256" },
         {
           "internalType": "uint256",
           "name": "vTokenTimelockedUntil",
@@ -1180,54 +792,28 @@
           "name": "wethFeesPerVTokenShareSnapshotX128",
           "type": "uint256"
         },
-        {
-          "internalType": "uint256",
-          "name": "wethOwed",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "wethOwed", "type": "uint256" }
       ],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "vaultId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "vaultId", "type": "uint256" }
       ],
       "name": "pricePerShareVToken",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "vaultId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "wethAmount",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "vaultId", "type": "uint256" },
+        { "internalType": "uint256", "name": "wethAmount", "type": "uint256" }
       ],
       "name": "receiveWethRewards",
       "outputs": [
-        {
-          "internalType": "bool",
-          "name": "rewardsDistributed",
-          "type": "bool"
-        }
+        { "internalType": "bool", "name": "rewardsDistributed", "type": "bool" }
       ],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1241,21 +827,9 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
+        { "internalType": "address", "name": "from", "type": "address" },
+        { "internalType": "address", "name": "to", "type": "address" },
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
       ],
       "name": "safeTransferFrom",
       "outputs": [],
@@ -1264,26 +838,10 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bytes",
-          "name": "data",
-          "type": "bytes"
-        }
+        { "internalType": "address", "name": "from", "type": "address" },
+        { "internalType": "address", "name": "to", "type": "address" },
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+        { "internalType": "bytes", "name": "data", "type": "bytes" }
       ],
       "name": "safeTransferFrom",
       "outputs": [],
@@ -1292,16 +850,8 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "operator",
-          "type": "address"
-        },
-        {
-          "internalType": "bool",
-          "name": "approved",
-          "type": "bool"
-        }
+        { "internalType": "address", "name": "operator", "type": "address" },
+        { "internalType": "bool", "name": "approved", "type": "bool" }
       ],
       "name": "setApprovalForAll",
       "outputs": [],
@@ -1336,16 +886,8 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "addr",
-          "type": "address"
-        },
-        {
-          "internalType": "bool",
-          "name": "_isGuardian",
-          "type": "bool"
-        }
+        { "internalType": "address", "name": "addr", "type": "address" },
+        { "internalType": "bool", "name": "_isGuardian", "type": "bool" }
       ],
       "name": "setIsGuardian",
       "outputs": [],
@@ -1354,11 +896,7 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "timelock_",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "timelock_", "type": "uint256" }
       ],
       "name": "setTimelock",
       "outputs": [],
@@ -1367,46 +905,24 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "bytes4",
-          "name": "interfaceId",
-          "type": "bytes4"
-        }
+        { "internalType": "bytes4", "name": "interfaceId", "type": "bytes4" }
       ],
       "name": "supportsInterface",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "symbol",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
+      "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "timelock",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
@@ -1425,96 +941,44 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "index",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "index", "type": "uint256" }
       ],
       "name": "tokenByIndex",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "index",
-          "type": "uint256"
-        }
+        { "internalType": "address", "name": "owner", "type": "address" },
+        { "internalType": "uint256", "name": "index", "type": "uint256" }
       ],
       "name": "tokenOfOwnerByIndex",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
       ],
       "name": "tokenURI",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
+      "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "totalSupply",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
+        { "internalType": "address", "name": "from", "type": "address" },
+        { "internalType": "address", "name": "to", "type": "address" },
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
       ],
       "name": "transferFrom",
       "outputs": [],
@@ -1523,11 +987,7 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
+        { "internalType": "address", "name": "newOwner", "type": "address" }
       ],
       "name": "transferOwnership",
       "outputs": [],
@@ -1536,11 +996,7 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "lockId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "lockId", "type": "uint256" }
       ],
       "name": "unpause",
       "outputs": [],
@@ -1548,13 +1004,7 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "name": "vaultGlobal",
       "outputs": [
         {
@@ -1573,40 +1023,22 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "positionId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "positionId", "type": "uint256" }
       ],
       "name": "wethBalance",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "positionId",
-          "type": "uint256"
-        },
+        { "internalType": "uint256", "name": "positionId", "type": "uint256" },
         {
           "internalType": "uint256",
           "name": "vTokenShares",
           "type": "uint256"
         },
-        {
-          "internalType": "uint256[]",
-          "name": "nftIds",
-          "type": "uint256[]"
-        },
+        { "internalType": "uint256[]", "name": "nftIds", "type": "uint256[]" },
         {
           "internalType": "uint256",
           "name": "vTokenPremiumLimit",
@@ -1620,21 +1052,9 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "address",
-          "name": "_logic",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "admin_",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes",
-          "name": "_data",
-          "type": "bytes"
-        }
+        { "internalType": "address", "name": "_logic", "type": "address" },
+        { "internalType": "address", "name": "admin_", "type": "address" },
+        { "internalType": "bytes", "name": "_data", "type": "bytes" }
       ],
       "stateMutability": "payable",
       "type": "constructor"
@@ -1722,15 +1142,12 @@
     "methodName": "__NFTXInventoryStaking_init",
     "args": [
       259200,
-      {
-        "type": "BigNumber",
-        "hex": "0x016345785d8a0000"
-      },
+      { "type": "BigNumber", "hex": "0x016345785d8a0000" },
       "0xE614aE8d4A37e048d75a08A3848fd8A62776b49e",
       "0x39D9A925d7fcA17E430b731882b97e2d10E9F8bB"
     ]
   },
-  "implementation": "0x0b3D8Fd85f43e2963d39e927D4a9eC1406A28E8E",
+  "implementation": "0x8E912C466bD1D720b7d97034c03572c4A261de33",
   "devdoc": {
     "details": "This contract implements a proxy that is upgradeable by an admin. To avoid https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357[proxy selector clashing], which can potentially be used in an attack, this contract uses the https://blog.openzeppelin.com/the-transparent-proxy-pattern/[transparent proxy pattern]. This pattern implies two things that go hand in hand: 1. If any account other than the admin calls the proxy, the call will be forwarded to the implementation, even if that call matches one of the admin functions exposed by the proxy itself. 2. If the admin calls the proxy, it can access the admin functions, but its calls will never be forwarded to the implementation. If the admin tries to call a function on the implementation it will fail with an error that says \"admin cannot fallback to proxy target\". These properties mean that the admin account can only be used for admin actions like upgrading the proxy or changing the admin, so it's best if it's a dedicated account that is not used for anything else. This will avoid headaches due to sudden errors when trying to call a function from the proxy implementation. Our recommendation is for the dedicated account to be an instance of the {ProxyAdmin} contract. If set up this way, you should think of the `ProxyAdmin` instance as the real administrative interface of your proxy.",
     "kind": "dev",
@@ -1756,13 +1173,6 @@
     },
     "version": 1
   },
-  "userdoc": {
-    "kind": "user",
-    "methods": {},
-    "version": 1
-  },
-  "storageLayout": {
-    "storage": [],
-    "types": null
-  }
+  "userdoc": { "kind": "user", "methods": {}, "version": 1 },
+  "storageLayout": { "storage": [], "types": null }
 }
