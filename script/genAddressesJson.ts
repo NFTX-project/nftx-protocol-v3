@@ -6,6 +6,7 @@ import deployConfig from "../deploy/deployConfig";
 const deploymentsList = [
   "CreateVaultZap",
   "DefaultProxyAdmin",
+  "FailSafe",
   "MarketplaceUniversalRouterZap",
   "MigratorZap",
   "NFTXEligibilityManager",
