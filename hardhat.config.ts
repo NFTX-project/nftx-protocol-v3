@@ -126,9 +126,9 @@ const config: HardhatUserConfig = {
       timeout: 600000,
     },
     mainnet: {
-      url: `https://rpc.nftx.xyz`,
+      url: process.env.MAINNET_RPC_URL!,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
-      timeout: 60000,
+      timeout: 600000,
     },
     arbitrum: {
       url: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_ARBITRUM_API_KEY}`,

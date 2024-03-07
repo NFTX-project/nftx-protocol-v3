@@ -3,6 +3,7 @@ import { DeployOptions, Deployment } from "hardhat-deploy/types";
 import { promises as fs } from "fs";
 import path from "path";
 import { format } from "prettier";
+import { keccak256, toUtf8Bytes, defaultAbiCoder } from "ethers/lib/utils";
 import deployConfig from "../deployConfig";
 
 export const getConfig = async (hre: HardhatRuntimeEnvironment) => {
@@ -99,8 +100,25 @@ export const handleUpgradeDeploy = async ({
   hre: HardhatRuntimeEnvironment;
   contractName: string;
   deployOptions: DeployOptions;
-}): Promise<Deployment | undefined> => {
-  const { deploy, network } = await getConfig(hre);
+}): Promise<Deployment> => {
+  const { deploy, network, deployments } = await getConfig(hre);
+
+  const defaultProxyAdminDeployment = await getDeploymentFileByName(
+    "DefaultProxyAdmin",
+    network
+  );
+  const defaultProxyAdminContract = (
+    await hre.ethers.getContractFactory(
+      defaultProxyAdminDeployment.abi,
+      defaultProxyAdminDeployment.bytecode
+    )
+  ).attach(defaultProxyAdminDeployment.address);
+
+  // set the current owner of the proxy, in the deployOptions
+  deployOptions.proxy = {
+    ...(typeof deployOptions.proxy === "object" ? deployOptions.proxy : {}),
+    owner: await defaultProxyAdminContract.owner(),
+  };
 
   let deployment: Deployment | undefined = undefined;
   try {
@@ -108,6 +126,9 @@ export const handleUpgradeDeploy = async ({
   } catch (e) {
     // update the deployment file for correct implementation address
     await setImplementation(contractName, network);
+    deployment = await deployments.get(contractName);
+
+    console.log(e);
 
     console.warn(
       `[⚠️ NOTE!] call "upgrade" on DefaultProxyAdmin to upgrade the implementation for ${contractName}`
@@ -115,6 +136,23 @@ export const handleUpgradeDeploy = async ({
   }
 
   return deployment;
+};
+
+const getEIP1967ProxyOwner = async (
+  hre: HardhatRuntimeEnvironment,
+  contractName: string
+) => {
+  const khash = keccak256(toUtf8Bytes(`eip1967.proxy.admin`));
+  const num = BigInt(khash);
+  const storageSlot = num - BigInt(1);
+
+  const provider = hre.ethers.provider;
+  const res = await provider.getStorageAt(contractName, storageSlot);
+
+  const owner: string = defaultAbiCoder.decode(["address"], res)[0];
+  console.log({ owner });
+
+  return owner;
 };
 
 export const setImplementation = async (
@@ -130,7 +168,10 @@ export const setImplementation = async (
   contract.implementation = contractImplementation.address;
 
   await fs.writeFile(
-    path.join(__dirname, `./deployments/${network.name}/${contractName}.json`),
+    path.join(
+      __dirname,
+      `../../deployments/${network.name}/${contractName}.json`
+    ),
     format(JSON.stringify(contract), {
       semi: false,
       parser: "json",
@@ -146,7 +187,10 @@ export const getDeploymentFileByName = async (
 ) => {
   return JSON.parse(
     await fs.readFile(
-      path.join(__dirname, `./deployments/${network.name}/${fileName}.json`),
+      path.join(
+        __dirname,
+        `../../deployments/${network.name}/${fileName}.json`
+      ),
       "utf8"
     )
   );
