@@ -6,6 +6,7 @@ import { deployInventoryStaking } from "./modules/InventoryStaking";
 import { deployUniswapV3Periphery } from "./modules/UniswapV3Periphery";
 import { deployNFTXRouter } from "./modules/NFTXRouter";
 import { deployFeeDistributor } from "./modules/FeeDistributor";
+import { deployFailSafe } from "./modules/FailSafe";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { vaultFactory } = await deployVaultFactory({ hre });
@@ -40,6 +41,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     uniswapFactory,
     inventoryStaking,
     vaultFactory,
+  });
+
+  const { failSafe } = await deployFailSafe({
+    hre,
+    inventoryStaking,
+    vaultFactory,
+    feeDistributor,
+    nftxRouter,
   });
 };
 export default func;

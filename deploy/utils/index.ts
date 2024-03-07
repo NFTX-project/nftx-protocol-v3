@@ -27,16 +27,31 @@ export const getContract = async (
   hre: HardhatRuntimeEnvironment,
   contractName: string,
   // keeping this param and not using deployments.get() because it helps to see the module's dependencies on other contracts
-  contractAddress: string
+  // making optional for querying DefaultProxyAdmin
+  contractAddress?: string
 ) => {
+  // this fails to read "DefaultProxyAdmin":
+  /** 
   const { deployments } = hre;
-
   const artifact = await deployments.getArtifact(contractName);
   const contractFactory = await hre.ethers.getContractFactory(
     artifact.abi,
     artifact.bytecode
   );
   const contract = contractFactory.attach(contractAddress);
+  */
+
+  const contractDeployment = await getDeploymentFileByName(
+    contractName,
+    hre.network
+  );
+  const contract = (
+    await hre.ethers.getContractFactory(
+      contractDeployment.abi,
+      contractDeployment.bytecode
+    )
+  ).attach(contractAddress ?? contractDeployment.address);
+
   return contract;
 };
 
@@ -103,16 +118,7 @@ export const handleUpgradeDeploy = async ({
 }): Promise<Deployment> => {
   const { deploy, network, deployments } = await getConfig(hre);
 
-  const defaultProxyAdminDeployment = await getDeploymentFileByName(
-    "DefaultProxyAdmin",
-    network
-  );
-  const defaultProxyAdminContract = (
-    await hre.ethers.getContractFactory(
-      defaultProxyAdminDeployment.abi,
-      defaultProxyAdminDeployment.bytecode
-    )
-  ).attach(defaultProxyAdminDeployment.address);
+  const defaultProxyAdminContract = await getContract(hre, "DefaultProxyAdmin");
 
   // set the current owner of the proxy, in the deployOptions
   deployOptions.proxy = {
@@ -127,8 +133,6 @@ export const handleUpgradeDeploy = async ({
     // update the deployment file for correct implementation address
     await setImplementation(contractName, network);
     deployment = await deployments.get(contractName);
-
-    console.log(e);
 
     console.warn(
       `[⚠️ NOTE!] call "upgrade" on DefaultProxyAdmin to upgrade the implementation for ${contractName}`

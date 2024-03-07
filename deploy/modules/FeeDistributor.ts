@@ -83,6 +83,6 @@ export const deployFeeDistributor = async ({
   }
 
   return {
-    feeDistributor,
+    feeDistributor: feeDistributor.address,
   };
 };
