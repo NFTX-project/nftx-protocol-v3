@@ -20,10 +20,12 @@ The vTokens can then be used to earn yield by:<br>
 Contract | mainnet | sepolia | goerli
 --- | --- | --- | ---
 [CreateVaultZap](./src/zaps/CreateVaultZap.sol) | [0x56dab32697B4A313f353DA0CE42B5113eD8E6f74](https://etherscan.io/address/0x56dab32697B4A313f353DA0CE42B5113eD8E6f74#code) | [0xD80b916470F8e79FD8d09874cb159CbB8D13d8da](https://sepolia.etherscan.io/address/0xD80b916470F8e79FD8d09874cb159CbB8D13d8da#code) | [0xc6464CC63bC20b64e1633A0293C2C9b202F4f1b6](https://goerli.etherscan.io/address/0xc6464CC63bC20b64e1633A0293C2C9b202F4f1b6#code)
+DefaultProxyAdmin | [0xf8Cab5e4912e08c475033776d9472b81c1325e58](https://etherscan.io/address/0xf8Cab5e4912e08c475033776d9472b81c1325e58#code) | [0x36cBBb16F2FA71d4B773E9F4A11cF7FC53B13EfD](https://sepolia.etherscan.io/address/0x36cBBb16F2FA71d4B773E9F4A11cF7FC53B13EfD#code) | [0xa0d26F02D5e94C8E9ED524875D9fce36ab4838a2](https://goerli.etherscan.io/address/0xa0d26F02D5e94C8E9ED524875D9fce36ab4838a2#code)
+FailSafe | [0x8665664CD32B6263A9b716371814Dc8CecFb8F2B](https://etherscan.io/address/0x8665664CD32B6263A9b716371814Dc8CecFb8F2B#code) | N/A | N/A
 [MarketplaceUniversalRouterZap](./src/zaps/MarketplaceUniversalRouterZap.sol) | [0x293A0c49c85F1D8851C665Ac3cE1f1DC2a79bE3d](https://etherscan.io/address/0x293A0c49c85F1D8851C665Ac3cE1f1DC2a79bE3d#code) | [0xd88a3B9D0Fb2d39ec8394CfFD983aFBB2D4a6410](https://sepolia.etherscan.io/address/0xd88a3B9D0Fb2d39ec8394CfFD983aFBB2D4a6410#code) | [0x0be2D766Eef4b6a72F1fAe2e49619F013d647B8A](https://goerli.etherscan.io/address/0x0be2D766Eef4b6a72F1fAe2e49619F013d647B8A#code)
 [MigratorZap](./src/zaps/MigratorZap.sol) | [0x089610Fb04c34C014B4B391f4eCEFAef94E98CEc](https://etherscan.io/address/0x089610Fb04c34C014B4B391f4eCEFAef94E98CEc#code) | [0x19762e505aF085284E287c8DAb931fb28545461f](https://sepolia.etherscan.io/address/0x19762e505aF085284E287c8DAb931fb28545461f#code) | [0xD4B67Fe6a1258fd5e1C4dF84f3De01F62e7ac127](https://goerli.etherscan.io/address/0xD4B67Fe6a1258fd5e1C4dF84f3De01F62e7ac127#code)
 [NFTXEligibilityManager](./src/v2/NFTXEligibilityManager.sol) | [0x4086e98Cce041d286112d021612fD894cFed94D5](https://etherscan.io/address/0x4086e98Cce041d286112d021612fD894cFed94D5#code) | [0xa1ad09f8Fd789E3A940Ba9Dc5aE4D17021eF290D](https://sepolia.etherscan.io/address/0xa1ad09f8Fd789E3A940Ba9Dc5aE4D17021eF290D#code) | [0xA4e9e286CE7A34d19f774c36844225468290C3A8](https://goerli.etherscan.io/address/0xA4e9e286CE7A34d19f774c36844225468290C3A8#code)
-[NFTXFeeDistributorV3](./src/NFTXFeeDistributorV3.sol) | [0xF4d96C5094FCD9eC24E612585e723b58F89e21fe](https://etherscan.io/address/0xF4d96C5094FCD9eC24E612585e723b58F89e21fe#code) | [0x66EF5B4b6ee05639194844CE4867515665F14fED](https://sepolia.etherscan.io/address/0x66EF5B4b6ee05639194844CE4867515665F14fED#code) | [0xA8076Ec5Dbb95165e14624Ff43dE2290e78A6905](https://goerli.etherscan.io/address/0xA8076Ec5Dbb95165e14624Ff43dE2290e78A6905#code)
+[NFTXFeeDistributorV3](./src/NFTXFeeDistributorV3.sol) | [0x6845fF5f102bEF9D785468F0bEb535b4687406E7](https://etherscan.io/address/0x6845fF5f102bEF9D785468F0bEb535b4687406E7#code) | [0x53AE38742C78EE64fC077EF840B2Aa47A7E9c603](https://sepolia.etherscan.io/address/0x53AE38742C78EE64fC077EF840B2Aa47A7E9c603#code) | [0xA8076Ec5Dbb95165e14624Ff43dE2290e78A6905](https://goerli.etherscan.io/address/0xA8076Ec5Dbb95165e14624Ff43dE2290e78A6905#code)
 [NFTXInventoryStakingV3Upgradeable](./src/NFTXInventoryStakingV3Upgradeable.sol) | [0x889f313e2a3FDC1c9a45bC6020A8a18749CD6152](https://etherscan.io/address/0x889f313e2a3FDC1c9a45bC6020A8a18749CD6152#code) | [0xfBFf0635f7c5327FD138E1EBa72BD9877A6a7C1C](https://sepolia.etherscan.io/address/0xfBFf0635f7c5327FD138E1EBa72BD9877A6a7C1C#code) | [0xEf771a17e6970d8B4b208a76e94F175277554230](https://goerli.etherscan.io/address/0xEf771a17e6970d8B4b208a76e94F175277554230#code)
 [NFTXRouter](./src/NFTXRouter.sol) | [0x70A741A12262d4b5Ff45C0179c783a380EebE42a](https://etherscan.io/address/0x70A741A12262d4b5Ff45C0179c783a380EebE42a#code) | [0x441b7DE4340AAa5aA86dB4DA43d9Badf7B2DAA66](https://sepolia.etherscan.io/address/0x441b7DE4340AAa5aA86dB4DA43d9Badf7B2DAA66#code) | [0x8E16cdd0D9A15d2d0EFeA531660e8DbD0F6eE12D](https://goerli.etherscan.io/address/0x8E16cdd0D9A15d2d0EFeA531660e8DbD0F6eE12D#code)
 [nftxUniversalRouter](https://github.com/NFTX-project/nftx-universal-router/blob/nftx-universal-router/contracts/UniversalRouter.sol) | [0x250d62a67254A46c0De472d2c9215E1d890cC90f](https://etherscan.io/address/0x250d62a67254A46c0De472d2c9215E1d890cC90f#code) | [0x12156cCA1958B6591CC49EaE03a5553458a4b424](https://sepolia.etherscan.io/address/0x12156cCA1958B6591CC49EaE03a5553458a4b424#code) | [0xF7c4FC5C2e30258e1E4d1197fc63aeDE371508f3](https://goerli.etherscan.io/address/0xF7c4FC5C2e30258e1E4d1197fc63aeDE371508f3#code)
@@ -175,8 +177,32 @@ Note: Tags are defined in the deploy script at the end like: `func.tags = ["<tag
 
 `yarn verify:goerli --license "GPL-2.0" --force-license --solc-input`
 
-How to verify the BeaconProxy (for Vaults):
-`source .env && forge verify-contract --chain-id 5 --num-of-optimizations 800 --watch --etherscan-api-key $ETHERSCAN_API_KEY --compiler-version v0.8.15+commit.e14f2714 0xffE5d77309efd6e9391Ac14D95f2035A1e138659 lib/openzeppelin-contracts/contracts/proxy/beacon/BeaconProxy.sol:BeaconProxy --constructor-args $(cast abi-encode "constructor(address,bytes)" 0x1d552A0e6c2f680872C4a88b1e7def05F1858dF0 "")`
+- How to verify the Create2BeaconProxy (for Vaults):
 
-where `0xffE5d77309efd6e9391Ac14D95f2035A1e138659` = vault (proxy) address\
-and `0x1d552A0e6c2f680872C4a88b1e7def05F1858dF0` = vault factory
+  ```
+  source .env &&
+  forge verify-contract --chain-id 1 \
+    0x8e42595f46e5998332F51D3267830DE982A3E59a \
+    src/custom/proxy/Create2BeaconProxy.sol:Create2BeaconProxy \
+    --num-of-optimizations 800 \
+    --compiler-version v0.8.15+commit.e14f2714 \
+    --watch \
+    --etherscan-api-key $ETHERSCAN_API_KEY
+  ```
+
+  where `0x8e42595f46e5998332F51D3267830DE982A3E59a` = vault (proxy) address.
+
+- How to verify the Create2BeaconProxy (for UniswapV3Pool):
+
+  ```
+  source .env &&
+  forge verify-contract --chain-id 1 \
+    0x2c2511250C3561F6E5f8999Ac777d9465E7e27FA \
+    src/custom/proxy/Create2BeaconProxy.sol:Create2BeaconProxy \
+    --num-of-optimizations 380 \
+    --compiler-version v0.8.15+commit.e14f2714 \
+    --watch \
+    --etherscan-api-key $ETHERSCAN_API_KEY
+  ```
+
+  where `0x2c2511250C3561F6E5f8999Ac777d9465E7e27FA` = pool (proxy) address.

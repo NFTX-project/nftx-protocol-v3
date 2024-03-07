@@ -7,10 +7,14 @@ import {TickHelpers} from "@src/lib/TickHelpers.sol";
 import {UniswapV3PoolUpgradeable, IUniswapV3Pool} from "@uni-core/UniswapV3PoolUpgradeable.sol";
 import {INFTXRouter} from "@src/NFTXRouter.sol";
 import {INFTXFeeDistributorV3} from "@src/interfaces/INFTXFeeDistributorV3.sol";
+import {Pausable} from "@src/custom/Pausable.sol";
 
 import {TestBase} from "@test/TestBase.sol";
 
 contract NFTXFeeDistributorV3Tests is TestBase {
+    uint256 constant DISTRIBUTE_LOCK_ID = 0;
+    uint256 constant DISTRIBUTE_VTOKENS_LOCK_ID = 1;
+
     event AddFeeReceiver(address receiver, uint256 allocPoint);
     event UpdateFeeReceiverAlloc(address receiver, uint256 allocPoint);
     event UpdateFeeReceiverAddress(address oldReceiver, address newReceiver);
@@ -18,11 +22,17 @@ contract NFTXFeeDistributorV3Tests is TestBase {
     event UpdateTreasuryAddress(address oldTreasury, address newTreasury);
     event PauseDistribution(bool paused);
 
+    // constructor
+
+    function test_feeDistributor_constructor() external {
+        assertEq(feeDistributor.owner(), address(this));
+    }
+
     // UniswapV3FactoryUpgradeable#setFeeDistributor
 
     function test_setFeeDistributor_RevertsForNonOwner() external {
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert();
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         factory.setFeeDistributor(address(feeDistributor));
     }
 
@@ -52,27 +62,28 @@ contract NFTXFeeDistributorV3Tests is TestBase {
 
     // FeeDistributor#distribute
 
-    function test_feeDistribuion_whenDistributionPaused() external {
+    function test_feeDistribution_whenDistributionPaused() external {
         _mintPosition(1);
 
-        // Pause distribution
-        feeDistributor.pauseFeeDistribution(true);
-        assertEq(feeDistributor.distributionPaused(), true);
+        // add to guardians
+        feeDistributor.setIsGuardian(address(this), true);
 
-        uint256 preTreasuryWethBalance = weth.balanceOf(TREASURY);
+        // Pause distribution
+        feeDistributor.pause(DISTRIBUTE_LOCK_ID);
+        assertEq(feeDistributor.isPaused(DISTRIBUTE_LOCK_ID), true);
 
         uint256 wethFees = 2 ether;
 
         // distribute fees
         weth.deposit{value: wethFees}();
         weth.transfer(address(feeDistributor), wethFees);
-        feeDistributor.distribute(0);
 
-        uint256 postTreasuryWethBalance = weth.balanceOf(TREASURY);
-        assertEq(postTreasuryWethBalance - preTreasuryWethBalance, wethFees);
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert(Pausable.Paused.selector);
+        feeDistributor.distribute(0);
     }
 
-    function test_feeDistribuion_whenZeroAllocTotal() external {
+    function test_feeDistribution_whenZeroAllocTotal() external {
         _mintPosition(1);
 
         // Remove all receivers
@@ -271,6 +282,36 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         console.log("ETH received", ethReceived);
     }
 
+    // FeeDistributor#distributeVTokensToPool
+
+    function test_distributeVTokensToPool_whenPaused() external {
+        // minting so that Pool is deployed
+        _mintPosition(1);
+
+        // add to guardians
+        feeDistributor.setIsGuardian(address(this), true);
+
+        // Pause distribution
+        feeDistributor.pause(DISTRIBUTE_VTOKENS_LOCK_ID);
+        assertEq(feeDistributor.isPaused(DISTRIBUTE_VTOKENS_LOCK_ID), true);
+
+        (uint256 mintedVTokens, ) = _mintVToken({
+            qty: 1,
+            depositor: address(this),
+            receiver: address(feeDistributor)
+        });
+
+        address pool = nftxRouter.getPool(address(vtoken), DEFAULT_FEE_TIER);
+
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert(Pausable.Paused.selector);
+        feeDistributor.distributeVTokensToPool({
+            pool: pool,
+            vToken: address(vtoken),
+            vTokenAmount: mintedVTokens
+        });
+    }
+
     // FeeDistributor#setTreasuryAddress
 
     function test_setTreasuryAddress_RevertsForNonOwner() external {
@@ -322,30 +363,6 @@ contract NFTXFeeDistributorV3Tests is TestBase {
 
         address postNFTXRouter = address(feeDistributor.nftxRouter());
         assertEq(postNFTXRouter, newNFTXRouter);
-    }
-
-    // FeeDistributor#pauseFeeDistribution
-
-    function test_pauseFeeDistribution_RevertsForNonOwner() external {
-        bool newPause = true;
-
-        hoax(makeAddr("nonOwner"));
-        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
-        feeDistributor.pauseFeeDistribution(newPause);
-    }
-
-    function test_pauseFeeDistribution_Success() external {
-        bool preDistributionPaused = feeDistributor.distributionPaused();
-
-        bool newPause = !preDistributionPaused;
-
-        vm.expectEmit(false, false, false, true);
-        emit PauseDistribution(newPause);
-        feeDistributor.pauseFeeDistribution(newPause);
-
-        bool postDistributionPaused = feeDistributor.distributionPaused();
-
-        assertEq(postDistributionPaused, newPause);
     }
 
     // FeeDistributor#rescueTokens
