@@ -1,13 +1,15 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getConfig, getContract } from "../utils";
-import { deployVaultFactory } from "./VaultFactory";
+import { getConfig, getContract, handleUpgradeDeploy } from "../utils";
 
-export const deployInventoryStaking = async (
-  hre: HardhatRuntimeEnvironment
-) => {
+// deploys InventoryStaking along with timelockExcludeList and inventoryDescriptor
+export const deployInventoryStaking = async ({
+  hre,
+  vaultFactory,
+}: {
+  hre: HardhatRuntimeEnvironment;
+  vaultFactory: string;
+}) => {
   const { deploy, execute, deployer, config } = await getConfig(hre);
-
-  const vaultFactory = await deployVaultFactory(hre);
 
   const timelockExcludeList = await deploy("TimelockExcludeList", {
     from: deployer,
@@ -19,26 +21,31 @@ export const deployInventoryStaking = async (
     log: true,
   });
 
-  const inventoryStaking = await deploy("NFTXInventoryStakingV3Upgradeable", {
-    from: deployer,
-    args: [config.WETH, config.permit2, vaultFactory],
-    proxy: {
-      proxyContract: "OpenZeppelinTransparentProxy",
-      execute: {
-        init: {
-          methodName: "__NFTXInventoryStaking_init",
-          args: [
-            config.inventoryTimelock,
-            config.inventoryEarlyWithdrawPenaltyInWei,
-            timelockExcludeList.address,
-            inventoryDescriptor.address,
-          ],
+  const inventoryStaking = await handleUpgradeDeploy({
+    hre,
+    contractName: "NFTXInventoryStakingV3Upgradeable",
+    deployOptions: {
+      from: deployer,
+      args: [config.WETH, config.permit2, vaultFactory],
+      proxy: {
+        proxyContract: "OpenZeppelinTransparentProxy",
+        execute: {
+          init: {
+            methodName: "__NFTXInventoryStaking_init",
+            args: [
+              config.inventoryTimelock,
+              config.inventoryEarlyWithdrawPenaltyInWei,
+              timelockExcludeList.address,
+              inventoryDescriptor.address,
+            ],
+          },
         },
       },
+      log: true,
     },
-    log: true,
   });
 
+  // == set states ==
   const vaultFactoryContract = await getContract(
     hre,
     "NFTXVaultFactoryUpgradeableV3",
@@ -47,7 +54,7 @@ export const deployInventoryStaking = async (
   const isExcludedFromFees = await vaultFactoryContract.excludedFromFees(
     inventoryStaking.address
   );
-  // add to fee exclusion if not added yet
+  // => 1. add to fee exclusion if not added yet
   if (isExcludedFromFees === false) {
     // InventoryStaking has in-built fee handling
     console.log("Setting fee exclusion for InventoryStaking...");
@@ -67,7 +74,7 @@ export const deployInventoryStaking = async (
     inventoryStaking.address
   );
   const isGuardian = await inventoryStakingContract.isGuardian(deployer);
-  // add guardian if not added yet
+  // => 2. add guardian if not added yet
   if (isGuardian === false) {
     console.log("Setting guardian on InventoryStaking...");
     await execute(
@@ -82,6 +89,7 @@ export const deployInventoryStaking = async (
 
   return {
     inventoryStaking: inventoryStaking.address,
-    vaultFactory,
+    timelockExcludeList: timelockExcludeList.address,
+    inventoryDescriptor: inventoryDescriptor.address,
   };
 };

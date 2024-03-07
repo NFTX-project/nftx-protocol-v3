@@ -1,23 +1,30 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getConfig, getContract } from "../utils";
+import { getConfig, getContract, handleUpgradeDeploy } from "../utils";
 
-export const deployEligibilityManager = async (
-  hre: HardhatRuntimeEnvironment
-) => {
+// deploys EligibilityManager and its modules
+export const deployEligibilityManager = async ({
+  hre,
+}: {
+  hre: HardhatRuntimeEnvironment;
+}) => {
   const { deploy, execute, deployer } = await getConfig(hre);
 
-  const NFTXEligibilityManager = await deploy("NFTXEligibilityManager", {
-    from: deployer,
-    proxy: {
-      proxyContract: "OpenZeppelinTransparentProxy",
-      execute: {
-        init: {
-          methodName: "__NFTXEligibilityManager_init",
-          args: [],
+  const NFTXEligibilityManager = await handleUpgradeDeploy({
+    hre,
+    contractName: "NFTXEligibilityManager",
+    deployOptions: {
+      from: deployer,
+      proxy: {
+        proxyContract: "OpenZeppelinTransparentProxy",
+        execute: {
+          init: {
+            methodName: "__NFTXEligibilityManager_init",
+            args: [],
+          },
         },
       },
+      log: true,
     },
-    log: true,
   });
 
   // only deploy eligibility modules if the modules array is empty
@@ -59,5 +66,5 @@ export const deployEligibilityManager = async (
     }
   }
 
-  return NFTXEligibilityManager.address;
+  return { NFTXEligibilityManager: NFTXEligibilityManager.address };
 };

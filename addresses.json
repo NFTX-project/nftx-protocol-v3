@@ -1,6 +1,7 @@
 {
   "mainnet": {
     "CreateVaultZap": "0x56dab32697B4A313f353DA0CE42B5113eD8E6f74",
+    "DefaultProxyAdmin": "0xf8Cab5e4912e08c475033776d9472b81c1325e58",
     "MarketplaceUniversalRouterZap": "0x293A0c49c85F1D8851C665Ac3cE1f1DC2a79bE3d",
     "MigratorZap": "0x089610Fb04c34C014B4B391f4eCEFAef94E98CEc",
     "NFTXEligibilityManager": "0x4086e98Cce041d286112d021612fD894cFed94D5",
@@ -19,10 +20,11 @@
   },
   "sepolia": {
     "CreateVaultZap": "0xD80b916470F8e79FD8d09874cb159CbB8D13d8da",
+    "DefaultProxyAdmin": "0x36cBBb16F2FA71d4B773E9F4A11cF7FC53B13EfD",
     "MarketplaceUniversalRouterZap": "0xd88a3B9D0Fb2d39ec8394CfFD983aFBB2D4a6410",
     "MigratorZap": "0x19762e505aF085284E287c8DAb931fb28545461f",
     "NFTXEligibilityManager": "0xa1ad09f8Fd789E3A940Ba9Dc5aE4D17021eF290D",
-    "NFTXFeeDistributorV3": "0x6432Fdc3F020B9d34B6Bff26013c6c882Cd85C87",
+    "NFTXFeeDistributorV3": "0x53AE38742C78EE64fC077EF840B2Aa47A7E9c603",
     "NFTXInventoryStakingV3Upgradeable": "0xfBFf0635f7c5327FD138E1EBa72BD9877A6a7C1C",
     "NFTXRouter": "0x441b7DE4340AAa5aA86dB4DA43d9Badf7B2DAA66",
     "nftxUniversalRouter": "0x12156cCA1958B6591CC49EaE03a5553458a4b424",
@@ -37,6 +39,7 @@
   },
   "goerli": {
     "CreateVaultZap": "0xc6464CC63bC20b64e1633A0293C2C9b202F4f1b6",
+    "DefaultProxyAdmin": "0xa0d26F02D5e94C8E9ED524875D9fce36ab4838a2",
     "MarketplaceUniversalRouterZap": "0x0be2D766Eef4b6a72F1fAe2e49619F013d647B8A",
     "MigratorZap": "0xD4B67Fe6a1258fd5e1C4dF84f3De01F62e7ac127",
     "NFTXEligibilityManager": "0xA4e9e286CE7A34d19f774c36844225468290C3A8",

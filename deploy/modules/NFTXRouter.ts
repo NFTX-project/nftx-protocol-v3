@@ -1,59 +1,39 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getConfig, getContract } from "../utils";
-import { deployUniswapV3Factory } from "./UniswapV3Factory";
-import { deployInventoryStaking } from "./InventoryStaking";
-import { utils } from "ethers";
+import {
+  executeOwnableFunction,
+  getConfig,
+  getContract,
+  getDeployment,
+} from "../utils";
 
-export const deployNFTXRouter = async (hre: HardhatRuntimeEnvironment) => {
-  const { deploy, execute, deployer, config } = await getConfig(hre);
+// deploys NFTXRouter
+export const deployNFTXRouter = async ({
+  hre,
+  vaultFactory,
+  inventoryStaking,
+  positionManager,
+  swapRouter,
+  quoter,
+}: {
+  hre: HardhatRuntimeEnvironment;
+  vaultFactory: string;
+  inventoryStaking: string;
+  positionManager: string;
+  swapRouter: string;
+  quoter: string;
+}) => {
+  const { deploy, execute, deployments, deployer, config } = await getConfig(
+    hre
+  );
 
-  const uniswapFactory = await deployUniswapV3Factory(hre);
-  const { inventoryStaking, vaultFactory } = await deployInventoryStaking(hre);
-
-  const NFTDescriptor = await deploy("NFTDescriptor", {
-    from: deployer,
-    log: true,
-  });
-
-  const descriptor = await deploy("NonfungibleTokenPositionDescriptor", {
-    from: deployer,
-    libraries: {
-      NFTDescriptor: NFTDescriptor.address,
-    },
-    args: [config.WETH, utils.formatBytes32String("WETH")],
-    log: true,
-  });
-
-  const positionManager = await deploy("NonfungiblePositionManager", {
-    from: deployer,
-    args: [uniswapFactory, config.WETH, descriptor.address],
-    log: true,
-  });
-
-  const swapRouter = await deploy("SwapRouter", {
-    from: deployer,
-    args: [uniswapFactory, config.WETH],
-    log: true,
-  });
-
-  const quoter = await deploy("QuoterV2", {
-    from: deployer,
-    args: [uniswapFactory, config.WETH],
-    log: true,
-  });
-
-  const tickLens = await deploy("TickLens", {
-    from: deployer,
-    args: [],
-    log: true,
-  });
+  const prevNFTXRouter = await getDeployment(hre, "NFTXRouter");
 
   const nftxRouter = await deploy("NFTXRouter", {
     from: deployer,
     args: [
-      positionManager.address,
-      swapRouter.address,
-      quoter.address,
+      positionManager,
+      swapRouter,
+      quoter,
       vaultFactory,
       config.permit2,
       config.lpTimelock,
@@ -64,6 +44,7 @@ export const deployNFTXRouter = async (hre: HardhatRuntimeEnvironment) => {
     log: true,
   });
 
+  // == set states ==
   const vaultFactoryContract = await getContract(
     hre,
     "NFTXVaultFactoryUpgradeableV3",
@@ -72,48 +53,57 @@ export const deployNFTXRouter = async (hre: HardhatRuntimeEnvironment) => {
   const isExcludedFromFees = await vaultFactoryContract.excludedFromFees(
     nftxRouter.address
   );
-  // add to fee exclusion if not added yet
+  // => 1. add to fee exclusion if not added yet
   if (isExcludedFromFees === false) {
     // NFTXRouter has in-built fee handling
-    console.log("Setting fee exclusion for NFTXRouter...");
-    await execute(
-      "NFTXVaultFactoryUpgradeableV3",
-      { from: deployer },
-      "setFeeExclusion",
-      nftxRouter.address,
-      true
-    );
-    console.log("Fee exclusion set for NFTXRouter");
+    await executeOwnableFunction({
+      hre,
+      contractName: "NFTXVaultFactoryUpgradeableV3",
+      contractAddress: vaultFactory,
+      functionName: "setFeeExclusion",
+      functionArgs: [nftxRouter.address, true],
+    });
   }
 
   const positionManagerContract = await getContract(
     hre,
     "NonfungiblePositionManager",
-    positionManager.address
+    positionManager
   );
   const isTimelockExcluded = await positionManagerContract.timelockExcluded(
     nftxRouter.address
   );
-  // add to timelock exclusion if not added yet
+  // => 2. add to timelock exclusion if not added yet
   if (isTimelockExcluded === false) {
-    console.log(
-      "Setting timelock exclusion for NFTXRouter on positionManager..."
-    );
-    await execute(
-      "NonfungiblePositionManager",
-      { from: deployer },
-      "setTimelockExcluded",
-      nftxRouter.address,
-      true
-    );
-    console.log("Timelock exclusion set for NFTXRouter on positionManager");
+    await executeOwnableFunction({
+      hre,
+      contractName: "NonfungiblePositionManager",
+      contractAddress: positionManager,
+      functionName: "setTimelockExcluded",
+      functionArgs: [nftxRouter.address, true],
+    });
+  }
+
+  // => check if new NFTXRouter was deployed for upgrade
+  if (prevNFTXRouter && prevNFTXRouter.address !== nftxRouter.address) {
+    // => upgrade
+
+    // == update states ==
+    // => 3. set new NFTXRouter in FeeDistributor
+
+    // @note getting FeeDistributor's from deployments, and not from params because for normal deployments the feeDistributor is deployed at last
+    // this case is for the upgrade:
+    const feeDistributor = await deployments.get("NFTXFeeDistributorV3");
+    await executeOwnableFunction({
+      hre,
+      contractName: "NFTXFeeDistributorV3",
+      contractAddress: feeDistributor.address,
+      functionName: "setNFTXRouter",
+      functionArgs: [nftxRouter.address],
+    });
   }
 
   return {
     nftxRouter: nftxRouter.address,
-    uniswapFactory,
-    inventoryStaking,
-    vaultFactory,
-    swapRouter: swapRouter.address,
   };
 };

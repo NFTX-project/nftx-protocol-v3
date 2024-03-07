@@ -123,7 +123,7 @@ const config: HardhatUserConfig = {
     sepolia: {
       url: process.env.SEPOLIA_RPC_URL!,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
-      timeout: 60000,
+      timeout: 600000,
     },
     mainnet: {
       url: `https://rpc.nftx.xyz`,

@@ -1,14 +1,29 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getConfig, getContract } from "../utils";
+import {
+  executeOwnableFunction,
+  getConfig,
+  getContract,
+  getDeployment,
+} from "../utils";
 import { constants } from "ethers";
-import { deployNFTXRouter } from "./NFTXRouter";
 
-// note: deploys all NFTXV3 core contracts
-export const deployFeeDistributor = async (hre: HardhatRuntimeEnvironment) => {
-  const { deploy, execute, deployer, config } = await getConfig(hre);
+// deploys feeDistributor
+export const deployFeeDistributor = async ({
+  hre,
+  nftxRouter,
+  uniswapFactory,
+  inventoryStaking,
+  vaultFactory,
+}: {
+  hre: HardhatRuntimeEnvironment;
+  nftxRouter: string;
+  uniswapFactory: string;
+  inventoryStaking: string;
+  vaultFactory: string;
+}) => {
+  const { deploy, deployer, config } = await getConfig(hre);
 
-  const { nftxRouter, uniswapFactory, inventoryStaking, vaultFactory } =
-    await deployNFTXRouter(hre);
+  const prevFeeDistributor = await getDeployment(hre, "NFTXFeeDistributorV3");
 
   const feeDistributor = await deploy("NFTXFeeDistributorV3", {
     from: deployer,
@@ -23,22 +38,26 @@ export const deployFeeDistributor = async (hre: HardhatRuntimeEnvironment) => {
     log: true,
   });
 
+  const isNewFeeDistributor =
+    prevFeeDistributor && prevFeeDistributor.address !== feeDistributor.address;
+
+  // == set states ==
   const uniswapFactoryContract = await getContract(
     hre,
     "UniswapV3FactoryUpgradeable",
     uniswapFactory
   );
   const feeDistributorAddress = await uniswapFactoryContract.feeDistributor();
-  // if feeDistributor is not set yet in UniswapV3Factory
-  if (feeDistributorAddress === constants.AddressZero) {
-    console.log("Setting FeeDistributor in UniV3Factory...");
-    await execute(
-      "UniswapV3FactoryUpgradeable",
-      { from: deployer },
-      "setFeeDistributor",
-      feeDistributor.address
-    );
-    console.log("Set FeeDistributor in UniV3Factory");
+  // => 1. if feeDistributor is not set yet in UniswapV3Factory
+  // OR new fee distributor was deployed for upgrade
+  if (feeDistributorAddress === constants.AddressZero || isNewFeeDistributor) {
+    await executeOwnableFunction({
+      hre,
+      contractName: "UniswapV3FactoryUpgradeable",
+      contractAddress: uniswapFactory,
+      functionName: "setFeeDistributor",
+      functionArgs: [feeDistributor.address],
+    });
   }
 
   const vaultFactoryContract = await getContract(
@@ -48,27 +67,22 @@ export const deployFeeDistributor = async (hre: HardhatRuntimeEnvironment) => {
   );
   const feeDistributorAddressInVaultFactory =
     await vaultFactoryContract.feeDistributor();
-  // if feeDistributor is not set yet in NFTXVaultFactory
-  if (feeDistributorAddressInVaultFactory === constants.AddressZero) {
-    console.log("Setting FeeDistributor in NFTXVaultFactory...");
-    await execute(
-      "NFTXVaultFactoryUpgradeableV3",
-      { from: deployer },
-      "setFeeDistributor",
-      feeDistributor.address
-    );
-    console.log("Set FeeDistributor in NFTXVaultFactory");
+  // => 2. if feeDistributor is not set yet in NFTXVaultFactory
+  // OR new fee distributor was deployed for upgrade
+  if (
+    feeDistributorAddressInVaultFactory === constants.AddressZero ||
+    isNewFeeDistributor
+  ) {
+    await executeOwnableFunction({
+      hre,
+      contractName: "NFTXVaultFactoryUpgradeableV3",
+      contractAddress: vaultFactory,
+      functionName: "setFeeDistributor",
+      functionArgs: [feeDistributor.address],
+    });
   }
 
   return {
     feeDistributor,
-    nftxRouter,
-    uniswapFactory,
-    inventoryStaking,
-    vaultFactory,
   };
-};
-
-export const deployNFTXV3Core = async (hre: HardhatRuntimeEnvironment) => {
-  return await deployFeeDistributor(hre);
 };

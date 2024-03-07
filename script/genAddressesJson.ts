@@ -1,10 +1,11 @@
 import { promises as fs } from "fs";
 import prettier from "prettier";
-import deployConfig from "../deployConfig";
+import deployConfig from "../deploy/deployConfig";
 
 // alphabetical order
 const deploymentsList = [
   "CreateVaultZap",
+  "DefaultProxyAdmin",
   "MarketplaceUniversalRouterZap",
   "MigratorZap",
   "NFTXEligibilityManager",
