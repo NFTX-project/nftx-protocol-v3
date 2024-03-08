@@ -58,13 +58,19 @@ contract FailSafeTests is TestBase {
         }
     }
 
-    function test_FailSafe_pauseAll_RevertsForNonOwner() external {
-        hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+    // FailSafe#pauseAll
+
+    function test_FailSafe_pauseAll_RevertsForNonGuardian() external {
+        hoax(makeAddr("nonGuardian"));
+        vm.expectRevert(FailSafe.NotGuardian.selector);
         failsafe.pauseAll();
     }
 
     function test_FailSafe_pauseAll_Success() external {
+        address newGuardian = makeAddr("newGuardian");
+        failsafe.setIsGuardian(newGuardian, true);
+        startHoax(newGuardian);
+
         failsafe.pauseAll();
 
         // check if all operations are paused
@@ -92,5 +98,60 @@ contract FailSafeTests is TestBase {
         assertTrue(nftxRouter.isPaused(NFTX_ROUTER_LOCK_ID_REMOVELIQ));
         assertTrue(nftxRouter.isPaused(NFTX_ROUTER_LOCK_ID_SELLNFTS));
         assertTrue(nftxRouter.isPaused(NFTX_ROUTER_LOCK_ID_BUYNFTS));
+    }
+
+    // FailSafe#setContracts
+
+    function test_FailSafe_setContracts_RevertsForNonOwner() external {
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
+        failsafe.setContracts(new FailSafe.Contract[](0));
+    }
+
+    function test_FailSafe_setContracts_Success() external {
+        FailSafe.Contract[] memory contracts = new FailSafe.Contract[](5);
+        contracts[0] = FailSafe.Contract({
+            addr: address(inventoryStaking),
+            lastLockId: 4
+        });
+        contracts[1] = FailSafe.Contract({
+            addr: address(vaultFactory),
+            lastLockId: 0
+        });
+        contracts[2] = FailSafe.Contract({
+            addr: address(feeDistributor),
+            lastLockId: 1
+        });
+        contracts[3] = FailSafe.Contract({
+            addr: address(nftxRouter),
+            lastLockId: 4
+        });
+        contracts[4] = FailSafe.Contract({
+            addr: makeAddr("newContract"),
+            lastLockId: 5
+        });
+
+        failsafe.setContracts(contracts);
+
+        // check if the contracts are set
+        for (uint256 i; i < contracts.length; i++) {
+            (address addr, uint256 lastLockId) = failsafe.contracts(i);
+            assertEq(addr, contracts[i].addr);
+            assertEq(lastLockId, contracts[i].lastLockId);
+        }
+    }
+
+    // FailSafe#setIsGuardian
+    function test_FailSafe_setIsGuardian_RevertsForNonOwner() external {
+        hoax(makeAddr("nonOwner"));
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
+        failsafe.setIsGuardian(makeAddr("addr"), true);
+    }
+
+    function test_FailSafe_setIsGuardian_Success() external {
+        address newGuardian = makeAddr("newGuardian");
+        failsafe.setIsGuardian(newGuardian, true);
+
+        assertTrue(failsafe.isGuardian(newGuardian));
     }
 }
