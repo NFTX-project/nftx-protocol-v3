@@ -14,6 +14,7 @@ const baseExplorerURLs = {
 // URLs for each contract
 const contractURLs = {
   CreateVaultZap: "./src/zaps/CreateVaultZap.sol",
+  FailSafe: "./src/FailSafe.sol",
   MarketplaceUniversalRouterZap: "./src/zaps/MarketplaceUniversalRouterZap.sol",
   MigratorZap: "./src/zaps/MigratorZap.sol",
   NFTXEligibilityManager: "./src/v2/NFTXEligibilityManager.sol",

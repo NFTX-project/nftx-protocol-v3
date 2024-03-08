@@ -15,7 +15,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     "DefaultProxyAdmin",
     "MarketplaceUniversalRouterZap",
     "MigratorZap",
-    "FailSafe",
     "NFTXFeeDistributorV3",
     "NFTXInventoryStakingV3Upgradeable",
     "NFTXRouter",
