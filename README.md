@@ -151,14 +151,14 @@ forge test
 1. To deploy core V3 contracts (including Uniswap V3 Fork):
 
 ```sh
-yarn deploy:goerli --maxfee <inWei> --priorityfee <inWei> --tags NFTXV3
+yarn deploy:mainnet --maxfee <inWei> --priorityfee <inWei> --tags NFTXV3
 ```
 
 2. Deploy new Universal Router (https://github.com/NFTX-project/nftx-universal-router) with updated address for UniswapV3 Factory address.
 3. Deploy all Zaps:
 
 ```sh
-yarn deploy:goerli --maxfee <inWei> --priorityfee <inWei> --tags Zaps
+yarn deploy:mainnet --maxfee <inWei> --priorityfee <inWei> --tags Zaps
 ```
 
 4. Run the following to generate `./addresses.json` for the deployed contract addresses
@@ -171,11 +171,11 @@ Note: Tags are defined in the deploy script at the end like: `func.tags = ["<tag
 
 ### Verify Contracts
 
-`yarn verify:goerli`
+`yarn verify:mainnet`
 
 **Note:** For some UniswapV3 contracts there might be some error while verifying, so run this for those contracts:
 
-`yarn verify:goerli --license "GPL-2.0" --force-license --solc-input`
+`yarn verify:mainnet --license "GPL-2.0" --force-license --solc-input`
 
 - How to verify the Create2BeaconProxy (for Vaults):
 
