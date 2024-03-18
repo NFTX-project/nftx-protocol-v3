@@ -5,6 +5,7 @@ import path from "path";
 import { format } from "prettier";
 import { keccak256, toUtf8Bytes, defaultAbiCoder } from "ethers/lib/utils";
 import deployConfig from "../deployConfig";
+import { Contract } from "ethers";
 
 export const getConfig = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts, network } = hre;
@@ -118,13 +119,16 @@ export const handleUpgradeDeploy = async ({
 }): Promise<Deployment> => {
   const { deploy, network, deployments } = await getConfig(hre);
 
-  const defaultProxyAdminContract = await getContract(hre, "DefaultProxyAdmin");
-
-  // set the current owner of the proxy, in the deployOptions
-  deployOptions.proxy = {
-    ...(typeof deployOptions.proxy === "object" ? deployOptions.proxy : {}),
-    owner: await defaultProxyAdminContract.owner(),
-  };
+  let defaultProxyAdminContract: Contract | undefined;
+  try {
+    // if the DefaultProxyAdmin is already deployed
+    defaultProxyAdminContract = await getContract(hre, "DefaultProxyAdmin");
+    // set the current owner of the proxy, in the deployOptions
+    deployOptions.proxy = {
+      ...(typeof deployOptions.proxy === "object" ? deployOptions.proxy : {}),
+      owner: await defaultProxyAdminContract.owner(),
+    };
+  } catch {}
 
   let deployment: Deployment | undefined = undefined;
   try {

@@ -22,7 +22,7 @@ const deploymentsList = [
 ];
 const deployConfigKeysList = ["nftxUniversalRouter", "permit2", "WETH"];
 
-const chains = ["mainnet", "sepolia", "goerli"];
+const chains = ["mainnet", "arbitrum", "sepolia", "goerli"];
 
 const main = async () => {
   console.log("Generating addresses.json...");
