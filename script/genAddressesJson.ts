@@ -20,7 +20,12 @@ const deploymentsList = [
   "TickLens",
   "UniswapV3FactoryUpgradeable",
 ];
-const deployConfigKeysList = ["nftxUniversalRouter", "permit2", "WETH"];
+const deployConfigKeysList = [
+  "nftxUniversalRouter",
+  "permit2",
+  "UniswapV3Staker",
+  "WETH",
+];
 
 const chains = ["mainnet", "arbitrum", "sepolia", "goerli"];
 

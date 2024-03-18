@@ -34,6 +34,7 @@ const contractURLs = {
   TickLens: "./src/uniswap/v3-periphery/lens/TickLens.sol",
   UniswapV3FactoryUpgradeable:
     "./src/uniswap/v3-core/UniswapV3FactoryUpgradeable.sol",
+  UniswapV3Staker: "https://github.com/Uniswap/v3-staker",
   WETH: "https://vscode.blockscan.com/ethereum/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 };
 

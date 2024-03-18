@@ -45,6 +45,7 @@ const config: {
     lpEarlyWithdrawPenaltyInWei: BigNumber;
     nftxRouterVTokenDustThreshold: BigNumber;
     multisig?: string;
+    UniswapV3Staker?: string;
   };
 } = {
   goerli: {
@@ -100,6 +101,7 @@ const config: {
     v2Inventory: "0x1A2C03ABD4Af7C87d8b4d5aD39b56fa98E8C4Cc6",
     sushiRouter: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
     multisig: "0x3863A65CE278a240f9Aa2A4b4A48493bE59E6139",
+    UniswapV3Staker: "0xd4E155135b7dFf66c9C3B34EcA4aE7d9555FE31F",
   },
 };
 
