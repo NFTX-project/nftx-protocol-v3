@@ -1,0 +1,65 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
+      "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts v4.4.1 (access/Ownable.sol)\n\npragma solidity ^0.8.0;\n\nimport \"../utils/Context.sol\";\n\n/**\n * @dev Contract module which provides a basic access control mechanism, where\n * there is an account (an owner) that can be granted exclusive access to\n * specific functions.\n *\n * By default, the owner account will be the one that deploys the contract. This\n * can later be changed with {transferOwnership}.\n *\n * This module is used through inheritance. It will make available the modifier\n * `onlyOwner`, which can be applied to your functions to restrict their use to\n * the owner.\n */\nabstract contract Ownable is Context {\n    address private _owner;\n\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\n\n    /**\n     * @dev Initializes the contract setting the deployer as the initial owner.\n     */\n    constructor() {\n        _transferOwnership(_msgSender());\n    }\n\n    /**\n     * @dev Returns the address of the current owner.\n     */\n    function owner() public view virtual returns (address) {\n        return _owner;\n    }\n\n    /**\n     * @dev Throws if called by any account other than the owner.\n     */\n    modifier onlyOwner() {\n        require(owner() == _msgSender(), \"Ownable: caller is not the owner\");\n        _;\n    }\n\n    /**\n     * @dev Leaves the contract without owner. It will not be possible to call\n     * `onlyOwner` functions anymore. Can only be called by the current owner.\n     *\n     * NOTE: Renouncing ownership will leave the contract without an owner,\n     * thereby removing any functionality that is only available to the owner.\n     */\n    function renounceOwnership() public virtual onlyOwner {\n        _transferOwnership(address(0));\n    }\n\n    /**\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\n     * Can only be called by the current owner.\n     */\n    function transferOwnership(address newOwner) public virtual onlyOwner {\n        require(newOwner != address(0), \"Ownable: new owner is the zero address\");\n        _transferOwnership(newOwner);\n    }\n\n    /**\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\n     * Internal function without access restriction.\n     */\n    function _transferOwnership(address newOwner) internal virtual {\n        address oldOwner = _owner;\n        _owner = newOwner;\n        emit OwnershipTransferred(oldOwner, newOwner);\n    }\n}\n"
+    },
+    "lib/openzeppelin-contracts/contracts/utils/Context.sol": {
+      "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)\n\npragma solidity ^0.8.0;\n\n/**\n * @dev Provides information about the current execution context, including the\n * sender of the transaction and its data. While these are generally available\n * via msg.sender and msg.data, they should not be accessed in such a direct\n * manner, since when dealing with meta-transactions the account sending and\n * paying for execution may not be the actual sender (as far as an application\n * is concerned).\n *\n * This contract is only required for intermediate, library-like contracts.\n */\nabstract contract Context {\n    function _msgSender() internal view virtual returns (address) {\n        return msg.sender;\n    }\n\n    function _msgData() internal view virtual returns (bytes calldata) {\n        return msg.data;\n    }\n}\n"
+    },
+    "src/FailSafe.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity =0.8.15;\n\n// inheriting\nimport {Ownable} from \"@openzeppelin/contracts/access/Ownable.sol\";\n\ninterface IPausable {\n    function pause(uint256 lockId) external;\n}\n\n/**\n * @title Fail Safe\n * @author @apoorvlathey\n *\n * @notice Pause all operations at once. This contract must be set as guardian.\n */\ncontract FailSafe is Ownable {\n    // types\n    struct Contract {\n        address addr;\n        uint256 lastLockId;\n    }\n\n    // storage\n    Contract[] public contracts;\n    mapping(address => bool) public isGuardian;\n\n    // events\n    event SetIsGuardian(address addr, bool isGuardian);\n\n    // errors\n    error NotGuardian();\n\n    constructor(Contract[] memory _contracts) {\n        setContracts(_contracts);\n        isGuardian[msg.sender] = true;\n    }\n\n    // modifiers\n    modifier onlyGuardian() {\n        if (!isGuardian[msg.sender]) revert NotGuardian();\n        _;\n    }\n\n    // external functions\n    // onlyGuardian\n    function pauseAll() external onlyGuardian {\n        uint256 len = contracts.length;\n        for (uint256 i; i < len; ) {\n            Contract storage c = contracts[i];\n\n            for (uint256 j; j <= c.lastLockId; ) {\n                IPausable(c.addr).pause(j);\n\n                unchecked {\n                    ++j;\n                }\n            }\n\n            unchecked {\n                ++i;\n            }\n        }\n    }\n\n    // onlyOwner\n    function setContracts(Contract[] memory _contracts) public onlyOwner {\n        delete contracts;\n\n        uint256 len = _contracts.length;\n        for (uint256 i; i < len; ) {\n            contracts.push(_contracts[i]);\n\n            unchecked {\n                ++i;\n            }\n        }\n    }\n\n    function setIsGuardian(address addr, bool _isGuardian) external onlyOwner {\n        isGuardian[addr] = _isGuardian;\n        emit SetIsGuardian(addr, _isGuardian);\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 800
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "useLiteralContent": true
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "remappings": [
+      "@openzeppelin/=lib/openzeppelin-contracts/",
+      "@openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/",
+      "@uni-core/=src/uniswap/v3-core/",
+      "@uni-periphery/=src/uniswap/v3-periphery/",
+      "@permit2/=lib/permit2/src/",
+      "@mocks/=src/mocks/",
+      "@uniswap/v3-core/contracts/=src/uniswap/v3-core/",
+      "@uniswap/lib/=lib/solidity-lib/",
+      "@uniswap/v2-core/=lib/v2-core/",
+      "base64-sol/=src/uniswap/v3-periphery/libraries/",
+      "forge-std/=lib/forge-std/src/",
+      "@src/=src/",
+      "@test/=test/",
+      "ds-test/=lib/forge-std/lib/ds-test/src/",
+      "forge-gas-snapshot/=lib/permit2/lib/forge-gas-snapshot/src/",
+      "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/",
+      "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      "permit2/=lib/permit2/",
+      "solidity-lib/=lib/solidity-lib/contracts/",
+      "solmate/=lib/permit2/lib/solmate/",
+      "v2-core/=lib/v2-core/contracts/"
+    ]
+  }
+}

@@ -20,6 +20,28 @@
     "UniswapV3FactoryUpgradeable": "0xa70e10beB02fF9a44007D9D3695d4b96003db101",
     "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
   },
+  "arbitrum": {
+    "CreateVaultZap": "0xF9E891AB1ECa89B7A4B3cBD45aEBFDF3Ec38946F",
+    "DefaultProxyAdmin": "0xdA7C2F023Dd30329d41483B95AFd24962f468A54",
+    "FailSafe": "0xBDA73b600435BF4309270438842dcE06f9a06fb7",
+    "MarketplaceUniversalRouterZap": "0xf56296B3010a59Ef7F0915569DD44E1302b9Ca40",
+    "MigratorZap": "0x6E1537eD56f52414f0182FaebF79A5fB2Ad2CABd",
+    "NFTXEligibilityManager": "0x6DCdfD7e94957cBAE9023c232dE18c0F72c2aD16",
+    "NFTXFeeDistributorV3": "0x0d50970C7848ebbE52661e70057D7D063B7de886",
+    "NFTXInventoryStakingV3Upgradeable": "0xe39a7E67d3E3b6eAF58BC02C4E80C3688847d155",
+    "NFTXRouter": "0x52731751Dede22827ad47109f5e9697d75a3ef4d",
+    "nftxUniversalRouter": "0x0DA69287B4C1B28181E5d155dDDda7Fa5C32E5Ad",
+    "NFTXVaultFactoryUpgradeableV3": "0x4dEeb9D2Bff2e9C35ce1f013DcC4582F891cb711",
+    "NonfungiblePositionManager": "0x8AD238377531547838370B9C4aC346b9Ed5466Ea",
+    "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",
+    "QuoterV2": "0xff3957CB28aB34186543281e0bbe0De05C9e7D6D",
+    "ShutdownRedeemerUpgradeable": "",
+    "SwapRouter": "0xeA60242d7183E3d13Dc17fb2A4D0230d34eef502",
+    "TickLens": "0x3f2797b0E19CBf2377B8DE2d1CEC2698AcA7b081",
+    "UniswapV3FactoryUpgradeable": "0xF4D0512FB47319B0CE9144EF582862e2921CaBF8",
+    "UniswapV3Staker": "0xd4E155135b7dFf66c9C3B34EcA4aE7d9555FE31F",
+    "WETH": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+  },
   "sepolia": {
     "CreateVaultZap": "0xD80b916470F8e79FD8d09874cb159CbB8D13d8da",
     "DefaultProxyAdmin": "0x36cBBb16F2FA71d4B773E9F4A11cF7FC53B13EfD",

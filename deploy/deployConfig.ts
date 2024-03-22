@@ -45,6 +45,7 @@ const config: {
     lpEarlyWithdrawPenaltyInWei: BigNumber;
     nftxRouterVTokenDustThreshold: BigNumber;
     multisig?: string;
+    UniswapV3Staker?: string;
   };
 } = {
   goerli: {
@@ -81,7 +82,7 @@ const config: {
     ...commonConfig,
     treasury: "0x40D73Df4F99bae688CE3C23a01022224FE16C7b2",
     WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    REWARD_TIER_CARDINALITY: "102",
+    REWARD_TIER_CARDINALITY: "102", // average block time = 12 seconds (https://etherscan.io/chart/blocktime). Cardinality = (20mins * 60) / 12 = 100. then adding 2 extra blocks for good measures.
     permit2: "0x000000000022d473030f116ddee9f6b43ac78ba3",
     nftxUniversalRouter: "0x250d62a67254A46c0De472d2c9215E1d890cC90f", // NOTE: update this if new UniswapV3Factory deployed.
     v2VaultFactory: "0xBE86f647b167567525cCAAfcd6f881F1Ee558216",
@@ -91,14 +92,16 @@ const config: {
   },
   arbitrum: {
     ...commonConfig,
-    treasury: "0x000000000000000000000000000000000000dEaD", // FIXME: set valid address
+    treasury: "0x3863A65CE278a240f9Aa2A4b4A48493bE59E6139",
     WETH: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-    REWARD_TIER_CARDINALITY: "75",
+    REWARD_TIER_CARDINALITY: "4617", // average block time = 0.26 seconds (https://arbiscan.io/chart/blocktime). Cardinality = (20mins * 60) / 0.26 = 4615. then adding 2 extra blocks for good measures.
     permit2: "0x000000000022d473030f116ddee9f6b43ac78ba3",
-    nftxUniversalRouter: "0x000000000000000000000000000000000000dEaD", // FIXME: set valid address
+    nftxUniversalRouter: "0x0DA69287B4C1B28181E5d155dDDda7Fa5C32E5Ad", // NOTE: update this if new UniswapV3Factory deployed.
     v2VaultFactory: "0xE77b89FEc41A7b7dC74eb33602e82F0672FbB33C",
     v2Inventory: "0x1A2C03ABD4Af7C87d8b4d5aD39b56fa98E8C4Cc6",
     sushiRouter: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+    multisig: "0x3863A65CE278a240f9Aa2A4b4A48493bE59E6139",
+    UniswapV3Staker: "0xd4E155135b7dFf66c9C3B34EcA4aE7d9555FE31F",
   },
 };
 
