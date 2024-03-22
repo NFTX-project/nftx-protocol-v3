@@ -29,6 +29,7 @@ const contractURLs = {
     "./src/uniswap/v3-periphery/NonfungiblePositionManager.sol",
   permit2: "https://github.com/Uniswap/permit2/blob/main/src/Permit2.sol",
   QuoterV2: "./src/uniswap/v3-periphery/lens/QuoterV2.sol",
+  ShutdownRedeemerUpgradeable: "./src/ShutdownRedeemerUpgradeable.sol",
   SwapRouter: "./src/uniswap/v3-periphery/SwapRouter.sol",
   TickLens: "./src/uniswap/v3-periphery/lens/TickLens.sol",
   UniswapV3FactoryUpgradeable:

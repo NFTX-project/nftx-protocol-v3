@@ -16,6 +16,7 @@ const deploymentsList = [
   "NFTXVaultFactoryUpgradeableV3",
   "NonfungiblePositionManager",
   "QuoterV2",
+  "ShutdownRedeemerUpgradeable",
   "SwapRouter",
   "TickLens",
   "UniswapV3FactoryUpgradeable",
