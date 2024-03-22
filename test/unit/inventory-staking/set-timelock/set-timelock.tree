@@ -1,0 +1,9 @@
+setTimelock.t.sol
+├── when the caller is not the owner
+│   └── it should revert
+└── when the caller is the owner
+    ├── when the timelock is greater than the max timelock
+    │   └── it should revert
+    └── when the timelock is less than or equal to the max timelock
+        ├── it should set the timelock
+        └── it should emit {UpdateTimelock} event
