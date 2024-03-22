@@ -4,12 +4,15 @@ import {ERC721Royalty, ERC721} from "@openzeppelin/contracts/token/ERC721/extens
 
 contract MockRoyaltyNFT is ERC721Royalty {
     uint256 public nextTokenId;
+    string baseURI;
 
     constructor(
         string memory name_,
-        string memory symbol_
+        string memory symbol_,
+        string memory baseURI_
     ) ERC721(name_, symbol_) {
         _setDefaultRoyalty(msg.sender, 500);
+        baseURI = baseURI_;
     }
 
     function mint(uint256 count) external returns (uint256[] memory tokenIds) {
@@ -23,5 +26,9 @@ contract MockRoyaltyNFT is ERC721Royalty {
         }
 
         nextTokenId = _nextTokenId;
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
     }
 }

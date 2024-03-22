@@ -1,8 +1,8 @@
 diff --git a/src/uniswap/v3-periphery/NonfungiblePositionManager.sol b/src/uniswap/v3-periphery/NonfungiblePositionManager.sol
-index 6f42448..f3f02a2 100644
+index 6f42448..3fb4f72 100644
 --- a/src/uniswap/v3-periphery/NonfungiblePositionManager.sol
 +++ b/src/uniswap/v3-periphery/NonfungiblePositionManager.sol
-@@ -1,503 +1,540 @@
+@@ -1,503 +1,544 @@
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity =0.8.15;
  pragma abicoder v2;
@@ -79,6 +79,8 @@ index 6f42448..f3f02a2 100644
  
 +    // token ID => timestamp
 +    mapping(uint256 => uint256) public override lockedUntil;
++    // token ID => timelock
++    mapping(uint256 => uint256) public override timelock;
 +
 +    mapping(address => bool) public override timelockExcluded;
 +
@@ -499,7 +501,8 @@ index 6f42448..f3f02a2 100644
  
 +    function setLockedUntil(
 +        uint256 tokenId,
-+        uint256 timestamp
++        uint256 lockedUntil_,
++        uint256 timelock_
 +    ) external override {
 +        require(
 +            msg.sender ==
@@ -510,7 +513,8 @@ index 6f42448..f3f02a2 100644
 +                )
 +        );
 +
-+        lockedUntil[tokenId] = timestamp;
++        lockedUntil[tokenId] = lockedUntil_;
++        timelock[tokenId] = timelock_;
 +    }
 +
 +    function setTimelockExcluded(

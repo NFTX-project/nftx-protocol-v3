@@ -1,0 +1,11 @@
+updateDelegate.t.sol
+├── given the vault is not finalized
+│   ├── when the caller is not the manager
+│   │   └── it should revert
+│   └── when the caller is the manager
+│       └── it should delegate to the current owner of the vault factory
+└── given the vault is finalized
+    ├── when the caller is not the owner
+    │   └── it should revert
+    └── when the caller is the owner
+        └── it should delegate to the current owner of the vault factory

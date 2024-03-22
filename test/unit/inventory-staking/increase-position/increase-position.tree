@@ -1,0 +1,31 @@
+increasePosition.t.sol
+├── given the increase position operation is paused
+│   └── when the caller is not the owner
+│       └── it should revert
+└── given the increase position operation is not paused
+    ├── when the caller is not the position owner
+    │   └── it should revert
+    └── when the caller is the position owner
+        ├── given the position was not created with just vtokens, vTokenTimelockedUntil is zero
+        │   └── it should revert
+        └── given the position was created with just vtokens, vTokenTimelockedUntil is not zero
+            ├── when the {viaPermit2} param is false
+            │   ├── when the force timelock is false
+            │   │   ├── it should update the position weth owed to account for weth fees accumulated till now
+            │   │   ├── it should set the position weth fees per vtoken share snapshot to the current global value
+            │   │   ├── it should increase the position vtoken share balance
+            │   │   ├── it should increase the total vtoken share balance
+            │   │   ├── it should set the position vtoken timelocked until
+            │   │   └── it should emit {IncreasePosition} event
+            │   └── when the force timelock is true
+            │       ├── it should increase the position
+            │       ├── it should set the position timelocked until
+            │       └── it should set the position timelock
+            └── when the {viaPermit2} param is true
+                ├── when the {encodedPermit2} is empty
+                │   ├── given the permit hasn't already been set
+                │   │   └── it should revert
+                │   └── given the permit has already been set
+                │       └── it should increase the position
+                └── when the {encodedPermit2} is not empty
+                    └── it should increase the position

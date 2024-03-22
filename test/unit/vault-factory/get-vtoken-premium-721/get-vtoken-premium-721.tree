@@ -1,0 +1,17 @@
+getVTokenPremium721.t.sol
+├── given the vault id does not exist
+│   └── it should revert
+└── given the vault id exists
+    ├── given the token id does not exist in the vault
+    │   ├── it should return zero premium
+    │   └── it should return zero address for depositor
+    └── given the token id exists in the vault
+        ├── given the token id was just deposited
+        │   ├── it should return max premium
+        │   └── it should return the depositor address
+        ├── given the token id was deposited a while ago but still in premium duration
+        │   ├── it should return the premium
+        │   └── it should return the depositor address
+        └── given the token id was deposited a while ago and not in premium duration
+            ├── it should return zero premium
+            └── it should return the depositor address

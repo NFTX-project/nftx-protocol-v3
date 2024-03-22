@@ -296,10 +296,10 @@ span { display: inline-block; }
 <body class="f9 b9">
 <pre>
 <span class="bold">diff --git a/src/uniswap/v3-periphery/interfaces/INonfungiblePositionManager.sol b/src/uniswap/v3-periphery/interfaces/INonfungiblePositionManager.sol
-index e21bd65..c9aa2ef 100644</span>
+index e21bd65..c53a212 100644</span>
 <span class="bold">--- a/src/uniswap/v3-periphery/interfaces/INonfungiblePositionManager.sol</span>
 <span class="bold">+++ b/src/uniswap/v3-periphery/interfaces/INonfungiblePositionManager.sol</span>
-<span class="f6">@@ -1,198 +1,209 @@</span>
+<span class="f6">@@ -1,198 +1,216 @@</span>
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity &gt;=0.7.5;
  pragma abicoder v2;
@@ -363,11 +363,18 @@ index e21bd65..c9aa2ef 100644</span>
 <span class="f2">+    /// @notice Returns the timestamp, till when the position is timelocked for</span>
 <span class="f2">+    function lockedUntil(uint256 tokenId) external view returns (uint256);</span>
 <span class="f2">+</span>
+<span class="f2">+    /// @notice Net timelock for position</span>
+<span class="f2">+    function timelock(uint256 tokenId) external view returns (uint256);</span>
+<span class="f2">+</span>
 <span class="f2">+    /// @notice Check if a particular address is excluded from timelock and hence can withdraw from the position early</span>
 <span class="f2">+    function timelockExcluded(address addr) external view returns (bool);</span>
 <span class="f2">+</span>
 <span class="f2">+    /// @dev Only callable by NFTXRouter</span>
-<span class="f2">+    function setLockedUntil(uint256 tokenId, uint256 timestamp) external;</span>
+<span class="f2">+    function setLockedUntil(</span>
+<span class="f2">+        uint256 tokenId,</span>
+<span class="f2">+        uint256 lockedUntil,</span>
+<span class="f2">+        uint256 timelock</span>
+<span class="f2">+    ) external;</span>
 <span class="f2">+</span>
 <span class="f2">+    function setTimelockExcluded(address addr, bool isExcluded) external;</span>
 <span class="f2">+</span>

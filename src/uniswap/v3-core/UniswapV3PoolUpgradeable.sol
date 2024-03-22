@@ -995,7 +995,7 @@ contract UniswapV3PoolUpgradeable is IUniswapV3Pool, Initializable {
     function distributeRewards(
         uint256 rewardsAmount,
         bool isToken0
-    ) external override {
+    ) external override lock {
         require(msg.sender == IUniswapV3Factory(factory).feeDistributor());
 
         uint256 feeGrowthGlobalX128 = isToken0

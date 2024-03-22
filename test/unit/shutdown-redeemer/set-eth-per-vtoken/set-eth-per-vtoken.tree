@@ -1,0 +1,7 @@
+setEthPerVToken.t.sol
+├── when the caller is not the owner
+│   └── it should revert
+└── when the caller is the owner
+    ├── it should set eth per vtoken value
+    ├── it should emit {EthPerVTokenSet} event
+    └── it should be payable

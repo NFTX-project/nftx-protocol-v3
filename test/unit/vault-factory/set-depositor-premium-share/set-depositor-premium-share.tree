@@ -1,0 +1,9 @@
+setDepositorPremiumShare.t.sol
+├── when the caller is not the owner
+│   └── it should revert
+└── when the caller is the owner
+    ├── when the depositor premium share greater than the max limit
+    │   └── it should revert
+    └── when the depositor premium share is less than or equal to the max limit
+        ├── it should set the depositor premium share
+        └── it should emit {NewDepositorPremiumShare} event

@@ -1,0 +1,257 @@
+{
+  "address": "0x1eFD767E7b2bebA1Df70c18e8B4225E7795Bc6c9",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [],
+      "name": "NFTXEligibilityInit",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "__NFTXEligibility_init",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "name": "__NFTXEligibility_init_bytes",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "afterMintHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "afterRedeemHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "beforeMintHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "beforeRedeemHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "checkAllEligible",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "checkAllIneligible",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "checkEligible",
+      "outputs": [
+        {
+          "internalType": "bool[]",
+          "name": "",
+          "type": "bool[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "checkIsEligible",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "finalized",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "name",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "targetAsset",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x965fdcf529171a8321953441acaa704b13599db9600750043ea2d023370380d7",
+  "receipt": {
+    "to": null,
+    "from": "0xDEA9196Dcdd2173D6E369c2AcC0faCc83fD9346a",
+    "contractAddress": "0x1eFD767E7b2bebA1Df70c18e8B4225E7795Bc6c9",
+    "transactionIndex": 2,
+    "gasUsed": "1157351",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x9bde6c04fcc5fa3d643972875ac8df67d4bcccf3f0038dad20b21c2378ccaed4",
+    "transactionHash": "0x965fdcf529171a8321953441acaa704b13599db9600750043ea2d023370380d7",
+    "logs": [],
+    "blockNumber": 190693869,
+    "cumulativeGasUsed": "1230162",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "98fafc251af9736707ec776efffb9e7a",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[],\"name\":\"NFTXEligibilityInit\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"__NFTXEligibility_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"__NFTXEligibility_init_bytes\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"afterMintHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"afterRedeemHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"beforeMintHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"beforeRedeemHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"checkAllEligible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"checkAllIneligible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"checkEligible\",\"outputs\":[{\"internalType\":\"bool[]\",\"name\":\"\",\"type\":\"bool[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"checkIsEligible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"finalized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetAsset\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/v2/eligibility/NFTXGen0KittyEligibility.sol\":\"NFTXGen0KittyEligibility\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":800},\"remappings\":[\":@mocks/=src/mocks/\",\":@openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@permit2/=lib/permit2/src/\",\":@src/=src/\",\":@test/=test/\",\":@uni-core/=src/uniswap/v3-core/\",\":@uni-periphery/=src/uniswap/v3-periphery/\",\":@uniswap/lib/=lib/solidity-lib/\",\":@uniswap/v2-core/=lib/v2-core/\",\":@uniswap/v3-core/contracts/=src/uniswap/v3-core/\",\":base64-sol/=src/uniswap/v3-periphery/libraries/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-gas-snapshot/=lib/permit2/lib/forge-gas-snapshot/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":permit2/=lib/permit2/\",\":solidity-lib/=lib/solidity-lib/contracts/\",\":solmate/=lib/permit2/lib/solmate/\",\":v2-core/=lib/v2-core/contracts/\"]},\"sources\":{\"src/interfaces/INFTXEligibility.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\ninterface INFTXEligibility {\\n    // Read functions.\\n    function name() external pure returns (string memory);\\n\\n    function finalized() external view returns (bool);\\n\\n    function targetAsset() external pure returns (address);\\n\\n    function checkAllEligible(uint256[] calldata tokenIds)\\n        external\\n        view\\n        returns (bool);\\n\\n    function checkEligible(uint256[] calldata tokenIds)\\n        external\\n        view\\n        returns (bool[] memory);\\n\\n    function checkAllIneligible(uint256[] calldata tokenIds)\\n        external\\n        view\\n        returns (bool);\\n\\n    function checkIsEligible(uint256 tokenId) external view returns (bool);\\n\\n    // Write functions.\\n    function __NFTXEligibility_init_bytes(bytes calldata configData) external;\\n\\n    function beforeMintHook(uint256[] calldata tokenIds) external;\\n\\n    function afterMintHook(uint256[] calldata tokenIds) external;\\n\\n    function beforeRedeemHook(uint256[] calldata tokenIds) external;\\n\\n    function afterRedeemHook(uint256[] calldata tokenIds) external;\\n}\\n\",\"keccak256\":\"0xd932fdc4ea04b9d685f094b4405e64da8f3ab46cd701b22223f2a28d42973c70\",\"license\":\"MIT\"},\"src/v2/custom/Initializable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\n// solhint-disable-next-line compiler-version\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed\\n * behind a proxy. Since a proxied contract can't have a constructor, it's common to move constructor logic to an\\n * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer\\n * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.\\n *\\n * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as\\n * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.\\n *\\n * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure\\n * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.\\n */\\nabstract contract Initializable {\\n    /**\\n     * @dev Indicates that the contract has been initialized.\\n     */\\n    bool private _initialized;\\n\\n    /**\\n     * @dev Indicates that the contract is in the process of being initialized.\\n     */\\n    bool private _initializing;\\n\\n    /**\\n     * @dev Modifier to protect an initializer function from being invoked twice.\\n     */\\n    modifier initializer() {\\n        require(\\n            _initializing || !_initialized,\\n            \\\"Initializable: contract is already initialized\\\"\\n        );\\n\\n        bool isTopLevelCall = !_initializing;\\n        if (isTopLevelCall) {\\n            _initializing = true;\\n            _initialized = true;\\n        }\\n\\n        _;\\n\\n        if (isTopLevelCall) {\\n            _initializing = false;\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x04ad3c77a6a5006b66f1642cc3353b8009215d734eb80f069ed42a6c09460391\",\"license\":\"MIT\"},\"src/v2/eligibility/NFTXEligibility.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\nimport {Initializable} from \\\"@src/v2/custom/Initializable.sol\\\";\\nimport {INFTXEligibility} from \\\"@src/interfaces/INFTXEligibility.sol\\\";\\n\\n// This is a contract meant to be inherited and overriden to implement eligibility modules.\\nabstract contract NFTXEligibility is INFTXEligibility, Initializable {\\n    function name() public pure virtual override returns (string memory);\\n\\n    function finalized() public view virtual override returns (bool);\\n\\n    function targetAsset() public pure virtual override returns (address);\\n\\n    function __NFTXEligibility_init_bytes(\\n        bytes memory initData\\n    ) public virtual override;\\n\\n    function checkIsEligible(\\n        uint256 tokenId\\n    ) external view virtual override returns (bool) {\\n        return _checkIfEligible(tokenId);\\n    }\\n\\n    function checkEligible(\\n        uint256[] calldata tokenIds\\n    ) external view virtual override returns (bool[] memory) {\\n        uint256 length = tokenIds.length;\\n        bool[] memory eligibile = new bool[](length);\\n        for (uint256 i; i < length; i++) {\\n            eligibile[i] = _checkIfEligible(tokenIds[i]);\\n        }\\n        return eligibile;\\n    }\\n\\n    function checkAllEligible(\\n        uint256[] calldata tokenIds\\n    ) external view virtual override returns (bool) {\\n        uint256 length = tokenIds.length;\\n        for (uint256 i; i < length; i++) {\\n            // If any are not eligible, end the loop and return false.\\n            if (!_checkIfEligible(tokenIds[i])) {\\n                return false;\\n            }\\n        }\\n        return true;\\n    }\\n\\n    // Checks if all provided NFTs are NOT eligible. This is needed for mint requesting where all NFTs\\n    // provided must be ineligible.\\n    function checkAllIneligible(\\n        uint256[] calldata tokenIds\\n    ) external view virtual override returns (bool) {\\n        uint256 length = tokenIds.length;\\n        for (uint256 i; i < length; i++) {\\n            // If any are eligible, end the loop and return false.\\n            if (_checkIfEligible(tokenIds[i])) {\\n                return false;\\n            }\\n        }\\n        return true;\\n    }\\n\\n    function beforeMintHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    function afterMintHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    function beforeRedeemHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    function afterRedeemHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    // Override this to implement your module!\\n    function _checkIfEligible(\\n        uint256 _tokenId\\n    ) internal view virtual returns (bool);\\n}\\n\",\"keccak256\":\"0x5e2035010be51cdd6af1639a464516da51d7521b1a78583fbb501ca6e72ca490\",\"license\":\"MIT\"},\"src/v2/eligibility/NFTXGen0KittyEligibility.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"./NFTXEligibility.sol\\\";\\n\\ninterface KittyCore {\\n    function ownerOf(uint256 _tokenId) external view returns (address owner);\\n\\n    function getKitty(\\n        uint256 _id\\n    )\\n        external\\n        view\\n        returns (\\n            bool,\\n            bool,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256 _generation,\\n            uint256\\n        );\\n}\\n\\ncontract NFTXGen0KittyEligibility is NFTXEligibility {\\n    function name() public pure virtual override returns (string memory) {\\n        return \\\"Gen0Kitty\\\";\\n    }\\n\\n    function finalized() public view virtual override returns (bool) {\\n        return true;\\n    }\\n\\n    function targetAsset() public pure virtual override returns (address) {\\n        return 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;\\n    }\\n\\n    event NFTXEligibilityInit();\\n\\n    function __NFTXEligibility_init_bytes(\\n        bytes memory /* configData */\\n    ) public virtual override initializer {\\n        __NFTXEligibility_init();\\n    }\\n\\n    // Parameters here should mirror the config struct.\\n    function __NFTXEligibility_init() public initializer {\\n        emit NFTXEligibilityInit();\\n    }\\n\\n    function _checkIfEligible(\\n        uint256 _tokenId\\n    ) internal view virtual override returns (bool) {\\n        (, , , , , , , , uint256 _generation, ) = KittyCore(targetAsset())\\n            .getKitty(_tokenId);\\n        return _generation == 0;\\n    }\\n}\\n\",\"keccak256\":\"0xf046e4cd89dc8972dd4db76099e864f8e802059c678140a4a5727c3cfbe30f4f\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610833806100206000396000f3fe608060405234801561001057600080fd5b50600436106100df5760003560e01c80636cd912601161008c578063b3f05b9711610066578063b3f05b97146101c0578063bd8affde1461012c578063ca373f28146101c7578063d2a096e8146101da57600080fd5b80636cd912601461017557806384ca9f8514610195578063b1eb9f87146101b857600080fd5b80634998b7f3116100bd5780634998b7f3146101625780635e2f9b521461012c5780636c47d5951461012c57600080fd5b806306fdde03146100e457806336eb08621461012c5780633d4403ac14610140575b600080fd5b604080518082018252600981527f47656e304b697474790000000000000000000000000000000000000000000000602082015290516101239190610562565b60405180910390f35b61013e61013a3660046105b7565b5050565b005b6040517306012c8cf97bead5deae237070f9587f8e7a266d8152602001610123565b61013e610170366004610642565b6101ed565b6101886101833660046105b7565b6102ad565b60405161012391906106f3565b6101a86101a33660046105b7565b610362565b6040519015158152602001610123565b61013e6103b0565b60016101a8565b6101a86101d53660046105b7565b61048c565b6101a86101e8366004610739565b6104d0565b600054610100900460ff1680610206575060005460ff16155b61026e5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b60648201526084015b60405180910390fd5b600054610100900460ff16158015610290576000805461ffff19166101011790555b6102986103b0565b801561013a576000805461ff00191690555050565b60608160008167ffffffffffffffff8111156102cb576102cb61062c565b6040519080825280602002602001820160405280156102f4578160200160208202803683370190505b50905060005b828110156103575761032386868381811061031757610317610752565b905060200201356104d7565b82828151811061033557610335610752565b911515602092830291909101909101528061034f81610768565b9150506102fa565b509150505b92915050565b600081815b818110156103a55761038485858381811061031757610317610752565b6103935760009250505061035c565b8061039d81610768565b915050610367565b506001949350505050565b600054610100900460ff16806103c9575060005460ff16155b61042c5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152608401610265565b600054610100900460ff1615801561044e576000805461ffff19166101011790555b6040517fb708568a0e67d40b1324a610ddd779500570f113513f944a791cc7b8b4970dec90600090a18015610489576000805461ff00191690555b50565b600081815b818110156103a5576104ae85858381811061031757610317610752565b156104be5760009250505061035c565b806104c881610768565b915050610491565b600061035c825b60405163e98b7f4d60e01b81526004810182905260009081907306012c8cf97bead5deae237070f9587f8e7a266d9063e98b7f4d9060240161014060405180830381865afa15801561052d573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061055191906107a4565b50159b9a5050505050505050505050565b600060208083528351808285015260005b8181101561058f57858101830151858201604001528201610573565b818111156105a1576000604083870101525b50601f01601f1916929092016040019392505050565b600080602083850312156105ca57600080fd5b823567ffffffffffffffff808211156105e257600080fd5b818501915085601f8301126105f657600080fd5b81358181111561060557600080fd5b8660208260051b850101111561061a57600080fd5b60209290920196919550909350505050565b634e487b7160e01b600052604160045260246000fd5b60006020828403121561065457600080fd5b813567ffffffffffffffff8082111561066c57600080fd5b818401915084601f83011261068057600080fd5b8135818111156106925761069261062c565b604051601f8201601f19908116603f011681019083821181831017156106ba576106ba61062c565b816040528281528760208487010111156106d357600080fd5b826020860160208301376000928101602001929092525095945050505050565b6020808252825182820181905260009190848201906040850190845b8181101561072d57835115158352928401929184019160010161070f565b50909695505050505050565b60006020828403121561074b57600080fd5b5035919050565b634e487b7160e01b600052603260045260246000fd5b60006001820161078857634e487b7160e01b600052601160045260246000fd5b5060010190565b8051801515811461079f57600080fd5b919050565b6000806000806000806000806000806101408b8d0312156107c457600080fd5b6107cd8b61078f565b99506107db60208c0161078f565b985060408b0151975060608b0151965060808b0151955060a08b0151945060c08b0151935060e08b015192506101008b015191506101208b015190509295989b9194979a509295985056fea164736f6c634300080f000a",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100df5760003560e01c80636cd912601161008c578063b3f05b9711610066578063b3f05b97146101c0578063bd8affde1461012c578063ca373f28146101c7578063d2a096e8146101da57600080fd5b80636cd912601461017557806384ca9f8514610195578063b1eb9f87146101b857600080fd5b80634998b7f3116100bd5780634998b7f3146101625780635e2f9b521461012c5780636c47d5951461012c57600080fd5b806306fdde03146100e457806336eb08621461012c5780633d4403ac14610140575b600080fd5b604080518082018252600981527f47656e304b697474790000000000000000000000000000000000000000000000602082015290516101239190610562565b60405180910390f35b61013e61013a3660046105b7565b5050565b005b6040517306012c8cf97bead5deae237070f9587f8e7a266d8152602001610123565b61013e610170366004610642565b6101ed565b6101886101833660046105b7565b6102ad565b60405161012391906106f3565b6101a86101a33660046105b7565b610362565b6040519015158152602001610123565b61013e6103b0565b60016101a8565b6101a86101d53660046105b7565b61048c565b6101a86101e8366004610739565b6104d0565b600054610100900460ff1680610206575060005460ff16155b61026e5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b60648201526084015b60405180910390fd5b600054610100900460ff16158015610290576000805461ffff19166101011790555b6102986103b0565b801561013a576000805461ff00191690555050565b60608160008167ffffffffffffffff8111156102cb576102cb61062c565b6040519080825280602002602001820160405280156102f4578160200160208202803683370190505b50905060005b828110156103575761032386868381811061031757610317610752565b905060200201356104d7565b82828151811061033557610335610752565b911515602092830291909101909101528061034f81610768565b9150506102fa565b509150505b92915050565b600081815b818110156103a55761038485858381811061031757610317610752565b6103935760009250505061035c565b8061039d81610768565b915050610367565b506001949350505050565b600054610100900460ff16806103c9575060005460ff16155b61042c5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152608401610265565b600054610100900460ff1615801561044e576000805461ffff19166101011790555b6040517fb708568a0e67d40b1324a610ddd779500570f113513f944a791cc7b8b4970dec90600090a18015610489576000805461ff00191690555b50565b600081815b818110156103a5576104ae85858381811061031757610317610752565b156104be5760009250505061035c565b806104c881610768565b915050610491565b600061035c825b60405163e98b7f4d60e01b81526004810182905260009081907306012c8cf97bead5deae237070f9587f8e7a266d9063e98b7f4d9060240161014060405180830381865afa15801561052d573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061055191906107a4565b50159b9a5050505050505050505050565b600060208083528351808285015260005b8181101561058f57858101830151858201604001528201610573565b818111156105a1576000604083870101525b50601f01601f1916929092016040019392505050565b600080602083850312156105ca57600080fd5b823567ffffffffffffffff808211156105e257600080fd5b818501915085601f8301126105f657600080fd5b81358181111561060557600080fd5b8660208260051b850101111561061a57600080fd5b60209290920196919550909350505050565b634e487b7160e01b600052604160045260246000fd5b60006020828403121561065457600080fd5b813567ffffffffffffffff8082111561066c57600080fd5b818401915084601f83011261068057600080fd5b8135818111156106925761069261062c565b604051601f8201601f19908116603f011681019083821181831017156106ba576106ba61062c565b816040528281528760208487010111156106d357600080fd5b826020860160208301376000928101602001929092525095945050505050565b6020808252825182820181905260009190848201906040850190845b8181101561072d57835115158352928401929184019160010161070f565b50909695505050505050565b60006020828403121561074b57600080fd5b5035919050565b634e487b7160e01b600052603260045260246000fd5b60006001820161078857634e487b7160e01b600052601160045260246000fd5b5060010190565b8051801515811461079f57600080fd5b919050565b6000806000806000806000806000806101408b8d0312156107c457600080fd5b6107cd8b61078f565b99506107db60208c0161078f565b985060408b0151975060608b0151965060808b0151955060a08b0151945060c08b0151935060e08b015192506101008b015191506101208b015190509295989b9194979a509295985056fea164736f6c634300080f000a",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 26343,
+        "contract": "src/v2/eligibility/NFTXGen0KittyEligibility.sol:NFTXGen0KittyEligibility",
+        "label": "_initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 26346,
+        "contract": "src/v2/eligibility/NFTXGen0KittyEligibility.sol:NFTXGen0KittyEligibility",
+        "label": "_initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      }
+    ],
+    "types": {
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      }
+    }
+  }
+}

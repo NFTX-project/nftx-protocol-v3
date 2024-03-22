@@ -42,7 +42,7 @@ contract UniswapV3FactoryUpgradeableTests is TestExtend {
 
     function test_upgradeBeaconTo_RevertsForNonOwner() external {
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         factory.upgradeBeaconTo(makeAddr("newBeaconImplementation"));
     }
 
@@ -64,7 +64,7 @@ contract UniswapV3FactoryUpgradeableTests is TestExtend {
 
     function test_enableFeeAmount_RevertsForNonOwner() external {
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         factory.enableFeeAmount(500, 10);
     }
 

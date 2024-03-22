@@ -1,0 +1,9 @@
+setFeeDistributor.t.sol
+├── when the caller is not the owner
+│   └── it should reverts
+└── when the caller is the owner
+    ├── when the fee distributor is the zero address
+    │   └── it should reverts
+    └── when the fee distributor is not the zero address
+        ├── it should set the fee distributor
+        └── it should emit the {NewFeeDistributor} event

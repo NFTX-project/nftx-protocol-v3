@@ -1,0 +1,8 @@
+setDescriptor.t.sol
+├── when the caller is not the owner
+│   └── it should revert
+└── when the caller is the owner
+    ├── when the descriptor is zero address
+    │   └── it should revert
+    └── when the descriptor is not zero address
+        └── it should set the descriptor

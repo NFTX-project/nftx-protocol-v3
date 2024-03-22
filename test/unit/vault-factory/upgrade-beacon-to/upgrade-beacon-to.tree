@@ -1,0 +1,9 @@
+upgradeBeaconTo.t.sol
+├── when the caller is not the owner
+│   └── it should revert
+└── when the caller is the owner
+    ├── when the implementation is not a contract
+    │   └── it should revert
+    └── when the implementation is a contract
+        ├── it should set the implementation
+        └── it should emit {Upgraded} event

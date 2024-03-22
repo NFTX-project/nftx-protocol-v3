@@ -4,6 +4,8 @@ pragma solidity =0.8.15;
 import {Test} from "forge-std/Test.sol";
 
 contract TestExtend is Test {
+    bytes constant OWNABLE_NOT_OWNER_ERROR = "Ownable: caller is not the owner";
+
     function assertEqUint24(
         uint24 a,
         uint24 b,

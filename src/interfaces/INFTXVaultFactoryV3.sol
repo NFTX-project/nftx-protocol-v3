@@ -45,8 +45,6 @@ interface INFTXVaultFactoryV3 is IBeacon {
     // =============================================================
 
     event NewFeeDistributor(address oldDistributor, address newDistributor);
-    event NewZapContract(address oldZap, address newZap);
-    event UpdatedZapContract(address zap, bool excluded);
     event FeeExclusion(address feeExcluded, bool excluded);
     event NewEligibilityManager(address oldEligManager, address newEligManager);
     event NewVault(
@@ -167,6 +165,12 @@ interface INFTXVaultFactoryV3 is IBeacon {
 
     function vault(uint256 vaultId) external view returns (address);
 
+    function computeVaultAddress(
+        address assetAddress,
+        string memory name,
+        string memory symbol
+    ) external view returns (address);
+
     function getTwapX96(address pool) external view returns (uint256 priceX96);
 
     /**
@@ -187,7 +191,7 @@ interface INFTXVaultFactoryV3 is IBeacon {
      * @param tokenId token id to calculate the premium for
      * @param amount ERC1155 amount of tokenId to redeem
      *
-     * @return netPremium Net premium in vTokens
+     * @return totalPremium Total premium in vTokens
      * @return premiums Premiums corresponding to each depositor
      * @return depositors Depositors that receive a share from the `premiums`
      */
@@ -199,7 +203,7 @@ interface INFTXVaultFactoryV3 is IBeacon {
         external
         view
         returns (
-            uint256 netPremium,
+            uint256 totalPremium,
             uint256[] memory premiums,
             address[] memory depositors
         );

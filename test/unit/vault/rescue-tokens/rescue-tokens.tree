@@ -1,0 +1,16 @@
+rescueTokens.t.sol
+├── when the caller is not the owner or is the manager
+│   └── it should revert
+└── when the caller is the owner
+    ├── when the token type is ERC20
+    │   └── it should transfer all the tokens to the caller
+    ├── when the token type is ERC721
+    │   ├── when token requested is the vault's asset
+    │   │   └── it should revert
+    │   └── when token requested is not the vault's asset
+    │       └── it should transfer the tokens to the caller
+    └── when the token type is ERC1155
+        ├── when token requested is the vault's asset
+        │   └── it should revert
+        └── when token requested is not the vault's asset
+            └── it should transfer the tokens to the caller

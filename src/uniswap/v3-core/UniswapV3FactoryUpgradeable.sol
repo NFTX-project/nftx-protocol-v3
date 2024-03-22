@@ -34,8 +34,10 @@ contract UniswapV3FactoryUpgradeable is
         if (rewardTierCardinality_ <= 1) revert InvalidRewardTierCardinality();
         rewardTierCardinality = rewardTierCardinality_;
 
-        feeAmountTickSpacing[10000] = 200;
-        emit FeeAmountEnabled(10000, 200);
+        feeAmountTickSpacing[3_000] = 60;
+        emit FeeAmountEnabled(3_000, 60);
+        feeAmountTickSpacing[10_000] = 200;
+        emit FeeAmountEnabled(10_000, 200);
     }
 
     /// @inheritdoc IUniswapV3Factory

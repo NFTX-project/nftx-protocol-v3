@@ -1,8 +1,8 @@
 diff --git a/src/uniswap/v3-core/UniswapV3Factory.sol b/src/uniswap/v3-core/UniswapV3FactoryUpgradeable.sol
-index 7120b07..4a54a05 100644
+index 7120b07..4a66c54 100644
 --- a/src/uniswap/v3-core/UniswapV3Factory.sol
 +++ b/src/uniswap/v3-core/UniswapV3FactoryUpgradeable.sol
-@@ -1,81 +1,111 @@
+@@ -1,81 +1,108 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity =0.8.12;
 +pragma solidity =0.8.15;
@@ -47,17 +47,14 @@ index 7120b07..4a54a05 100644
 +        uint16 rewardTierCardinality_
 +    ) external initializer {
 +        __UniswapV3PoolDeployerUpgradeable_init(beaconImplementation_);
++
++        if (rewardTierCardinality_ <= 1) revert InvalidRewardTierCardinality();
++        rewardTierCardinality = rewardTierCardinality_;
  
 -        feeAmountTickSpacing[500] = 10;
 -        emit FeeAmountEnabled(500, 10);
 -        feeAmountTickSpacing[3000] = 60;
 -        emit FeeAmountEnabled(3000, 60);
-+        rewardTierCardinality = rewardTierCardinality_;
-+
-+        // feeAmountTickSpacing[500] = 10;
-+        // emit FeeAmountEnabled(500, 10);
-+        // feeAmountTickSpacing[3000] = 60;
-+        // emit FeeAmountEnabled(3000, 60);
          feeAmountTickSpacing[10000] = 200;
          emit FeeAmountEnabled(10000, 200);
      }
@@ -84,9 +81,7 @@ index 7120b07..4a54a05 100644
 +            token1,
 +            fee,
 +            tickSpacing,
-+            INFTXFeeDistributorV3(feeDistributor).rewardFeeTier() == fee
-+                ? rewardTierCardinality
-+                : 1
++            rewardTierCardinality
 +        );
          getPool[token0][token1][fee] = pool;
          // populate mapping in the reverse direction, deliberate choice to avoid the cost of comparing addresses
@@ -108,6 +103,8 @@ index 7120b07..4a54a05 100644
 +    function setRewardTierCardinality(
 +        uint16 rewardTierCardinality_
 +    ) external override onlyOwner {
++        if (rewardTierCardinality_ <= 1) revert InvalidRewardTierCardinality();
++
 +        rewardTierCardinality = rewardTierCardinality_;
      }
  

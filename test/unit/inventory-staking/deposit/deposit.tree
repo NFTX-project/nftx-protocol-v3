@@ -1,0 +1,52 @@
+deposit.t.sol
+├── given the deposit operation is paused
+│   └── when the caller is not the owner
+│       └── it should revert
+└── given the deposit operation is not paused
+    ├── when the vault id is invalid
+    │   └── it should revert
+    └── when the vault id is valid
+        ├── when the {viaPermit2} param is false
+        │   ├── when the force timelock is false
+        │   │   ├── given the total vtoken shares are zero
+        │   │   │   ├── when the deposit amount is less than minimum liquidity
+        │   │   │   │   └── it should revert
+        │   │   │   ├── when the deposit amount is equal to minimum liquidity
+        │   │   │   │   └── it should revert
+        │   │   │   └── when the deposit amount is greater than minimum liquidity
+        │   │   │       ├── it should mint xnft position to the recipient
+        │   │   │       ├── it should mint vtoken shares after deducting minimum liquidity
+        │   │   │       ├── it should increase the total vtoken shares
+        │   │   │       ├── it should set the position nonce to zero
+        │   │   │       ├── it should set the position vault id
+        │   │   │       ├── it should set the position timelocked until to zero
+        │   │   │       ├── it should set the position timelock to the current value
+        │   │   │       ├── it should set the position vtoken timelocked until
+        │   │   │       ├── it should set the position weth fees per vtoken share snapshot to the global value
+        │   │   │       ├── it should set the position weth owed to zero
+        │   │   │       └── it should emit {Deposit} event
+        │   │   └── given the total vtoken shares are greater than zero
+        │   │       ├── it should mint xnft position to the recipient
+        │   │       ├── it should mint proportional vtoken shares
+        │   │       ├── it should increase the total vtoken shares
+        │   │       ├── it should set the position nonce to zero
+        │   │       ├── it should set the position vault id
+        │   │       ├── it should set the position timelocked until to zero
+        │   │       ├── it should set the position timelock to the current value
+        │   │       ├── it should set the position vtoken timelocked until
+        │   │       ├── it should set the position weth fees per vtoken share snapshot to the global value
+        │   │       ├── it should set the position weth owed to zero
+        │   │       └── it should emit {Deposit} event
+        │   └── when the force timelock is true
+        │       ├── it should mint xnft position to the recipient
+        │       ├── it should set the position timelocked until
+        │       ├── it should set the position timelock to the current value
+        │       └── it should set the position vtoken timelocked until
+        └── when the {viaPermit2} param is true
+            ├── when the {encodedPermit2} is empty
+            │   ├── given the permit hasn't already been set
+            │   │   └── it should revert
+            │   └── given the permit has already been set
+            │       └── it should mint xnft position
+            └── when the {encodedPermit2} is not empty
+                └── it should mint xnft position

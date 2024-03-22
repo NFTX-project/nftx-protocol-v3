@@ -2,7 +2,7 @@
 pragma solidity =0.8.15;
 
 // inheriting
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@src/custom/Pausable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
@@ -35,15 +35,21 @@ import {INFTXRouter} from "@src/interfaces/INFTXRouter.sol";
  * @notice Router to facilitate vault tokens minting/burning + addition/removal of concentrated liquidity
  * @dev This router must be excluded from the vault fees, as vault fees handled via custom logic here. Also should be excluded from timelocks on NonfungiblePositionManager.
  */
-contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
+contract NFTXRouter is INFTXRouter, Pausable, ERC721Holder, ERC1155Holder {
     using SafeERC20 for IERC20;
 
     // =============================================================
     //                           CONSTANTS
     // =============================================================
+    uint256 internal constant PAUSE_ADDLIQ = 0;
+    uint256 internal constant PAUSE_INCREASELIQ = 1;
+    uint256 internal constant PAUSE_REMOVELIQ = 2;
+    uint256 internal constant PAUSE_SELLNFTS = 3;
+    uint256 internal constant PAUSE_BUYNFTS = 4;
 
     address public immutable override WETH;
     IPermitAllowanceTransfer public immutable override PERMIT2;
+    uint256 constant BASE_VTOKEN_TIMELOCK = 1 hours;
 
     INonfungiblePositionManager public immutable override positionManager;
     SwapRouter public immutable override router;
@@ -215,6 +221,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function removeLiquidity(
         RemoveLiquidityParams calldata params
     ) external payable override {
+        onlyOwnerIfPaused(PAUSE_REMOVELIQ);
+
         if (positionManager.ownerOf(params.positionId) != msg.sender)
             revert NotPositionOwner();
 
@@ -348,6 +356,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
     function sellNFTs(
         SellNFTsParams calldata params
     ) external payable override returns (uint256 wethReceived) {
+        onlyOwnerIfPaused(PAUSE_SELLNFTS);
+
         INFTXVaultV3 vToken = INFTXVaultV3(
             nftxVaultFactory.vault(params.vaultId)
         );
@@ -424,6 +434,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
      * @inheritdoc INFTXRouter
      */
     function buyNFTs(BuyNFTsParams calldata params) external payable override {
+        onlyOwnerIfPaused(PAUSE_BUYNFTS);
+
         INFTXVaultV3 vToken = INFTXVaultV3(
             nftxVaultFactory.vault(params.vaultId)
         );
@@ -604,6 +616,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         AddLiquidityParams calldata params,
         INFTXVaultV3 vToken
     ) internal returns (uint256 positionId) {
+        onlyOwnerIfPaused(PAUSE_ADDLIQ);
+
         (uint256 vTokensAmount, bool _isVToken0) = _pullAndMintVTokens(
             vToken,
             params.nftIds,
@@ -624,7 +638,7 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                 amount1Desired: 0,
                 amount0Min: 0,
                 amount1Min: 0,
-                recipient: msg.sender,
+                recipient: params.recipient,
                 deadline: params.deadline
             });
 
@@ -670,7 +684,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.nftIds,
             positionId,
             params.vaultId,
-            params.forceTimelock
+            params.forceTimelock,
+            params.recipient
         );
 
         emit AddLiquidity(
@@ -678,7 +693,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.vaultId,
             params.vTokensAmount,
             params.nftIds,
-            pool
+            pool,
+            params.recipient
         );
     }
 
@@ -686,6 +702,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         IncreaseLiquidityParams calldata params,
         INFTXVaultV3 vToken
     ) internal {
+        onlyOwnerIfPaused(PAUSE_INCREASELIQ);
+
         if (positionManager.ownerOf(params.positionId) != msg.sender)
             revert NotPositionOwner();
 
@@ -723,7 +741,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
             params.nftIds,
             params.positionId,
             params.vaultId,
-            params.forceTimelock
+            params.forceTimelock,
+            msg.sender
         );
 
         emit IncreaseLiquidity(
@@ -788,7 +807,8 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
         uint256[] calldata nftIds,
         uint256 positionId,
         uint256 vaultId,
-        bool forceTimelock
+        bool forceTimelock,
+        address recipient
     ) internal {
         uint256 vTokenBalance = vToken.balanceOf(address(this));
         if (nftIds.length > 0) {
@@ -812,13 +832,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                     inventoryStaking.deposit(
                         vaultId,
                         vTokenBalance,
-                        msg.sender,
+                        recipient,
                         "",
                         false,
                         true // forceTimelock as we minted the vTokens with NFTs
                     );
                 } else {
-                    vToken.transfer(msg.sender, vTokenBalance);
+                    vToken.transfer(recipient, vTokenBalance);
                 }
             }
         } else {
@@ -829,6 +849,13 @@ contract NFTXRouter is INFTXRouter, Ownable, ERC721Holder, ERC1155Holder {
                     positionId,
                     block.timestamp + _lpTimelock,
                     _lpTimelock
+                );
+            } else {
+                // set timelock of the position NFT to 1 hour, to prevent instant redeem via increaseLiquidity
+                positionManager.setLockedUntil(
+                    positionId,
+                    block.timestamp + BASE_VTOKEN_TIMELOCK,
+                    BASE_VTOKEN_TIMELOCK
                 );
             }
 

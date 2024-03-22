@@ -1,0 +1,12 @@
+receiveWethRewards.t.sol
+├── when the caller is not the fee distributor
+│   └── it should revert
+└── when the caller is the fee distributor
+    ├── given the total vtoken shares are less than or equal to the minimum liquidity
+    │   ├── it should not pull any weth from the fee distributor
+    │   ├── it should not increase the global weth fees per vtoken shares
+    │   └── it should return false
+    └── given the total vtoken shares are greater than the minimum liquidity
+        ├── it should pull the required weth from the fee distributor
+        ├── it should increase the global weth fees per vtoken shares
+        └── it should return true

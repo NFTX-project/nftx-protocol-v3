@@ -55,8 +55,6 @@ interface INFTXFeeDistributorV3 {
             ReceiverType receiverType
         );
 
-    function distributionPaused() external view returns (bool);
-
     // =============================================================
     //                            EVENTS
     // =============================================================
@@ -114,8 +112,6 @@ interface INFTXFeeDistributorV3 {
     function setTreasuryAddress(address treasury) external;
 
     function setNFTXRouter(INFTXRouter nftxRouter) external;
-
-    function pauseFeeDistribution(bool pause) external;
 
     function rescueTokens(IERC20 token) external;
 }

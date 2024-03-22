@@ -1,0 +1,45 @@
+depositWithNFT.t.sol
+├── given the deposit with nft operation is paused
+│   └── when the caller is not the owner
+│       └── it should revert
+└── given the deposit with nft operation is not paused
+    ├── when the vault id is invalid
+    │   └── it should revert
+    └── when the vauld id is valid
+        ├── given the caller is not on the timelock exclude list
+        │   ├── given the underlying NFT is ERC721
+        │   │   ├── given the total vtoken shares are zero
+        │   │   │   ├── it should mint vtokens to the inventory contract
+        │   │   │   ├── it should mint xnft position to the recipient
+        │   │   │   ├── it should mint vtoken shares after deducting minimum liquidity
+        │   │   │   ├── it should increase the total vtoken shares
+        │   │   │   ├── it should set the position nonce to zero
+        │   │   │   ├── it should set the position vault id
+        │   │   │   ├── it should set the position timelocked until
+        │   │   │   ├── it should set the position timelock to the current value
+        │   │   │   ├── it should set the position vtoken timelocked until to zero
+        │   │   │   ├── it should set the position weth fees per vtoken share snapshot to the global value
+        │   │   │   ├── it should set the position weth owed to zero
+        │   │   │   └── it should emit {DepositWithNFT} event
+        │   │   └── given the total vtoken shares are greater than zero
+        │   │       ├── it should mint vtokens to the inventory contract
+        │   │       ├── it should mint xnft position to the recipient
+        │   │       ├── it should mint proportional vtoken shares
+        │   │       ├── it should increase the total vtoken shares
+        │   │       ├── it should set the position nonce to zero
+        │   │       ├── it should set the position vault id
+        │   │       ├── it should set the position timelocked until
+        │   │       ├── it should set the position timelock to the current value
+        │   │       ├── it should set the position vtoken timelocked until to zero
+        │   │       ├── it should set the position weth fees per vtoken share snapshot to the global value
+        │   │       ├── it should set the position weth owed to zero
+        │   │       └── it should emit {DepositWithNFT} event
+        │   └── given the underlying NFT is ERC1155
+        │       ├── it should mint vtokens to the inventory contract
+        │       └── it should mint xnft position to the recipient
+        └── given the caller is on the timelock exclude list
+            ├── it should mint vtokens to the inventory contract
+            ├── it should mint xnft position to the recipient
+            ├── it should set the position timelocked until to zero
+            ├── it should set the position timelock to the current value
+            └── it should set the position vtoken timelocked until to zero

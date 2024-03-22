@@ -1,0 +1,18 @@
+getVTokenPremium1155.t.sol
+├── given the vault id does not exist
+│   └── it should revert
+└── given the vault id exists
+    ├── given the token id does not exist in the vault
+    │   ├── it should return zero total premium
+    │   ├── it should return empty premiums array
+    │   └── it should return empty depositors array
+    └── given the token id exists in the vault
+        ├── when the amount is zero
+        │   └── it should revert
+        └── when the amount is greater than zero
+            ├── when the amount is greater than quantity of nfts in the vault
+            │   └── it should revert
+            └── when the amount is less than or equal to the quantity of nfts in the vault
+                ├── it should return the total premium
+                ├── it should return the premiums array
+                └── it should return the depositors array

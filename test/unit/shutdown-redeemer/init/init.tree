@@ -1,0 +1,6 @@
+init.t.sol
+├── given the contract is initialized
+│   └── it should revert
+└── given the contract is not initialized
+    ├── it should set the owner
+    └── it should have the vault factory already set

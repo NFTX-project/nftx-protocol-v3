@@ -1,0 +1,70 @@
+swap.t.sol
+├── given the swap operation is paused
+│   └── when the caller is not the owner
+│       └── it should revert
+└── given the swap operation is not paused
+    ├── given the swap is not enabled
+    │   └── it should revert
+    └── given the swap is enabled
+        ├── given the uniswap pool does not exist
+        │   ├── it should refund all ETH sent in the transaction (no swap or premium fees)
+        │   ├── it should pull idsIn from the caller
+        │   ├── it should send requested NFTs from the vault
+        │   └── it should emit {Swapped} event
+        └── given the uniswap pool exists
+            ├── given the asset type is ERC721
+            │   ├── when the idsIn and idsOut are not the same length
+            │   │   └── it should revert
+            │   └── when the idsIn and idsOut are the same length
+            │       ├── given the caller is on the fee exclusion list
+            │       │   ├── when the force fee is true
+            │       │   │   ├── it should refund any extra ETH sent after deducting swap fees along with premium fees (if any)
+            │       │   │   ├── it should pull idsIn from the caller
+            │       │   │   ├── it should send requested NFTs from the vault
+            │       │   │   └── it should emit {Swapped} event
+            │       │   └── when the force fee is false
+            │       │       ├── it should refund all ETH sent in the transaction (no swap or premium fees)
+            │       │       ├── it should pull idsIn from the caller
+            │       │       ├── it should send requested NFTs from the vault
+            │       │       └── it should emit {Swapped} event
+            │       └── given the caller is not on the fee exclusion list
+            │           ├── when insufficient ETH is sent to cover the vault fees
+            │           │   └── it should revert
+            │           └── when the ETH sent is greater than or equal to the vault fees
+            │               ├── given the requested NFTs are in premium duration
+            │               │   ├── when the premium limit is greater than the premium fees
+            │               │   │   └── it should revert
+            │               │   └── when the premium limit is less than or equal to the premium fees
+            │               │       ├── it should refund any extra ETH sent after deducting swap and premium fees
+            │               │       ├── it should pull idsIn from the caller
+            │               │       ├── it should send requested NFTs from the vault
+            │               │       └── it should emit {Swapped} event
+            │               └── given the requested NFTs are not in premium duration
+            │                   ├── it should refund any extra ETH sent after deducting swap fees
+            │                   ├── it should pull idsIn from the caller
+            │                   ├── it should send requested NFTs from the vault
+            │                   └── it should emit {Swapped} event
+            └── given the asset type is ERC1155
+                ├── when any amounts element is zero
+                │   └── it should revert
+                └── when none of the amounts elements are zero
+                    ├── when the idsIn and idsOut are not the same length
+                    │   └── it should revert
+                    └── when the idsIn and idsOut are the same length
+                        ├── given the caller is on the fee exclusion list
+                        │   └── when the force fee is false
+                        │       ├── it should refund all ETH sent in the transaction (no swap or premium fees)
+                        │       ├── it should pull idsIn and amounts from the caller
+                        │       ├── it should send requested NFTs from the vault
+                        │       └── it should emit {Swapped} event
+                        └── given the caller is not on the fee exclusion list
+                            ├── given the requested NFTs are in premium duration
+                            │   ├── it should refund any extra ETH sent after deducting swap and premium fees
+                            │   ├── it should pull idsIn and amounts from the caller
+                            │   ├── it should send requested NFTs from the vault
+                            │   └── it should emit {Swapped} event
+                            └── given the requested NFTs are not in premium duration
+                                ├── it should refund any extra ETH sent after deducting swap fees
+                                ├── it should pull idsIn and amounts from the caller
+                                ├── it should send requested NFTs from the vault
+                                └── it should emit {Swapped} event

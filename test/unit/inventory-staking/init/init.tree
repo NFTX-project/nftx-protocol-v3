@@ -1,0 +1,21 @@
+init.t.sol
+├── given the contract is initialized
+│   └── it should revert
+└── given the contract is not initialized
+    ├── when the timelock is greater than the max timelock
+    │   └── it should revert
+    └── when the timelock is less than or equal to the max timelock
+        ├── when the early withdraw penalty is greater than the max early withdraw penalty
+        │   └── it should revert
+        └── when the early withdraw penalty is less than or equal to the max early withdraw penalty
+            ├── it should set the contract as initialized
+            ├── it should set the owner
+            ├── it should have correct weth address set
+            ├── it should have correct permit2 address set
+            ├── it should set the token name
+            ├── it should set the token symbol
+            ├── it should set the timelock
+            ├── it should set the early withdraw penalty
+            ├── it should set the timelock exclude list
+            ├── it should set the descriptor
+            └── it should set the next id

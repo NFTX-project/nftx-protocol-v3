@@ -1,8 +1,8 @@
 diff --git a/src/uniswap/v3-core/interfaces/IUniswapV3Factory.sol b/src/uniswap/v3-core/interfaces/IUniswapV3Factory.sol
-index 540cfdc..e905d2e 100644
+index 540cfdc..22b0d29 100644
 --- a/src/uniswap/v3-core/interfaces/IUniswapV3Factory.sol
 +++ b/src/uniswap/v3-core/interfaces/IUniswapV3Factory.sol
-@@ -1,78 +1,77 @@
+@@ -1,78 +1,79 @@
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity >=0.5.0;
  
@@ -33,6 +33,8 @@ index 540cfdc..e905d2e 100644
      /// @param tickSpacing The minimum number of ticks between initialized ticks for pools created with the given fee
      event FeeAmountEnabled(uint24 indexed fee, int24 indexed tickSpacing);
  
++    error InvalidRewardTierCardinality();
++
      /// @notice Returns the current owner of the factory
      /// @dev Can be changed by the current owner via setOwner
      /// @return The address of the factory owner

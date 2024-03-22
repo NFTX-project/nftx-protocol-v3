@@ -1,0 +1,13 @@
+setVaultFeatures.t.sol
+├── given the vault is not finalized
+│   ├── when the caller is not the manager
+│   │   └── it should revert
+│   └── when the caller is the manager
+│       ├── it should set the mint, redeem and swap features flag
+│       └── it should emit the {EnableMintUpdated}, {EnableRedeemUpdated} and {EnableSwapUpdated} events
+└── given the vault is finalized
+    ├── when the caller is not the owner
+    │   └── it should revert
+    └── when the caller is the owner
+        ├── it should set the mint, redeem and swap features flag
+        └── it should emit the {EnableMintUpdated}, {EnableRedeemUpdated} and {EnableSwapUpdated} events

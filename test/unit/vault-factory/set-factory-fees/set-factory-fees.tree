@@ -1,0 +1,17 @@
+setFactoryFees.t.sol
+├── when the caller is not the owner
+│   └── it should revert
+└── when the caller is the owner
+    ├── when the mint fee is greater than limit
+    │   └── it should revert
+    └── when the mint fee is less than or equal to the limit
+        ├── when the redeem fee is greater than limit
+        │   └── it should revert
+        └── when the redeem fee is less than or equal to the limit
+            ├── when the swap fee is greater than limit
+            │   └── it should revert
+            └── when the swap fee is less than or equal to the limit
+                ├── it should set the factory mint fee
+                ├── it should set the factory redeem fee
+                ├── it should set the factory swap fee
+                └── it should emit {UpdateFactoryFees} event

@@ -1,0 +1,275 @@
+{
+  "address": "0x134b737A7D4C4586A3cf63E50a308006b3932224",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "version",
+          "type": "uint8"
+        }
+      ],
+      "name": "Initialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [],
+      "name": "NFTXEligibilityInit",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "__NFTXEligibility_init",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "name": "__NFTXEligibility_init_bytes",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "afterMintHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "afterRedeemHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "beforeMintHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "beforeRedeemHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "checkAllEligible",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "checkAllIneligible",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "checkEligible",
+      "outputs": [
+        {
+          "internalType": "bool[]",
+          "name": "",
+          "type": "bool[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "checkIsEligible",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "finalized",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "name",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "targetAsset",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xa97e90a74ef2607a4b3ac29cdaf23e7b7dea25a82ad43851dc6c3cae73b66f2a",
+  "receipt": {
+    "to": null,
+    "from": "0xb06a64615842CbA9b3Bdb7e6F726F3a5BD20daC2",
+    "contractAddress": "0x134b737A7D4C4586A3cf63E50a308006b3932224",
+    "transactionIndex": 30,
+    "gasUsed": "543382",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x8ba19d7d2eb7542e0c1f7db4af92694a0abc6628bb3df5a9e3ab0e47baf59faf",
+    "transactionHash": "0xa97e90a74ef2607a4b3ac29cdaf23e7b7dea25a82ad43851dc6c3cae73b66f2a",
+    "logs": [],
+    "blockNumber": 10389453,
+    "cumulativeGasUsed": "4839894",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "86b1d24146f3ebe063a3e2d32a72fbad",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"NFTXEligibilityInit\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"__NFTXEligibility_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"__NFTXEligibility_init_bytes\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"afterMintHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"afterRedeemHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"beforeMintHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"beforeRedeemHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"checkAllEligible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"checkAllIneligible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"checkEligible\",\"outputs\":[{\"internalType\":\"bool[]\",\"name\":\"\",\"type\":\"bool[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"checkIsEligible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"finalized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetAsset\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/v2/eligibility/NFTXGen0KittyEligibility.sol\":\"NFTXGen0KittyEligibility\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":800},\"remappings\":[\":@mocks/=src/mocks/\",\":@openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@permit2/=lib/permit2/src/\",\":@src/=src/\",\":@test/=test/\",\":@uni-core/=src/uniswap/v3-core/\",\":@uni-periphery/=src/uniswap/v3-periphery/\",\":@uniswap/lib/=lib/solidity-lib/\",\":@uniswap/v2-core/=lib/v2-core/\",\":@uniswap/v3-core/contracts/=src/uniswap/v3-core/\",\":base64-sol/=src/uniswap/v3-periphery/libraries/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-gas-snapshot/=lib/permit2/lib/forge-gas-snapshot/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":permit2/=lib/permit2/\",\":solidity-lib/=lib/solidity-lib/contracts/\",\":solmate/=lib/permit2/lib/solmate/\",\":v2-core/=lib/v2-core/contracts/\"]},\"sources\":{\"lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.8.1) (proxy/utils/Initializable.sol)\\n\\npragma solidity ^0.8.2;\\n\\nimport \\\"../../utils/AddressUpgradeable.sol\\\";\\n\\n/**\\n * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed\\n * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an\\n * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer\\n * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.\\n *\\n * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be\\n * reused. This mechanism prevents re-execution of each \\\"step\\\" but allows the creation of new initialization steps in\\n * case an upgrade adds a module that needs to be initialized.\\n *\\n * For example:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * contract MyToken is ERC20Upgradeable {\\n *     function initialize() initializer public {\\n *         __ERC20_init(\\\"MyToken\\\", \\\"MTK\\\");\\n *     }\\n * }\\n * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {\\n *     function initializeV2() reinitializer(2) public {\\n *         __ERC20Permit_init(\\\"MyToken\\\");\\n *     }\\n * }\\n * ```\\n *\\n * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as\\n * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.\\n *\\n * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure\\n * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.\\n *\\n * [CAUTION]\\n * ====\\n * Avoid leaving a contract uninitialized.\\n *\\n * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation\\n * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke\\n * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * /// @custom:oz-upgrades-unsafe-allow constructor\\n * constructor() {\\n *     _disableInitializers();\\n * }\\n * ```\\n * ====\\n */\\nabstract contract Initializable {\\n    /**\\n     * @dev Indicates that the contract has been initialized.\\n     * @custom:oz-retyped-from bool\\n     */\\n    uint8 private _initialized;\\n\\n    /**\\n     * @dev Indicates that the contract is in the process of being initialized.\\n     */\\n    bool private _initializing;\\n\\n    /**\\n     * @dev Triggered when the contract has been initialized or reinitialized.\\n     */\\n    event Initialized(uint8 version);\\n\\n    /**\\n     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,\\n     * `onlyInitializing` functions can be used to initialize parent contracts.\\n     *\\n     * Similar to `reinitializer(1)`, except that functions marked with `initializer` can be nested in the context of a\\n     * constructor.\\n     *\\n     * Emits an {Initialized} event.\\n     */\\n    modifier initializer() {\\n        bool isTopLevelCall = !_initializing;\\n        require(\\n            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),\\n            \\\"Initializable: contract is already initialized\\\"\\n        );\\n        _initialized = 1;\\n        if (isTopLevelCall) {\\n            _initializing = true;\\n        }\\n        _;\\n        if (isTopLevelCall) {\\n            _initializing = false;\\n            emit Initialized(1);\\n        }\\n    }\\n\\n    /**\\n     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the\\n     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be\\n     * used to initialize parent contracts.\\n     *\\n     * A reinitializer may be used after the original initialization step. This is essential to configure modules that\\n     * are added through upgrades and that require initialization.\\n     *\\n     * When `version` is 1, this modifier is similar to `initializer`, except that functions marked with `reinitializer`\\n     * cannot be nested. If one is invoked in the context of another, execution will revert.\\n     *\\n     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in\\n     * a contract, executing them in the right order is up to the developer or operator.\\n     *\\n     * WARNING: setting the version to 255 will prevent any future reinitialization.\\n     *\\n     * Emits an {Initialized} event.\\n     */\\n    modifier reinitializer(uint8 version) {\\n        require(!_initializing && _initialized < version, \\\"Initializable: contract is already initialized\\\");\\n        _initialized = version;\\n        _initializing = true;\\n        _;\\n        _initializing = false;\\n        emit Initialized(version);\\n    }\\n\\n    /**\\n     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the\\n     * {initializer} and {reinitializer} modifiers, directly or indirectly.\\n     */\\n    modifier onlyInitializing() {\\n        require(_initializing, \\\"Initializable: contract is not initializing\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.\\n     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized\\n     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called\\n     * through proxies.\\n     *\\n     * Emits an {Initialized} event the first time it is successfully executed.\\n     */\\n    function _disableInitializers() internal virtual {\\n        require(!_initializing, \\\"Initializable: contract is initializing\\\");\\n        if (_initialized < type(uint8).max) {\\n            _initialized = type(uint8).max;\\n            emit Initialized(type(uint8).max);\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the highest version that has been initialized. See {reinitializer}.\\n     */\\n    function _getInitializedVersion() internal view returns (uint8) {\\n        return _initialized;\\n    }\\n\\n    /**\\n     * @dev Returns `true` if the contract is currently initializing. See {onlyInitializing}.\\n     */\\n    function _isInitializing() internal view returns (bool) {\\n        return _initializing;\\n    }\\n}\\n\",\"keccak256\":\"0x037c334add4b033ad3493038c25be1682d78c00992e1acb0e2795caff3925271\",\"license\":\"MIT\"},\"lib/openzeppelin-contracts-upgradeable/contracts/utils/AddressUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.8.0) (utils/Address.sol)\\n\\npragma solidity ^0.8.1;\\n\\n/**\\n * @dev Collection of functions related to the address type\\n */\\nlibrary AddressUpgradeable {\\n    /**\\n     * @dev Returns true if `account` is a contract.\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * It is unsafe to assume that an address for which this function returns\\n     * false is an externally-owned account (EOA) and not a contract.\\n     *\\n     * Among others, `isContract` will return false for the following\\n     * types of addresses:\\n     *\\n     *  - an externally-owned account\\n     *  - a contract in construction\\n     *  - an address where a contract will be created\\n     *  - an address where a contract lived, but was destroyed\\n     * ====\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * You shouldn't rely on `isContract` to protect against flash loan attacks!\\n     *\\n     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets\\n     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract\\n     * constructor.\\n     * ====\\n     */\\n    function isContract(address account) internal view returns (bool) {\\n        // This method relies on extcodesize/address.code.length, which returns 0\\n        // for contracts in construction, since the code is only stored at the end\\n        // of the constructor execution.\\n\\n        return account.code.length > 0;\\n    }\\n\\n    /**\\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\\n     * `recipient`, forwarding all available gas and reverting on errors.\\n     *\\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\\n     * imposed by `transfer`, making them unable to receive funds via\\n     * `transfer`. {sendValue} removes this limitation.\\n     *\\n     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].\\n     *\\n     * IMPORTANT: because control is transferred to `recipient`, care must be\\n     * taken to not create reentrancy vulnerabilities. Consider using\\n     * {ReentrancyGuard} or the\\n     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\\n     */\\n    function sendValue(address payable recipient, uint256 amount) internal {\\n        require(address(this).balance >= amount, \\\"Address: insufficient balance\\\");\\n\\n        (bool success, ) = recipient.call{value: amount}(\\\"\\\");\\n        require(success, \\\"Address: unable to send value, recipient may have reverted\\\");\\n    }\\n\\n    /**\\n     * @dev Performs a Solidity function call using a low level `call`. A\\n     * plain `call` is an unsafe replacement for a function call: use this\\n     * function instead.\\n     *\\n     * If `target` reverts with a revert reason, it is bubbled up by this\\n     * function (like regular Solidity function calls).\\n     *\\n     * Returns the raw returned data. To convert to the expected return value,\\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\\n     *\\n     * Requirements:\\n     *\\n     * - `target` must be a contract.\\n     * - calling `target` with `data` must not revert.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0, \\\"Address: low-level call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with\\n     * `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but also transferring `value` wei to `target`.\\n     *\\n     * Requirements:\\n     *\\n     * - the calling contract must have an ETH balance of at least `value`.\\n     * - the called Solidity function must be `payable`.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, value, \\\"Address: low-level call with value failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but\\n     * with `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(address(this).balance >= value, \\\"Address: insufficient balance for call\\\");\\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\\n        return verifyCallResultFromTarget(target, success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\\n        return functionStaticCall(target, data, \\\"Address: low-level static call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal view returns (bytes memory) {\\n        (bool success, bytes memory returndata) = target.staticcall(data);\\n        return verifyCallResultFromTarget(target, success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Tool to verify that a low level call to smart-contract was successful, and revert (either by bubbling\\n     * the revert reason or using the provided one) in case of unsuccessful call or if target was not a contract.\\n     *\\n     * _Available since v4.8._\\n     */\\n    function verifyCallResultFromTarget(\\n        address target,\\n        bool success,\\n        bytes memory returndata,\\n        string memory errorMessage\\n    ) internal view returns (bytes memory) {\\n        if (success) {\\n            if (returndata.length == 0) {\\n                // only check isContract if the call was successful and the return data is empty\\n                // otherwise we already know that it was a contract\\n                require(isContract(target), \\\"Address: call to non-contract\\\");\\n            }\\n            return returndata;\\n        } else {\\n            _revert(returndata, errorMessage);\\n        }\\n    }\\n\\n    /**\\n     * @dev Tool to verify that a low level call was successful, and revert if it wasn't, either by bubbling the\\n     * revert reason or using the provided one.\\n     *\\n     * _Available since v4.3._\\n     */\\n    function verifyCallResult(\\n        bool success,\\n        bytes memory returndata,\\n        string memory errorMessage\\n    ) internal pure returns (bytes memory) {\\n        if (success) {\\n            return returndata;\\n        } else {\\n            _revert(returndata, errorMessage);\\n        }\\n    }\\n\\n    function _revert(bytes memory returndata, string memory errorMessage) private pure {\\n        // Look for revert reason and bubble it up if present\\n        if (returndata.length > 0) {\\n            // The easiest way to bubble the revert reason is using memory via assembly\\n            /// @solidity memory-safe-assembly\\n            assembly {\\n                let returndata_size := mload(returndata)\\n                revert(add(32, returndata), returndata_size)\\n            }\\n        } else {\\n            revert(errorMessage);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x2edcb41c121abc510932e8d83ff8b82cf9cdde35e7c297622f5c29ef0af25183\",\"license\":\"MIT\"},\"src/interfaces/INFTXEligibility.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\ninterface INFTXEligibility {\\n    // Read functions.\\n    function name() external pure returns (string memory);\\n\\n    function finalized() external view returns (bool);\\n\\n    function targetAsset() external pure returns (address);\\n\\n    function checkAllEligible(uint256[] calldata tokenIds)\\n        external\\n        view\\n        returns (bool);\\n\\n    function checkEligible(uint256[] calldata tokenIds)\\n        external\\n        view\\n        returns (bool[] memory);\\n\\n    function checkAllIneligible(uint256[] calldata tokenIds)\\n        external\\n        view\\n        returns (bool);\\n\\n    function checkIsEligible(uint256 tokenId) external view returns (bool);\\n\\n    // Write functions.\\n    function __NFTXEligibility_init_bytes(bytes calldata configData) external;\\n\\n    function beforeMintHook(uint256[] calldata tokenIds) external;\\n\\n    function afterMintHook(uint256[] calldata tokenIds) external;\\n\\n    function beforeRedeemHook(uint256[] calldata tokenIds) external;\\n\\n    function afterRedeemHook(uint256[] calldata tokenIds) external;\\n}\\n\",\"keccak256\":\"0xd932fdc4ea04b9d685f094b4405e64da8f3ab46cd701b22223f2a28d42973c70\",\"license\":\"MIT\"},\"src/v2/eligibility/NFTXEligibility.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\nimport {Initializable} from \\\"@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol\\\";\\nimport {INFTXEligibility} from \\\"@src/interfaces/INFTXEligibility.sol\\\";\\n\\n// This is a contract meant to be inherited and overriden to implement eligibility modules.\\nabstract contract NFTXEligibility is INFTXEligibility, Initializable {\\n    function name() public pure virtual override returns (string memory);\\n\\n    function finalized() public view virtual override returns (bool);\\n\\n    function targetAsset() public pure virtual override returns (address);\\n\\n    function __NFTXEligibility_init_bytes(\\n        bytes memory initData\\n    ) public virtual override;\\n\\n    function checkIsEligible(\\n        uint256 tokenId\\n    ) external view virtual override returns (bool) {\\n        return _checkIfEligible(tokenId);\\n    }\\n\\n    function checkEligible(\\n        uint256[] calldata tokenIds\\n    ) external view virtual override returns (bool[] memory) {\\n        uint256 length = tokenIds.length;\\n        bool[] memory eligibile = new bool[](length);\\n        for (uint256 i; i < length; i++) {\\n            eligibile[i] = _checkIfEligible(tokenIds[i]);\\n        }\\n        return eligibile;\\n    }\\n\\n    function checkAllEligible(\\n        uint256[] calldata tokenIds\\n    ) external view virtual override returns (bool) {\\n        uint256 length = tokenIds.length;\\n        for (uint256 i; i < length; i++) {\\n            // If any are not eligible, end the loop and return false.\\n            if (!_checkIfEligible(tokenIds[i])) {\\n                return false;\\n            }\\n        }\\n        return true;\\n    }\\n\\n    // Checks if all provided NFTs are NOT eligible. This is needed for mint requesting where all NFTs\\n    // provided must be ineligible.\\n    function checkAllIneligible(\\n        uint256[] calldata tokenIds\\n    ) external view virtual override returns (bool) {\\n        uint256 length = tokenIds.length;\\n        for (uint256 i; i < length; i++) {\\n            // If any are eligible, end the loop and return false.\\n            if (_checkIfEligible(tokenIds[i])) {\\n                return false;\\n            }\\n        }\\n        return true;\\n    }\\n\\n    function beforeMintHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    function afterMintHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    function beforeRedeemHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    function afterRedeemHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    // Override this to implement your module!\\n    function _checkIfEligible(\\n        uint256 _tokenId\\n    ) internal view virtual returns (bool);\\n}\\n\",\"keccak256\":\"0xc81f611a10dc5024d14ae1920ed864b13f49ef7dc1efa31cc97e25290785c7ec\",\"license\":\"MIT\"},\"src/v2/eligibility/NFTXGen0KittyEligibility.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"./NFTXEligibility.sol\\\";\\n\\ninterface KittyCore {\\n    function ownerOf(uint256 _tokenId) external view returns (address owner);\\n\\n    function getKitty(\\n        uint256 _id\\n    )\\n        external\\n        view\\n        returns (\\n            bool,\\n            bool,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256 _generation,\\n            uint256\\n        );\\n}\\n\\ncontract NFTXGen0KittyEligibility is NFTXEligibility {\\n    function name() public pure virtual override returns (string memory) {\\n        return \\\"Gen0Kitty\\\";\\n    }\\n\\n    function finalized() public view virtual override returns (bool) {\\n        return true;\\n    }\\n\\n    function targetAsset() public pure virtual override returns (address) {\\n        return 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;\\n    }\\n\\n    event NFTXEligibilityInit();\\n\\n    function __NFTXEligibility_init_bytes(\\n        bytes memory /* configData */\\n    ) public virtual override initializer {\\n        __NFTXEligibility_init();\\n    }\\n\\n    // Parameters here should mirror the config struct.\\n    function __NFTXEligibility_init() public initializer {\\n        emit NFTXEligibilityInit();\\n    }\\n\\n    function _checkIfEligible(\\n        uint256 _tokenId\\n    ) internal view virtual override returns (bool) {\\n        (, , , , , , , , uint256 _generation, ) = KittyCore(targetAsset())\\n            .getKitty(_tokenId);\\n        return _generation == 0;\\n    }\\n}\\n\",\"keccak256\":\"0xf046e4cd89dc8972dd4db76099e864f8e802059c678140a4a5727c3cfbe30f4f\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506108df806100206000396000f3fe608060405234801561001057600080fd5b50600436106100df5760003560e01c80636cd912601161008c578063b3f05b9711610066578063b3f05b97146101c0578063bd8affde1461012c578063ca373f28146101c7578063d2a096e8146101da57600080fd5b80636cd912601461017557806384ca9f8514610195578063b1eb9f87146101b857600080fd5b80634998b7f3116100bd5780634998b7f3146101625780635e2f9b521461012c5780636c47d5951461012c57600080fd5b806306fdde03146100e457806336eb08621461012c5780633d4403ac14610140575b600080fd5b604080518082018252600981527f47656e304b69747479000000000000000000000000000000000000000000000060208201529051610123919061060e565b60405180910390f35b61013e61013a366004610663565b5050565b005b6040517306012c8cf97bead5deae237070f9587f8e7a266d8152602001610123565b61013e6101703660046106ee565b6101ed565b610188610183366004610663565b610303565b604051610123919061079f565b6101a86101a3366004610663565b6103b8565b6040519015158152602001610123565b61013e610406565b60016101a8565b6101a86101d5366004610663565b610538565b6101a86101e83660046107e5565b61057c565b600054610100900460ff161580801561020d5750600054600160ff909116105b806102275750303b158015610227575060005460ff166001145b61028f5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b60648201526084015b60405180910390fd5b6000805460ff1916600117905580156102b2576000805461ff0019166101001790555b6102ba610406565b801561013a576000805461ff0019169055604051600181527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024989060200160405180910390a15050565b60608160008167ffffffffffffffff811115610321576103216106d8565b60405190808252806020026020018201604052801561034a578160200160208202803683370190505b50905060005b828110156103ad5761037986868381811061036d5761036d6107fe565b90506020020135610583565b82828151811061038b5761038b6107fe565b91151560209283029190910190910152806103a581610814565b915050610350565b509150505b92915050565b600081815b818110156103fb576103da85858381811061036d5761036d6107fe565b6103e9576000925050506103b2565b806103f381610814565b9150506103bd565b506001949350505050565b600054610100900460ff16158080156104265750600054600160ff909116105b806104405750303b158015610440575060005460ff166001145b6104a35760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152608401610286565b6000805460ff1916600117905580156104c6576000805461ff0019166101001790555b6040517fb708568a0e67d40b1324a610ddd779500570f113513f944a791cc7b8b4970dec90600090a18015610535576000805461ff0019169055604051600181527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024989060200160405180910390a15b50565b600081815b818110156103fb5761055a85858381811061036d5761036d6107fe565b1561056a576000925050506103b2565b8061057481610814565b91505061053d565b60006103b2825b60405163e98b7f4d60e01b81526004810182905260009081907306012c8cf97bead5deae237070f9587f8e7a266d9063e98b7f4d9060240161014060405180830381865afa1580156105d9573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105fd9190610850565b50159b9a5050505050505050505050565b600060208083528351808285015260005b8181101561063b5785810183015185820160400152820161061f565b8181111561064d576000604083870101525b50601f01601f1916929092016040019392505050565b6000806020838503121561067657600080fd5b823567ffffffffffffffff8082111561068e57600080fd5b818501915085601f8301126106a257600080fd5b8135818111156106b157600080fd5b8660208260051b85010111156106c657600080fd5b60209290920196919550909350505050565b634e487b7160e01b600052604160045260246000fd5b60006020828403121561070057600080fd5b813567ffffffffffffffff8082111561071857600080fd5b818401915084601f83011261072c57600080fd5b81358181111561073e5761073e6106d8565b604051601f8201601f19908116603f01168101908382118183101715610766576107666106d8565b8160405282815287602084870101111561077f57600080fd5b826020860160208301376000928101602001929092525095945050505050565b6020808252825182820181905260009190848201906040850190845b818110156107d95783511515835292840192918401916001016107bb565b50909695505050505050565b6000602082840312156107f757600080fd5b5035919050565b634e487b7160e01b600052603260045260246000fd5b60006001820161083457634e487b7160e01b600052601160045260246000fd5b5060010190565b8051801515811461084b57600080fd5b919050565b6000806000806000806000806000806101408b8d03121561087057600080fd5b6108798b61083b565b995061088760208c0161083b565b985060408b0151975060608b0151965060808b0151955060a08b0151945060c08b0151935060e08b015192506101008b015191506101208b015190509295989b9194979a509295985056fea164736f6c634300080f000a",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100df5760003560e01c80636cd912601161008c578063b3f05b9711610066578063b3f05b97146101c0578063bd8affde1461012c578063ca373f28146101c7578063d2a096e8146101da57600080fd5b80636cd912601461017557806384ca9f8514610195578063b1eb9f87146101b857600080fd5b80634998b7f3116100bd5780634998b7f3146101625780635e2f9b521461012c5780636c47d5951461012c57600080fd5b806306fdde03146100e457806336eb08621461012c5780633d4403ac14610140575b600080fd5b604080518082018252600981527f47656e304b69747479000000000000000000000000000000000000000000000060208201529051610123919061060e565b60405180910390f35b61013e61013a366004610663565b5050565b005b6040517306012c8cf97bead5deae237070f9587f8e7a266d8152602001610123565b61013e6101703660046106ee565b6101ed565b610188610183366004610663565b610303565b604051610123919061079f565b6101a86101a3366004610663565b6103b8565b6040519015158152602001610123565b61013e610406565b60016101a8565b6101a86101d5366004610663565b610538565b6101a86101e83660046107e5565b61057c565b600054610100900460ff161580801561020d5750600054600160ff909116105b806102275750303b158015610227575060005460ff166001145b61028f5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b60648201526084015b60405180910390fd5b6000805460ff1916600117905580156102b2576000805461ff0019166101001790555b6102ba610406565b801561013a576000805461ff0019169055604051600181527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024989060200160405180910390a15050565b60608160008167ffffffffffffffff811115610321576103216106d8565b60405190808252806020026020018201604052801561034a578160200160208202803683370190505b50905060005b828110156103ad5761037986868381811061036d5761036d6107fe565b90506020020135610583565b82828151811061038b5761038b6107fe565b91151560209283029190910190910152806103a581610814565b915050610350565b509150505b92915050565b600081815b818110156103fb576103da85858381811061036d5761036d6107fe565b6103e9576000925050506103b2565b806103f381610814565b9150506103bd565b506001949350505050565b600054610100900460ff16158080156104265750600054600160ff909116105b806104405750303b158015610440575060005460ff166001145b6104a35760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152608401610286565b6000805460ff1916600117905580156104c6576000805461ff0019166101001790555b6040517fb708568a0e67d40b1324a610ddd779500570f113513f944a791cc7b8b4970dec90600090a18015610535576000805461ff0019169055604051600181527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024989060200160405180910390a15b50565b600081815b818110156103fb5761055a85858381811061036d5761036d6107fe565b1561056a576000925050506103b2565b8061057481610814565b91505061053d565b60006103b2825b60405163e98b7f4d60e01b81526004810182905260009081907306012c8cf97bead5deae237070f9587f8e7a266d9063e98b7f4d9060240161014060405180830381865afa1580156105d9573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105fd9190610850565b50159b9a5050505050505050505050565b600060208083528351808285015260005b8181101561063b5785810183015185820160400152820161061f565b8181111561064d576000604083870101525b50601f01601f1916929092016040019392505050565b6000806020838503121561067657600080fd5b823567ffffffffffffffff8082111561068e57600080fd5b818501915085601f8301126106a257600080fd5b8135818111156106b157600080fd5b8660208260051b85010111156106c657600080fd5b60209290920196919550909350505050565b634e487b7160e01b600052604160045260246000fd5b60006020828403121561070057600080fd5b813567ffffffffffffffff8082111561071857600080fd5b818401915084601f83011261072c57600080fd5b81358181111561073e5761073e6106d8565b604051601f8201601f19908116603f01168101908382118183101715610766576107666106d8565b8160405282815287602084870101111561077f57600080fd5b826020860160208301376000928101602001929092525095945050505050565b6020808252825182820181905260009190848201906040850190845b818110156107d95783511515835292840192918401916001016107bb565b50909695505050505050565b6000602082840312156107f757600080fd5b5035919050565b634e487b7160e01b600052603260045260246000fd5b60006001820161083457634e487b7160e01b600052601160045260246000fd5b5060010190565b8051801515811461084b57600080fd5b919050565b6000806000806000806000806000806101408b8d03121561087057600080fd5b6108798b61083b565b995061088760208c0161083b565b985060408b0151975060608b0151965060808b0151955060a08b0151945060c08b0151935060e08b015192506101008b015191506101208b015190509295989b9194979a509295985056fea164736f6c634300080f000a",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 276,
+        "contract": "src/v2/eligibility/NFTXGen0KittyEligibility.sol:NFTXGen0KittyEligibility",
+        "label": "_initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_uint8"
+      },
+      {
+        "astId": 279,
+        "contract": "src/v2/eligibility/NFTXGen0KittyEligibility.sol:NFTXGen0KittyEligibility",
+        "label": "_initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      }
+    ],
+    "types": {
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_uint8": {
+        "encoding": "inplace",
+        "label": "uint8",
+        "numberOfBytes": "1"
+      }
+    }
+  }
+}

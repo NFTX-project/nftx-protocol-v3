@@ -11,4 +11,8 @@ contract Mock1155 is ERC1155 {
         tokenId = nextId;
         _mint(msg.sender, nextId++, amount, "");
     }
+
+    function mint(uint256 tokenId, uint256 amount) external {
+        _mint(msg.sender, tokenId, amount, "");
+    }
 }

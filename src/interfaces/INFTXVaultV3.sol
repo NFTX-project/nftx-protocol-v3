@@ -199,6 +199,11 @@ interface INFTXVaultV3 is IERC20Upgradeable {
      */
     function setManager(address _manager) external;
 
+    /**
+     * @notice Delegate all to the current vault factory's owner
+     */
+    function updateDelegate() external;
+
     // =============================================================
     //                     ONLY OWNER WRITE
     // =============================================================

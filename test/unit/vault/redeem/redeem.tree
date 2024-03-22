@@ -1,0 +1,80 @@
+redeem.t.sol
+├── given the redeem operation is paused
+│   └── when the caller is not the owner
+│       └── it should revert
+└── given the redeem operation is not paused
+    ├── given the redeem is not enabled
+    │   └── it should revert
+    └── given the redeem is enabled
+        ├── when the weth amount is zero
+        │   ├── given the uniswap pool does not exist
+        │   │   ├── it should refund all ETH sent in the transaction (no redeem or premium fees)
+        │   │   ├── it should burn vtokens
+        │   │   ├── it should sent requested NFTs from the vault
+        │   │   └── it should emit the {Redeemed} event
+        │   └── given the uniswap pool exists
+        │       ├── given the asset type is ERC721
+        │       │   ├── given the caller is on the fee exclusion list
+        │       │   │   ├── when the force fee is true
+        │       │   │   │   ├── it should refund any extra ETH sent after deducting redeem fees along with premium fees (if any)
+        │       │   │   │   ├── it should burn vtokens
+        │       │   │   │   ├── it should sent requested NFTs from the vault
+        │       │   │   │   ├── it should send the depositor share (if any) to the depositor
+        │       │   │   │   └── it should emit the {Redeemed} event
+        │       │   │   └── when the force fee is false
+        │       │   │       ├── it should refund all ETH sent in the transaction
+        │       │   │       ├── it should burn vtokens
+        │       │   │       ├── it should sent requested NFTs from the vault
+        │       │   │       └── it should emit the {Redeemed} event
+        │       │   └── given the caller is not on the fee exclusion list
+        │       │       ├── when insufficient ETH is sent to cover the vault fees
+        │       │       │   └── it should revert
+        │       │       └── when the ETH sent is greater than or equal to the vault fees
+        │       │           ├── given the requested NFTs are in premium duration
+        │       │           │   ├── when the premium limit is greater than the premium fees
+        │       │           │   │   └── it should revert
+        │       │           │   └── when the premium limit is less than or equal to the premium fees
+        │       │           │       ├── it should refund any extra ETH sent after deducting redeem and premium fees
+        │       │           │       ├── it should burn vtokens
+        │       │           │       ├── it should sent requested NFTs from the vault
+        │       │           │       ├── it should send the depositor share to the depositor
+        │       │           │       └── it should emit the {Redeemed} event
+        │       │           └── given the requested NFTs are not in premium duration
+        │       │               ├── it should refund any extra ETH sent after deducting redeem fees
+        │       │               ├── it should burn vtokens
+        │       │               ├── it should sent requested NFTs from the vault
+        │       │               └── it should emit the {Redeemed} event
+        │       └── given the asset type is ERC1155
+        │           ├── given the caller is on the fee exclusion list
+        │           │   └── given the requested NFTs are in premium duration
+        │           │       └── when the amount of ids to redeem for each particular token id exceeds their current deposit info
+        │           │           ├── it should increment the pointer index
+        │           │           ├── it should refund all ETH sent in the transaction
+        │           │           ├── it should burn vtokens
+        │           │           ├── it should sent requested NFTs from the vault
+        │           │           └── it should emit the {Redeemed} event
+        │           └── given the caller is not on the fee exclusion list
+        │               ├── given the requested NFTs are in premium duration
+        │               │   └── when the amount of ids to redeem for each particular token id is within their current deposit info
+        │               │       ├── it should keep the pointer index same as before
+        │               │       ├── it should refund any extra ETH sent after deducting redeem and premium fees
+        │               │       ├── it should burn vtokens
+        │               │       ├── it should sent requested NFTs from the vault
+        │               │       └── it should emit the {Redeemed} event
+        │               └── given the requested NFTs are not in premium duration
+        │                   └── when the amount of ids to redeem for each particular token id exceeds their current deposit info
+        │                       ├── it should increment the pointer index
+        │                       ├── it should refund any extra ETH sent after deducting redeem fees
+        │                       ├── it should burn vtokens
+        │                       ├── it should sent requested NFTs from the vault
+        │                       └── it should emit the {Redeemed} event
+        └── when the weth amount is greater than zero
+            ├── when the ETH sent is greater than zero
+            │   └── it should revert
+            └── when the ETH sent is zero
+                └── given the requested NFTs are not in premium duration
+                    ├── it should only pull the WETH for redeem fees along with premium fees (if any)
+                    ├── it should burn vtokens
+                    ├── it should sent requested NFTs from the vault
+                    ├── it should send the depositor share (if any) to the depositor
+                    └── it should emit the {Redeemed} event

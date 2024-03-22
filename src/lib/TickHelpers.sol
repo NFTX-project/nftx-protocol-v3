@@ -14,8 +14,13 @@ library TickHelpers {
         // sqrtP = sqrt(price) * 2^96
         // = sqrt(amount1 / amount0) * 2^96
         // = sqrt(amount1 * 2^192 / amount0)
+        // this restricts the max(amount1) to be (2^256 - 1)/(2^192) ~= 18.44e18
+        // so rearranging the formula, keeping sufficient precision
+        // = sqrt(amount1 * 2^142 / amount0) * 2^25
 
-        sqrtP = SafeCast.toUint160(Babylonian.sqrt((amount1 << 192) / amount0));
+        sqrtP = SafeCast.toUint160(
+            Babylonian.sqrt((amount1 * (2 ** 142)) / amount0) * (1 << 25)
+        );
     }
 
     function getTickForAmounts(
