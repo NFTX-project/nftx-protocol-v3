@@ -1,0 +1,13 @@
+disableVaultFees.t.sol
+├── given the vault is not finalized
+│   └── when the caller is not the manager
+│       └── it should revert
+├── when the caller is the manager
+│   ├── it should reset the vault mint, redeem and swap fees to the factory default
+│   └── it should emit {DisableVaultFees} event
+└── given the vault is finalized
+    ├── when the caller is not the owner
+    │   └── it should revert
+    └── when the caller is the owner
+        ├── it should reset the vault mint, redeem and swap fees to the factory default
+        └── it should emit {DisableVaultFees} event

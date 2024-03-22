@@ -1,0 +1,11 @@
+redeem.t.sol
+├── given the redeem operation is paused
+│   └── it should revert
+└── given the redeem operation is not paused
+    └── given the caller has approved this contract to spend their vTokens
+        ├── given the redeem has not been enabled for the requested vault id
+        │   └── it should revert
+        └── given the redeem has been enabled for the requested vault id
+            ├── it should lock the vTokens in this contract
+            ├── it should transfer ETH to the caller
+            └── it should emit {Redeemed} event

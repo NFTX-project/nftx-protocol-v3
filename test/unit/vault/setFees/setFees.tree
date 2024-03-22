@@ -1,0 +1,19 @@
+setFees.t.sol
+├── when the vault is not finalized
+│   ├── when the caller is not the manager
+│   │   └── it should revert
+│   └── when the caller is the manager
+│       ├── when the mint, redeem or swap fees is greater than the limit
+│       │   └── it should revert
+│       └── when the mint, redeem and swap fees are less than or equal to the limit
+│           ├── it should set the fees
+│           └── it should emit the {UpdateVaultFees} event
+└── when the vault is finalized
+    ├── when the caller is not the owner
+    │   └── it should revert
+    └── when the caller is the owner
+        ├── when the mint, redeem or swap fees is greater than the limit (after finalized)
+        │   └── it should revert
+        └── when the mint, redeem and swap fees are less than or equal to the limit (after finalized)
+            ├── it should set the fees
+            └── it should emit the {UpdateVaultFees} event

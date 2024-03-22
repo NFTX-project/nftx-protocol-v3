@@ -16,13 +16,19 @@ const deploymentsList = [
   "NFTXVaultFactoryUpgradeableV3",
   "NonfungiblePositionManager",
   "QuoterV2",
+  "ShutdownRedeemerUpgradeable",
   "SwapRouter",
   "TickLens",
   "UniswapV3FactoryUpgradeable",
 ];
-const deployConfigKeysList = ["nftxUniversalRouter", "permit2", "WETH"];
+const deployConfigKeysList = [
+  "nftxUniversalRouter",
+  "permit2",
+  "UniswapV3Staker",
+  "WETH",
+];
 
-const chains = ["mainnet", "sepolia", "goerli"];
+const chains = ["mainnet", "arbitrum", "sepolia", "goerli"];
 
 const main = async () => {
   console.log("Generating addresses.json...");

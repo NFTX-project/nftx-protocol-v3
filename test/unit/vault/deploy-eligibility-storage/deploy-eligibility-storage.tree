@@ -1,0 +1,23 @@
+deployEligibilityStorage.t.sol
+├── given the vault is not finalized
+│   ├── when the caller is not the manager
+│   │   └── it should revert
+│   └── when the caller is the manager
+│       ├── given the eligibility storage is set A
+│       │   └── it should revert
+│       └── given the eligibility storage is not set A
+│           ├── it should deploy the eligibility module
+│           ├── it should set the eligibility storage
+│           ├── it should set the {allowAllItems} to false
+│           └── it should emit {EligibilityDeployed} event
+└── given the vault is finalized
+    ├── when the caller is not the owner
+    │   └── it should revert
+    └── when the caller is the owner
+        ├── given the eligibility storage is set B
+        │   └── it should revert
+        └── given the eligibility storage is not set B
+            ├── it should deploy the eligibility module
+            ├── it should set the eligibility storage
+            ├── it should set the {allowAllItems} to false
+            └── it should emit {EligibilityDeployed} event

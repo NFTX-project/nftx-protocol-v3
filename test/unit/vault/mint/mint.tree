@@ -1,0 +1,49 @@
+mint.t.sol
+├── given the mint operation is paused
+│   └── when the caller is not the owner
+│       └── it should revert
+└── given the mint operation is not paused
+    ├── given the mint is not enabled
+    │   └── it should revert
+    └── given the mint is enabled
+        ├── given the token id is not in the eligibility module
+        │   └── it should revert
+        └── given the token id is in the eligibility module
+            ├── given the asset type is ERC721
+            │   ├── given the token id is already in the holdings
+            │   │   └── it should revert
+            │   └── given the token id is not in the holdings
+            │       ├── when the nft is externally transferred to the contract
+            │       │   ├── it should mint the vtokens
+            │       │   ├── it should set the depositor and timestamp for the token ids
+            │       │   └── it should emit the {Minted} event
+            │       ├── given the uniswap pool does not exist 721
+            │       │   ├── it should refund all ETH sent in the transaction
+            │       │   ├── it should mint the vtokens
+            │       │   ├── it should pull the NFTs from the sender
+            │       │   ├── it should set the depositor and timestamp for the token ids
+            │       │   └── it should emit the {Minted} event
+            │       └── given the uniswap pool exists 721
+            │           ├── given the sender is on the fee exclusion list
+            │           │   └── it should refund all ETH sent in the transaction
+            │           └── given the sender is not on the fee exclusion list 721
+            │               ├── when the ETH sent is less than the vault fees
+            │               │   └── it should revert
+            │               └── when the ETH sent is greater than or equal to the vault fees 721
+            │                   ├── it should refund any extra ETH sent after deducting mint fees
+            │                   ├── it should mint the vtokens
+            │                   ├── it should pull the NFTs from the sender
+            │                   ├── it should set the depositor and timestamp for the token ids
+            │                   └── it should emit the {Minted} event
+            └── given the asset type is ERC1155
+                ├── when the amount is zero
+                │   └── it should revert
+                └── when the amount is greater than zero
+                    └── given the uniswap pool does exist 1155
+                        └── given the sender is on the fee exclusion list 1155
+                            └── when the ETH sent is greater than or equal to the vault fees 1155
+                                ├── it should refund any extra ETH sent after deducting mint fees
+                                ├── it should mint the vtokens
+                                ├── it should pull the NFTs from the sender
+                                ├── it should set the pointer index, depositor and timestamp for the token ids
+                                └── it should emit the {Minted} event

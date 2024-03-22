@@ -32,7 +32,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
 
     function test_setFeeDistributor_RevertsForNonOwner() external {
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert();
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         factory.setFeeDistributor(address(feeDistributor));
     }
 
@@ -318,7 +318,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         address newTreasury = makeAddr("newTreasury");
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         feeDistributor.setTreasuryAddress(newTreasury);
     }
 
@@ -349,7 +349,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
         address newNFTXRouter = makeAddr("newNFTXRouter");
 
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         feeDistributor.setNFTXRouter(INFTXRouter(newNFTXRouter));
     }
 
@@ -369,7 +369,7 @@ contract NFTXFeeDistributorV3Tests is TestBase {
 
     function test_rescueTokens_RevertsForNonOwner() external {
         hoax(makeAddr("nonOwner"));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(OWNABLE_NOT_OWNER_ERROR);
         feeDistributor.rescueTokens(weth);
     }
 

@@ -1,0 +1,37 @@
+withdraw.t.sol
+├── given the withdraw operation is paused
+│   └── when the caller is not the owner
+│       └── it should revert
+└── given the withdraw operation is not paused
+    ├── when the caller is not the position owner
+    │   └── it should revert
+    └── when the caller is the position owner
+        ├── given the position is vtoken timelocked
+        │   └── it should revert
+        └── given the position is not vtoken timelocked
+            ├── when more vtoken shares requested than the balance
+            │   └── it should revert
+            └── when the requested vtoken shares are less than or equal to the balance
+                ├── when the position is not timelocked
+                │   ├── when the nftIds length is zero
+                │   │   ├── it should transfer the corresponding vtoken amount to the caller
+                │   │   ├── it should lower the position vtoken shares balance by the requested amount
+                │   │   ├── it should lower the total vtoken shares by the requested amount
+                │   │   ├── it should transfer the accumulated weth fees to the caller
+                │   │   ├── it should set the position weth fees per vtoken shares snapshot to the current global value
+                │   │   ├── it should set the position weth owed to zero
+                │   │   └── it should emit {Withdraw} event
+                │   └── when the nftIds length is greater than zero
+                │       ├── when the nftIds count exceeds the vtoken owed
+                │       │   └── it should revert
+                │       └── when the nftIds count does not exceed the vtoken owed
+                │           ├── given the position was under timelock once
+                │           │   ├── it should not charge any redeem fees
+                │           │   ├── it should redeem portion of vtoken owed to the requested nftIds
+                │           │   └── it should send the remaining vtoken owed to the caller
+                │           └── given the position was never under timelock
+                │               ├── it should charge the redeem fees, sent as ETH with the transaction
+                │               └── it should send back any ETH residue
+                └── when the position is timelocked
+                    ├── it should deduct vtoken penalty
+                    └── it should increase the price per vtoken share

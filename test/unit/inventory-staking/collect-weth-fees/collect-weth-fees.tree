@@ -1,0 +1,12 @@
+collectWethFees.t.sol
+├── given the collect weth fees operation is paused
+│   └── when the caller is not the owner
+│       └── it should revert
+└── given the collect weth fees operation is not paused
+    ├── when the caller is not the position owner
+    │   └── it should revert
+    └── when the caller is the position owner
+        ├── it should transfer the total accumulated weth fees to the caller
+        ├── it should update the position weth fees per vtoken shares snapshot to the current global value
+        ├── it should set the position weth owed to zero
+        └── it should emit {CollectWethFees} event

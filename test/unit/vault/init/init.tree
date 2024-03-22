@@ -1,0 +1,18 @@
+init.t.sol
+├── given the contract is initialized
+│   └── it should revert
+└── given the contract is not initialized
+    ├── when the asset address is zero
+    │   └── it should revert
+    └── when the asset address is not zero
+        ├── it should set the owner to the sender (vault factory)
+        ├── it should set the token name
+        ├── it should set the token symbol
+        ├── it should set the asset address
+        ├── it should set the vault factory address
+        ├── it should set the vault id
+        ├── it should set the vault asset type
+        ├── it should set the allowAllItems flag
+        ├── it should emit the {VaultInit} event
+        ├── it should enable mint, redeem and swap
+        └── it should set the delegate to the DAO

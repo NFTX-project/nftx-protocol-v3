@@ -7,6 +7,7 @@ const outputMarkdownFilePath = "./README.md";
 
 const baseExplorerURLs = {
   mainnet: "https://etherscan.io/address/",
+  arbitrum: "https://arbiscan.io/address/",
   sepolia: "https://sepolia.etherscan.io/address/",
   goerli: "https://goerli.etherscan.io/address/",
 };
@@ -14,6 +15,7 @@ const baseExplorerURLs = {
 // URLs for each contract
 const contractURLs = {
   CreateVaultZap: "./src/zaps/CreateVaultZap.sol",
+  FailSafe: "./src/FailSafe.sol",
   MarketplaceUniversalRouterZap: "./src/zaps/MarketplaceUniversalRouterZap.sol",
   MigratorZap: "./src/zaps/MigratorZap.sol",
   NFTXEligibilityManager: "./src/v2/NFTXEligibilityManager.sol",
@@ -28,10 +30,12 @@ const contractURLs = {
     "./src/uniswap/v3-periphery/NonfungiblePositionManager.sol",
   permit2: "https://github.com/Uniswap/permit2/blob/main/src/Permit2.sol",
   QuoterV2: "./src/uniswap/v3-periphery/lens/QuoterV2.sol",
+  ShutdownRedeemerUpgradeable: "./src/ShutdownRedeemerUpgradeable.sol",
   SwapRouter: "./src/uniswap/v3-periphery/SwapRouter.sol",
   TickLens: "./src/uniswap/v3-periphery/lens/TickLens.sol",
   UniswapV3FactoryUpgradeable:
     "./src/uniswap/v3-core/UniswapV3FactoryUpgradeable.sol",
+  UniswapV3Staker: "https://github.com/Uniswap/v3-staker",
   WETH: "https://vscode.blockscan.com/ethereum/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 };
 

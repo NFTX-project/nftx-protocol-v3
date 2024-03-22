@@ -734,7 +734,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         onlyOwnerIfPaused(4);
 
         // only allow for positions created with just vTokens
-        if (position.timelockedUntil > 0)
+        if (position.vTokenTimelockedUntil == 0)
             revert PositionNotCreatedWithVTokens();
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
