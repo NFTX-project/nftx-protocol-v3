@@ -18,6 +18,7 @@
     "SwapRouter": "0x1703f8111B0E7A10e1d14f9073F53680d64277A3",
     "TickLens": "0x1650115DDD287bE6F4972180d290D0FF89a42c40",
     "UniswapV3FactoryUpgradeable": "0xa70e10beB02fF9a44007D9D3695d4b96003db101",
+    "V3MigrateSwap": "",
     "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
   },
   "arbitrum": {
@@ -40,6 +41,7 @@
     "TickLens": "0x3f2797b0E19CBf2377B8DE2d1CEC2698AcA7b081",
     "UniswapV3FactoryUpgradeable": "0xF4D0512FB47319B0CE9144EF582862e2921CaBF8",
     "UniswapV3Staker": "0xd4E155135b7dFf66c9C3B34EcA4aE7d9555FE31F",
+    "V3MigrateSwap": "",
     "WETH": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
   },
   "sepolia": {
@@ -61,6 +63,7 @@
     "SwapRouter": "0xa7069da6a7e600e0348620484fD2B1f24E075d5f",
     "TickLens": "0xA13E04fAEe08E784A44C27e9E77Ca7a02D45BFd7",
     "UniswapV3FactoryUpgradeable": "0xDD2dce9C403f93c10af1846543870D065419E70b",
+    "V3MigrateSwap": "0xd26b2BFBB6E8c1B3B849751549B20abf5E5fb125",
     "WETH": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
   },
   "goerli": {
@@ -82,6 +85,7 @@
     "SwapRouter": "0x2E77A788fc66c5312354aaE0df1dC1895ce556f8",
     "TickLens": "0x32A7703773cBc265cf79D49340F656837169FEcD",
     "UniswapV3FactoryUpgradeable": "0xf25081B098c5929A26F562aa2502795fE89BC73f",
+    "V3MigrateSwap": "",
     "WETH": "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
   }
 }
