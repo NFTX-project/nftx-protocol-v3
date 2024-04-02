@@ -20,6 +20,7 @@ const deploymentsList = [
   "SwapRouter",
   "TickLens",
   "UniswapV3FactoryUpgradeable",
+  "V3MigrateSwap",
 ];
 const deployConfigKeysList = [
   "nftxUniversalRouter",

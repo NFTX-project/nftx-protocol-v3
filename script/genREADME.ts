@@ -36,6 +36,7 @@ const contractURLs = {
   UniswapV3FactoryUpgradeable:
     "./src/uniswap/v3-core/UniswapV3FactoryUpgradeable.sol",
   UniswapV3Staker: "https://github.com/Uniswap/v3-staker",
+  V3MigrateSwap: "./src/V3MigrateSwap.sol",
   WETH: "https://vscode.blockscan.com/ethereum/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 };
 
