@@ -1,0 +1,11 @@
+swap.t.sol
+├── given the swap operation is paused
+│   └── given the caller is not the owner
+│       └── it should revert
+└── given the swap operation is not paused
+    ├── given the swap is not enabled for the vault token
+    │   └── it should revert
+    └── given the swap is enabled for the vault token
+        ├── it should pull v2 vTokens
+        ├── it should send back v3 vTokens
+        └── it should emit {Swapped} event
