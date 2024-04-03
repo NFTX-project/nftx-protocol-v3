@@ -141,6 +141,17 @@ const config: HardhatUserConfig = {
         },
       },
     },
+    base: {
+      url: process.env.BASE_RPC_URL!,
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
+      timeout: 600000,
+      verify: {
+        etherscan: {
+          apiKey: process.env.BASESCAN_API_KEY,
+          apiUrl: "https://api.basescan.org/",
+        },
+      },
+    },
   },
   mocha: {
     timeout: 200000,
