@@ -57,9 +57,7 @@ contract RescueAirdropTests is Test {
         }
         assertEq(address(rescueAidropFactory), NFTX_FACTORY);
 
-        for (uint256 i; i <= factoryNonce; ++i) {
-            rescueAidropFactory.deployNewProxy();
-        }
+        rescueAidropFactory.deployNewProxies(factoryNonce + 1);
 
         uint256 preMFERBalance = IERC20(MFER_AIRDROP_TOKEN).balanceOf(
             FACTORY_DEPLOYER
