@@ -10,10 +10,12 @@
     "deploy:sepolia": "hardhat deploy --network sepolia",
     "deploy:mainnet": "hardhat deploy --network mainnet",
     "deploy:arbitrum": "hardhat deploy --network arbitrum",
+    "deploy:base": "hardhat deploy --network base",
     "verify:goerli": "hardhat --network goerli etherscan-verify",
     "verify:sepolia": "hardhat --network sepolia etherscan-verify",
     "verify:mainnet": "hardhat --network mainnet etherscan-verify",
     "verify:arbitrum": "hardhat --network arbitrum etherscan-verify",
+    "verify:base": "hardhat --network base etherscan-verify",
     "gen:addresses": "ts-node ./script/genAddressesJson.ts",
     "gen:readme": "ts-node ./script/genREADME.ts",
     "gen:addresses-and-readme": "yarn gen:addresses && yarn gen:readme"
