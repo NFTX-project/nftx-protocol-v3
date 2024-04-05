@@ -4,7 +4,7 @@ pragma solidity =0.8.15;
 import {console} from "forge-std/Test.sol";
 import {TickHelpers} from "@src/lib/TickHelpers.sol";
 
-import {FailSafe} from "@src/FailSafe.sol";
+import {FailSafe} from "@src/periphery/FailSafe.sol";
 import {Pausable} from "@src/custom/Pausable.sol";
 
 import {TestBase} from "@test/TestBase.sol";

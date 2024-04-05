@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {V3MigrateSwap} from "@src/V3MigrateSwap.sol";
+import {V3MigrateSwap} from "@src/periphery/V3MigrateSwap.sol";
 import {PausableUpgradeable} from "@src/custom/PausableUpgradeable.sol";
 
 import {V3MigrateSwap_Unit_Test} from "../V3MigrateSwap.t.sol";

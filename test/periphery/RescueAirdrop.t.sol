@@ -3,8 +3,8 @@ pragma solidity =0.8.15;
 
 import {Test, console} from "forge-std/Test.sol";
 
-import {RescueAirdropFactory} from "@src/RescueAirdropFactory.sol";
-import {RescueAirdropUpgradeable} from "@src/RescueAirdropUpgradeable.sol";
+import {RescueAirdropFactory} from "@src/periphery/RescueAirdropFactory.sol";
+import {RescueAirdropUpgradeable} from "@src/periphery/RescueAirdropUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@mocks/MockERC20.sol";
 

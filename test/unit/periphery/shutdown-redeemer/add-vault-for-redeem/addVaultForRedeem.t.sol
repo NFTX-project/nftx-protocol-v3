@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {ShutdownRedeemerUpgradeable} from "@src/ShutdownRedeemerUpgradeable.sol";
+import {ShutdownRedeemerUpgradeable} from "@src/periphery/ShutdownRedeemerUpgradeable.sol";
 import {NFTXVaultUpgradeableV3} from "@src/NFTXVaultUpgradeableV3.sol";
 import {MockNFT} from "@mocks/MockNFT.sol";
 

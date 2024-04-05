@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {ShutdownRedeemerUpgradeable} from "@src/ShutdownRedeemerUpgradeable.sol";
+import {ShutdownRedeemerUpgradeable} from "@src/periphery/ShutdownRedeemerUpgradeable.sol";
 import {INFTXVaultFactoryV2} from "@src/v2/interfaces/INFTXVaultFactoryV2.sol";
 
 import {ShutdownRedeemer_Unit_Test} from "../ShutdownRedeemer.t.sol";

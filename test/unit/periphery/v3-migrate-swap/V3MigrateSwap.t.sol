@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {V3MigrateSwap} from "@src/V3MigrateSwap.sol";
+import {V3MigrateSwap} from "@src/periphery/V3MigrateSwap.sol";
 import {MockERC20} from "@mocks/MockERC20.sol";
 
 import {NewTestBase} from "@test/NewTestBase.sol";
