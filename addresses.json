@@ -44,6 +44,28 @@
     "V3MigrateSwap": "",
     "WETH": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
   },
+  "base": {
+    "CreateVaultZap": "0x2D77756C139ed3c25472Daf233F332E8F605Dd8E",
+    "DefaultProxyAdmin": "0x33b381E2e0c4adC1dbd388888e9A29079e5b6702",
+    "FailSafe": "0xb13907103606118D01D18c9Deb249B89F6c31545",
+    "MarketplaceUniversalRouterZap": "0x31cB832F661Cd90fc9Fca6fB70A39cA811a02aEd",
+    "MigratorZap": "",
+    "NFTXEligibilityManager": "0xcB62303a5Ecc5f9C5cF7B5AA967a25d9Bb2B4b08",
+    "NFTXFeeDistributorV3": "0xA64c2F3f965f055E51482bF0960Ebb5f2904BF68",
+    "NFTXInventoryStakingV3Upgradeable": "0x47D9ACEE6aa260C36F4368091bE92F0824876C72",
+    "NFTXRouter": "0x590F8679964D4dEfB54DCD307b2941B053eb1821",
+    "nftxUniversalRouter": "0x7c656F0691Db983ee78f68189c55C36d1862c901",
+    "NFTXVaultFactoryUpgradeableV3": "0x0D74B761eAB5cC7Cc0E4e625A2e2B8251A4915c6",
+    "NonfungiblePositionManager": "0x4f566a711901168804A74F252680d85C9246188e",
+    "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",
+    "QuoterV2": "0xFf40913CA69912212e00e93Ad4DD1480A7aeF13A",
+    "ShutdownRedeemerUpgradeable": "",
+    "SwapRouter": "0x27124948dcc9EbF3113681898FF217d3E4f56900",
+    "TickLens": "0x95Eaddd888c0063B392B771d11Db9704843df8bE",
+    "UniswapV3FactoryUpgradeable": "0x5FD88cD0034A0B2FC77E75Ea09b6e512511b0Eb9",
+    "V3MigrateSwap": "",
+    "WETH": "0x4200000000000000000000000000000000000006"
+  },
   "sepolia": {
     "CreateVaultZap": "0xD80b916470F8e79FD8d09874cb159CbB8D13d8da",
     "DefaultProxyAdmin": "0x36cBBb16F2FA71d4B773E9F4A11cF7FC53B13EfD",

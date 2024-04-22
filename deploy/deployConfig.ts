@@ -103,6 +103,18 @@ const config: {
     multisig: "0x3863A65CE278a240f9Aa2A4b4A48493bE59E6139",
     UniswapV3Staker: "0xd4E155135b7dFf66c9C3B34EcA4aE7d9555FE31F",
   },
+  base: {
+    ...commonConfig,
+    treasury: "0x92831A7CB08B7b86E71F61D86c94227bB0DfcD89",
+    multisig: "0x92831A7CB08B7b86E71F61D86c94227bB0DfcD89",
+    WETH: "0x4200000000000000000000000000000000000006",
+    REWARD_TIER_CARDINALITY: "602", // average block time = 2 seconds. Cardinality = (20mins * 60) / 2 = 600. then adding 2 extra blocks for good measures.
+    permit2: "0x000000000022d473030f116ddee9f6b43ac78ba3",
+    nftxUniversalRouter: "0x7c656F0691Db983ee78f68189c55C36d1862c901", // NOTE: update this if new UniswapV3Factory deployed.
+    v2VaultFactory: "",
+    v2Inventory: "",
+    sushiRouter: "",
+  },
 };
 
 export default config;

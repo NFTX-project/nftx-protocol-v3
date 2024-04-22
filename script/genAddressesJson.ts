@@ -29,7 +29,7 @@ const deployConfigKeysList = [
   "WETH",
 ];
 
-const chains = ["mainnet", "arbitrum", "sepolia", "goerli"];
+const chains = ["mainnet", "arbitrum", "base", "sepolia", "goerli"];
 
 const main = async () => {
   console.log("Generating addresses.json...");

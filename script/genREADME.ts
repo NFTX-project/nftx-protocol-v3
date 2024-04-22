@@ -8,6 +8,7 @@ const outputMarkdownFilePath = "./README.md";
 const baseExplorerURLs = {
   mainnet: "https://etherscan.io/address/",
   arbitrum: "https://arbiscan.io/address/",
+  base: "https://basescan.org/address/",
   sepolia: "https://sepolia.etherscan.io/address/",
   goerli: "https://goerli.etherscan.io/address/",
 };

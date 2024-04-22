@@ -1,0 +1,328 @@
+{
+  "address": "0xe01Cf5099e700c282A56E815ABd0C4948298Afae",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "NFTXEligibilityInit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "isEligible",
+          "type": "bool"
+        }
+      ],
+      "name": "UniqueEligibilitiesSet",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "__NFTXEligibility_init",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "_configData",
+          "type": "bytes"
+        }
+      ],
+      "name": "__NFTXEligibility_init_bytes",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "afterMintHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "afterRedeemHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "beforeMintHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "beforeRedeemHook",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "checkAllEligible",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "checkAllIneligible",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "checkEligible",
+      "outputs": [
+        {
+          "internalType": "bool[]",
+          "name": "",
+          "type": "bool[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "checkIsEligible",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "finalized",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "isUniqueEligible",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "name",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "targetAsset",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x31d293c5ba044ab59a574b85ba1d5f03dce21dc11aa016d748310dc6ec6856ee",
+  "receipt": {
+    "to": null,
+    "from": "0xDEA9196Dcdd2173D6E369c2AcC0faCc83fD9346a",
+    "contractAddress": "0xe01Cf5099e700c282A56E815ABd0C4948298Afae",
+    "transactionIndex": 35,
+    "gasUsed": "654167",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x16de7f4f5323648cb087ab7c092c4e82ae25e59e3a30ff671adb010cc4f8b010",
+    "transactionHash": "0x31d293c5ba044ab59a574b85ba1d5f03dce21dc11aa016d748310dc6ec6856ee",
+    "logs": [],
+    "blockNumber": 13482445,
+    "cumulativeGasUsed": "7307930",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "28cfca9f7b5d9e5cb55aef2a8f8b4710",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"NFTXEligibilityInit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"isEligible\",\"type\":\"bool\"}],\"name\":\"UniqueEligibilitiesSet\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"__NFTXEligibility_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_configData\",\"type\":\"bytes\"}],\"name\":\"__NFTXEligibility_init_bytes\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"afterMintHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"afterRedeemHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"beforeMintHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"beforeRedeemHook\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"checkAllEligible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"checkAllIneligible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"checkEligible\",\"outputs\":[{\"internalType\":\"bool[]\",\"name\":\"\",\"type\":\"bool[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"checkIsEligible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"finalized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"isUniqueEligible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetAsset\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/v2/eligibility/NFTXListEligibility.sol\":\"NFTXListEligibility\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"none\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":800},\"remappings\":[\":@mocks/=src/mocks/\",\":@openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@permit2/=lib/permit2/src/\",\":@src/=src/\",\":@test/=test/\",\":@uni-core/=src/uniswap/v3-core/\",\":@uni-periphery/=src/uniswap/v3-periphery/\",\":@uniswap/lib/=lib/solidity-lib/\",\":@uniswap/v2-core/=lib/v2-core/\",\":@uniswap/v3-core/contracts/=src/uniswap/v3-core/\",\":base64-sol/=src/uniswap/v3-periphery/libraries/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-gas-snapshot/=lib/permit2/lib/forge-gas-snapshot/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":permit2/=lib/permit2/\",\":solidity-lib/=lib/solidity-lib/contracts/\",\":solmate/=lib/permit2/lib/solmate/\",\":v2-core/=lib/v2-core/contracts/\"]},\"sources\":{\"src/interfaces/INFTXEligibility.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\ninterface INFTXEligibility {\\n    // Read functions.\\n    function name() external pure returns (string memory);\\n\\n    function finalized() external view returns (bool);\\n\\n    function targetAsset() external pure returns (address);\\n\\n    function checkAllEligible(uint256[] calldata tokenIds)\\n        external\\n        view\\n        returns (bool);\\n\\n    function checkEligible(uint256[] calldata tokenIds)\\n        external\\n        view\\n        returns (bool[] memory);\\n\\n    function checkAllIneligible(uint256[] calldata tokenIds)\\n        external\\n        view\\n        returns (bool);\\n\\n    function checkIsEligible(uint256 tokenId) external view returns (bool);\\n\\n    // Write functions.\\n    function __NFTXEligibility_init_bytes(bytes calldata configData) external;\\n\\n    function beforeMintHook(uint256[] calldata tokenIds) external;\\n\\n    function afterMintHook(uint256[] calldata tokenIds) external;\\n\\n    function beforeRedeemHook(uint256[] calldata tokenIds) external;\\n\\n    function afterRedeemHook(uint256[] calldata tokenIds) external;\\n}\\n\",\"keccak256\":\"0xd932fdc4ea04b9d685f094b4405e64da8f3ab46cd701b22223f2a28d42973c70\",\"license\":\"MIT\"},\"src/v2/custom/Initializable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\n// solhint-disable-next-line compiler-version\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed\\n * behind a proxy. Since a proxied contract can't have a constructor, it's common to move constructor logic to an\\n * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer\\n * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.\\n *\\n * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as\\n * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.\\n *\\n * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure\\n * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.\\n */\\nabstract contract Initializable {\\n    /**\\n     * @dev Indicates that the contract has been initialized.\\n     */\\n    bool private _initialized;\\n\\n    /**\\n     * @dev Indicates that the contract is in the process of being initialized.\\n     */\\n    bool private _initializing;\\n\\n    /**\\n     * @dev Modifier to protect an initializer function from being invoked twice.\\n     */\\n    modifier initializer() {\\n        require(\\n            _initializing || !_initialized,\\n            \\\"Initializable: contract is already initialized\\\"\\n        );\\n\\n        bool isTopLevelCall = !_initializing;\\n        if (isTopLevelCall) {\\n            _initializing = true;\\n            _initialized = true;\\n        }\\n\\n        _;\\n\\n        if (isTopLevelCall) {\\n            _initializing = false;\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x04ad3c77a6a5006b66f1642cc3353b8009215d734eb80f069ed42a6c09460391\",\"license\":\"MIT\"},\"src/v2/eligibility/NFTXEligibility.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\nimport {Initializable} from \\\"@src/v2/custom/Initializable.sol\\\";\\nimport {INFTXEligibility} from \\\"@src/interfaces/INFTXEligibility.sol\\\";\\n\\n// This is a contract meant to be inherited and overriden to implement eligibility modules.\\nabstract contract NFTXEligibility is INFTXEligibility, Initializable {\\n    function name() public pure virtual override returns (string memory);\\n\\n    function finalized() public view virtual override returns (bool);\\n\\n    function targetAsset() public pure virtual override returns (address);\\n\\n    function __NFTXEligibility_init_bytes(\\n        bytes memory initData\\n    ) public virtual override;\\n\\n    function checkIsEligible(\\n        uint256 tokenId\\n    ) external view virtual override returns (bool) {\\n        return _checkIfEligible(tokenId);\\n    }\\n\\n    function checkEligible(\\n        uint256[] calldata tokenIds\\n    ) external view virtual override returns (bool[] memory) {\\n        uint256 length = tokenIds.length;\\n        bool[] memory eligibile = new bool[](length);\\n        for (uint256 i; i < length; i++) {\\n            eligibile[i] = _checkIfEligible(tokenIds[i]);\\n        }\\n        return eligibile;\\n    }\\n\\n    function checkAllEligible(\\n        uint256[] calldata tokenIds\\n    ) external view virtual override returns (bool) {\\n        uint256 length = tokenIds.length;\\n        for (uint256 i; i < length; i++) {\\n            // If any are not eligible, end the loop and return false.\\n            if (!_checkIfEligible(tokenIds[i])) {\\n                return false;\\n            }\\n        }\\n        return true;\\n    }\\n\\n    // Checks if all provided NFTs are NOT eligible. This is needed for mint requesting where all NFTs\\n    // provided must be ineligible.\\n    function checkAllIneligible(\\n        uint256[] calldata tokenIds\\n    ) external view virtual override returns (bool) {\\n        uint256 length = tokenIds.length;\\n        for (uint256 i; i < length; i++) {\\n            // If any are eligible, end the loop and return false.\\n            if (_checkIfEligible(tokenIds[i])) {\\n                return false;\\n            }\\n        }\\n        return true;\\n    }\\n\\n    function beforeMintHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    function afterMintHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    function beforeRedeemHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    function afterRedeemHook(\\n        uint256[] calldata tokenIds\\n    ) external virtual override {}\\n\\n    // Override this to implement your module!\\n    function _checkIfEligible(\\n        uint256 _tokenId\\n    ) internal view virtual returns (bool);\\n}\\n\",\"keccak256\":\"0x5e2035010be51cdd6af1639a464516da51d7521b1a78583fbb501ca6e72ca490\",\"license\":\"MIT\"},\"src/v2/eligibility/NFTXListEligibility.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"./UniqueEligibility.sol\\\";\\nimport \\\"./NFTXEligibility.sol\\\";\\n\\ncontract NFTXListEligibility is NFTXEligibility, UniqueEligibility {\\n    function name() public pure virtual override returns (string memory) {\\n        return \\\"List\\\";\\n    }\\n\\n    function finalized() public view virtual override returns (bool) {\\n        return true;\\n    }\\n\\n    function targetAsset() public pure virtual override returns (address) {\\n        return address(0);\\n    }\\n\\n    struct Config {\\n        uint256[] tokenIds;\\n    }\\n\\n    event NFTXEligibilityInit(uint256[] tokenIds);\\n\\n    function __NFTXEligibility_init_bytes(\\n        bytes memory _configData\\n    ) public virtual override initializer {\\n        uint256[] memory _ids = abi.decode(_configData, (uint256[]));\\n        __NFTXEligibility_init(_ids);\\n    }\\n\\n    function __NFTXEligibility_init(\\n        uint256[] memory tokenIds\\n    ) public initializer {\\n        _setUniqueEligibilities(tokenIds, true);\\n        emit NFTXEligibilityInit(tokenIds);\\n    }\\n\\n    function _checkIfEligible(\\n        uint256 _tokenId\\n    ) internal view virtual override returns (bool) {\\n        return isUniqueEligible(_tokenId);\\n    }\\n}\\n\",\"keccak256\":\"0x27b68bc00bda25da343d8ee56fa14ce885b98f28d53b6d5ba3bd36ec2f9c6ed8\",\"license\":\"MIT\"},\"src/v2/eligibility/UniqueEligibility.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\ncontract UniqueEligibility {\\n    mapping(uint256 => uint256) eligibleBitMap;\\n\\n    event UniqueEligibilitiesSet(uint256[] tokenIds, bool isEligible);\\n\\n    function isUniqueEligible(\\n        uint256 tokenId\\n    ) public view virtual returns (bool) {\\n        uint256 wordIndex = tokenId / 256;\\n        uint256 bitMap = eligibleBitMap[wordIndex];\\n        return _getBit(bitMap, tokenId);\\n    }\\n\\n    function _setUniqueEligibilities(\\n        uint256[] memory tokenIds,\\n        bool _isEligible\\n    ) internal virtual {\\n        uint256 cachedWord = eligibleBitMap[0];\\n        uint256 cachedIndex = 0;\\n        for (uint256 i; i < tokenIds.length; i++) {\\n            uint256 tokenId = tokenIds[i];\\n            uint256 eligibilityWordIndex = tokenId / 256;\\n            if (eligibilityWordIndex != cachedIndex) {\\n                // Save the cached word.\\n                eligibleBitMap[cachedIndex] = cachedWord;\\n                // Cache the new one.\\n                cachedWord = eligibleBitMap[eligibilityWordIndex];\\n                cachedIndex = eligibilityWordIndex;\\n            }\\n            // Modify the cached word.\\n            cachedWord = _setBit(cachedWord, tokenId, _isEligible);\\n        }\\n        // Assign the last word since the loop is done.\\n        eligibleBitMap[cachedIndex] = cachedWord;\\n        emit UniqueEligibilitiesSet(tokenIds, _isEligible);\\n    }\\n\\n    function _setBit(\\n        uint256 bitMap,\\n        uint256 index,\\n        bool eligible\\n    ) internal pure returns (uint256) {\\n        uint256 claimedBitIndex = index % 256;\\n        if (eligible) {\\n            return bitMap | (1 << claimedBitIndex);\\n        } else {\\n            return bitMap & ~(1 << claimedBitIndex);\\n        }\\n    }\\n\\n    function _getBit(\\n        uint256 bitMap,\\n        uint256 index\\n    ) internal pure returns (bool) {\\n        uint256 claimedBitIndex = index % 256;\\n        return uint8((bitMap >> claimedBitIndex) & 1) == 1;\\n    }\\n}\\n\",\"keccak256\":\"0x5fc972c4dc5a8982b73491057d80f039900179b71ecf07e69c6a7a66be1a789f\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610adf806100206000396000f3fe608060405234801561001057600080fd5b50600436106100ea5760003560e01c80636cd912601161008c578063bd8affde11610066578063bd8affde1461011e578063ca373f28146101b1578063d2a096e8146101c4578063facf895f146101d757600080fd5b80636cd912601461017757806384ca9f8514610197578063b3f05b97146101aa57600080fd5b80633d4403ac116100c85780633d4403ac146101555780634998b7f3146101645780635e2f9b521461011e5780636c47d5951461011e57600080fd5b806306fdde03146100ef57806336eb08621461011e5780633942cf3614610132575b600080fd5b6040805180820182526004815263131a5cdd60e21b6020820152905161011591906106a0565b60405180910390f35b61013061012c3660046106f5565b5050565b005b61014561014036600461076a565b6101ea565b6040519015158152602001610115565b60405160008152602001610115565b6101306101723660046107ca565b61021d565b61018a6101853660046106f5565b6102f7565b604051610115919061085f565b6101456101a53660046106f5565b6103ac565b6001610145565b6101456101bf3660046106f5565b6103fa565b6101456101d236600461076a565b61043e565b6101306101e53660046108c9565b610449565b6000806101f961010084610975565b600081815260016020526040902054909150610215818561053e565b949350505050565b600054610100900460ff1680610236575060005460ff16155b61029e5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b60648201526084015b60405180910390fd5b600054610100900460ff161580156102c0576000805461ffff19166101011790555b6000828060200190518101906102d69190610989565b90506102e181610449565b50801561012c576000805461ff00191690555050565b60608160008167ffffffffffffffff81111561031557610315610783565b60405190808252806020026020018201604052801561033e578160200160208202803683370190505b50905060005b828110156103a15761036d86868381811061036157610361610a0f565b9050602002013561055e565b82828151811061037f5761037f610a0f565b911515602092830291909101909101528061039981610a25565b915050610344565b509150505b92915050565b600081815b818110156103ef576103ce85858381811061036157610361610a0f565b6103dd576000925050506103a6565b806103e781610a25565b9150506103b1565b506001949350505050565b600081815b818110156103ef5761041c85858381811061036157610361610a0f565b1561042c576000925050506103a6565b8061043681610a25565b9150506103ff565b60006103a68261055e565b600054610100900460ff1680610462575060005460ff16155b6104c55760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152608401610295565b600054610100900460ff161580156104e7576000805461ffff19166101011790555b6104f2826001610569565b7f57c1f3c63f373f6f173119ab80d232a4a8ca7449a0bdb2f33f6188847539e745826040516105219190610a87565b60405180910390a1801561012c576000805461ff00191690555050565b60008061054d61010084610a9a565b9390931c6001908116149392505050565b60006103a6826101ea565b600080805260016020527fa6eef7e35abe7026729641147f7915573c7e97b47efa546f5f6e3230263bcb495490805b84518110156106195760008582815181106105b5576105b5610a0f565b602002602001015190506000610100826105cf9190610975565b90508381146105f7576000938452600160205260408085209590955580845293909220549291825b61060285838861066b565b94505050808061061190610a25565b915050610598565b5060008181526001602052604090819020839055517ffacde3821ab1224682dd0ab6a805f71860b6ca6982ad044c8c4927ea4c6f14019061065d9086908690610aae565b60405180910390a150505050565b60008061067a61010085610a9a565b9050821561068f576001901b84179050610699565b6001901b19841690505b9392505050565b600060208083528351808285015260005b818110156106cd578581018301518582016040015282016106b1565b818111156106df576000604083870101525b50601f01601f1916929092016040019392505050565b6000806020838503121561070857600080fd5b823567ffffffffffffffff8082111561072057600080fd5b818501915085601f83011261073457600080fd5b81358181111561074357600080fd5b8660208260051b850101111561075857600080fd5b60209290920196919550909350505050565b60006020828403121561077c57600080fd5b5035919050565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff811182821017156107c2576107c2610783565b604052919050565b600060208083850312156107dd57600080fd5b823567ffffffffffffffff808211156107f557600080fd5b818501915085601f83011261080957600080fd5b81358181111561081b5761081b610783565b61082d601f8201601f19168501610799565b9150808252868482850101111561084357600080fd5b8084840185840137600090820190930192909252509392505050565b6020808252825182820181905260009190848201906040850190845b8181101561089957835115158352928401929184019160010161087b565b50909695505050505050565b600067ffffffffffffffff8211156108bf576108bf610783565b5060051b60200190565b600060208083850312156108dc57600080fd5b823567ffffffffffffffff8111156108f357600080fd5b8301601f8101851361090457600080fd5b8035610917610912826108a5565b610799565b81815260059190911b8201830190838101908783111561093657600080fd5b928401925b828410156109545783358252928401929084019061093b565b979650505050505050565b634e487b7160e01b600052601260045260246000fd5b6000826109845761098461095f565b500490565b6000602080838503121561099c57600080fd5b825167ffffffffffffffff8111156109b357600080fd5b8301601f810185136109c457600080fd5b80516109d2610912826108a5565b81815260059190911b820183019083810190878311156109f157600080fd5b928401925b82841015610954578351825292840192908401906109f6565b634e487b7160e01b600052603260045260246000fd5b600060018201610a4557634e487b7160e01b600052601160045260246000fd5b5060010190565b600081518084526020808501945080840160005b83811015610a7c57815187529582019590820190600101610a60565b509495945050505050565b6020815260006106996020830184610a4c565b600082610aa957610aa961095f565b500690565b604081526000610ac16040830185610a4c565b90508215156020830152939250505056fea164736f6c634300080f000a",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100ea5760003560e01c80636cd912601161008c578063bd8affde11610066578063bd8affde1461011e578063ca373f28146101b1578063d2a096e8146101c4578063facf895f146101d757600080fd5b80636cd912601461017757806384ca9f8514610197578063b3f05b97146101aa57600080fd5b80633d4403ac116100c85780633d4403ac146101555780634998b7f3146101645780635e2f9b521461011e5780636c47d5951461011e57600080fd5b806306fdde03146100ef57806336eb08621461011e5780633942cf3614610132575b600080fd5b6040805180820182526004815263131a5cdd60e21b6020820152905161011591906106a0565b60405180910390f35b61013061012c3660046106f5565b5050565b005b61014561014036600461076a565b6101ea565b6040519015158152602001610115565b60405160008152602001610115565b6101306101723660046107ca565b61021d565b61018a6101853660046106f5565b6102f7565b604051610115919061085f565b6101456101a53660046106f5565b6103ac565b6001610145565b6101456101bf3660046106f5565b6103fa565b6101456101d236600461076a565b61043e565b6101306101e53660046108c9565b610449565b6000806101f961010084610975565b600081815260016020526040902054909150610215818561053e565b949350505050565b600054610100900460ff1680610236575060005460ff16155b61029e5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b60648201526084015b60405180910390fd5b600054610100900460ff161580156102c0576000805461ffff19166101011790555b6000828060200190518101906102d69190610989565b90506102e181610449565b50801561012c576000805461ff00191690555050565b60608160008167ffffffffffffffff81111561031557610315610783565b60405190808252806020026020018201604052801561033e578160200160208202803683370190505b50905060005b828110156103a15761036d86868381811061036157610361610a0f565b9050602002013561055e565b82828151811061037f5761037f610a0f565b911515602092830291909101909101528061039981610a25565b915050610344565b509150505b92915050565b600081815b818110156103ef576103ce85858381811061036157610361610a0f565b6103dd576000925050506103a6565b806103e781610a25565b9150506103b1565b506001949350505050565b600081815b818110156103ef5761041c85858381811061036157610361610a0f565b1561042c576000925050506103a6565b8061043681610a25565b9150506103ff565b60006103a68261055e565b600054610100900460ff1680610462575060005460ff16155b6104c55760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152608401610295565b600054610100900460ff161580156104e7576000805461ffff19166101011790555b6104f2826001610569565b7f57c1f3c63f373f6f173119ab80d232a4a8ca7449a0bdb2f33f6188847539e745826040516105219190610a87565b60405180910390a1801561012c576000805461ff00191690555050565b60008061054d61010084610a9a565b9390931c6001908116149392505050565b60006103a6826101ea565b600080805260016020527fa6eef7e35abe7026729641147f7915573c7e97b47efa546f5f6e3230263bcb495490805b84518110156106195760008582815181106105b5576105b5610a0f565b602002602001015190506000610100826105cf9190610975565b90508381146105f7576000938452600160205260408085209590955580845293909220549291825b61060285838861066b565b94505050808061061190610a25565b915050610598565b5060008181526001602052604090819020839055517ffacde3821ab1224682dd0ab6a805f71860b6ca6982ad044c8c4927ea4c6f14019061065d9086908690610aae565b60405180910390a150505050565b60008061067a61010085610a9a565b9050821561068f576001901b84179050610699565b6001901b19841690505b9392505050565b600060208083528351808285015260005b818110156106cd578581018301518582016040015282016106b1565b818111156106df576000604083870101525b50601f01601f1916929092016040019392505050565b6000806020838503121561070857600080fd5b823567ffffffffffffffff8082111561072057600080fd5b818501915085601f83011261073457600080fd5b81358181111561074357600080fd5b8660208260051b850101111561075857600080fd5b60209290920196919550909350505050565b60006020828403121561077c57600080fd5b5035919050565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff811182821017156107c2576107c2610783565b604052919050565b600060208083850312156107dd57600080fd5b823567ffffffffffffffff808211156107f557600080fd5b818501915085601f83011261080957600080fd5b81358181111561081b5761081b610783565b61082d601f8201601f19168501610799565b9150808252868482850101111561084357600080fd5b8084840185840137600090820190930192909252509392505050565b6020808252825182820181905260009190848201906040850190845b8181101561089957835115158352928401929184019160010161087b565b50909695505050505050565b600067ffffffffffffffff8211156108bf576108bf610783565b5060051b60200190565b600060208083850312156108dc57600080fd5b823567ffffffffffffffff8111156108f357600080fd5b8301601f8101851361090457600080fd5b8035610917610912826108a5565b610799565b81815260059190911b8201830190838101908783111561093657600080fd5b928401925b828410156109545783358252928401929084019061093b565b979650505050505050565b634e487b7160e01b600052601260045260246000fd5b6000826109845761098461095f565b500490565b6000602080838503121561099c57600080fd5b825167ffffffffffffffff8111156109b357600080fd5b8301601f810185136109c457600080fd5b80516109d2610912826108a5565b81815260059190911b820183019083810190878311156109f157600080fd5b928401925b82841015610954578351825292840192908401906109f6565b634e487b7160e01b600052603260045260246000fd5b600060018201610a4557634e487b7160e01b600052601160045260246000fd5b5060010190565b600081518084526020808501945080840160005b83811015610a7c57815187529582019590820190600101610a60565b509495945050505050565b6020815260006106996020830184610a4c565b600082610aa957610aa961095f565b500690565b604081526000610ac16040830185610a4c565b90508215156020830152939250505056fea164736f6c634300080f000a",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 29223,
+        "contract": "src/v2/eligibility/NFTXListEligibility.sol:NFTXListEligibility",
+        "label": "_initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 29226,
+        "contract": "src/v2/eligibility/NFTXListEligibility.sol:NFTXListEligibility",
+        "label": "_initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 30458,
+        "contract": "src/v2/eligibility/NFTXListEligibility.sol:NFTXListEligibility",
+        "label": "eligibleBitMap",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_mapping(t_uint256,t_uint256)"
+      }
+    ],
+    "types": {
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_mapping(t_uint256,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}
