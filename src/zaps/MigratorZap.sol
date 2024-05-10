@@ -385,19 +385,37 @@ contract MigratorZap is Ownable {
         )
     {
         vTokenV3 = v3NFTXFactory.vault(vaultIdV3);
+        address assetAddress = INFTXVaultV3(vTokenV3).assetAddress();
+        bool isCryptoPunk = (assetAddress == TransferLib.CRYPTO_PUNKS);
 
         // random redeem v2 vTokens. Directly transferring to the v3 vault
-        uint256[] memory idsToRedeem;
+        uint256[] memory emptyArray;
         uint256[] memory idsRedeemed = INFTXVaultV2(vTokenV2).redeemTo(
             vTokenV2Balance / 1 ether,
-            idsToRedeem,
-            is1155 ? address(this) : vTokenV3
+            emptyArray,
+            is1155 ? address(this) : (isCryptoPunk ? address(this) : vTokenV3)
         );
+        if (isCryptoPunk) {
+            for (uint256 i; i < idsRedeemed.length; ) {
+                // from TransferLib._approveCryptoPunkERC721()
+                bytes memory data = abi.encodeWithSignature(
+                    "offerPunkForSaleToAddress(uint256,uint256,address)",
+                    idsRedeemed[i],
+                    0,
+                    vTokenV3 // to = v3 vault address
+                );
+                (bool success, bytes memory resultData) = TransferLib
+                    .CRYPTO_PUNKS
+                    .call(data);
+                require(success, string(resultData));
+
+                unchecked {
+                    ++i;
+                }
+            }
+        }
         if (is1155) {
-            IERC1155(INFTXVaultV3(vTokenV3).assetAddress()).setApprovalForAll(
-                vTokenV3,
-                true
-            );
+            IERC1155(assetAddress).setApprovalForAll(vTokenV3, true);
         }
 
         // fractional portion of vToken would be left
