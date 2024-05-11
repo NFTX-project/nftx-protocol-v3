@@ -39,7 +39,8 @@ contract RescueAirdropTests is Test {
         token.transfer(MFER_VAULT, airdropAmount);
     }
 
-    function test_claim_MFER() public {
+    // mainnet state changed now, so test no longer valid
+    function no_test_claim_MFER() public {
         // send some ETH to the deployer
         vm.deal(FACTORY_DEPLOYER, 10 ether);
         vm.startPrank(FACTORY_DEPLOYER);
