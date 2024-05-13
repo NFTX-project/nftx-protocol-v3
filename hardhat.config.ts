@@ -116,22 +116,39 @@ const config: HardhatUserConfig = {
       ],
     },
     goerli: {
-      url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_GOERLI_API_KEY}`,
+      url: process.env.GOERLI_RPC_URL!,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
+      timeout: 60000,
+    },
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL!,
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
+      timeout: 600000,
     },
     mainnet: {
-      url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_MAINNET_API_KEY}`,
+      url: process.env.MAINNET_RPC_URL!,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
-      timeout: 60000,
+      timeout: 600000,
     },
     arbitrum: {
-      url: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_ARBITRUM_API_KEY}`,
+      url: process.env.ARBITRUM_RPC_URL!,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
-      timeout: 60000,
+      timeout: 600000,
       verify: {
         etherscan: {
           apiKey: process.env.ARBISCAN_API_KEY,
           apiUrl: "https://api.arbiscan.io/",
+        },
+      },
+    },
+    base: {
+      url: process.env.BASE_RPC_URL!,
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
+      timeout: 600000,
+      verify: {
+        etherscan: {
+          apiKey: process.env.BASESCAN_API_KEY,
+          apiUrl: "https://api.basescan.org/",
         },
       },
     },

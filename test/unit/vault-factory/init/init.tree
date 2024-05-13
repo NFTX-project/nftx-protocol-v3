@@ -1,0 +1,23 @@
+init.t.sol
+├── given the contract is initialized
+│   └── it should revert
+└── given the contract is not initialized
+    ├── when the vault implementation is not a contract
+    │   └── it should revert
+    └── when the vault implementation is a contract
+        ├── when the twap interval is zero
+        │   └── it should revert
+        └── when the twap interval is greater than zero
+            ├── when the depositor premium share is greater than max depositor premium share
+            │   └── it should revert
+            └── when the depositor premium share is less than or equal to max depositor premium share
+                ├── it should set the contract as initialized
+                ├── it should set the owner
+                ├── it should set the vault implementation
+                ├── it should set the factory mint fee
+                ├── it should set the factory redeem fee
+                ├── it should set the factory swap fee
+                ├── it should set the twap interval
+                ├── it should set the premium duration
+                ├── it should set the premium max
+                └── it should set the depositor premium share

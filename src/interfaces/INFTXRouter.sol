@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity =0.8.15;
+pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -50,7 +50,8 @@ interface INFTXRouter {
         uint256 vaultId,
         uint256 vTokensAmount,
         uint256[] nftIds,
-        address pool
+        address pool,
+        address recipient
     );
 
     event RemoveLiquidity(
@@ -109,6 +110,8 @@ interface INFTXRouter {
         uint256 deadline;
         // Forcefully apply timelock to the position
         bool forceTimelock;
+        // Recipient address that receives the LP NFT
+        address recipient;
     }
 
     /**

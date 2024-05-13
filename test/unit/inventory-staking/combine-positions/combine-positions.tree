@@ -1,0 +1,29 @@
+combinePositions.t.sol
+├── when the caller is not the owner of the parent position
+│   └── it should revert
+└── when the caller is the owner of the parent position
+    ├── given the parent position is timelocked
+    │   └── it should revert
+    ├── given the parent position is vtoken timelocked
+    │   └── it should revert
+    └── given the parent position is not timelocked or vtoken timelocked
+        ├── when the caller is not the owner of the child position
+        │   └── it should revert
+        └── when the caller is the owner of the child position
+            ├── given the child position is timelocked
+            │   └── it should revert
+            ├── given the child position is vtoken timelocked
+            │   └── it should revert
+            └── given the child position is not timelocked or vtoken timelocked
+                ├── given the child and parent position's vault ids mismatch
+                │   └── it should revert
+                └── given the child and parent position's vault ids match
+                    ├── when the child and parent positions are the same
+                    │   └── it should revert
+                    └── when the child and parent positions are different
+                        ├── it should set the vtoken share balance of children positions to zero
+                        ├── it should set the weth owed of children positions to zero
+                        ├── it should increase the parent position's vtoken share balance by the sum of the children positions' vtoken share balances
+                        ├── it should increase the parent position's weth owed by the sum of the children positions' weth owed
+                        ├── it should set the parent position weth fees per vtoken shares snapshot to the current global value
+                        └── it should emit {CombinePositions} event

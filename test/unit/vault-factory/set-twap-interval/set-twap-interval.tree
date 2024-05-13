@@ -1,0 +1,9 @@
+setTwapInterval.t.sol
+├── when the caller is not the owner
+│   └── it should revert
+└── when the caller is the owner
+    ├── when the twap interval is zero
+    │   └── it should revert
+    └── when the twap interval is greater than zero
+        ├── it should set the twap interval
+        └── it should emit {NewTwapInterval} event

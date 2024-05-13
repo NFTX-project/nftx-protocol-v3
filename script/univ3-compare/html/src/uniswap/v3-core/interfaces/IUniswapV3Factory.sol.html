@@ -296,10 +296,10 @@ span { display: inline-block; }
 <body class="f9 b9">
 <pre>
 <span class="bold">diff --git a/src/uniswap/v3-core/interfaces/IUniswapV3Factory.sol b/src/uniswap/v3-core/interfaces/IUniswapV3Factory.sol
-index 540cfdc..e905d2e 100644</span>
+index 540cfdc..22b0d29 100644</span>
 <span class="bold">--- a/src/uniswap/v3-core/interfaces/IUniswapV3Factory.sol</span>
 <span class="bold">+++ b/src/uniswap/v3-core/interfaces/IUniswapV3Factory.sol</span>
-<span class="f6">@@ -1,78 +1,77 @@</span>
+<span class="f6">@@ -1,78 +1,79 @@</span>
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity &gt;=0.5.0;
  
@@ -330,6 +330,8 @@ index 540cfdc..e905d2e 100644</span>
      /// @param tickSpacing The minimum number of ticks between initialized ticks for pools created with the given fee
      event FeeAmountEnabled(uint24 indexed fee, int24 indexed tickSpacing);
  
+<span class="f2">+    error InvalidRewardTierCardinality();</span>
+<span class="f2">+</span>
      /// @notice Returns the current owner of the factory
      /// @dev Can be changed by the current owner via setOwner
      /// @return The address of the factory owner

@@ -1,0 +1,10 @@
+finalizeVault.t.sol
+├── given the vault is not finalized
+│   ├── when the caller is not the manager
+│   │   └── it should revert
+│   └── when the caller is the manager
+│       ├── it should set the manager to zero address
+│       └── it should emit the {ManagerSet} event
+└── given the vault is finalized
+    └── when the caller is not the owner
+        └── it should revert

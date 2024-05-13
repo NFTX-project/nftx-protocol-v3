@@ -1,0 +1,5 @@
+vaultFees.t.sol
+├── given the custom vault fee is not set
+│   └── it should return the factory mint, redeem and swap fees
+└── given the custom vault fee is set
+    └── it should return the custom vault mint, redeem and swap fees

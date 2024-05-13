@@ -501,6 +501,16 @@ contract MarketplaceUniversalRouterZap is Ownable, ERC721Holder, ERC1155Holder {
         emit NewDustThreshold(dustThreshold_);
     }
 
+    function rescueTokens(IERC20 token) external onlyOwner {
+        if (address(token) != address(0)) {
+            uint256 balance = token.balanceOf(address(this));
+            token.safeTransfer(msg.sender, balance);
+        } else {
+            uint256 balance = address(this).balance;
+            TransferLib.transferETH(msg.sender, balance);
+        }
+    }
+
     // =============================================================
     //                      INTERNAL / PRIVATE
     // =============================================================

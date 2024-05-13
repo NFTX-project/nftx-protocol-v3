@@ -10,9 +10,10 @@ import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
 import {ExponentialPremium} from "@src/lib/ExponentialPremium.sol";
+import {Create2Upgradeable} from "@openzeppelin-upgradeable/contracts/utils/Create2Upgradeable.sol";
 
 // contracts
-import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import {Create2BeaconProxy} from "@src/custom/proxy/Create2BeaconProxy.sol";
 import {NFTXVaultUpgradeableV3} from "@src/NFTXVaultUpgradeableV3.sol";
 
 // interfaces
@@ -33,6 +34,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
     //                            CONSTANTS
     // =============================================================
     uint256 constant MAX_DEPOSITOR_PREMIUM_SHARE = 1 ether;
+    bytes internal constant BEACON_CODE = type(Create2BeaconProxy).creationCode;
 
     // =============================================================
     //                            VARIABLES
@@ -320,7 +322,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
         view
         override
         returns (
-            uint256 netPremium,
+            uint256 totalPremium,
             uint256[] memory premiums,
             address[] memory depositors
         )
@@ -350,13 +352,13 @@ contract NFTXVaultFactoryUpgradeableV3 is
                 (uint256 qty, address depositor, uint48 timestamp) = _vault
                     .depositInfo1155(tokenId, _pointerIndex1155 + i);
 
-                if (qty > amount) {
+                if (qty >= amount) {
                     uint256 vTokenPremium = _getVTokenPremium(
                         timestamp,
                         _premiumMax,
                         _premiumDuration
                     ) * amount;
-                    netPremium += vTokenPremium;
+                    totalPremium += vTokenPremium;
 
                     premiums[i] = vTokenPremium;
                     depositors[i] = depositor;
@@ -371,7 +373,7 @@ contract NFTXVaultFactoryUpgradeableV3 is
                         _premiumMax,
                         _premiumDuration
                     ) * qty;
-                    netPremium += vTokenPremium;
+                    totalPremium += vTokenPremium;
 
                     premiums[i] = vTokenPremium;
                     depositors[i] = depositor;
@@ -429,6 +431,21 @@ contract NFTXVaultFactoryUpgradeableV3 is
      */
     function vault(uint256 vaultId) external view override returns (address) {
         return _vaults[vaultId];
+    }
+
+    /**
+     * @inheritdoc INFTXVaultFactoryV3
+     */
+    function computeVaultAddress(
+        address assetAddress,
+        string memory name,
+        string memory symbol
+    ) external view returns (address) {
+        return
+            Create2Upgradeable.computeAddress(
+                keccak256(abi.encode(assetAddress, name, symbol)),
+                keccak256(BEACON_CODE)
+            );
     }
 
     /**
@@ -511,7 +528,11 @@ contract NFTXVaultFactoryUpgradeableV3 is
         bool is1155,
         bool allowAllItems
     ) internal returns (address) {
-        address newBeaconProxy = address(new BeaconProxy(address(this), ""));
+        address newBeaconProxy = Create2Upgradeable.deploy(
+            0,
+            keccak256(abi.encode(assetAddress, name, symbol)),
+            BEACON_CODE
+        );
         NFTXVaultUpgradeableV3(newBeaconProxy).__NFTXVault_init(
             name,
             symbol,

@@ -1,0 +1,6 @@
+disableVaultFees.t.sol
+├── when the caller is not the owner or the vault contract
+│   └── it should revert
+└── when the caller is the owner or the vault contract
+    ├── it should reset the vault mint, redeem and swap fees to the factory default
+    └── it should emit {DisableVaultFees} event

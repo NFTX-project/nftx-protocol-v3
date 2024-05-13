@@ -1,0 +1,17 @@
+setVaultFees.t.sol
+├── when the caller is not the owner or the vault contract
+│   └── it should revert
+└── when the caller is the owner or the vault contract
+    ├── when the mint fee is greater than the limit
+    │   └── it should revert
+    └── when the mint fee is less than or equal to the limit
+        ├── when the redeem fee is greater than the limit
+        │   └── it should revert
+        └── when the redeem fee is less than or equal to the limit
+            ├── when the swap fee is greater than the limit
+            │   └── it should revert
+            └── when the swap fee is less than or equal to the limit
+                ├── it should set the vault mint fee
+                ├── it should set the vault redeem fee
+                ├── it should set the vault swap fee
+                └── it should emit {UpdateVaultFees} event

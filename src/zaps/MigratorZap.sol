@@ -3,8 +3,9 @@ pragma solidity =0.8.15;
 
 import {TransferLib} from "@src/lib/TransferLib.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IWETH9} from "@uni-periphery/interfaces/external/IWETH9.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {INFTXVaultV2} from "@src/v2/interfaces/INFTXVaultV2.sol";
 import {INFTXVaultV3} from "@src/interfaces/INFTXVaultV3.sol";
@@ -22,7 +23,9 @@ import {INonfungiblePositionManager} from "@uni-periphery/interfaces/INonfungibl
  * @notice Migrates positions from NFTX v2 to v3
  * @dev This Zap must be excluded from vault fees in both NFTX v2 & v3.
  */
-contract MigratorZap {
+contract MigratorZap is Ownable {
+    using SafeERC20 for IERC20;
+
     struct SushiToNFTXAMMParams {
         // Sushiswap pool address for vTokenV2 <> WETH pair
         address sushiPair;
@@ -30,8 +33,6 @@ contract MigratorZap {
         uint256 lpAmount;
         // Vault address in NFTX v2
         address vTokenV2;
-        // NFT tokenIds to redeem from v2 vault
-        uint256[] idsToRedeem;
         // If underlying vault NFT is ERC1155
         bool is1155;
         // Encoded permit signature for sushiPair
@@ -56,6 +57,7 @@ contract MigratorZap {
     uint256 private constant DEADLINE =
         0xf000000000000000000000000000000000000000000000000000000000000000;
     uint256 private constant DUST_THRESHOLD = 0.005 ether;
+    uint256 private constant V2_VTOKEN_DUST = 100; // 100 wei
 
     IWETH9 public immutable WETH;
     INFTXVaultFactoryV2 public immutable v2NFTXFactory;
@@ -126,7 +128,6 @@ contract MigratorZap {
             (vTokenV3, vTokenV3Balance, wethReceived) = _v2ToV3Vault(
                 params.vTokenV2,
                 vTokenV2Balance,
-                params.idsToRedeem,
                 params.vaultIdV3,
                 params.is1155,
                 0 // passing zero here as `positionManager.mint` takes this into account via `amount0Min` or `amount1Min`
@@ -194,7 +195,6 @@ contract MigratorZap {
     function v2InventoryToXNFT(
         uint256 vaultIdV2,
         uint256 shares,
-        uint256[] calldata idsToRedeem,
         bool is1155,
         uint256 vaultIdV3,
         uint256 minWethToReceive
@@ -206,6 +206,31 @@ contract MigratorZap {
         address vTokenV2 = v2NFTXFactory.vault(vaultIdV2);
         uint256 vTokenV2Balance = IERC20(vTokenV2).balanceOf(address(this));
 
+        // to account for rounding down when withdrawing xTokens to vTokens
+        uint256 numNftsRedeemable = vTokenV2Balance / 1 ether;
+        uint256 numNftsRedeemableAfterDust = (vTokenV2Balance +
+            V2_VTOKEN_DUST) / 1 ether;
+
+        if (numNftsRedeemableAfterDust > numNftsRedeemable) {
+            // having few wei more of vTokens (100 wei at max) would result in redeeming one whole more NFT
+            uint256 vTokensToBuy = numNftsRedeemableAfterDust *
+                1 ether -
+                vTokenV2Balance;
+            // swapping ETH from this contract to get `vTokensToBuy`
+            address[] memory path = new address[](2);
+            path[0] = address(WETH);
+            path[1] = vTokenV2;
+            sushiRouter.swapETHForExactTokens{value: 1_000_000_000}(
+                vTokensToBuy,
+                path,
+                address(this),
+                block.timestamp
+            );
+
+            // update var to the latest balance
+            vTokenV2Balance = IERC20(vTokenV2).balanceOf(address(this));
+        }
+
         (
             address vTokenV3,
             uint256 vTokenV3Balance,
@@ -213,7 +238,6 @@ contract MigratorZap {
         ) = _v2ToV3Vault(
                 vTokenV2,
                 vTokenV2Balance,
-                idsToRedeem,
                 vaultIdV3,
                 is1155,
                 minWethToReceive
@@ -244,7 +268,6 @@ contract MigratorZap {
     function v2VaultToXNFT(
         address vTokenV2,
         uint256 vTokenV2Balance,
-        uint256[] calldata idsToRedeem,
         bool is1155,
         uint256 vaultIdV3,
         uint256 minWethToReceive
@@ -262,7 +285,6 @@ contract MigratorZap {
         ) = _v2ToV3Vault(
                 vTokenV2,
                 vTokenV2Balance,
-                idsToRedeem,
                 vaultIdV3,
                 is1155,
                 minWethToReceive
@@ -284,6 +306,20 @@ contract MigratorZap {
             false,
             false
         );
+    }
+
+    // =============================================================
+    //                        ONLY OWNER WRITE
+    // =============================================================
+
+    function rescueTokens(address token) external onlyOwner {
+        if (token != address(0)) {
+            uint256 balance = IERC20(token).balanceOf(address(this));
+            IERC20(token).safeTransfer(msg.sender, balance);
+        } else {
+            uint256 balance = address(this).balance;
+            TransferLib.transferETH(msg.sender, balance);
+        }
     }
 
     // =============================================================
@@ -337,7 +373,6 @@ contract MigratorZap {
     function _v2ToV3Vault(
         address vTokenV2,
         uint256 vTokenV2Balance,
-        uint256[] calldata idsToRedeem,
         uint256 vaultIdV3,
         bool is1155,
         uint256 minWethToReceive
@@ -350,18 +385,37 @@ contract MigratorZap {
         )
     {
         vTokenV3 = v3NFTXFactory.vault(vaultIdV3);
+        address assetAddress = INFTXVaultV3(vTokenV3).assetAddress();
+        bool isCryptoPunk = (assetAddress == TransferLib.CRYPTO_PUNKS);
 
-        // redeem v2 vTokens. Directly transferring to the v3 vault
+        // random redeem v2 vTokens. Directly transferring to the v3 vault
+        uint256[] memory emptyArray;
         uint256[] memory idsRedeemed = INFTXVaultV2(vTokenV2).redeemTo(
             vTokenV2Balance / 1 ether,
-            idsToRedeem,
-            is1155 ? address(this) : vTokenV3
+            emptyArray,
+            is1155 ? address(this) : (isCryptoPunk ? address(this) : vTokenV3)
         );
+        if (isCryptoPunk) {
+            for (uint256 i; i < idsRedeemed.length; ) {
+                // from TransferLib._approveCryptoPunkERC721()
+                bytes memory data = abi.encodeWithSignature(
+                    "offerPunkForSaleToAddress(uint256,uint256,address)",
+                    idsRedeemed[i],
+                    0,
+                    vTokenV3 // to = v3 vault address
+                );
+                (bool success, bytes memory resultData) = TransferLib
+                    .CRYPTO_PUNKS
+                    .call(data);
+                require(success, string(resultData));
+
+                unchecked {
+                    ++i;
+                }
+            }
+        }
         if (is1155) {
-            IERC1155(INFTXVaultV3(vTokenV3).assetAddress()).setApprovalForAll(
-                vTokenV3,
-                true
-            );
+            IERC1155(assetAddress).setApprovalForAll(vTokenV3, true);
         }
 
         // fractional portion of vToken would be left
@@ -410,4 +464,7 @@ contract MigratorZap {
             address(this)
         );
     }
+
+    // To fund the zap with ETH to swap for missing vTokens during v2 redeem
+    receive() external payable {}
 }

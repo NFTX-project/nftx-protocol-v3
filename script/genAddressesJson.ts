@@ -1,62 +1,93 @@
 import { promises as fs } from "fs";
 import prettier from "prettier";
-import deployConfig from "../deployConfig";
+import deployConfig from "../deploy/deployConfig";
 
 // alphabetical order
 const deploymentsList = [
   "CreateVaultZap",
+  "DefaultProxyAdmin",
+  "FailSafe",
   "MarketplaceUniversalRouterZap",
+  "MigratorZap",
+  "NFTXEligibilityManager",
   "NFTXFeeDistributorV3",
   "NFTXInventoryStakingV3Upgradeable",
   "NFTXRouter",
   "NFTXVaultFactoryUpgradeableV3",
   "NonfungiblePositionManager",
   "QuoterV2",
+  "ShutdownRedeemerUpgradeable",
   "SwapRouter",
   "TickLens",
   "UniswapV3FactoryUpgradeable",
+  "V3MigrateSwap",
 ];
-const deployConfigKeysList = ["nftxUniversalRouter", "permit2", "WETH"];
+const deployConfigKeysList = [
+  "nftxUniversalRouter",
+  "permit2",
+  "UniswapV3Staker",
+  "WETH",
+];
+
+const chains = ["mainnet", "arbitrum", "base", "sepolia", "goerli"];
 
 const main = async () => {
   console.log("Generating addresses.json...");
 
   let output: {
-    goerli: { [label: string]: string };
-  } = {
-    goerli: {},
-  };
+    [chain: string]: { [label: string]: string };
+  } = {};
 
-  // TODO: add for mainnet
-  for (var i = 0; i < deploymentsList.length; i++) {
-    const data = JSON.parse(
-      await fs.readFile(
-        `./deployments/goerli/${deploymentsList[i]}.json`,
-        "utf8"
-      )
-    ) as { address: string };
+  // as we are using Promise all here, so the order of the chains might not be maintained
+  await Promise.all(
+    chains.map(async (chain) => {
+      output[chain] = await addressesForChain(chain);
+    })
+  );
 
-    output.goerli[deploymentsList[i]] = data.address;
-  }
-  deployConfigKeysList.map((k) => {
-    // @ts-ignore
-    output.goerli[k] = deployConfig["goerli"][k];
+  let orderedOutput: { [chain: string]: { [label: string]: string } } = {};
+  chains.forEach((chain) => {
+    orderedOutput[chain] = output[chain];
   });
 
-  // make output alphabetical
-  output.goerli = Object.keys(output.goerli)
-    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
-    .reduce((obj, key) => {
-      // @ts-ignore
-      obj[key] = output.goerli[key];
-      return obj;
-    }, {});
-
-  const formattedJson = prettier.format(JSON.stringify(output), {
+  const formattedJson = prettier.format(JSON.stringify(orderedOutput), {
     parser: "json",
   });
 
   await fs.writeFile("./addresses.json", formattedJson);
 };
 
+const addressesForChain = async (chain: string) => {
+  let res: { [label: string]: string } = {};
+
+  for (var i = 0; i < deploymentsList.length; i++) {
+    try {
+      const data = JSON.parse(
+        await fs.readFile(
+          `./deployments/${chain}/${deploymentsList[i]}.json`,
+          "utf8"
+        )
+      ) as { address: string };
+
+      res[deploymentsList[i]] = data.address;
+    } catch (e) {
+      res[deploymentsList[i]] = "";
+    }
+  }
+  deployConfigKeysList.map((k) => {
+    // @ts-ignore
+    res[k] = deployConfig[chain][k];
+  });
+
+  // make output alphabetical
+  res = Object.keys(res)
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+    .reduce((obj, key) => {
+      // @ts-ignore
+      obj[key] = res[key];
+      return obj;
+    }, {});
+
+  return res;
+};
 main();

@@ -32,7 +32,7 @@ import {INFTXInventoryStakingV3} from "@src/interfaces/INFTXInventoryStakingV3.s
  * @author @apoorvlathey
  *
  * @dev lockId's:
- * 0: deposit & depositWithPermit2
+ * 0: deposit
  * 1: depositWithNFT
  * 2: withdraw
  * 3: collectWethFees
@@ -556,7 +556,8 @@ contract NFTXInventoryStakingV3Upgradeable is
             revert SenderNotFeeDistributor();
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];
-        if (_vaultGlobal.totalVTokenShares == 0) {
+        // avoid distributing rewards if only the locked liquidity or no liquidity is present
+        if (_vaultGlobal.totalVTokenShares <= MINIMUM_LIQUIDITY) {
             return false;
         }
         rewardsDistributed = true;
@@ -733,7 +734,7 @@ contract NFTXInventoryStakingV3Upgradeable is
         onlyOwnerIfPaused(4);
 
         // only allow for positions created with just vTokens
-        if (position.timelockedUntil > 0)
+        if (position.vTokenTimelockedUntil == 0)
             revert PositionNotCreatedWithVTokens();
 
         VaultGlobal storage _vaultGlobal = vaultGlobal[vaultId];

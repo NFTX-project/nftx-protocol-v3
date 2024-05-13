@@ -1,0 +1,10 @@
+shutdown.t.sol
+├── when the caller is not the owner or is the manager
+│   └── it should revert
+└── when the caller is the owner
+    ├── given there are more than 4 NFTs in the vault
+    │   └── it should revert
+    └── given there are 4 or less NFTs in the vault
+        ├── it should with transfer the NFTs to the recipient
+        ├── it should set the asset address to the zero address
+        └── it should emit {VaultShutdown} event

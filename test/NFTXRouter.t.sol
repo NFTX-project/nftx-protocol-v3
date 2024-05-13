@@ -10,6 +10,7 @@ import {TestBase} from "@test/TestBase.sol";
 
 contract NFTXRouterTests is TestBase {
     uint256 currentNFTPrice = 5 ether;
+    uint256 constant BASE_VTOKEN_TIMELOCK = 1 hours;
 
     // ================================
     // Add Liquidity
@@ -111,7 +112,8 @@ contract NFTXRouterTests is TestBase {
                     vTokenMin: 0,
                     wethMin: 0,
                     deadline: block.timestamp,
-                    forceTimelock: false
+                    forceTimelock: false,
+                    recipient: address(this)
                 })
             );
 
@@ -142,7 +144,10 @@ contract NFTXRouterTests is TestBase {
             1,
             "Position Balance didn't change"
         );
-        assertEq(positionManager.lockedUntil(positionId), 0);
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            block.timestamp + BASE_VTOKEN_TIMELOCK
+        );
         assertGt(liquidity, 0, "Liquidity didn't increase");
         assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
         assertEqInt24(tickUpper, _tickUpper, "Incorrect tickUpper");
@@ -197,7 +202,8 @@ contract NFTXRouterTests is TestBase {
                     vTokenMin: 0,
                     wethMin: 0,
                     deadline: block.timestamp,
-                    forceTimelock: false
+                    forceTimelock: false,
+                    recipient: address(this)
                 })
             );
 
@@ -360,7 +366,8 @@ contract NFTXRouterTests is TestBase {
                     vTokenMin: 0,
                     wethMin: 0,
                     deadline: block.timestamp,
-                    forceTimelock: false
+                    forceTimelock: false,
+                    recipient: from
                 }),
                 encodedPermit2
             );
@@ -390,7 +397,10 @@ contract NFTXRouterTests is TestBase {
             1,
             "Position Balance didn't change"
         );
-        assertEq(positionManager.lockedUntil(positionId), 0);
+        assertEq(
+            positionManager.lockedUntil(positionId),
+            block.timestamp + BASE_VTOKEN_TIMELOCK
+        );
         assertGt(liquidity, 0, "Liquidity didn't increase");
         assertEqInt24(tickLower, _tickLower, "Incorrect tickLower");
         assertEqInt24(tickUpper, _tickUpper, "Incorrect tickUpper");
@@ -453,7 +463,8 @@ contract NFTXRouterTests is TestBase {
                     vTokenMin: 0,
                     wethMin: 0,
                     deadline: block.timestamp,
-                    forceTimelock: false
+                    forceTimelock: false,
+                    recipient: from
                 }),
                 encodedPermit2
             );
@@ -559,7 +570,6 @@ contract NFTXRouterTests is TestBase {
 
     function testIncreaseLiquidity_withVTokens() external {
         uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
-        uint256 preTimelock = positionManager.lockedUntil(positionId);
 
         uint256 prePositionNFTBalance = positionManager.balanceOf(
             address(this)
@@ -598,8 +608,7 @@ contract NFTXRouterTests is TestBase {
         assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
         assertEq(
             positionManager.lockedUntil(positionId),
-            preTimelock,
-            "Timelock got updated"
+            block.timestamp + BASE_VTOKEN_TIMELOCK
         );
     }
 
@@ -706,10 +715,10 @@ contract NFTXRouterTests is TestBase {
     // increaseLiquidityWithPermit2
 
     function testIncreaseLiquidityWithPermit2_withVTokens() external {
-        startHoax(from);
-
         uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
-        uint256 preTimelock = positionManager.lockedUntil(positionId);
+        positionManager.safeTransferFrom(address(this), from, positionId);
+
+        startHoax(from);
 
         uint256 prePositionNFTBalance = positionManager.balanceOf(
             address(this)
@@ -753,15 +762,16 @@ contract NFTXRouterTests is TestBase {
         assertGt(postLiquidity, preLiquidity, "Liquidity didn't increase");
         assertEq(
             positionManager.lockedUntil(positionId),
-            preTimelock,
-            "Timelock got updated"
+            block.timestamp + BASE_VTOKEN_TIMELOCK
         );
     }
 
     function testIncreaseLiquidityWithPermit2_withNFTs_and_VTokens() external {
+        uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
+        positionManager.safeTransferFrom(address(this), from, positionId);
+
         startHoax(from);
 
-        uint256 positionId = _mintPositionWithTwap(currentNFTPrice);
         // after timelock ended
         vm.warp(positionManager.lockedUntil(positionId) + 1);
 

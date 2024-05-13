@@ -7,12 +7,18 @@
     "compile": "hardhat compile",
     "clean": "hardhat clean",
     "deploy:goerli": "hardhat deploy --network goerli",
-    "verify:goerli": "hardhat --network goerli etherscan-verify",
+    "deploy:sepolia": "hardhat deploy --network sepolia",
     "deploy:mainnet": "hardhat deploy --network mainnet",
-    "verify:mainnet": "hardhat --network mainnet etherscan-verify",
     "deploy:arbitrum": "hardhat deploy --network arbitrum",
+    "deploy:base": "hardhat deploy --network base",
+    "verify:goerli": "hardhat --network goerli etherscan-verify",
+    "verify:sepolia": "hardhat --network sepolia etherscan-verify",
+    "verify:mainnet": "hardhat --network mainnet etherscan-verify",
     "verify:arbitrum": "hardhat --network arbitrum etherscan-verify",
-    "gen:addresses": "ts-node ./script/genAddressesJson.ts"
+    "verify:base": "hardhat --network base etherscan-verify",
+    "gen:addresses": "ts-node ./script/genAddressesJson.ts",
+    "gen:readme": "ts-node ./script/genREADME.ts",
+    "gen:addresses-and-readme": "yarn gen:addresses && yarn gen:readme"
   },
   "devDependencies": {
     "@ethersproject/units": "^5.7.0",
@@ -32,12 +38,12 @@
     "hardhat-deploy": "^0.11.22",
     "hardhat-deploy-ethers": "0.3.0-beta.13",
     "hardhat-tracer": "^1.0.0-alpha.6",
-    "husky": "^8.0.0",
+    "husky": "^8.0.3",
     "prettier": "^2.4.1",
     "prettier-plugin-solidity": "^1.0.0-beta.18",
-    "ts-node": "^10.8.0",
+    "ts-node": "^10.9.2",
     "typechain": "^5.1.1",
-    "typescript": "^4.7.2"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-verify": "^1.1.1"

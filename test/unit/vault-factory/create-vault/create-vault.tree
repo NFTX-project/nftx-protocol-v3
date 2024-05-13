@@ -1,0 +1,26 @@
+createVault.t.sol
+├── given the fee distributor is not set
+│   └── it should revert
+└── given the fee distributor is set
+    ├── given the vault implementation is not set
+    │   └── it should revert
+    └── given the vault implementation is set
+        ├── given the create vault operation is paused
+        │   └── when the caller is not the owner
+        │       └── it should revert
+        └── given the create vault operation is not paused
+            ├── given the vault with same name and symbol exists for the same asset
+            │   └── it should revert
+            └── given the vault with same name and symbol does not exist for the same asset
+                ├── it should deploy a new vault as beacon proxy
+                ├── it should bump the number of vaults
+                ├── it should add the vault to the vault mapping
+                ├── it should add the vault to vaults for asset mapping
+                ├── it should set the vault's name
+                ├── it should set the vault's symbol
+                ├── it should set the vault's asset
+                ├── it should set the vault's asset type
+                ├── it should set the vault's {allowAllItems}
+                ├── it should set the vault's manager to the caller
+                ├── it should set the vault's owner
+                └── it should emit a {NewVault} event
